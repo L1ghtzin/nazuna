@@ -1,52 +1,30 @@
-/**
- * Menu de downloads e pesquisas de mídia
- * @module menudown
- * @param {string} prefix - Prefixo dos comandos do bot
- * @param {string} [botName="MeuBot"] - Nome do bot
- * @param {string} [userName="Usuário"] - Nome do usuário
- * @returns {Promise<string>} Menu formatado com comandos de download
- */
 async function menudown(prefix, botName = "MeuBot", userName = "Usuário") {
   return `
-╭═══ 🌸 *${botName}* 🌸 ═══╮
-│ Olá, *${userName}*!
-╰══════════════════════╯
+╭┈⊰ 🌸 『 *${botName}* 』
+┊Olá, *${userName}*!
+╰─┈┈┈┈┈◜❁◞┈┈┈┈┈─╯
 
-╭═══ 📥 *DOWNLOADS E PESQUISAS* 📥 ═══╮
-│
-│╭─▸ *Pesquisas de Mídia:*
-││
-││◕⁠➜ ${prefix}letra
-││    ↳ Buscar letras de musicas
-││◕⁠➜ ${prefix}play
-││    ↳ Baixar música do YouTube
-││◕⁠➜ ${prefix}playvid
-││    ↳ Baixar vídeo do YouTube
-││◕⁠➜ ${prefix}assistir
-││    ↳ Pesquisar filmes para assistir
-││◕⁠➜ ${prefix}mcplugin
-││    ↳ Buscar plugins de Minecraft
-││◕⁠➜ ${prefix}apkmod / ${prefix}mod
-││    ↳ Buscar APKs modificados
-││◕⁠➜ ${prefix}clima
-││    ↳ Pesquisar clima de uma cidade
-││◕⁠➜ ${prefix}dicionario
-││    ↳ Significado de uma palavra
-││◕⁠➜ ${prefix}wikipedia
-││    ↳ Fazer pesquisa no wikipedia
-│
-│╭─▸ *Downloads Diretos:*
-││
-││◕⁠➜ ${prefix}tiktok / ${prefix}ttk
-││    ↳ Baixar vídeos do TikTok
-││◕⁠➜ ${prefix}pinterest / ${prefix}pin
-││    ↳ Baixar do Pinterest
-││◕⁠➜ ${prefix}instagram / ${prefix}ig
-││    ↳ Baixar do Instagram
-││◕⁠➜ ${prefix}igstory
-││    ↳ Baixar story do Instagram
-│
-╰══════════════════════╯
+╭┈❪🍧ฺꕸ▸ *PESQUISAS*
+┊
+┊•.̇𖥨֗🍓⭟${prefix}letra
+┊•.̇𖥨֗🍓⭟${prefix}play
+┊•.̇𖥨֗🍓⭟${prefix}playvid
+┊•.̇𖥨֗🍓⭟${prefix}shazam
+┊•.̇𖥨֗🍓⭟${prefix}assistir
+┊•.̇𖥨֗🍓⭟${prefix}mcplugin
+┊•.̇𖥨֗🍓⭟${prefix}apkmod
+┊•.̇𖥨֗🍓⭟${prefix}clima
+┊•.̇𖥨֗🍓⭟${prefix}dicionario
+┊•.̇𖥨֗🍓⭟${prefix}wikipedia
+╰─┈┈┈┈┈◜❁◞┈┈┈┈┈─╯
+
+╭┈❪🍧ฺꕸ▸ *DOWNLOADS*
+┊
+┊•.̇𖥨֗🍓⭟${prefix}tiktok
+┊•.̇𖥨֗🍓⭟${prefix}pinterest
+┊•.̇𖥨֗🍓⭟${prefix}instagram
+┊•.̇𖥨֗🍓⭟${prefix}igstory
+╰─┈┈┈┈┈◜❁◞┈┈┈┈┈─╯
 `;
 }
 

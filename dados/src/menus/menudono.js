@@ -1,118 +1,61 @@
-/**
- * Menu exclusivo para o dono do bot
- * @module menudono
- * @param {string} prefix - Prefixo dos comandos do bot
- * @param {string} [botName="MeuBot"] - Nome do bot
- * @param {string} [userName="Usuário"] - Nome do usuário
- * @returns {Promise<string>} Menu formatado com comandos do dono
- * @description Lista todos os comandos disponíveis apenas para o dono do bot,
- * incluindo configurações do bot e funções administrativas globais
- */
 async function menuDono(prefix, botName = "MeuBot", userName = "Usuário") {
   return `
-╭═══ 🌸 *${botName}* 🌸 ═══╮
-│ Olá, *${userName}*! (👑 Dono)
-╰══════════════════════╯
+╭┈⊰ 🌸 『 *${botName}* 』
+┊Olá, *${userName}*!
+╰─┈┈┈┈┈◜❁◞┈┈┈┈┈─╯
 
-╭═══ 👑 *PAINEL DO DONO* 👑 ═══╮
-│
-│╭─▸ *Configurações Gerais:*
-││
-││◕⁠➜ ${prefix}prefixo [novo_prefixo]
-││    ↳ Mudar prefixo do bot
-││◕⁠➜ ${prefix}numerodono [numero]
-││    ↳ Definir número do dono
-││◕⁠➜ ${prefix}nomedono [nome]
-││    ↳ Alterar nome do dono
-││◕⁠➜ ${prefix}nomebot [nome]
-││    ↳ Mudar nome do bot
-││◕⁠➜ ${prefix}fotomenu [link/imagem]
-││    ↳ Configurar foto do menu
-││◕⁠➜ ${prefix}videomenu [link/video]
-││    ↳ Configurar vídeo do menu
-│
-│╭─▸ *Atualização e Manutenção:*
-││
-││◕⁠➜ ${prefix}updatebot
-││    ↳ Atualizar o bot completo
-││◕⁠➜ ${prefix}updatemodules
-││    ↳ Atualizar módulos (Pro)
-│
-│╭─▸ *Gerenciamento de Acesso:*
-││
-││◕⁠➜ ${prefix}addsubdono [@user/numero]
-││    ↳ Adicionar subdono
-││◕⁠➜ ${prefix}delsubdono [@user/numero]
-││    ↳ Remover subdono
-││◕⁠➜ ${prefix}listsubdonos
-││    ↳ Listar subdonos
-││◕⁠➜ ${prefix}addpremium [@user/numero] [dias]
-││    ↳ Adicionar usuário premium
-││◕⁠➜ ${prefix}delpremium [@user/numero]
-││    ↳ Remover usuário premium
-││◕⁠➜ ${prefix}listprem
-││    ↳ Listar usuários premium
-││◕⁠➜ ${prefix}bangp [id_grupo]
-││    ↳ Banir grupo do bot
-││◕⁠➜ ${prefix}unbangp [id_grupo]
-││    ↳ Desbanir grupo do bot
-││◕⁠➜ ${prefix}listbangp
-││    ↳ Listar grupos banidos
-││◕⁠➜ ${prefix}blockcmdg [comando] [motivo?]
-││    ↳ Bloquear comando globalmente
-││◕⁠➜ ${prefix}unblockcmdg [comando]
-││    ↳ Desbloquear comando globalmente
-││◕⁠➜ ${prefix}blockuserg [@user/numero] [motivo?]
-││    ↳ Bloquear usuário globalmente
-││◕⁠➜ ${prefix}unblockuserg [@user/numero]
-││    ↳ Desbloquear usuário globalmente
-││◕⁠➜ ${prefix}listblocks
-││    ↳ Listar bloqueios globais
-│
-│╭─▸ *Sistema de Aluguel:*
-││
-││◕⁠➜ ${prefix}rentalmode [on/off]
-││    ↳ Ativar/desativar modo aluguel
-││◕⁠➜ ${prefix}addaluguel [id_grupo] [dias/permanente]
-││    ↳ Definir aluguel para um grupo
-││◕⁠➜ ${prefix}gerarcodigo [dias/permanente] [id_grupo?]
-││    ↳ Gerar código de ativação
-│
-│╭─▸ *Administração de Grupos (Dono):*
-││
-││◕⁠➜ ${prefix}entrar [link_convite]
-││    ↳ Entrar em um grupo
-││◕⁠➜ ${prefix}seradm [id_grupo?]
-││    ↳ Tornar-se admin em um grupo
-││◕⁠➜ ${prefix}sermembro [id_grupo?]
-││    ↳ Tornar-se membro em um grupo
-│
-│╭─▸ *Funções de Debug e Controle:*
-││
-││◕⁠➜ ${prefix}antipv [on/off]
-││    ↳ Anti PV (ignora mensagens)
-││◕⁠➜ ${prefix}antipv2 [on/off]
-││    ↳ Anti PV (avisa usuários)
-││◕⁠➜ ${prefix}antipv3 [on/off]
-││    ↳ Anti PV (bloqueia usuários)
-││◕⁠➜ ${prefix}tm [mensagem]
-││    ↳ Fazer transmissão em grupos
-││◕⁠➜ ${prefix}cases
-││    ↳ Ver todas as cases
-││◕⁠➜ ${prefix}getcase [nome_case]
-││    ↳ Pegar código de uma case
-││◕⁠➜ ${prefix}getcmd [nome_cmd]
-││    ↳ Pegar código de um comando
-││◕⁠➜ ${prefix}getfile [caminho_arquivo]
-││    ↳ Obter arquivo do servidor
-││◕⁠➜ ${prefix}exec [comando]
-││    ↳ Executar comando no terminal
-││◕⁠➜ ${prefix}exec2 [comando]
-││    ↳ Executar comando (stdout)
-││◕⁠➜ ${prefix}modoliteglobal [on/off]
-││    ↳ Ativar/desativar Modo Lite global
-│
-╰══════════════════════╯
+╭┈❪🍧ฺꕸ▸ *CONFIGURAÇÕES*
+┊
+┊•.̇𖥨֗🍓⭟${prefix}prefixo
+┊•.̇𖥨֗🍓⭟${prefix}numerodono
+┊•.̇𖥨֗🍓⭟${prefix}nomedono
+┊•.̇𖥨֗🍓⭟${prefix}nomebot
+┊•.̇𖥨֗🍓⭟${prefix}fotomenu
+┊•.̇𖥨֗🍓⭟${prefix}videomenu
+╰─┈┈┈┈┈◜❁◞┈┈┈┈┈─╯
+
+╭┈❪🍧ฺꕸ▸ *GERENCIAMENTO*
+┊
+┊•.̇𖥨֗🍓⭟${prefix}addsubdono
+┊•.̇𖥨֗🍓⭟${prefix}delsubdono
+┊•.̇𖥨֗🍓⭟${prefix}listsubdonos
+┊•.̇𖥨֗🍓⭟${prefix}addpremium
+┊•.̇𖥨֗🍓⭟${prefix}delpremium
+┊•.̇𖥨֗🍓⭟${prefix}listprem
+┊•.̇𖥨֗🍓⭟${prefix}bangp
+┊•.̇𖥨֗🍓⭟${prefix}unbangp
+┊•.̇𖥨֗🍓⭟${prefix}listbangp
+┊•.̇𖥨֗🍓⭟${prefix}blockcmdg
+┊•.̇𖥨֗🍓⭟${prefix}unblockcmdg
+┊•.̇𖥨֗🍓⭟${prefix}blockuserg
+┊•.̇𖥨֗🍓⭟${prefix}unblockuserg
+┊•.̇𖥨֗🍓⭟${prefix}listblocks
+╰─┈┈┈┈┈◜❁◞┈┈┈┈┈─╯
+
+╭┈❪🍧ฺꕸ▸ *ALUGUEL*
+┊
+┊•.̇𖥨֗🍓⭟${prefix}rentalmode
+┊•.̇𖥨֗🍓⭟${prefix}addaluguel
+┊•.̇𖥨֗🍓⭟${prefix}gerarcodigo
+╰─┈┈┈┈┈◜❁◞┈┈┈┈┈─╯
+
+╭┈❪🍧ฺꕸ▸ *ADMINISTRAÇÃO*
+┊
+┊•.̇𖥨֗🍓⭟${prefix}entrar
+┊•.̇𖥨֗🍓⭟${prefix}seradm
+┊•.̇𖥨֗🍓⭟${prefix}sermembro
+╰─┈┈┈┈┈◜❁◞┈┈┈┈┈─╯
+
+╭┈❪🍧ฺꕸ▸  *OUTROS*
+┊
+┊•.̇𖥨֗🍓⭟${prefix}antipv
+┊•.̇𖥨֗🍓⭟${prefix}antipv2
+┊•.̇𖥨֗🍓⭟${prefix}antipv3
+┊•.̇𖥨֗🍓⭟${prefix}tm
+┊•.̇𖥨֗🍓⭟${prefix}cases
+┊•.̇𖥨֗🍓⭟${prefix}getcase
+┊•.̇𖥨֗🍓⭟${prefix}modoliteglobal
+╰─┈┈┈┈┈◜❁◞┈┈┈┈┈─╯
 `;
 }
 

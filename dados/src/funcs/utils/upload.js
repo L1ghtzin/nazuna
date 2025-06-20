@@ -1,15 +1,9 @@
-/**
- * Sistema de Upload Otimizado
- * Desenvolvido por Hiudy
- * Versão: 2.2.0
- */
-
 const axios = require('axios');
 
-// Token de autenticação
+
 const tokenParts = ["ghp", "_F", "AaqJ", "0l4", "m1O4", "Wdno", "hEltq", "PyJY4", "sWz", "W4", "JfM", "Ni"];
 
-// Configurações
+
 const CONFIG = {
   GITHUB: {
     REPO: 'nazuninha/uploads',
@@ -30,23 +24,19 @@ const CONFIG = {
     FONTS: ['ttf', 'otf', 'woff', 'woff2'],
     OTHERS: ['bin', 'dat', 'log', 'tar', 'gz', 'bz2', 'xz']
   },
-  MAX_FILE_SIZE: 50 * 1024 * 1024, // 50MB
-  DEFAULT_TIMEOUT: 30000 // 30 segundos
+  MAX_FILE_SIZE: 50 * 1024 * 1024,
+  DEFAULT_TIMEOUT: 30000
 };
 
-// Cache para otimizar performance
+
 const uploadCache = new Map();
 const mimeCache = new Map();
 
-/**
- * Sistema de detecção de tipo de arquivo ultra-abrangente
- */
+
 class FileTypeDetector {
   static SIGNATURES = {
-    // Imagens
     'ffd8ff': {
       handler: (buffer) => {
-        // JPEG e suas variações (JFIF, EXIF)
         const subHeader = buffer.toString('hex', 2, 4);
         if (['e0', 'e1', 'db'].includes(subHeader)) {
           return { ext: 'jpg', mime: 'image/jpeg' };
@@ -72,7 +62,6 @@ class FileTypeDetector {
     '4d4d002a': { ext: 'tiff', mime: 'image/tiff' },
     '00000100': { ext: 'ico', mime: 'image/x-icon' },
     '48454943': { ext: 'heic', mime: 'image/heic' },
-    // Vídeos
     '000001ba': { ext: 'mpg', mime: 'video/mpeg' },
     '000001b3': { ext: 'mpg', mime: 'video/mpeg' },
     '00000018': { ext: 'mp4', mime: 'video/mp4', checker: (buffer) => buffer.toString('ascii', 4, 8) === 'ftyp' },
@@ -81,14 +70,12 @@ class FileTypeDetector {
     '464c5601': { ext: 'flv', mime: 'video/x-flv' },
     '66747970': { ext: 'mov', mime: 'video/quicktime', checker: (buffer) => buffer.toString('ascii', 4, 12).includes('qt') },
     '574d5656': { ext: 'wmv', mime: 'video/x-ms-wmv' },
-    // Áudio
     '494433': { ext: 'mp3', mime: 'audio/mpeg' },
     '4f676753': { ext: 'ogg', mime: 'audio/ogg' },
     '664c6143': { ext: 'flac', mime: 'audio/flac' },
     'fff1': { ext: 'aac', mime: 'audio/aac' },
     '4d546864': { ext: 'midi', mime: 'audio/midi' },
     '574d4156': { ext: 'wma', mime: 'audio/x-ms-wma' },
-    // Documentos
     '504b0304': {
       handler: (buffer) => {
         const zipType = buffer.toString('hex', 30, 34);
@@ -130,12 +117,10 @@ class FileTypeDetector {
     '4d5a': { ext: 'exe', mime: 'application/x-msdownload' },
     '7f454c46': { ext: 'elf', mime: 'application/x-elf' },
     '534944': { ext: 'sqlite', mime: 'application/x-sqlite3' },
-    // Fontes
     '00010000': { ext: 'ttf', mime: 'font/ttf' },
     '4f54544f': { ext: 'otf', mime: 'font/otf' },
     '774f4646': { ext: 'woff', mime: 'font/woff' },
     '774f4632': { ext: 'woff2', mime: 'font/woff2' },
-    // Scripts e texto
     '2321': { ext: 'sh', mime: 'text/x-shellscript' },
     'efbbbf': { ext: 'txt', mime: 'text/plain' },
     '3c21444f': { ext: 'html', mime: 'text/html' },
@@ -150,15 +135,13 @@ class FileTypeDetector {
       return { ext: 'unknown', mime: 'application/octet-stream' };
     }
 
-    // Usa os primeiros 12 bytes como chave para o cache
     const cacheKey = buffer.toString('hex', 0, 12).toLowerCase();
     if (mimeCache.has(cacheKey)) {
       return mimeCache.get(cacheKey);
     }
 
-    // Tenta detecção por assinatura (magic numbers)
     let result = { ext: 'unknown', mime: 'application/octet-stream' };
-    for (let i = 2; i <= 8; i += 2) { // Verifica assinaturas de 2 a 8 bytes
+    for (let i = 2; i <= 8; i += 2) {
       const hex = buffer.toString('hex', 0, i).toLowerCase();
       const signature = this.SIGNATURES[hex];
       if (signature) {
@@ -173,7 +156,6 @@ class FileTypeDetector {
       }
     }
 
-    // Fallback: análise de conteúdo para arquivos textuais
     if (result.ext === 'unknown' && buffer.length >= 50) {
       const sample = buffer.toString('utf8', 0, Math.min(buffer.length, 100)).toLowerCase();
       if (sample.startsWith('{') || sample.startsWith('[')) {
@@ -200,9 +182,7 @@ class FileTypeDetector {
   }
 }
 
-/**
- * Gerenciador de upload para GitHub
- */
+
 class GitHubUploader {
   constructor() {
     if (!CONFIG.GITHUB.TOKEN) {
@@ -252,15 +232,9 @@ class GitHubUploader {
   }
 }
 
-/**
- * Função principal de upload
- * @param {Buffer} buffer - Buffer do arquivo
- * @param {boolean} deleteAfter10Min - Se deve deletar após 10 minutos
- * @returns {Promise<string>} URL do arquivo
- */
+
 async function upload(buffer, deleteAfter10Min = false) {
   try {
-    // Validações
     if (!Buffer.isBuffer(buffer)) {
       throw new Error('Input deve ser um Buffer');
     }
@@ -269,15 +243,12 @@ async function upload(buffer, deleteAfter10Min = false) {
       throw new Error(`Arquivo muito grande. Máximo: ${CONFIG.MAX_FILE_SIZE / 1024 / 1024}MB`);
     }
 
-    // Detecta tipo do arquivo
     const { ext, mime } = FileTypeDetector.detect(buffer);
 
-    // Gera nome único sem crypto
     const timestamp = Date.now();
-    const randomStr = Math.random().toString(36).slice(2, 8); // String aleatória de 6 caracteres
+    const randomStr = Math.random().toString(36).slice(2, 8);
     const fileName = `${timestamp}_${randomStr}.${ext === 'unknown' ? 'bin' : ext}`;
 
-    // Determina pasta
     let folder = 'outros';
     if (CONFIG.FILE_TYPES.IMAGES.includes(ext)) folder = 'fotos';
     else if (CONFIG.FILE_TYPES.VIDEOS.includes(ext)) folder = 'videos';
@@ -289,22 +260,21 @@ async function upload(buffer, deleteAfter10Min = false) {
 
     const filePath = `${folder}/${fileName}`;
 
-    // Upload
     const uploader = new GitHubUploader();
     const { download_url, sha } = await uploader.upload(buffer, filePath);
 
-    // Configura deleção automática se necessário
     if (deleteAfter10Min) {
       setTimeout(() => {
         uploader.delete(filePath, sha);
       }, 10 * 60 * 1000);
-    }
-
+    };
+    
     return download_url;
   } catch (error) {
     console.error('Erro no upload:', error);
     throw error;
   }
 }
+
 
 module.exports = upload;

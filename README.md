@@ -56,7 +56,7 @@ Fique por dentro de novidades, dicas exclusivas e updates!
 
 ### 🤖 **O que é o nazuna Bot?**
 
-O **nazuna Bot** é um bot foda pro WhatsApp, feito com **Node.js** e **Baileys**. Ele é um assistente completo: automatiza tarefas, gerencia grupos, e tem comandos pra tudo, desde administração até diversão. Perfeito pra iniciantes e altamente customizável pra quem manja de código.
+O **nazuna Bot** é um bot foda pro WhatsApp, feito com **Node.js** e **WaLib**. Ele é um assistente completo: automatiza tarefas, gerencia grupos, e tem comandos pra tudo, desde administração até diversão. Perfeito pra iniciantes e altamente customizável pra quem manja de código.
 
 > ⚠️ **Aviso Sério**: O nazuna Bot é **protegido por copyright**. Tirar créditos, vender ou distribuir versões modificadas sem permissão é crime e pode te meter em encrenca legal.
 
@@ -502,7 +502,7 @@ Stay in the loop with news, exclusive tips, and updates!
 
 ### 🤖 **What is nazuna Bot?**
 
-**nazuna Bot** is an epic WhatsApp bot built with **Node.js** and **Baileys**. It’s like a supercharged assistant: automates tasks, manages groups, and offers commands for everything from admin tasks to fun. Perfect for beginners and highly customizable for coders.
+**nazuna Bot** is an epic WhatsApp bot built with **Node.js** and **WaLib**. It’s like a supercharged assistant: automates tasks, manages groups, and offers commands for everything from admin tasks to fun. Perfect for beginners and highly customizable for coders.
 
 > ⚠️ **Serious Warning**: nazuna Bot is **copyright-protected**. Removing credits, selling, or distributing modified versions without permission is illegal and may lead to legal trouble.
 
@@ -948,7 +948,7 @@ Métricas en tiempo real del **nazuna Bot**, con lo que significa cada una:
 
 ### 🤖 **¿Qué es nazuna Bot?**
 
-**nazuna Bot** es un bot épico para WhatsApp, construido con **Node.js** y **Baileys**. Es como un asistente todo terreno: automatiza tareas, gestiona grupos y ofrece comandos para admin, utilidades y diversión. Ideal para principiantes y súper personalizable para programadores.
+**nazuna Bot** es un bot épico para WhatsApp, construido con **Node.js** y **WaLib**. Es como un asistente todo terreno: automatiza tareas, gestiona grupos y ofrece comandos para admin, utilidades y diversión. Ideal para principiantes y súper personalizable para programadores.
 
 > ⚠️ **Advertencia Seria**: nazuna Bot está **protegido por derechos de autor**. Quitar créditos, vender o distribuir versiones modificadas sin permiso es ilegal y puede meterte en problemas legales.
 
@@ -1394,7 +1394,7 @@ Tetap update dengan berita, tips eksklusif, dan pembaruan!
 
 ### 🤖 **Apa itu nazuna Bot?**
 
-**nazuna Bot** adalah bot WhatsApp keren yang dibuat dengan **Node.js** dan **Baileys**. Ini seperti asisten super: mengotomatiskan tugas, mengelola grup, dan menawarkan perintah untuk admin, utilitas, hingga hiburan. Cocok untuk pemula dan sangat bisa disesuaikan untuk coder.
+**nazuna Bot** adalah bot WhatsApp keren yang dibuat dengan **Node.js** dan **WaLib**. Ini seperti asisten super: mengotomatiskan tugas, mengelola grup, dan menawarkan perintah untuk admin, utilitas, hingga hiburan. Cocok untuk pemula dan sangat bisa disesuaikan untuk coder.
 
 > ⚠️ **Peringatan Serius**: nazuna Bot **dilindungi hak cipta**. Menghapus kredit, menjual, atau mendistribusikan versi modifikasi tanpa izin adalah ilegal dan bisa bermasalah secara hukum.
 
@@ -1840,7 +1840,7 @@ Restez informé des nouveautés, astuces exclusives et mises à jour !
 
 ### 🤖 **Qu'est-ce que nazuna Bot ?**
 
-**nazuna Bot** est un bot WhatsApp épique, construit avec **Node.js** et **Baileys**. C’est un assistant tout-terrain : il automatise les tâches, gère les groupes et propose des commandes pour l’administration, les utilitaires et le divertissement. Parfait pour les débutants et hautement personnalisable pour les codeurs.
+**nazuna Bot** est un bot WhatsApp épique, construit avec **Node.js** et **WaLib**. C’est un assistant tout-terrain : il automatise les tâches, gère les groupes et propose des commandes pour l’administration, les utilitaires et le divertissement. Parfait pour les débutants et hautement personnalisable pour les codeurs.
 
 > ⚠️ **Avertissement Sérieux** : nazuna Bot est **protégé par des droits d'auteur**. Supprimer les crédits, vendre ou distribuer des versions modifiées sans autorisation est illégal et peut entraîner des problèmes juridiques.
 

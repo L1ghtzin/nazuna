@@ -1,67 +1,37 @@
-/**
- * Menu de comandos gerais para membros
- * @module menumemb
- * @param {string} prefix - Prefixo dos comandos do bot
- * @param {string} [botName="MeuBot"] - Nome do bot
- * @param {string} [userName="Usuário"] - Nome do usuário
- * @returns {Promise<string>} Menu formatado com comandos para membros
- * @description Lista todos os comandos disponíveis para membros comuns,
- * incluindo verificação de status, rankings e estatísticas do grupo/bot
- */
 async function menuMembros(prefix, botName = "MeuBot", userName = "Usuário") {
   return `
-╭═══ 🌸 *${botName}* 🌸 ═══╮
-│ Olá, *${userName}*!
-╰══════════════════════╯
+╭┈⊰ 🌸 『 *${botName}* 』
+┊Olá, *${userName}*!
+╰─┈┈┈┈┈◜❁◞┈┈┈┈┈─╯
 
-╭═══ 🌟 *COMANDOS PARA MEMBROS* 🌟 ═══╮
-│
-│╭─▸ *Informações e Status:*
-││
-││◕⁠➜ ${prefix}perfil
-││    ↳ Ver seu perfil
-││◕⁠➜ ${prefix}dono
-││    ↳ Ver informações do dono
-││◕⁠➜ ${prefix}criador
-││    ↳ Ver informações do criador
-││◕⁠➜ ${prefix}ping
-││    ↳ Verificar status do bot
-││◕⁠➜ ${prefix}rvisu
-││    ↳ Revelar visualização única
-││◕⁠➜ ${prefix}totalcmd
-││    ↳ Total de comandos do bot
-││◕⁠➜ ${prefix}topcmd
-││    ↳ Ver comandos mais usados
-││◕⁠➜ ${prefix}cmdinfo [comando]
-││    ↳ Ver estatísticas de um comando
-││◕⁠➜ ${prefix}statusgp
-││    ↳ Ver estatísticas do grupo
-││◕⁠➜ ${prefix}statusbot
-││    ↳ Ver estatísticas globais do bot
-││◕⁠➜ ${prefix}meustatus
-││    ↳ Ver suas estatísticas pessoais
-││◕⁠➜ ${prefix}regras
-││    ↳ Ver regras do grupo
-│
-│╭─▸ *Configurações Pessoais:*
-││
-││◕⁠➜ ${prefix}mention
-││    ↳ Configurar menções
-││◕⁠➜ ${prefix}afk [motivo?]
-││    ↳ Definir status AFK
-││◕⁠➜ ${prefix}voltei
-││    ↳ Remover status AFK
-│
-│╭─▸ *Rankings:*
-││
-││◕⁠➜ ${prefix}rankativo
-││    ↳ Ver ranking de ativos do grupo
-││◕⁠➜ ${prefix}rankinativo
-││    ↳ Ver ranking de inativos do grupo
-││◕⁠➜ ${prefix}rankativog
-││    ↳ Ver ranking global de ativos
-│
-╰══════════════════════╯
+╭┈❪🍧ฺꕸ▸ *INFORMAÇÕES*
+┊
+┊•.̇𖥨֗🍓⭟${prefix}perfil
+┊•.̇𖥨֗🍓⭟${prefix}dono
+┊•.̇𖥨֗🍓⭟${prefix}ping
+┊•.̇𖥨֗🍓⭟${prefix}rvisu
+┊•.̇𖥨֗🍓⭟${prefix}totalcmd
+┊•.̇𖥨֗🍓⭟${prefix}topcmd
+┊•.̇𖥨֗🍓⭟${prefix}cmdinfo
+┊•.̇𖥨֗🍓⭟${prefix}statusgp
+┊•.̇𖥨֗🍓⭟${prefix}statusbot
+┊•.̇𖥨֗🍓⭟${prefix}meustatus
+┊•.̇𖥨֗🍓⭟${prefix}regras
+╰─┈┈┈┈┈◜❁◞┈┈┈┈┈─╯
+
+╭┈❪🍧ฺꕸ▸ *CONFIGURAÇÕES*
+┊
+┊•.̇𖥨֗🍓⭟${prefix}mention
+┊•.̇𖥨֗🍓⭟${prefix}afk
+┊•.̇𖥨֗🍓⭟${prefix}voltei
+╰─┈┈┈┈┈◜❁◞┈┈┈┈┈─╯
+
+╭┈❪🍧ฺꕸ▸ *RANKS*
+┊
+┊•.̇𖥨֗🍓⭟${prefix}rankativo
+┊•.̇𖥨֗🍓⭟${prefix}rankinativo
+┊•.̇𖥨֗🍓⭟${prefix}rankativog
+╰─┈┈┈┈┈◜❁◞┈┈┈┈┈─╯
 `;
 }
 

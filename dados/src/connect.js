@@ -2,13 +2,12 @@
 ═════════════════════════════
   Nazuna - Conexão WhatsApp
   Autor: Hiudy
-  Revisão: 15/06/2025
-  Sistema Dual Implementado
+  Revisão: 18/06/2025
 ═════════════════════════════
 */
 
 const { Boom } = require('@hapi/boom');
-const { makeWASocket, useMultiFileAuthState, proto, DisconnectReason } = require('baileys');
+const { makeWASocket, useMultiFileAuthState, proto, DisconnectReason } = require('@cognima/walib');
 const NodeCache = require('node-cache');
 const readline = require('readline');
 const pino = require('pino');
@@ -24,7 +23,6 @@ const { prefixo, nomebot, nomedono, numerodono } = require('./config.json');
 
 const indexModule = require(path.join(__dirname, 'index.js'));
 
-// Detectar flags
 const codeMode = process.argv.includes('--code');
 const dualMode = process.argv.includes('--dual');
 
@@ -35,11 +33,9 @@ const ask = (question) => {
 
 const groupCache = new NodeCache({ stdTTL: 5 * 60, useClones: false });
 
-// Variável global para armazenar a conexão secundária
 let secondarySocket = null;
 let useSecondary = false; 
 
-// Função para criar um socket WhatsApp
 async function createBotSocket(authDir, isPrimary = true) {
   await fs.mkdir(DATABASE_DIR, { recursive: true });
   await fs.mkdir(authDir, { recursive: true });
@@ -66,10 +62,8 @@ async function createBotSocket(authDir, isPrimary = true) {
     cachedGroupMetadata: (jid) => groupCache.get(jid) || null
   });
 
-  // Salvar credenciais sempre que atualizadas
   socket.ev.on('creds.update', saveCreds);
 
-  // Código de pareamento apenas para conexão primária
   if (codeMode && !socket.authState.creds.registered) {
     let phoneNumber = await ask('📞 Digite seu número (com DDD e DDI, ex: +5511999999999): \n\n');
     phoneNumber = phoneNumber.replace(/\D/g, '');
@@ -82,7 +76,6 @@ async function createBotSocket(authDir, isPrimary = true) {
     console.log('📲 No WhatsApp, vá em "Aparelhos Conectados" -> "Conectar com Número de Telefone" e insira o código.\n');
   }
 
-  // Apenas a conexão primária recebe eventos de grupos
   if (isPrimary) {
     socket.ev.on('groups.update', async ([ev]) => {
       const meta = await socket.groupMetadata(ev.id).catch(() => null);
@@ -264,7 +257,6 @@ async function createBotSocket(authDir, isPrimary = true) {
       }
     });
   } else {
-    // Para conexão secundária, apenas gerenciar reconexão
     socket.ev.on('connection.update', async (update) => {
       const { connection, lastDisconnect } = update;
 
@@ -280,7 +272,6 @@ async function createBotSocket(authDir, isPrimary = true) {
           await fs.rm(AUTH_DIR_SECONDARY, { recursive: true, force: true });
         }
 
-        // Tentar reconectar após 5 segundos
         setTimeout(async () => {
           try {
             console.log('🔀 Tentando reconectar conexão secundária...');
@@ -298,13 +289,13 @@ async function createBotSocket(authDir, isPrimary = true) {
   }
 
   return socket;
-}
+};
+
 
 async function startNazu() {
   try {
     console.log(`🚀 Iniciando Nazuna ${dualMode ? '(Modo Dual)' : '(Modo Simples)'}...`);
 
-    // Sempre criar conexão primária
     const primarySocket = await createBotSocket(AUTH_DIR_PRIMARY, true);
 
     if (dualMode) {
@@ -312,7 +303,6 @@ async function startNazu() {
       try {
         secondarySocket = await createBotSocket(AUTH_DIR_SECONDARY, false);
 
-        // Aguardar ambas as conexões estarem prontas
         const waitForConnection = (socket) => {
           return new Promise((resolve) => {
             if (socket.user) {
@@ -340,7 +330,8 @@ async function startNazu() {
   } catch (err) {
     console.error('Erro ao iniciar o bot:', err);
     process.exit(1);
-  }
-}
+  };
+};
+
 
 startNazu();

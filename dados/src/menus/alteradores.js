@@ -1,72 +1,61 @@
-/**
- * Menu de downloads e pesquisas de mídia
- * @module menudown
- * @param {string} prefix - Prefixo dos comandos do bot
- * @param {string} [botName="MeuBot"] - Nome do bot
- * @param {string} [userName="Usuário"] - Nome do usuário
- * @returns {Promise<string>} Menu formatado com comandos de download
- */
 async function menuAlterador(prefix, botName = "MeuBot", userName = "Usuário") {
   return `
-╭═══ 🌸 *${botName}* 🌸 ═══╮
-│ Olá, *${userName}*!
-╰══════════════════════╯
+╭┈⊰ 🌸 『 *${botName}* 』
+┊Olá, *${userName}*!
+╰─┈┈┈┈┈◜❁◞┈┈┈┈┈─╯
 
-╭═══ 🎵 *ALTERADORES* 📼 ═══╮
-│
-│╭─▸ *Alteradores de video:*
-││
-││◕⁠➜ ${prefix}play
-││◕⁠➜ ${prefix}videorapido
-││◕⁠➜ ${prefix}fastvid
-││◕⁠➜ ${prefix}videoslow
-││◕⁠➜ ${prefix}videolento
-││◕⁠➜ ${prefix}videoreverso
-││◕⁠➜ ${prefix}videoloop
-││◕⁠➜ ${prefix}videomudo
-││◕⁠➜ ${prefix}videobw
-││◕⁠➜ ${prefix}pretoebranco
-││◕⁠➜ ${prefix}tomp3
-││◕⁠➜ ${prefix}sepia
-││◕⁠➜ ${prefix}espelhar
-││◕⁠➜ ${prefix}rotacionar
-│
-│╭─▸ *Alteradores de audio:*
-││
-││◕⁠➜ ${prefix}speedup
-││◕⁠➜ ${prefix}vozmenino
-││◕⁠➜ ${prefix}vozmulher
-││◕⁠➜ ${prefix}vozhomem
-││◕⁠➜ ${prefix}vozcrianca
-││◕⁠➜ ${prefix}vozeco
-││◕⁠➜ ${prefix}eco
-││◕⁠➜ ${prefix}vozlenta
-││◕⁠➜ ${prefix}audiolento
-││◕⁠➜ ${prefix}vozrapida
-││◕⁠➜ ${prefix}audiorapido
-││◕⁠➜ ${prefix}vozcaverna
-││◕⁠➜ ${prefix}bass
-││◕⁠➜ ${prefix}bass2
-││◕⁠➜ ${prefix}bass3
-││◕⁠➜ ${prefix}volumeboost
-││◕⁠➜ ${prefix}aumentarvolume
-││◕⁠➜ ${prefix}reverb
-││◕⁠➜ ${prefix}drive
-││◕⁠➜ ${prefix}equalizer
-││◕⁠➜ ${prefix}equalizar
-││◕⁠➜ ${prefix}reverse
-││◕⁠➜ ${prefix}audioreverso
-││◕⁠➜ ${prefix}pitch
-││◕⁠➜ ${prefix}flanger
-││◕⁠➜ ${prefix}grave
-││◕⁠➜ ${prefix}vozgrave
-││◕⁠➜ ${prefix}chorus
-││◕⁠➜ ${prefix}phaser
-││◕⁠➜ ${prefix}tremolo
-││◕⁠➜ ${prefix}vibrato
-││◕⁠➜ ${prefix}lowpass
-│
-╰══════════════════════╯
+╭┈❪🍧ฺꕸ▸ *ALTERAR VIDEO*
+┊
+┊•.̇𖥨֗🍓⭟${prefix}videorapido
+┊•.̇𖥨֗🍓⭟${prefix}fastvid
+┊•.̇𖥨֗🍓⭟${prefix}videoslow
+┊•.̇𖥨֗🍓⭟${prefix}videolento
+┊•.̇𖥨֗🍓⭟${prefix}videoreverso
+┊•.̇𖥨֗🍓⭟${prefix}videoloop
+┊•.̇𖥨֗🍓⭟${prefix}videomudo
+┊•.̇𖥨֗🍓⭟${prefix}videobw
+┊•.̇𖥨֗🍓⭟${prefix}pretoebranco
+┊•.̇𖥨֗🍓⭟${prefix}tomp3
+┊•.̇𖥨֗🍓⭟${prefix}sepia
+┊•.̇𖥨֗🍓⭟${prefix}espelhar
+┊•.̇𖥨֗🍓⭟${prefix}rotacionar
+╰─┈┈┈┈┈◜❁◞┈┈┈┈┈─╯
+
+╭┈❪🍧ฺꕸ▸ *ALTERAR AUDIO*
+┊
+┊•.̇𖥨֗🍓⭟${prefix}speedup
+┊•.̇𖥨֗🍓⭟${prefix}vozmenino
+┊•.̇𖥨֗🍓⭟${prefix}vozmulher
+┊•.̇𖥨֗🍓⭟${prefix}vozhomem
+┊•.̇𖥨֗🍓⭟${prefix}vozcrianca
+┊•.̇𖥨֗🍓⭟${prefix}vozeco
+┊•.̇𖥨֗🍓⭟${prefix}eco
+┊•.̇𖥨֗🍓⭟${prefix}vozlenta
+┊•.̇𖥨֗🍓⭟${prefix}audiolento
+┊•.̇𖥨֗🍓⭟${prefix}vozrapida
+┊•.̇𖥨֗🍓⭟${prefix}audiorapido
+┊•.̇𖥨֗🍓⭟${prefix}vozcaverna
+┊•.̇𖥨֗🍓⭟${prefix}bass
+┊•.̇𖥨֗🍓⭟${prefix}bass2
+┊•.̇𖥨֗🍓⭟${prefix}bass3
+┊•.̇𖥨֗🍓⭟${prefix}volumeboost
+┊•.̇𖥨֗🍓⭟${prefix}aumentarvolume
+┊•.̇𖥨֗🍓⭟${prefix}reverb
+┊•.̇𖥨֗🍓⭟${prefix}drive
+┊•.̇𖥨֗🍓⭟${prefix}equalizer
+┊•.̇𖥨֗🍓⭟${prefix}equalizar
+┊•.̇𖥨֗🍓⭟${prefix}reverse
+┊•.̇𖥨֗🍓⭟${prefix}audioreverso
+┊•.̇𖥨֗🍓⭟${prefix}pitch
+┊•.̇𖥨֗🍓⭟${prefix}flanger
+┊•.̇𖥨֗🍓⭟${prefix}grave
+┊•.̇𖥨֗🍓⭟${prefix}vozgrave
+┊•.̇𖥨֗🍓⭟${prefix}chorus
+┊•.̇𖥨֗🍓⭟${prefix}phaser
+┊•.̇𖥨֗🍓⭟${prefix}tremolo
+┊•.̇𖥨֗🍓⭟${prefix}vibrato
+┊•.̇𖥨֗🍓⭟${prefix}lowpass
+╰─┈┈┈┈┈◜❁◞┈┈┈┈┈─╯
 `;
 }
 
