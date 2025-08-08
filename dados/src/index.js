@@ -1109,6 +1109,25 @@ async function NazuninhaBotExec(nazu, info, store, groupCache, messagesCache) {
       await reply(`🗺️ Ops! @${sender.split('@')[0]}, parece que localizações não são permitidas aqui e você foi removido(a).`,  { mentions: [sender] });
     };
 
+if (
+  isGroup &&
+  groupData.antipag &&
+  !isGroupAdmin &&
+  (
+    !!info.message?.paymentMessage ||
+    info.message?.protocolMessage?.type === 4 ||
+    !!info.message?.extendedTextMessage?.contextInfo?.quotedMessage?.paymentMessage
+  )
+) {
+  await nazu.sendMessage(from, {
+    delete: { remoteJid: from, fromMe: false, id: info.key.id, participant: sender }
+  });
+  await nazu.groupParticipantsUpdate(from, [sender], 'remove');
+  await reply(
+    `🚫 Ops! @${sender.split('@')[0]}, mensagens de pagamento não são permitidas aqui e você foi removido(a).`,
+    { mentions: [sender] }
+  );
+};
 
     if (isGroup && antifloodData[from]?.enabled && isCmd && !isGroupAdmin) {
       antifloodData[from].users = antifloodData[from].users || {};
@@ -4299,6 +4318,7 @@ break;
         ["AntiLinkHard",   groupData.antilinkhard],
         ["AntiDoc",        groupData.antidoc],
         ["AntiLoc",        groupData.antiloc],
+        ["AntiPag",        groupData.antipag],
         ["AutoDL",         groupData.autodl],
         ["AutoSticker",    groupData.autoSticker],
         ["Modo Brincadeira", isModoBn],
@@ -5270,7 +5290,24 @@ case 'dellimitmessage':
     await reply("Ocorreu um erro 💔");
   }
   break;
-  
+
+case 'antipag':
+  try {
+    if (!isGroup) return reply("❌ Isso só pode ser usado em grupo!");
+    if (!isGroupAdmin) return reply("❌ Você precisa ser administrador!");
+    if (!isBotAdmin) return reply("❌ Eu preciso ser administrador para isso!");
+
+    const groupFilePath = __dirname + `/../database/grupos/${from}.json`;
+    groupData.antipag = !groupData.antipag;
+    fs.writeFileSync(groupFilePath, JSON.stringify(groupData, null, 2));
+
+    await reply(`✅ Anti-Pagamento ${groupData.antipag ? 'ativado' : 'desativado'}! Mensagens de pagamento resultarão em banimento.`);
+  } catch (e) {
+    console.error(e);
+    await reply("❌ Ocorreu um erro ao tentar alterar o Anti-Pagamento.");
+  }
+  break;
+
     case 'modobrincadeira': case 'modobrincadeiras': case 'modobn': case 'gamemode': try {
     if (!isGroup) return reply("isso so pode ser usado em grupo 💔");
     if (!isGroupAdmin) return reply("você precisa ser adm 💔");
