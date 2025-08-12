@@ -212,8 +212,30 @@ async function createBotSocket(authDir) {
             text: `🚨 Atenção! @${inf.participants[0].split('@')[0]} foi ${action} por @${by.split('@')[0]}.`,
             mentions: [inf.participants[0], by],
           });
-        }
+        };
 
+        if ((inf.action === 'promote' || inf.action === 'demote') && jsonGp.antiarqv) {
+          const author = inf.author || inf.id;
+          const participant = inf.participants[0];
+          const groupOwners = jsonGp.groupOwners || [];
+
+          if (author === NazunaSock.user.id || groupOwners.includes(author)) {
+            return;
+          };
+
+          try {
+            if (inf.action === 'promote') {
+              await NazunaSock.groupParticipantsUpdate(from, [participant], 'demote');
+            } else if (inf.action === 'demote') {
+              await NazunaSock.groupParticipantsUpdate(from, [participant], 'promote');
+            };
+            await NazunaSock.groupParticipantsUpdate(from, [author], 'demote');
+          } catch (e) {
+            console.error(`❌ Erro ao aplicar anti-arquivamento no grupo ${from}: ${e.message}`);
+          };
+          return;
+        };
+        
         if (inf.action === 'add' && jsonGp.antifake) {
           const participant = inf.participants[0];
           const countryCode = participant.split('@')[0].substring(0, 2);

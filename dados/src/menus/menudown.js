@@ -27,8 +27,6 @@ ${middleBorder}${menuItemIcon}${prefix}playvid
 ${middleBorder}${menuItemIcon}${prefix}shazam
 ${middleBorder}${menuItemIcon}${prefix}assistir
 ${middleBorder}${menuItemIcon}${prefix}mcplugin
-${middleBorder}${menuItemIcon}${prefix}apkmod
-${middleBorder}${menuItemIcon}${prefix}clima
 ${middleBorder}${menuItemIcon}${prefix}dicionario
 ${middleBorder}${menuItemIcon}${prefix}wikipedia
 ${bottomBorder}

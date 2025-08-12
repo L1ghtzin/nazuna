@@ -22,7 +22,6 @@
     "@cognima/walib": "npm:@neoxr/baileys@latest",
     "fluent-ffmpeg": "latest",
     "linkedom": "latest",
-    "node-cron": "latest",
     "node-webpmux": "latest",
     "qrcode-terminal": "latest",
     "yt-search": "latest"

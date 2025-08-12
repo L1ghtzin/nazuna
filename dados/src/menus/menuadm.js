@@ -16,9 +16,9 @@ async function menuadm(
     moderatorsMenuTitle = "MODERADORES",
     partnershipsMenuTitle = "PARCERIAS",
     activationsMenuTitle = "ATIVAÇÕES",
-    settingsMenuTitle = "CONFIGURAÇÕES"
-  } = {},
-  isLiteMode = false
+    settingsMenuTitle = "CONFIGURAÇÕES",
+    antiNukeTitle = "ANTI NUKE"
+  } = {}
 ) {
   const formattedHeader = header.replace(/#user#/g, userName);
 
@@ -82,6 +82,14 @@ ${middleBorder}
 ${middleBorder}${menuItemIcon}${prefix}parcerias
 ${middleBorder}${menuItemIcon}${prefix}addparceria
 ${middleBorder}${menuItemIcon}${prefix}delparceria
+${bottomBorder}
+
+${menuTopBorder}${separatorIcon} *${antiNukeTitle}*
+${middleBorder}
+${middleBorder}${menuItemIcon}${prefix}antinuke
+${middleBorder}${menuItemIcon}${prefix}donogp
+${middleBorder}${menuItemIcon}${prefix}rmdonogp
+${middleBorder}${menuItemIcon}${prefix}donosgp
 ${bottomBorder}
 
 ${menuTopBorder}${separatorIcon} *${activationsMenuTitle}*

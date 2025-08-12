@@ -568,7 +568,7 @@ async function NazuninhaBotExec(nazu, info, store, groupCache, messagesCache) {
   var prefix = prefixo;
   var numerodono = String(numerodono);
   
-  const { youtube, banner, tiktok, pinterest, igdl, sendSticker, FilmesDL, styleText, emojiMix, upload, mcPlugin, tictactoe, toolsJson, vabJson, apkMod, google, Lyrics, commandStats, ia, VerifyUpdate } = await require(__dirname+'/funcs/exports.js');
+  const { youtube, banner, tiktok, pinterest, igdl, sendSticker, FilmesDL, styleText, emojiMix, upload, mcPlugin, tictactoe, toolsJson, vabJson, google, Lyrics, commandStats, ia, VerifyUpdate } = await require(__dirname+'/funcs/exports.js');
   
   const antipvData = loadJsonFile(DATABASE_DIR + '/antipv.json');
   const premiumListaZinha = loadJsonFile(DONO_DIR + '/premium.json');
@@ -1698,17 +1698,33 @@ if (!isCmd) {
   
   //INTELIGENCIA ARTIFICIAL
   
-  case 'genrealism': try {
-    if(!q) return reply(`Falta o prompt.\nEx: ${prefix}${command} Black Cat`);
+  case 'genrealism':
+case 'genghibli':
+case 'gencyberpunk':
+case 'genanime':
+case 'genportrait':
+case 'genchibi':
+case 'genpixelart':
+case 'genoilpainting':
+case 'gen3d':
+  try {
+    let styleKey = command === 'genrealism' ? 'default' : command.slice(3);
+    if (!KeyCog) {
+      await nazu.sendMessage(nmrdn, {
+        text: `Olá! 🐝 Passei aqui para avisar que alguém tentou usar o comando "${prefix}${command}", mas parece que a sua API Key de IA ainda não foi configurada ou adquirida. 😊 Caso tenha interesse, entre em contato comigo pelo link abaixo! Os planos são super acessíveis (a partir de R$10/mês, sem limite de requisições). 🚀\nwa.me/553399285117`
+      });
+      return reply('O sistema de IA está temporariamente desativado. Meu dono já foi notificado! 😺');
+    }
+    if (!q) return reply(`Falta o prompt.\nEx: ${prefix}${command} Black Cat`);
     await reply('⏳ Só um segundinho, estou gerando a imagem... ✨');
-    ImageS = await ia.makeCognimaImageRequest({model:"deepimg",prompt:q,size:"3:2",style:"default",n:1}, KeyCog);
-    if(!ImageS || !ImageS[0]) return reply('😓 Poxa, algo deu errado aqui');
-    await nazu.sendMessage(from, {image: {url: ImageS[0].url}}, {quoted: info});
-  } catch(e) {
+    ImageS = await ia.makeCognimaImageRequest({ model: "deepimg", prompt: q, size: "3:2", style: styleKey, n: 1 }, KeyCog);
+    if (!ImageS || !ImageS[0]) return reply('😓 Poxa, algo deu errado aqui');
+    await nazu.sendMessage(from, { image: { url: ImageS[0].url } }, { quoted: info });
+  } catch (e) {
     console.error("Erro no DeepIMG", e);
     await reply('😓 Poxa, algo deu errado aqui');
-  };
-  break
+  }
+break;
   
   case 'gemma':
     if (!q) return reply(`🤔 Qual sua dúvida para o Gemma? Informe a pergunta após o comando! Exemplo: ${prefix}${command} quem descobriu o Brasil? 🌍`);
@@ -2431,9 +2447,9 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
     break;
 
   case 'listaralugueis':
-case 'aluguelist':
-case 'listaluguel':
-case 'listaaluguel':
+  case 'aluguelist':
+  case 'listaluguel':
+  case 'listaaluguel':
   try {
     if (!isOwner) return reply('🚫 Este comando é apenas para o dono do bot!');
 
@@ -6585,13 +6601,10 @@ break;
       if (groupData.moderators.length === 0) {
         return reply("🛡️ Não há moderadores definidos para este grupo.");
       }
-      let modsMessage = `🛡️ *Moderadores do Grupo ${groupName}* 🛡️
-
-`;
+      let modsMessage = `🛡️ *Moderadores do Grupo ${groupName}* 🛡️\n\n`;
       const mentionedUsers = [];
       groupData.moderators.forEach((modJid) => {
-        modsMessage += `➥ @${modJid.split('@')[0]}
-`;
+        modsMessage += `➥ @${modJid.split('@')[0]}\n`;
         mentionedUsers.push(modJid);
       });
       await reply(modsMessage, { mentions: mentionedUsers });
@@ -6654,191 +6667,81 @@ break;
       await reply("Ocorreu um erro ao listar comandos de moderadores 💔");
   }
   break;
+  
+  case 'antiarqv': case 'antinuke':
+  try {
+    if (!isGroup) return reply("Este comando só funciona em grupos.");
+    if (!isGroupAdmin) return reply("Apenas administradores podem ativar/desativar o anti-arquivamento.");
+    groupData.antiarqv = !groupData.antiarqv;
+    fs.writeFileSync(groupFile, JSON.stringify(groupData, null, 2));
+    await reply(`🛡️ Anti-arquivamento ${groupData.antiarqv ? 'ativado' : 'desativado'} com sucesso! Agora, apenas donos do grupo podem promover/rebaixar membros.`);
+  } catch (e) {
+    console.error('Erro no comando antiarqv:', e);
+    await reply("Ocorreu um erro ao alternar o anti-arquivamento 💔");
+  }
+  break;
 
-  case 'clima':
-    try {
-      if (!q) return reply('Digite o nome da cidade para pesquisar o clima.');
-      const geocodingResponse = await axios.get(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q)}&count=1`);
-      if (!geocodingResponse.data.results || geocodingResponse.data.results.length === 0) {
-        return reply(`Cidade "${q}" não encontrada.`);
-      }
-      const { latitude, longitude, name } = geocodingResponse.data.results[0];
-      const weatherResponse = await axios.get(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=weathercode,temperature_2m,relativehumidity_2m,windspeed_10m,winddirection_10m`);
-      const { temperature_2m: temperature, relativehumidity_2m: relativehumidity, windspeed_10m: windspeed, winddirection_10m: winddirection, weathercode } = weatherResponse.data.current;
-
-      let weatherDescription;
-      switch (weathercode) {
-        case 0:
-          weatherDescription = "Céu limpo";
-          break;
-        case 1:
-          weatherDescription = "Predominantemente limpo";
-          break;
-        case 2:
-          weatherDescription = "Parcialmente nublado";
-          break;
-        case 3:
-          weatherDescription = "Nublado";
-          break;
-        case 45:
-          weatherDescription = "Nevoeiro";
-          break;
-        case 48:
-          weatherDescription = "Nevoeiro com geada";
-          break;
-        case 51:
-          weatherDescription = "Chuvisco leve";
-          break;
-        case 53:
-          weatherDescription = "Chuvisco moderado";
-          break;
-        case 55:
-          weatherDescription = "Chuvisco intenso";
-          break;
-        case 56:
-          weatherDescription = "Chuvisco leve com geada";
-          break;
-        case 57:
-          weatherDescription = "Chuvisco intenso com geada";
-          break;
-        case 61:
-          weatherDescription = "Chuva leve";
-          break;
-        case 63:
-          weatherDescription = "Chuva moderada";
-          break;
-        case 65:
-          weatherDescription = "Chuva intensa";
-          break;
-        case 66:
-          weatherDescription = "Chuva leve com geada";
-          break;
-        case 67:
-          weatherDescription = "Chuva intensa com geada";
-          break;
-        case 71:
-          weatherDescription = "Neve leve";
-          break;
-        case 73:
-          weatherDescription = "Neve moderada";
-          break;
-        case 75:
-          weatherDescription = "Neve intensa";
-          break;
-        case 77:
-          weatherDescription = "Grãos de neve";
-          break;
-        case 80:
-          weatherDescription = "Pancadas de chuva leve";
-          break;
-        case 81:
-          weatherDescription = "Pancadas de chuva moderada";
-          break;
-        case 82:
-          weatherDescription = "Pancadas de chuva intensa";
-          break;
-        case 85:
-          weatherDescription = "Pancadas de neve leve";
-          break;
-        case 86:
-          weatherDescription = "Pancadas de neve intensa";
-          break;
-        case 95:
-          weatherDescription = "Tempestade";
-          break;
-        case 96:
-          weatherDescription = "Tempestade com granizo leve";
-          break;
-        case 99:
-          weatherDescription = "Tempestade com granizo intenso";
-          break;
-        default:
-          weatherDescription = "Condição desconhecida";
-      }
-      
-      let weatherEmoji;
-      switch (weathercode) {
-        case 0:
-          weatherEmoji = "☀️";
-          break;
-        case 1:
-        case 2:
-          weatherEmoji = "🌤️";
-          break;
-        case 3:
-          weatherEmoji = "☁️";
-          break;
-        case 45:
-        case 48:
-          weatherEmoji = "🌫️";
-          break;
-        case 51:
-        case 53:
-        case 55:
-        case 56:
-        case 57:
-          weatherEmoji = "🌧️";
-          break;
-        case 61:
-        case 63:
-        case 65:
-        case 66:
-        case 67:
-          weatherEmoji = "🌧️";
-          break;
-        case 71:
-        case 73:
-        case 75:
-        case 77:
-        case 85:
-        case 86:
-          weatherEmoji = "❄️";
-          break;
-        case 80:
-        case 81:
-        case 82:
-          weatherEmoji = "🌧️";
-          break;
-        case 95:
-        case 96:
-        case 99:
-          weatherEmoji = "⛈️";
-          break;
-        default:
-          weatherEmoji = "🌈";
-      }
-
-      let windDirectionEmoji;
-      if (winddirection >= 337.5 || winddirection < 22.5) {
-        windDirectionEmoji = "⬆️";
-      } else if (winddirection >= 22.5 && winddirection < 67.5) {
-        windDirectionEmoji = "↗️";
-      } else if (winddirection >= 67.5 && winddirection < 112.5) {
-        windDirectionEmoji = "➡️";
-      } else if (winddirection >= 112.5 && winddirection < 157.5) {
-        windDirectionEmoji = "↘️";
-      } else if (winddirection >= 157.5 && winddirection < 202.5) {
-        windDirectionEmoji = "⬇️";
-      } else if (winddirection >= 202.5 && winddirection < 247.5) {
-        windDirectionEmoji = "↙️";
-      } else if (winddirection >= 247.5 && winddirection < 292.5) {
-        windDirectionEmoji = "⬅️";
-      } else {
-        windDirectionEmoji = "↖️";
-      }
-
-      const weatherInfo = `🌦️ *Clima em ${name}*
-
-🌡️ *Temperatura:* ${temperature}°C
-💧 *Umidade:* ${relativehumidity}%
-💨 *Vento:* ${windspeed} km/h ${windDirectionEmoji}
-${weatherEmoji} *${weatherDescription}*`;
-      await reply(weatherInfo);
-    } catch (e) {
-      console.error(e);
-      await reply("Ocorreu um erro ao pesquisar o clima 💔");
+  case 'donogp':
+  try {
+    if (!isGroup) return reply("Este comando só funciona em grupos.");
+    if (!isGroupAdmin) return reply("Apenas administradores podem adicionar donos do grupo.");
+    if (!menc_os2) return reply(`Marque o usuário que deseja adicionar como dono do grupo. Ex: ${prefix}donogp @usuario`);
+    const ownerToAdd = menc_os2;
+    groupData.groupOwners = groupData.groupOwners || [];
+    if (groupData.groupOwners.includes(ownerToAdd)) {
+      return reply(`@${ownerToAdd.split('@')[0]} já é um dono do grupo.`, { mentions: [ownerToAdd] });
     }
-    break;
+    if (!groupAdmins.includes(ownerToAdd)) {
+      return reply(`@${ownerToAdd.split('@')[0]} precisa ser administrador para ser adicionado como dono do grupo.`, { mentions: [ownerToAdd] });
+    }
+    groupData.groupOwners.push(ownerToAdd);
+    fs.writeFileSync(groupFile, JSON.stringify(groupData, null, 2));
+    await reply(`✅ @${ownerToAdd.split('@')[0]} foi adicionado como dono do grupo! Agora pode promover/rebaixar livremente com anti-arquivamento ativo.`, { mentions: [ownerToAdd] });
+  } catch (e) {
+    console.error('Erro no comando donogp:', e);
+    await reply("Ocorreu um erro ao adicionar dono do grupo 💔");
+  }
+  break;
+
+  case 'rmdonogp': case 'deldonogp':
+  try {
+    if (!isGroup) return reply("Este comando só funciona em grupos.");
+    if (!isGroupAdmin) return reply("Apenas administradores podem remover donos do grupo.");
+    if (!menc_os2) return reply(`Marque o usuário que deseja remover como dono do grupo. Ex: ${prefix}rmdonogp @usuario`);
+    const ownerToRemove = menc_os2;
+    groupData.groupOwners = groupData.groupOwners || [];
+    const ownerIndex = groupData.groupOwners.indexOf(ownerToRemove);
+    if (ownerIndex === -1) {
+      return reply(`@${ownerToRemove.split('@')[0]} não é um dono do grupo.`, { mentions: [ownerToRemove] });
+    }
+    groupData.groupOwners.splice(ownerIndex, 1);
+    fs.writeFileSync(groupFile, JSON.stringify(groupData, null, 2));
+    await reply(`✅ @${ownerToRemove.split('@')[0]} foi removido como dono do grupo.`, { mentions: [ownerToRemove] });
+  } catch (e) {
+    console.error('Erro no comando rmdonogp:', e);
+    await reply("Ocorreu um erro ao remover dono do grupo 💔");
+  }
+  break;
+
+  case 'donosgp': case 'listdonosgp':
+  try {
+    if (!isGroup) return reply("Este comando só funciona em grupos.");
+    groupData.groupOwners = groupData.groupOwners || [];
+    if (groupData.groupOwners.length === 0) {
+      return reply("🛡️ Não há donos do grupo definidos.");
+    }
+    let ownersMessage = `🛡️ *Donos do Grupo ${groupName}* 🛡️\n\n`;
+    const mentionedOwners = [];
+    groupData.groupOwners.forEach((ownerJid) => {
+      ownersMessage += `➥ @${ownerJid.split('@')[0]}\n`;
+      mentionedOwners.push(ownerJid);
+    });
+    await reply(ownersMessage, { mentions: mentionedOwners });
+  } catch (e) {
+    console.error('Erro no comando donsgp:', e);
+    await reply("Ocorreu um erro ao listar donos do grupo 💔");
+  }
+  break;
     
  default:
   if (isCmd) await nazu.react('❌', {key: info.key});

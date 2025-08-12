@@ -50,6 +50,14 @@ ${bottomBorder}
 ${menuTopBorder}${separatorIcon} *${imageMenuTitle}*
 ${middleBorder}
 ${middleBorder}${menuItemIcon}${prefix}genrealism
+${middleBorder}${menuItemIcon}${prefix}genghibli
+${middleBorder}${menuItemIcon}${prefix}gencyberpunk
+${middleBorder}${menuItemIcon}${prefix}genanime
+${middleBorder}${menuItemIcon}${prefix}genportrait
+${middleBorder}${menuItemIcon}${prefix}genchibi
+${middleBorder}${menuItemIcon}${prefix}genpixelart
+${middleBorder}${menuItemIcon}${prefix}genoilpainting
+${middleBorder}${menuItemIcon}${prefix}gen3d
 ${bottomBorder}
 
 ${menuTopBorder}${separatorIcon} *${toolsMenuTitle}*
