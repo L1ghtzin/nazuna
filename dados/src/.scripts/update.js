@@ -238,36 +238,29 @@ async function cleanOldFiles() {
   printMessage('🧹 Limpando arquivos antigos...');
 
   try {
-    const gitDir = path.join(process.cwd(), '.git');
-    if (fsSync.existsSync(gitDir)) {
-      printDetail('📂 Removendo diretório .git...');
-      if (isWindows) {
-        execSync(`rmdir /s /q "${gitDir}"`, { stdio: 'ignore' });
-      } else {
-        await fs.rm(gitDir, { recursive: true, force: true });
-      }
-    }
-    
-    const gitDir2 = path.join(process.cwd(), '.github');
-    if (fsSync.existsSync(gitDir2)) {
-      printDetail('📂 Removendo diretório .github...');
-      if (isWindows) {
-        execSync(`rmdir /s /q "${gitDir2}"`, { stdio: 'ignore' });
-      } else {
-        await fs.rm(gitDir2, { recursive: true, force: true });
-      }
-    }
+    const itemsToDelete = [
+      { path: path.join(process.cwd(), '.git'), type: 'dir', name: '.git' },
+      { path: path.join(process.cwd(), '.github'), type: 'dir', name: '.github' },
+      { path: path.join(process.cwd(), '.npm'), type: 'dir', name: '.npm' },
+      { path: path.join(process.cwd(), 'node_modules'), type: 'dir', name: 'node_modules' },
+      { path: path.join(process.cwd(), 'package.json'), type: 'file', name: 'package.json' },
+      { path: path.join(process.cwd(), 'package-lock.json'), type: 'file', name: 'package-lock.json' },
+      { path: path.join(process.cwd(), 'README.md'), type: 'file', name: 'README.md' },
+    ];
 
-    const packageJson = path.join(process.cwd(), 'package.json');
-    if (fsSync.existsSync(packageJson)) {
-      printDetail('📝 Removendo package.json...');
-      await fs.unlink(packageJson);
-    }
-
-    const packageLockJson = path.join(process.cwd(), 'package-lock.json');
-    if (fsSync.existsSync(packageLockJson)) {
-      printDetail('📝 Removendo package-lock.json...');
-      await fs.unlink(packageLockJson);
+    for (const item of itemsToDelete) {
+      if (fsSync.existsSync(item.path)) {
+        printDetail(`📂 Removendo ${item.name}...`);
+        if (item.type === 'dir') {
+          if (isWindows) {
+            execSync(`rmdir /s /q "${item.path}"`, { stdio: 'ignore' });
+          } else {
+            await fs.rm(item.path, { recursive: true, force: true });
+          }
+        } else {
+          await fs.unlink(item.path);
+        }
+      }
     }
 
     const dadosDir = path.join(process.cwd(), 'dados');

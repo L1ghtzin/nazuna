@@ -85,9 +85,118 @@ function setupGracefulShutdown() {
   process.on('SIGTERM', shutdown);
 }
 
+async function isTermux() {
+  try {
+    return !!process.env.TERMUX_VERSION || (await execAsync('command -v pkg')).stdout.includes('termux');
+  } catch {
+    return false;
+  }
+}
+
+async function installFFmpeg() {
+  printSeparator();
+  printMessage('📦 Instalando FFmpeg e ffprobe...');
+
+  try {
+    const platform = os.platform();
+    let command;
+
+    if (await isTermux()) {
+      try {
+        await execAsync('command -v pkg');
+        command = 'pkg install ffmpeg -y';
+      } catch {
+        printWarning('⚠️ Termux detectado, mas pkg não encontrado.');
+        printInfo('📝 Instale o FFmpeg e ffprobe manualmente no Termux: pkg install ffmpeg');
+        return;
+      }
+    } else if (platform === 'linux') {
+      try {
+        await execAsync('command -v apt-get');
+        command = 'sudo apt-get update && sudo apt-get install -y ffmpeg';
+      } catch {
+        try {
+          await execAsync('command -v yum');
+          command = 'sudo yum install -y ffmpeg';
+        } catch {
+          try {
+            await execAsync('command -v dnf');
+            command = 'sudo dnf install -y ffmpeg';
+          } catch {
+            printWarning('⚠️ Nenhum gerenciador de pacotes compatível (apt/yum/dnf) encontrado.');
+            printInfo('📝 Instale o FFmpeg e ffprobe manualmente: https://ffmpeg.org/download.html');
+            return;
+          }
+        }
+      }
+    } else if (platform === 'darwin') {
+      try {
+        await execAsync('command -v brew');
+        command = 'brew install ffmpeg';
+      } catch {
+        printWarning('⚠️ Homebrew não encontrado. Instale o Homebrew primeiro: https://brew.sh');
+        printInfo('📝 Após instalar o Homebrew, execute: brew install ffmpeg');
+        return;
+      }
+    } else if (platform === 'win32') {
+      try {
+        await execAsync('winget --version');
+        command = 'winget install --id Gyan.FFmpeg -e';
+      } catch {
+        printWarning('⚠️ winget não encontrado ou FFmpeg/ffprobe não instalado.');
+        printInfo('📝 Baixe e instale o FFmpeg (inclui ffprobe) manualmente: https://ffmpeg.org/download.html');
+        printDetail('📌 Adicione o FFmpeg ao PATH do sistema após a instalação.');
+        return;
+      }
+    } else {
+      printWarning('⚠️ Sistema operacional não suportado para instalação automática do FFmpeg/ffprobe.');
+      printInfo('📝 Instale o FFmpeg e ffprobe manualmente: https://ffmpeg.org/download.html');
+      return;
+    }
+
+    await new Promise((resolve, reject) => {
+      const ffmpegProcess = exec(command, { shell: isWindows }, (error) =>
+        error ? reject(error) : resolve()
+      );
+
+      const spinner = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
+      let i = 0;
+      const interval = setInterval(() => {
+        process.stdout.write(`\r${spinner[i]} Instalando FFmpeg e ffprobe...`);
+        i = (i + 1) % spinner.length;
+      }, 100);
+
+      ffmpegProcess.on('close', () => {
+        clearInterval(interval);
+        process.stdout.write('\r                                \r');
+      });
+    });
+
+    try {
+      await execAsync('ffmpeg -version');
+      printMessage('✅ FFmpeg instalado com sucesso.');
+    } catch {
+      printWarning('⚠️ FFmpeg instalado, mas não encontrado no PATH.');
+      printInfo('📝 Certifique-se de que o FFmpeg está no PATH do sistema ou no ambiente Termux.');
+    }
+
+    try {
+      await execAsync('ffprobe -version');
+      printMessage('✅ ffprobe instalado com sucesso.');
+    } catch {
+      printWarning('⚠️ ffprobe instalado, mas não encontrado no PATH.');
+      printInfo('📝 Certifique-se de que o ffprobe está no PATH do sistema ou no ambiente Termux.');
+      printDetail('📌 ffprobe geralmente vem com o FFmpeg. Verifique a instalação do FFmpeg.');
+    }
+  } catch (error) {
+    printWarning(`❌ Erro ao instalar FFmpeg/ffprobe: ${error.message}`);
+    printInfo('📝 Instale o FFmpeg e ffprobe manualmente: https://ffmpeg.org/download.html');
+  }
+}
+
 async function installDependencies() {
   printSeparator();
-  printMessage('📦 Instalando dependências...');
+  printMessage('📦 Instalando dependências do Node.js...');
 
   try {
     await new Promise((resolve, reject) => {
@@ -108,12 +217,41 @@ async function installDependencies() {
       });
     });
 
-    printMessage('✅ Dependências instaladas com sucesso.');
+    printMessage('✅ Dependências do Node.js instaladas com sucesso.');
   } catch (error) {
-    printWarning(`❌ Erro ao instalar dependências: ${error.message}`);
+    printWarning(`❌ Erro ao instalar dependências do Node.js: ${error.message}`);
     printInfo('📝 Tente executar manualmente: npm run config:install');
     process.exit(1);
   }
+
+  await installFFmpeg();
+}
+
+async function checkSystemRequirements() {
+  printSeparator();
+  printMessage('🔍 Verificando requisitos do sistema...');
+
+  try {
+    const nodeVersion = await execAsync('node --version');
+    printDetail(`✅ Node.js encontrado: ${nodeVersion.stdout.trim()}`);
+  } catch {
+    printWarning('⚠️ Node.js não encontrado. Instale o Node.js: https://nodejs.org ou no Termux: pkg install nodejs');
+    process.exit(1);
+  }
+
+  try {
+    const npmVersion = await execAsync('npm --version');
+    printDetail(`✅ npm encontrado: ${npmVersion.stdout.trim()}`);
+  } catch {
+    printWarning('⚠️ npm não encontrado. Instale o Node.js com npm: https://nodejs.org ou no Termux: pkg install nodejs');
+    process.exit(1);
+  }
+
+  if (await isTermux()) {
+    printDetail('✅ Ambiente Termux detectado.');
+  }
+
+  printMessage('✅ Todos os requisitos do sistema verificados.');
 }
 
 async function displayHeader() {
@@ -138,11 +276,13 @@ async function main() {
     setupGracefulShutdown();
 
     if (process.argv.includes('--install')) {
+      await checkSystemRequirements();
       await installDependencies();
       process.exit(0);
     }
 
     await displayHeader();
+    await checkSystemRequirements();
 
     const defaultConfig = {
       nomedono: '',
@@ -201,13 +341,13 @@ async function main() {
       printMessage('✅ Configuração salva com sucesso em config.json!');
       printSeparator();
 
-      const installNow = await confirm(rl, '📦 Deseja instalar as dependências agora?', 's');
+      const installNow = await confirm(rl, '📦 Deseja instalar as dependências, FFmpeg e ffprobe agora?', 's');
 
       if (installNow) {
         rl.close();
         await installDependencies();
       } else {
-        printMessage('📝 Você pode instalar as dependências depois com: npm run config:install');
+        printMessage('📝 Você pode instalar as dependências, FFmpeg e ffprobe depois com: npm run config:install');
       }
 
       printSeparator();
@@ -227,7 +367,8 @@ async function main() {
 async function promptInput(rl, prompt, defaultValue, field = null) {
   return new Promise((resolve) => {
     const displayPrompt = `${prompt} ${colors.dim}(atual: ${defaultValue})${colors.reset}: `;
-    rl.question(displayPrompt, async (input) => {
+    console.log(displayPrompt);
+    rl.question("-->", async (input) => {
       const value = input.trim() || defaultValue;
 
       if (field && !validateInput(value, field)) {
@@ -242,7 +383,8 @@ async function promptInput(rl, prompt, defaultValue, field = null) {
 async function confirm(rl, prompt, defaultValue = 'n') {
   return new Promise((resolve) => {
     const defaultText = defaultValue.toLowerCase() === 's' ? 'S/n' : 's/N';
-    rl.question(`${prompt} (${defaultText}): `, (input) => {
+    console.log(`${prompt} (${defaultText}): `);
+    rl.question("-->", (input) => {
       const response = (input.trim() || defaultValue).toLowerCase();
       resolve(response === 's' || response === 'sim' || response === 'y' || response === 'yes');
     });

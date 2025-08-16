@@ -5,7 +5,6 @@
   "main": "dados/src/connect.js",
   "scripts": {
     "start": "node dados/src/.scripts/start.js",
-    "start:dual": "node dados/src/.scripts/start.js dual",
     "config": "node dados/src/.scripts/config.js",
     "config:install": "node dados/src/.scripts/config.js --install",
     "update": "node dados/src/.scripts/update.js"

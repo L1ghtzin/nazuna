@@ -3,7 +3,7 @@
 const fs = require('fs').promises;
 const fsSync = require('fs');
 const path = require('path');
-const { spawn } = require('child_process');
+const { spawn, execSync } = require('child_process');
 const readline = require('readline');
 const os = require('os');
 
@@ -11,16 +11,8 @@ const CONFIG_PATH = path.join(process.cwd(), 'dados', 'src', 'config.json');
 const NODE_MODULES_PATH = path.join(process.cwd(), 'node_modules');
 const QR_CODE_DIR = path.join(process.cwd(), 'dados', 'database', 'qr-code');
 const CONNECT_FILE = path.join(process.cwd(), 'dados', 'src', 'connect.js');
-const RESTART_DELAY = 50;
 const isWindows = os.platform() === 'win32';
-const dualMode = process.argv.includes('dual');
-
-let version = 'Desconhecida';
-try {
-  const packageJson = JSON.parse(fsSync.readFileSync(path.join(process.cwd(), 'package.json'), 'utf8'));
-  version = packageJson.version;
-} catch (error) {
-}
+const isTermux = fsSync.existsSync('/data/data/com.termux');
 
 const colors = {
   reset: '\x1b[0m',
@@ -29,42 +21,78 @@ const colors = {
   blue: '\x1b[1;34m',
   yellow: '\x1b[1;33m',
   cyan: '\x1b[1;36m',
-  magenta: '\x1b[1;35m',
-  dim: '\x1b[2m',
   bold: '\x1b[1m',
 };
 
-function mensagem(text) {
-  console.log(`${colors.green}${text}${colors.reset}`);
-}
+const mensagem = (text) => console.log(`${colors.green}${text}${colors.reset}`);
+const aviso = (text) => console.log(`${colors.red}${text}${colors.reset}`);
+const info = (text) => console.log(`${colors.cyan}${text}${colors.reset}`);
+const separador = () => console.log(`${colors.blue}============================================${colors.reset}`);
 
-function aviso(text) {
-  console.log(`${colors.red}${text}${colors.reset}`);
-}
-
-function info(text) {
-  console.log(`${colors.cyan}${text}${colors.reset}`);
-}
-
-function detalhe(text) {
-  console.log(`${colors.dim}${text}${colors.reset}`);
-}
-
-function separador() {
-  console.log(`${colors.blue}============================================${colors.reset}`);
-}
+const getVersion = () => {
+  try {
+    const packageJson = JSON.parse(fsSync.readFileSync(path.join(process.cwd(), 'package.json'), 'utf8'));
+    return packageJson.version || 'Desconhecida';
+  } catch {
+    return 'Desconhecida';
+  }
+};
 
 let botProcess = null;
-let restartCount = 0;
-const MAX_RESTART_COUNT = 10;
-const RESTART_COUNT_RESET_INTERVAL = 60000;
+const version = getVersion();
+
+async function setupTermuxAutostart() {
+  if (!isTermux) {
+    info('📱 Não está rodando no Termux. Ignorando configuração de autostart.');
+    return;
+  }
+
+  info('📱 Detectado ambiente Termux. Configurando inicialização automática...');
+
+  try {
+    const termuxProperties = path.join(process.env.HOME, '.termux', 'termux.properties');
+    await fs.mkdir(path.dirname(termuxProperties), { recursive: true });
+    if (!fsSync.existsSync(termuxProperties)) {
+      await fs.writeFile(termuxProperties, '');
+    }
+    await execSync(`sed '/^# *allow-external-apps *= *true/s/^# *//' ${termuxProperties} -i && termux-reload-settings`, { stdio: 'inherit' });
+    mensagem('📝 Configuração de termux.properties concluída.');
+
+    const bashrcPath = path.join(process.env.HOME, '.bashrc');
+    const termuxServiceCommand = `
+am startservice --user 0 \\
+  -n com.termux/com.termux.app.RunCommandService \\
+  -a com.termux.RUN_COMMAND \\
+  --es com.termux.RUN_COMMAND_PATH '/data/data/com.termux/files/usr/bin/npm' \\
+  --esa com.termux.RUN_COMMAND_ARGUMENTS 'start' \\
+  --es com.termux.RUN_COMMAND_SESSION_NAME 'Nazuna Bot' \\
+  --es com.termux.RUN_COMMAND_WORKDIR '${path.join(__dirname, '..', '..', '..')}' \\
+  --ez com.termux.RUN_COMMAND_BACKGROUND 'false' \\
+  --es com.termux.RUN_COMMAND_SESSION_ACTION '0'
+`;
+    let bashrcContent = '';
+    if (fsSync.existsSync(bashrcPath)) {
+      bashrcContent = await fs.readFile(bashrcPath, 'utf8');
+    }
+
+    if (!bashrcContent.includes(termuxServiceCommand.trim())) {
+      await fs.appendFile(bashrcPath, `\n${termuxServiceCommand}\n`);
+      mensagem('📝 Comando am startservice adicionado ao ~/.bashrc');
+    } else {
+      info('📝 Comando am startservice já presente no ~/.bashrc');
+    }
+
+    mensagem('📱 Configuração de inicialização automática no Termux concluída!');
+  } catch (error) {
+    aviso(`❌ Erro ao configurar autostart no Termux: ${error.message}`);
+  }
+}
 
 function setupGracefulShutdown() {
   const shutdown = () => {
-    console.log('\n');
     mensagem('🛑 Encerrando o Nazuna... Até logo!');
     if (botProcess) {
-      botProcess.removeAllListeners('close');
+      botProcess.removeAllListeners();
       botProcess.kill();
     }
     process.exit(0);
@@ -74,11 +102,10 @@ function setupGracefulShutdown() {
   process.on('SIGTERM', shutdown);
 
   if (isWindows) {
-    const rl = readline.createInterface({
+    readline.createInterface({
       input: process.stdin,
       output: process.stdout,
-    });
-    rl.on('SIGINT', shutdown);
+    }).on('SIGINT', shutdown);
   }
 }
 
@@ -90,10 +117,8 @@ async function displayHeader() {
 
   separador();
   for (const line of header) {
-    await new Promise((resolve) => {
-      process.stdout.write(line + '\n');
-      setTimeout(resolve, 100);
-    });
+    console.log(line);
+    await new Promise((resolve) => setTimeout(resolve, 100));
   }
   separador();
   console.log();
@@ -101,13 +126,27 @@ async function displayHeader() {
 
 async function checkPrerequisites() {
   if (!fsSync.existsSync(CONFIG_PATH)) {
-    aviso('⚠️ Arquivo de configuração (config.json) não encontrado!');
-    mensagem('📝 Execute o comando: npm run config');
-    process.exit(1);
+    aviso('⚠️ Arquivo de configuração (config.json) não encontrado! Iniciando configuração automática...');
+    try {
+      await new Promise((resolve, reject) => {
+        const configProcess = spawn('npm', ['run', 'config'], {
+          stdio: 'inherit',
+          shell: isWindows,
+        });
+
+        configProcess.on('close', (code) => (code === 0 ? resolve() : reject(new Error(`Configuração falhou com código ${code}`))));
+        configProcess.on('error', reject);
+      });
+      mensagem('📝 Configuração concluída com sucesso!');
+    } catch (error) {
+      aviso(`❌ Falha na configuração: ${error.message}`);
+      mensagem('📝 Tente executar manualmente: npm run config');
+      process.exit(1);
+    }
   }
 
   if (!fsSync.existsSync(NODE_MODULES_PATH)) {
-    aviso('⚠️ Módulos do Node.js não encontrados! Iniciando instalação automática com npm run config:install...');
+    aviso('⚠️ Módulos do Node.js não encontrados! Iniciando instalação automática...');
     try {
       await new Promise((resolve, reject) => {
         const installProcess = spawn('npm', ['run', 'config:install'], {
@@ -115,19 +154,10 @@ async function checkPrerequisites() {
           shell: isWindows,
         });
 
-        installProcess.on('close', (code) => {
-          if (code === 0) {
-            mensagem('📦 Instalação dos módulos concluída com sucesso!');
-            resolve();
-          } else {
-            reject(new Error(`Instalação falhou com código ${code}`));
-          }
-        });
-
-        installProcess.on('error', (error) => {
-          reject(new Error(`Erro ao executar npm run config:install: ${error.message}`));
-        });
+        installProcess.on('close', (code) => (code === 0 ? resolve() : reject(new Error(`Instalação falhou com código ${code}`))));
+        installProcess.on('error', reject);
       });
+      mensagem('📦 Instalação dos módulos concluída com sucesso!');
     } catch (error) {
       aviso(`❌ Falha na instalação dos módulos: ${error.message}`);
       mensagem('📦 Tente executar manualmente: npm run config:install');
@@ -145,10 +175,9 @@ async function checkPrerequisites() {
 function startBot(codeMode = false) {
   const args = ['--expose-gc', CONNECT_FILE];
   if (codeMode) args.push('--code');
-  if (dualMode) args.push('--dual');
 
-  info(codeMode ? `🔑 Iniciando com código de pareamento (modo dual: ${dualMode ? 'Ativado' : 'Desativado'})` : `📷 Iniciando com QR Code (modo dual: ${dualMode ? 'Ativado' : 'Desativado'})`);
-
+  info(`📷 Iniciando com ${codeMode ? 'código de pareamento' : 'QR Code'}`);
+  
   botProcess = spawn('node', args, {
     stdio: 'inherit',
     env: { ...process.env, FORCE_COLOR: '1' },
@@ -170,24 +199,11 @@ function startBot(codeMode = false) {
 }
 
 function restartBot(codeMode) {
-  restartCount++;
-  let delay = RESTART_DELAY;
-
-  if (restartCount > MAX_RESTART_COUNT) {
-    const exponentialDelay = Math.min(30000, RESTART_DELAY * Math.pow(1.5, restartCount - MAX_RESTART_COUNT));
-    delay = exponentialDelay;
-    aviso(`⚠️ Muitas tentativas de reinício (${restartCount}). Aguardando ${Math.round(delay / 1000)} segundos.`);
-  } else {
-    aviso(`🔄 Reiniciando o bot em ${delay / 1000} segundos...`);
-  }
-
+  aviso('🔄 Reiniciando o bot em 0.5 segundos...');
   setTimeout(() => {
-    if (botProcess) {
-      botProcess.removeAllListeners('close');
-      botProcess.removeAllListeners('error');
-    }
+    if (botProcess) botProcess.removeAllListeners();
     startBot(codeMode);
-  }, delay);
+  }, 500);
 }
 
 async function checkAutoConnect() {
@@ -196,7 +212,6 @@ async function checkAutoConnect() {
       await fs.mkdir(QR_CODE_DIR, { recursive: true });
       return false;
     }
-
     const files = await fs.readdir(QR_CODE_DIR);
     return files.length > 2;
   } catch (error) {
@@ -247,6 +262,8 @@ async function main() {
     setupGracefulShutdown();
     await displayHeader();
     await checkPrerequisites();
+    await setupTermuxAutostart();
+    
     const hasSession = await checkAutoConnect();
     if (hasSession) {
       mensagem('📷 Sessão de QR Code detectada. Conectando automaticamente...');
