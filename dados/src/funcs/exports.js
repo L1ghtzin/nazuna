@@ -1,15 +1,13 @@
 const fs = require('fs').promises;
 const path = require('path');
 
-
 function loadModule(modulePath, moduleName) {
   try {
     return require(modulePath);
   } catch (error) {
     return undefined;
-  };
-};
-
+  }
+}
 
 async function loadJson(filePath, fileName) {
   try {
@@ -17,9 +15,8 @@ async function loadJson(filePath, fileName) {
     return JSON.parse(data);
   } catch (error) {
     return undefined;
-  };
-};
-
+  }
+}
 
 async function loadRemoteModuleWithRetry(url, moduleName, maxRetries = 5, retryInterval = 500) {
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
@@ -31,19 +28,17 @@ async function loadRemoteModuleWithRetry(url, moduleName, maxRetries = 5, retryI
         await new Promise(resolve => setTimeout(resolve, retryInterval));
       } else {
         return {};
-      };
-    };
-  };
-};
-
+      }
+    }
+  }
+}
 
 const utilsDir = path.join(__dirname, 'utils');
 const jsonDir = path.join(__dirname, 'json');
 
-
 const { requireRemote } = loadModule(path.join(utilsDir, 'import.js'), 'import');
 
-
+// módulos remotos
 const remoteModuleUrls = {
   youtube: 'https://gitlab.com/hiudyy/nazuna-funcs/-/raw/main/funcs/downloads/youtube.js',
   tiktok: 'https://gitlab.com/hiudyy/nazuna-funcs/-/raw/main/funcs/downloads/tiktok.js',
@@ -58,17 +53,17 @@ const remoteModuleUrls = {
   VerifyUpdate: 'https://gitlab.com/hiudyy/nazuna-funcs/-/raw/main/funcs/utils/update-verify.js'
 };
 
-
+// módulos locais
 const emojiMix = loadModule(path.join(utilsDir, 'emojimix.js'), 'emojiMix');
 const upload = loadModule(path.join(utilsDir, 'upload.js'), 'upload');
 const tictactoe = loadModule(path.join(utilsDir, 'tictactoe.js'), 'tictactoe');
-const sendSticker = loadModule(path.join(utilsDir, 'sticker.js'), 'sendSticker').sendSticker;
+const sendSticker = loadModule(path.join(utilsDir, 'sticker.js'), 'sendSticker')?.sendSticker;
 const commandStats = loadModule(path.join(utilsDir, 'commandStats.js'), 'commandStats');
-const tovideo = loadModule(path.join(utilsDir, 'tovideo.js'), 'tovideo');
 
+// importa a função diretamente (corrigido)
+const { tovideo } = require(path.join(utilsDir, 'tovideo.js'));
 
 module.exports = (async () => {
-
   const modules = {
     youtube: undefined,
     tiktok: undefined,
@@ -83,12 +78,13 @@ module.exports = (async () => {
   };
 
   try {
-  
+    // baixa módulos remotos
     const downloadPromises = Object.entries(remoteModuleUrls).map(async ([key, url]) => {
       modules[key] = await loadRemoteModuleWithRetry(url, key);
-      modules[key] = modules[key].default ? modules[key].default : modules[key]
+      modules[key] = modules[key].default ? modules[key].default : modules[key];
     });
 
+    // carrega jsons
     const jsonPromises = [
       loadJson(path.join(jsonDir, 'tools.json'), 'tools.json').then(data => ({ toolsJson: data })),
       loadJson(path.join(jsonDir, 'vab.json'), 'vab.json').then(data => ({ vabJson: data }))
@@ -104,7 +100,7 @@ module.exports = (async () => {
       sendSticker,
       emojiMix,
       upload,
-      tovideo,
+      tovideo, // agora é a função certa
       toolsJson: () => toolsJson,
       vabJson: () => vabJson,
       commandStats,

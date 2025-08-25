@@ -601,7 +601,7 @@ async function NazuninhaBotExec(nazu, info, store, groupCache, messagesCache) {
   var prefix = prefixo;
   var numerodono = String(numerodono);
   
-  const { youtube, banner, tiktok, pinterest, igdl, sendSticker, FilmesDL, styleText, emojiMix, upload, mcPlugin, tictactoe, toolsJson, vabJson, google, Lyrics, commandStats, ia, VerifyUpdate } = await require(__dirname+'/funcs/exports.js');
+  const { youtube, banner, tiktok, pinterest, igdl, sendSticker, FilmesDL, styleText, emojiMix, upload, mcPlugin, tictactoe, toolsJson, vabJson, google, Lyrics, commandStats, ia, VerifyUpdate, tovideo } = await require(__dirname+'/funcs/exports.js');
   
   const antipvData = loadJsonFile(DATABASE_DIR + '/antipv.json');
   const premiumListaZinha = loadJsonFile(DONO_DIR + '/premium.json');
