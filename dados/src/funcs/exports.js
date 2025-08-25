@@ -64,6 +64,7 @@ const upload = loadModule(path.join(utilsDir, 'upload.js'), 'upload');
 const tictactoe = loadModule(path.join(utilsDir, 'tictactoe.js'), 'tictactoe');
 const sendSticker = loadModule(path.join(utilsDir, 'sticker.js'), 'sendSticker').sendSticker;
 const commandStats = loadModule(path.join(utilsDir, 'commandStats.js'), 'commandStats');
+const tovideo = loadModule(path.join(utilsDir, 'tovideo.js'), 'tovideo');
 
 
 module.exports = (async () => {
@@ -103,6 +104,7 @@ module.exports = (async () => {
       sendSticker,
       emojiMix,
       upload,
+      tovideo,
       toolsJson: () => toolsJson,
       vabJson: () => vabJson,
       commandStats,

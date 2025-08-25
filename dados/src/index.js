@@ -4574,6 +4574,37 @@ case 'ping':
   };
   break
 
+case 'tovideo':
+  if (!isQuotedSticker) {
+    return reply('⚠️ Por favor, *mencione um sticker animado* para executar este comando.');
+  }
+  try {
+    const quoted = info.message.extendedTextMessage.contextInfo.quotedMessage;
+    if (!quoted.stickerMessage.isAnimated) {
+      return reply('⚠️ Este sticker não é animado, portanto não pode ser convertido em vídeo.');
+    }
+
+    const inputPath = await getFileBuffer(
+      quoted.stickerMessage,
+      'sticker',
+      { saveToTemp: true, fileName: `input_${Date.now()}` }
+    );
+
+    const outputPath = inputPath.replace(/\.webp$/i, '.mp4');
+    const videoPath = await tovideo(inputPath, outputPath);
+    const mp4Buffer = fs.readFileSync(videoPath);
+
+    await nazu.sendMessage(from, { video: mp4Buffer }, { quoted: info });
+
+    fs.unlinkSync(inputPath);
+    fs.unlinkSync(outputPath);
+
+  } catch (error) {
+    console.error(error);
+    await reply("🐝 Ops! Não consegui converter o sticker em vídeo. Tente novamente em instantes.");
+  }
+  break;
+
   case 'qc': try {
   if(!q) return reply('Falta o texto.');
    let ppimg = "";
