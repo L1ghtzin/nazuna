@@ -21,7 +21,7 @@
     "dependencies": {
         "@cacheable/node-cache": "latest",
         "@hapi/boom": "latest",
-        "@cognima/walib": "npm:@itsukichan/baileys@latest",
+        "@cognima/walib": "npm:baileys@latest",
         "axios": "latest",
         "fluent-ffmpeg": "latest",
         "linkedom": "latest",
