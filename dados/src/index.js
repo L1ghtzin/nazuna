@@ -8145,33 +8145,36 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
           await reply("🐝 Oh não! Aconteceu um errinho inesperado aqui. Tente de novo daqui a pouquinho, por favor! 🥺");
         }
         break;
-      case 'ping':
-        try {
-          const timestamp = Date.now();
-          const speedConverted = (timestamp - info.messageTimestamp * 1000) / 1000;
-          const uptimeBot = formatUptime(process.uptime());
-          const ramBotProcessoMb = (process.memoryUsage().rss / 1024 / 1024).toFixed(2);
-          const getGroups = await nazu.groupFetchAllParticipating();
-          const totalGrupos = Object.keys(getGroups).length;
-          let totalUsers = 0;
-          Object.values(getGroups).forEach(group => {
-            totalUsers += group.participants.length;
-          });
-          let statusEmoji = '🟢';
-          let statusTexto = 'Excelente';
-          if (speedConverted > 2) {
-            statusEmoji = '🟡';
-            statusTexto = 'Bom';
-          }
-          if (speedConverted > 5) {
-            statusEmoji = '🟠';
-            statusTexto = 'Médio';
-          }
-          if (speedConverted > 8) {
-            statusEmoji = '🔴';
-            statusTexto = 'Ruim';
-          }
-          let mensagem = `
+case 'ping':
+  try {
+    const timestamp = Date.now();
+    const speedConverted = (timestamp - info.messageTimestamp * 1000) / 1000;
+    const uptimeBot = formatUptime(process.uptime());
+    const ramBotProcessoMb = (process.memoryUsage().rss / 1024 / 1024).toFixed(2);
+
+    const getGroups = await nazu.groupFetchAllParticipating();
+    const totalGrupos = Object.keys(getGroups).length;
+    let totalUsers = 0;
+    Object.values(getGroups).forEach(group => {
+      totalUsers += group.participants.length;
+    });
+
+    let statusEmoji = '🟢';
+    let statusTexto = 'Excelente';
+    if (speedConverted > 2) {
+      statusEmoji = '🟡';
+      statusTexto = 'Bom';
+    }
+    if (speedConverted > 5) {
+      statusEmoji = '🟠';
+      statusTexto = 'Médio';
+    }
+    if (speedConverted > 8) {
+      statusEmoji = '🔴';
+      statusTexto = 'Ruim';
+    }
+
+    let mensagem = `
 ╭━━「 ${statusEmoji} *STATUS DO BOT* ${statusEmoji} 」
 ┊
 ┊ 🤖 *Informações do Bot*
@@ -8191,43 +8194,42 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
 ┊ ╰ 💾 RAM Usada: *${ramBotProcessoMb} MB*
 ┊
 ╰━━「 ${nomebot} 」`;
-          
-          mensagem = mensagem.trim();
-          let ppimg = "";
-          try {
-            ppimg = await nazu.profilePictureUrl(botNumber, 'image');
-          } catch {
-            ppimg = 'https://raw.githubusercontent.com/nazuninha/uploads/main/outros/1753966446765_oordgn.bin';
-          }
-          ;
-          const pingImageUrl = await banner.Ping("", ppimg, nomebot, speedConverted.toFixed(3), uptimeBot, totalGrupos, totalUsers);
-          await nazu.sendMessage(from, {
-            image: pingImageUrl,
-            caption: mensagem
-          }, {
-            quoted: info
-          });
-        } catch (e) {
-          console.error("Erro no comando ping:", e);
-          await reply("❌ Ocorreu um erro ao processar o comando ping");
-        }
-        ;
-        break;
-      case 'toimg':
-        if (!isQuotedSticker) return reply('Por favor, *mencione um sticker* para executar o comando.');
-        try {
-          var buff;
-          buff = await getFileBuffer(info.message.extendedTextMessage.contextInfo.quotedMessage.stickerMessage, 'sticker');
-          await nazu.sendMessage(from, {
-            image: buff
-          }, {
-            quoted: info
-          });
-        } catch (error) {
-          await reply("🐝 Oh não! Aconteceu um errinho inesperado aqui. Tente de novo daqui a pouquinho, por favor! 🥺");
-        }
-        ;
-        break;
+
+    mensagem = mensagem.trim();
+
+    let ppimg = "";
+    try {
+      ppimg = await nazu.profilePictureUrl(botNumber, 'image');
+    } catch {
+      ppimg = 'https://raw.githubusercontent.com/nazuninha/uploads/main/outros/1753966446765_oordgn.bin';
+    }
+
+    // Tentativa de gerar o banner
+    let pingImageUrl = null;
+    try {
+      pingImageUrl = await banner.Ping("", ppimg, nomebot, speedConverted.toFixed(3), uptimeBot, totalGrupos, totalUsers);
+    } catch (err) {
+      console.error("Erro ao gerar banner:", err);
+    }
+
+    // Verifica se a imagem retornada é válida
+    if (!pingImageUrl || typeof pingImageUrl !== 'object' || !pingImageUrl.url) {
+      console.warn("⚠️ Falha ao gerar imagem do banner, enviando texto puro.");
+      await nazu.sendMessage(from, { text: mensagem }, { quoted: info });
+      return;
+    }
+
+    // Envia imagem com legenda
+    await nazu.sendMessage(from, {
+      image: pingImageUrl,
+      caption: mensagem
+    }, { quoted: info });
+
+  } catch (e) {
+    console.error("Erro no comando ping:", e);
+    await reply("❌ Ocorreu um erro ao processar o comando ping");
+  }
+  break;
       case 'qc':
         try {
           if (!q) return reply('Falta o texto.');
@@ -10372,7 +10374,7 @@ Exemplos:
         ;
       case 'chance':
         try {
-          if (!isGroup) return reply("🎮 Ops! Esse comando só funciona em grupos! Chama a galera! 👥�");
+          if (!isGroup) return reply("🎮 Ops! Esse comando só funciona em grupos! Chama a galera! 👥 ");
           if (!isModoBn) return reply('❌ O modo brincadeira está off nesse grupo! Pede pro admin ativar a diversão! 🎉');
           if (!q) return reply(`🎲 Me conta algo para eu calcular as chances! 📊
 
@@ -10394,12 +10396,12 @@ Exemplos:
 ${chance >= 80 ? '🚀 Uau! Apostaria minhas fichas nisso!' : chance >= 60 ? '😎 Chances promissoras!' : chance >= 40 ? '🤔 Meio termo, pode rolar!' : chance >= 20 ? '😅 Hmm... complicado!' : '😂 Melhor sonhar com outra coisa!'}`);
         } catch (e) {
           console.error(e);
-          await reply("😵 Minha bola de cristal bugou! Tenta de novo! 🔮�");
+          await reply("😵 Minha bola de cristal bugou! Tenta de novo! 🔮 ");
         }
         break;
       case 'quando':
         try {
-          if (!isGroup) return reply("🕰️ Esse comando só funciona em grupos! Vem com a galera! �✨");
+          if (!isGroup) return reply("🕰️ Esse comando só funciona em grupos! Vem com a galera!  ✨");
           if (!isModoBn) return reply('❌ O modo brincadeira está dormindo nesse grupo! Acorda ele! 😴🎉');
           if (!q) return reply(`🔮 Me conta o que você quer que eu preveja! 🌠
 
@@ -10423,12 +10425,12 @@ ${chance >= 80 ? '🚀 Uau! Apostaria minhas fichas nisso!' : chance >= 60 ? '�
           const prefixo = prefixos[Math.floor(Math.random() * prefixos.length)];
           await reply(`${prefixo}...
 
-�️ "${q}" vai acontecer: *${tempo}*!
+ ️ "${q}" vai acontecer: *${tempo}*!
 
 ${tempo.includes('nunca') ? '😂 Brincadeira! Nunca desista dos seus sonhos!' : '🍀 Boa sorte na espera!'}`);
         } catch (e) {
           console.error(e);
-          await reply("🔮 Minha máquina do tempo pifou! Tenta de novo! ⏰�");
+          await reply("🔮 Minha máquina do tempo pifou! Tenta de novo! ⏰ ");
         }
         break;
       case 'casal':
@@ -10458,7 +10460,7 @@ ${tempo.includes('nunca') ? '😂 Brincadeira! Nunca desista dos seus sonhos!' :
                            shipLevel >= 60 ? '😍 Ship promissor!' : 
                            shipLevel >= 40 ? '😊 Rolou uma química!' : 
                            shipLevel >= 20 ? '🤔 Meio forçado...' : '😅 Só na amizade!';
-          await reply(`💘 *${comentario}* 💘\n\n👑 **CASAL DO MOMENTO** �\n@${membro1.split('@')[0]} ❤️ @${membro2.split('@')[0]}\n\n� **Nível de ship:** *${shipLevel}%*\n🎯 **Chance de dar certo:** *${chance}%*\n\n${statusShip}\n\n${chance >= 70 ? '🎉 Já podem marcar o casamento!' : chance >= 50 ? '👀 Vale a pena investir!' : '😂 Melhor ficar só na amizade!'}`, {
+          await reply(`💘 *${comentario}* 💘\n\n👑 **CASAL DO MOMENTO**  \n@${membro1.split('@')[0]} ❤️ @${membro2.split('@')[0]}\n\n  **Nível de ship:** *${shipLevel}%*\n🎯 **Chance de dar certo:** *${chance}%*\n\n${statusShip}\n\n${chance >= 70 ? '🎉 Já podem marcar o casamento!' : chance >= 50 ? '👀 Vale a pena investir!' : '😂 Melhor ficar só na amizade!'}`, {
             mentions: [membro1, membro2]
           });
         } catch (e) {
@@ -10496,7 +10498,7 @@ ${tempo.includes('nunca') ? '😂 Brincadeira! Nunca desista dos seus sonhos!' :
                            shipLevel >= 70 ? '🎆 Ship de qualidade!' : 
                            shipLevel >= 50 ? '😊 Tem potencial!' : 
                            shipLevel >= 30 ? '🤔 Pode rolar...' : '😅 Força demais!';
-          await reply(`${emoji} *${comentario}* ${emoji}\n\n👑 **SHIP SELECIONADO** �\n@${menc_os2.split('@')[0]} ✨ @${par.split('@')[0]}\n\n💫 **Ship name:** *${nomeShip}*\n� **Nível de ship:** *${shipLevel}%*\n🎯 **Compatibilidade:** *${chance}%*\n\n${statusShip}\n\n${chance >= 75 ? '🎉 Relacionamento dos sonhos!' : chance >= 50 ? '👀 Merece uma chance!' : '😂 Melhor só shippar mesmo!'}`, {
+          await reply(`${emoji} *${comentario}* ${emoji}\n\n👑 **SHIP SELECIONADO**  \n@${menc_os2.split('@')[0]} ✨ @${par.split('@')[0]}\n\n💫 **Ship name:** *${nomeShip}*\n  **Nível de ship:** *${shipLevel}%*\n🎯 **Compatibilidade:** *${chance}%*\n\n${statusShip}\n\n${chance >= 75 ? '🎉 Relacionamento dos sonhos!' : chance >= 50 ? '👀 Merece uma chance!' : '😂 Melhor só shippar mesmo!'}`, {
             mentions: [menc_os2, par]
           });
         } catch (e) {
@@ -10506,7 +10508,7 @@ ${tempo.includes('nunca') ? '😂 Brincadeira! Nunca desista dos seus sonhos!' :
         break;
       case 'sn':
         try {
-          if (!isGroup) return reply("🎱 Esse comando só funciona em grupos! Chama todo mundo! �✨");
+          if (!isGroup) return reply("🎱 Esse comando só funciona em grupos! Chama todo mundo!  ✨");
           if (!isModoBn) return reply('❌ O modo brincadeira está pausado nesse grupo! Hora de ativar a diversão! 🎉');
           if (!q) return reply(`🎱 Faça uma pergunta para o oráculo! 🔮
 
@@ -10531,7 +10533,7 @@ ${tempo.includes('nunca') ? '😂 Brincadeira! Nunca desista dos seus sonhos!' :
           const confianca = Math.floor(Math.random() * 30) + 70; // 70-100%
           const emoji = isPositive ? '🎆' : '💔';
           
-          await reply(`� **ORÁCULO RESPONDE** 🎱
+          await reply(`  **ORÁCULO RESPONDE** 🎱
 
 🤔 *Pergunta:* "${q}"
 
@@ -10542,7 +10544,7 @@ ${emoji} **Resposta:** *${resposta}*
 ${isPositive ? '🎉 O destino sorri para você!' : '😅 Mas não desista dos seus sonhos!'}`);
         } catch (e) {
           console.error(e);
-          await reply("🎱 A bola 8 travou! Tenta de novo! �");
+          await reply("🎱 A bola 8 travou! Tenta de novo!  ");
         }
         break;
       case 'sorte':
