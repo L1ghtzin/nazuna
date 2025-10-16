@@ -1670,7 +1670,7 @@ async function NazuninhaBotExec(nazu, info, store, messagesCache, rentalExpirati
     const isSubOwner = isSubdono(sender);
     const ownerJid = `${numerodono}@s.whatsapp.net`;
     const botId = getBotId(nazu);
-    const isBotSender = sender === botId || sender === nazu.user.id || sender === nazu.user.lid.split(':')[0] + '@lid';
+    const isBotSender = sender === botId || sender === nazu.user?.id?.split(':')[0] + '@s.whatsapp.net' || sender === nazu.user?.id?.split(':')[0] + '@lid';
     const isOwner = nmrdn === sender || ownerJid === sender || (lidowner && lidowner === sender) || info.key.fromMe || isBotSender;
     const isOwnerOrSub = isOwner || isSubOwner;
     const type = getContentType(info.message);
