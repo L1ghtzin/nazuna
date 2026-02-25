@@ -821,6 +821,11 @@ async function NazuninhaBotExec(nazu, info, store, messagesCache, rentalExpirati
     const n = Math.floor(num);
     return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
   }
+  
+  // Função para remover acentos das palavras
+   function normalizarTexto(texto) {
+   return texto.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+   }
 
   // Calcula tempo restante de cooldown
   function timeLeft(timestamp) {
@@ -19590,7 +19595,7 @@ case 'facebookdl':
 
           // Detecta se é URL de Pinterest antes de qualquer split
           const PIN_URL_REGEX = /^(?:https?:\/\/)?(?:[a-zA-Z0-9-]+\.)?pinterest\.\w{2,6}(?:\.\w{2})?\/pin\/([0-9a-zA-Z]+)|^https?:\/\/pin\.it\/[a-zA-Z0-9]+/i;
-          let maxImages = 5;
+          let maxImages = 3;
           let searchTerm = q.trim();
 
           // Só extrai limite \/N se NÃO for URL
@@ -28547,36 +28552,56 @@ ${prefix}calc converter 100 km mi`);
       // ═══════════════════════════════════════════════════════════════
       case 'horoscopo':
       case 'signo':
-        if (!iaExpanded) return reply("Sistema de horóscopo temporariamente indisponível.");
-        if (!ia || !KeyCog) return reply("❌ Sistema de IA não disponível no momento.");
-        
-        const signoHoroscopo = args[0]?.toLowerCase();
-        if (!signoHoroscopo) {
-          return reply(`🔮 *Horóscopo - Signos*
-
-${prefix}horoscopo <signo>
-
-*Signos disponíveis:*
-♈ Áries | ♉ Touro | ♊ Gêmeos
-♋ Câncer | ♌ Leão | ♍ Virgem
-♎ Libra | ♏ Escorpião | ♐ Sagitário
-♑ Capricórnio | ♒ Aquário | ♓ Peixes`);
-        }
-        
-        reply("🔮 Consultando as estrelas...");
-        
-        // Função wrapper para a IA
-        const aiFunctionHoroscope = (prompt) => {
-          return ia.makeCognimaRequest('qwen/qwen3-235b-a22b', prompt, null)
-            .then(response => response?.data?.choices?.[0]?.message?.content || '');
-        };
-        
-        iaExpanded.generateHoroscope(signoHoroscopo, aiFunctionHoroscope, prefix).then(resultHoroscope => {
-          reply(resultHoroscope.message);
-        }).catch(err => {
-          reply('❌ Erro ao gerar horóscopo. Tente novamente!');
-        });
-        break;
+      if (!q) return reply("❌ Você precisa informar um signo para buscar a previsão.");
+  
+       // Lista completa de signos
+      const signos = ["aries", "touro", "gemeos", "cancer", "leao", "virgem", "libra", "escorpiao", "sagitario", "capricornio", "aquario", "peixes"];
+       const queryNormalizada = normalizarTexto(q);
+  
+      // Verifica se o signo é válido
+      if (!signos.includes(queryNormalizada)) {
+         return reply('❌ Signo inválido! Os signos disponíveis são:\n' + 
+         '♈ Áries\n♉ Touro\n♊ Gêmeos\n♋ Câncer\n♌ Leão\n♍ Virgem\n♎ Libra\n♏ Escorpião\n♐ Sagitário\n♑ Capricórnio\n♒ Aquário\n♓ Peixes');
+      }
+  
+     const resSignos = await axios.get(`https://apisnodz.com.br/api/pesquisas/horoscopo?query=${queryNormalizada}`)
+       .catch(err => {
+         reply('❌ Erro ao gerar horóscopo. Tente novamente!');
+        return null;
+      });
+  
+     if (!resSignos || !resSignos.data || !resSignos.data.resultado) {
+       return;
+      }
+  
+     const resultado = resSignos.data.resultado;
+  
+      // Personaliza a mensagem de acordo com o signo
+      const emojis = {
+       "aries": "♈", "touro": "♉", "gemeos": "♊", "cancer": "♋",
+       "leao": "♌", "virgem": "♍", "libra": "♎", "escorpiao": "♏",
+       "sagitario": "♐", "capricornio": "♑", "aquario": "♒", "peixes": "♓"
+     };
+  
+     const emojiSigno = emojis[queryNormalizada] || "🔮";
+     const nomeSigno = resultado.signo.charAt(0).toUpperCase() + resultado.signo.slice(1);
+  
+    // Cria a legenda personalizada
+     const legenda = `🔮 *HORÓSCOPO* 🔮\n\n` +
+      `${emojiSigno} *Signo:* ${nomeSigno}\n` +
+      `📅 *Data:* ${resultado.dia}\n` +
+      `✨ *Previsão do Dia:*\n${resultado.previsao}\n\n` +
+      `🔗 Fonte: Horóscopo Virtual\n` +
+      `🌐 ${resultado.url}`;
+  
+    // Envia a imagem com a legenda
+    await nazu.sendMessage(from, {
+      image: { url: resultado.imagem },
+       caption: legenda
+    }, { quoted: info }).catch(err => {
+     reply('❌ Erro ao enviar imagem do horóscopo. Tente novamente!');
+    });
+     break;
 
       case 'signos':
         return reply(`🔮 *Signos do Zodíaco*
