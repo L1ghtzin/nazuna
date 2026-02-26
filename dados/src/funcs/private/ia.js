@@ -7,7 +7,7 @@ import { fileURLToPath } from 'url';
 import userContextDB from '../../utils/userContextDB.js';
 
 // Chave de IA hardcoded
-const IA_API_KEY = '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';
+const IA_API_KEY = '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';
 
 // Função para obter data/hora no fuso horário do Brasil (GMT-3)
 function getBrazilDateTime() {
@@ -1852,7 +1852,6 @@ async function processUserMessages(data, nazu = null, ownerNumber = null, person
           'qwen/qwen3-235b-a22b',
           JSON.stringify(userInput),
           selectedPrompt,
-          key,
           historico[userId] || []
         )).data;
 
