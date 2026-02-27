@@ -35,6 +35,12 @@ ${middleBorder}${menuItemIcon}${prefix}calc <expressão>
 ${middleBorder}${menuItemIcon}${prefix}calc converter <valor> <de> <para>
 ${bottomBorder}
 
+${menuTopBorder}${separatorIcon} *🔮 HORÓSCOPO & MISTICISMO*
+${middleBorder}
+${middleBorder}${menuItemIcon}${prefix}horoscopo <signo>
+${middleBorder}${menuItemIcon}${prefix}signos
+${bottomBorder}
+
 ${menuTopBorder}${separatorIcon} *📝 NOTAS PESSOAIS*
 ${middleBorder}
 ${middleBorder}${menuItemIcon}${prefix}nota add <texto>

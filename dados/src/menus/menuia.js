@@ -56,12 +56,6 @@ ${middleBorder}${menuItemIcon}${prefix}resumirchat <qtd>
 ${middleBorder}${menuItemIcon}${prefix}recomendar <tipo> <gênero>
 ${bottomBorder}
 
-${menuTopBorder}${separatorIcon} *🔮 HORÓSCOPO & MISTICISMO*
-${middleBorder}
-${middleBorder}${menuItemIcon}${prefix}horoscopo <signo>
-${middleBorder}${menuItemIcon}${prefix}signos
-${bottomBorder}
-
 ${menuTopBorder}${separatorIcon} *💬 DEBATES & ARGUMENTAÇÃO*
 ${middleBorder}
 ${middleBorder}${menuItemIcon}${prefix}debater <tema>
