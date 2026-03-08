@@ -18085,7 +18085,7 @@ Exemplo: ${prefix}tradutor espanhol | Olá mundo! ✨`);
         try {
           if (!isOwner) return reply("Apenas o dono pode adicionar usuários à blacklist global.");
           if (!menc_os2 && !q) return reply(`Marque o usuário ou forneça o número (ex: ${prefix}addblackglobal @usuario motivo).`);
-          const reason = args.length > 1 ? args.slice(1).join(' ') : 'Não especificado';
+          const reason = q ? (q.includes('@') || !menc_os2) ? (args.length > 1 ? args.slice(1).join(' ') : 'Não especificado') : q.trim() : 'Não especificado';
           let targetUser = menc_os2 || (q.split(' ')[0].includes('@') ? q.split(' ')[0] : (isValidJid(q.split(' ')[0]) || isValidLid(q.split(' ')[0])) ? q.split(' ')[0] : null);
 
           // Se informou apenas número, tenta obter LID via onWhatsApp/cache
@@ -21284,8 +21284,7 @@ Precisa de ajuda? Entre em contato:
         if (!isOwner) return reply("Este comando é apenas para o meu dono");
         try {
           if (!menc_os2) return reply("Marque alguém 🙄");
-          var reason;
-          reason = q ? q.includes('@') ? q.includes(' ') ? q.split(' ').slice(1).join(' ') : "Não informado" : q : 'Não informado';
+          var reason = q ? (q.includes('@') || !menc_os2) ? (q.includes(' ') ? q.split(' ').slice(1).join(' ') : "Não informado") : q.trim() : 'Não informado';
           var menc_os3;
           menc_os3 = (menc_os2 && menc_os2.includes(' ')) ? menc_os2.split(' ')[0] : menc_os2;
           if (!menc_os3) return reply("Erro ao processar usuário mencionado");
@@ -24570,8 +24569,7 @@ ${prefix}togglecmdvip premium_ia off`);
         if (!isGroupAdmin) return reply("você precisa ser adm 💔");
         try {
           if (!menc_os2) return reply("Marque alguém 🙄");
-          var reason;
-          reason = q ? q.includes('@') ? q.includes(' ') ? q.split(' ').slice(1).join(' ') : "Não informado" : q : 'Não informado';
+          var reason = q ? (q.includes('@') || !menc_os2) ? (q.includes(' ') ? q.split(' ').slice(1).join(' ') : "Não informado") : q.trim() : 'Não informado';
           var menc_os3;
           menc_os3 = (menc_os2 && menc_os2.includes(' ')) ? menc_os2.split(' ')[0] : menc_os2;
           if (!menc_os3) return reply("Erro ao processar usuário mencionado");
@@ -27035,7 +27033,7 @@ Exemplos:
             }
           }
           if (!targetUser) return reply(`Marque o usuário ou forneça o número (ex: ${prefix}addblacklist 5511999998888 motivo).`);
-          const reason = args.length > 1 ? args.slice(1).join(' ') : "Motivo não informado";
+          const reason = q ? (q.includes('@') || !menc_os2) ? (args.length > 1 ? args.slice(1).join(' ') : 'Motivo não informado') : q.trim() : 'Motivo não informado';
           const groupFilePath = buildGroupFilePath(from);
           let groupData = fs.existsSync(groupFilePath) ? JSON.parse(fs.readFileSync(groupFilePath)) : {
             blacklist: {}
@@ -27136,7 +27134,7 @@ Exemplos:
           if (!isGroupAdmin) return reply("Você precisa ser administrador 💔");
           if (!menc_os2) return reply("Marque um usuário 🙄");
           if (menc_os2 === botNumber) return reply("❌ Não posso advertir a mim mesma!");
-          const reason = q.includes(' ') ? q.split(' ').slice(1).join(' ') : "Motivo não informado";
+          const reason = q ? (q.includes('@') || !menc_os2) ? (args.length > 1 ? args.slice(1).join(' ') : 'Motivo não informado') : q.trim() : 'Motivo não informado';
           const groupFilePath = buildGroupFilePath(from);
           let groupData = fs.existsSync(groupFilePath) ? JSON.parse(fs.readFileSync(groupFilePath)) : {
             warnings: {}
