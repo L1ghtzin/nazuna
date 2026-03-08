@@ -990,7 +990,7 @@ async function createBotSocket(authDir) {
         } = await useMultiFileAuthState(authDir, makeCacheableSignalKeyStore);
         
         // Versão manual do WhatsApp
-        const version = [2, 3000, 1034260505];
+        const version = [2, 3000, 1034740716];
         console.log(`📱 Usando versão do WhatsApp: ${version.join('.')}`);
         
         const NazunaSock = makeWASocket({
