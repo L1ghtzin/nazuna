@@ -1,5 +1,4 @@
 import a, { useMultiFileAuthState, DisconnectReason, fetchLatestBaileysVersion, makeCacheableSignalKeyStore } from 'whaileys';
-
 const makeWASocket = a.default;
 import { Boom } from '@hapi/boom';
 import NodeCache from 'node-cache';
@@ -18,6 +17,7 @@ import PerformanceOptimizer from './utils/performanceOptimizer.js';
 import RentalExpirationManager from './utils/rentalExpirationManager.js';
 import { loadMsgBotOn } from './utils/database.js';
 import { buildUserId } from './utils/helpers.js';
+import { initCaptchaIndex } from './utils/captchaIndex.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -309,6 +309,9 @@ async function initializeOptimizedCaches() {
     try {
         await performanceOptimizer.initialize();
         
+        // Inicializa índice de captcha para busca rápida
+        await initCaptchaIndex();
+        
         msgRetryCounterCache = {
             get: (key) => performanceOptimizer.cacheGet('msgRetry', key),
             set: (key, value, ttl) => performanceOptimizer.cacheSet('msgRetry', key, value, ttl),
@@ -396,58 +399,14 @@ async function clearAuthDir(dirToRemove = AUTH_DIR) {
     }
 }
 
-const DEFAULT_GROUP_SETTINGS = {
-    bemvindo: false,
-    welcome: {},
-    textbv: '',
-    exit: {
-        enabled: false,
-        text: '',
-        image: ''
-    },
-    blacklist: {},
-    x9: false
-};
-
-function normalizeGroupSettings(data) {
-    const merged = data && typeof data === 'object'
-        ? { ...DEFAULT_GROUP_SETTINGS, ...data }
-        : { ...DEFAULT_GROUP_SETTINGS };
-
-    if (!merged.welcome || typeof merged.welcome !== 'object') merged.welcome = {};
-    if (!merged.exit || typeof merged.exit !== 'object') merged.exit = { enabled: false, text: '', image: '' };
-    if (!merged.blacklist || typeof merged.blacklist !== 'object') merged.blacklist = {};
-
-    if (typeof merged.textbv !== 'string') merged.textbv = '';
-    if (typeof merged.bemvindo !== 'boolean') merged.bemvindo = false;
-    if (typeof merged.x9 !== 'boolean') merged.x9 = false;
-
-    if (typeof merged.exit.enabled !== 'boolean') merged.exit.enabled = false;
-    if (typeof merged.exit.text !== 'string') merged.exit.text = '';
-    if (typeof merged.exit.image !== 'string') merged.exit.image = '';
-
-    return merged;
-}
-
 async function loadGroupSettings(groupId) {
     const groupFilePath = path.join(DATABASE_DIR, 'grupos', `${groupId}.json`);
     try {
         const data = await fs.readFile(groupFilePath, 'utf-8');
-        return normalizeGroupSettings(JSON.parse(data));
+        return JSON.parse(data);
     } catch (e) {
-        if (e?.code === 'ENOENT') {
-            try {
-                await fs.mkdir(path.dirname(groupFilePath), { recursive: true });
-                const defaults = normalizeGroupSettings();
-                await fs.writeFile(groupFilePath, JSON.stringify(defaults, null, 2));
-                return defaults;
-            } catch (writeErr) {
-                console.error(`❌ Erro ao criar configurações do grupo ${groupId}: ${writeErr.message}`);
-                return normalizeGroupSettings();
-            }
-        }
         console.error(`❌ Erro ao ler configurações do grupo ${groupId}: ${e.message}`);
-        return normalizeGroupSettings();
+        return {};
     }
 }
 
@@ -615,6 +574,84 @@ async function handleGroupParticipantsUpdate(NazunaSock, inf) {
 }
 
 // Handler para solicitações de entrada em grupos
+// Evento 'group.join-request' emitido pelo Baileys
+async function handleGroupJoinRequest(NazunaSock, inf) {
+    try {
+        const from = inf.id;
+        
+        if (DEBUG_MODE) {
+            console.log('🐛 [handleGroupJoinRequest] Processando solicitação...');
+            console.log('🐛 Group ID:', from);
+            console.log('🐛 Action:', inf.action);
+            console.log('🐛 Participant (LID):', inf.participant);
+            console.log('🐛 Participant Phone:', inf.participantPn);
+            console.log('🐛 Author:', inf.author);
+            console.log('🐛 Method:', inf.method);
+        }
+        
+        if (!from) {
+            if (DEBUG_MODE) console.log('🐛 Group ID não encontrado, abortando');
+            return;
+        }
+        
+        const groupSettings = await loadGroupSettings(from);
+        
+        if (DEBUG_MODE) {
+            console.log('🐛 Group settings:');
+            console.log('  - autoAcceptRequests:', groupSettings.autoAcceptRequests);
+            console.log('  - captchaEnabled:', groupSettings.captchaEnabled);
+            console.log('  - x9:', groupSettings.x9);
+        }
+        
+        // O participante pode vir como LID ou phone number
+        const participantJid = inf.participantPn || inf.participant;
+        const participantDisplay = participantJid ? participantJid.split('@')[0] : 'Desconhecido';
+        
+        // Auto-aceitar se configurado e for uma nova solicitação
+        if (groupSettings.autoAcceptRequests && inf.action === 'created' && participantJid) {
+            try {
+                // Se captcha estiver ativado
+                if (groupSettings.captchaEnabled) {
+                    const num1 = Math.floor(Math.random() * 10) + 1;
+                    const num2 = Math.floor(Math.random() * 10) + 1;
+                    const answer = num1 + num2;
+                    
+                    // Salvar captcha pendente
+                    if (!groupSettings.pendingCaptchas) groupSettings.pendingCaptchas = {};
+                    groupSettings.pendingCaptchas[participantJid] = {
+                        answer,
+                        groupId: from,
+                        timestamp: Date.now()
+                    };
+                    await saveGroupSettings(from, groupSettings);
+                    
+                    // Enviar captcha no PV
+                    await NazunaSock.sendMessage(participantJid, {
+                        text: `🔐 *Verificação de Segurança*\n\nVocê solicitou entrar no grupo. Para ser aprovado, resolva esta conta:\n\n❓ Quanto é *${num1} + ${num2}*?\n\n⏱️ Você tem 5 minutos para responder.\n\n💡 Responda apenas com o número.`
+                    }).catch(err => console.error(`❌ Erro ao enviar captcha: ${err.message}`));
+                    
+                    // Auto-rejeitar após 5 minutos se não responder
+                    setTimeout(async () => {
+                        const currentSettings = await loadGroupSettings(from);
+                        if (currentSettings.pendingCaptchas?.[participantJid]) {
+                            delete currentSettings.pendingCaptchas[participantJid];
+                            await saveGroupSettings(from, currentSettings);
+                            await NazunaSock.groupRequestParticipantsUpdate(from, [participantJid], 'reject').catch(() => {});
+                        }
+                    }, 5 * 60 * 1000);
+                } else {
+                    // Auto-aceitar direto sem captcha
+                    await NazunaSock.groupRequestParticipantsUpdate(from, [participantJid], 'approve');
+                }
+            } catch (err) {
+                console.error(`Erro ao processar auto-aceitar: ${err.message}`);
+            }
+        }
+    } catch (error) {
+        console.error(`❌ Erro em handleGroupJoinRequest: ${error.message}`);
+    }
+}
+
 const isValidJid = (str) => /^\d+@s\.whatsapp\.net$/.test(str);
 const isValidLid = (str) => /^[a-zA-Z0-9_]+@lid$/.test(str);
 const isValidUserId = (str) => isValidJid(str) || isValidLid(str);
@@ -989,8 +1026,8 @@ async function createBotSocket(authDir) {
             signalRepository
         } = await useMultiFileAuthState(authDir, makeCacheableSignalKeyStore);
         
-        // Versão manual do WhatsApp
-        const version = [2, 3000, 1034740716];
+        // Busca a versão mais recente do WhatsApp
+        const { version } = await fetchLatestBaileysVersion();
         console.log(`📱 Usando versão do WhatsApp: ${version.join('.')}`);
         
         const NazunaSock = makeWASocket({
@@ -1000,17 +1037,16 @@ async function createBotSocket(authDir) {
             generateHighQualityLinkPreview: true,
             syncFullHistory: true,
             markOnlineOnConnect: true,
-            browser: ["Ubuntu", "Chrome", "20.0.00"],
             connectTimeoutMs: 120000,
             retryRequestDelayMs: 5000,
             qrTimeout: 180000,
             keepAliveIntervalMs: 30_000,
             defaultQueryTimeoutMs: undefined,
+            browser: ['Windows', 'Edge', '143.0.3650.66'],
             msgRetryCounterCache,
             auth: state,
             signalRepository,
-            logger,
-            shouldResendMessageOn475AckError: true
+            logger
         });
 
         if (codeMode && !NazunaSock.authState.creds.registered) {
@@ -1074,6 +1110,23 @@ async function createBotSocket(authDir) {
                 console.log('🐛 ================================================\n');
             }
             await handleGroupParticipantsUpdate(NazunaSock, inf);
+        });
+        
+        // Listener para solicitações de entrada em grupos (join requests)
+        NazunaSock.ev.on('group.join-request', async (inf) => {
+            if (DEBUG_MODE) {
+                console.log('\n🐛 ========== GROUP JOIN REQUEST ==========');
+                console.log('📅 Timestamp:', new Date().toISOString());
+                console.log('🆔 Group ID:', inf.id);
+                console.log('⚡ Action:', inf.action);
+                console.log('👤 Participant:', inf.participant);
+                console.log('📱 Participant Phone:', inf.participantPn);
+                console.log('👮 Author:', inf.author);
+                console.log('📝 Method:', inf.method);
+                console.log('📦 Full event data:', JSON.stringify(inf, null, 2));
+                console.log('🐛 ===========================================\n');
+            }
+            await handleGroupJoinRequest(NazunaSock, inf);
         });
 
         let messagesListenerAttached = false;
@@ -1204,6 +1257,30 @@ async function createBotSocket(authDir) {
                 attachMessagesListener();
                 startCacheCleanup(); // Inicia o sistema de limpeza de cache
                 
+                // Envia mensagem de boas-vindas para o dono
+                try {
+                    const msgBotOnConfig = loadMsgBotOn();
+                    
+                    if (msgBotOnConfig.enabled) {
+                        // Aguarda 3 segundos para garantir que o bot está totalmente conectado
+                        setTimeout(async () => {
+                            try {
+                                const ownerJid = buildUserId(numerodono, config);
+                                await NazunaSock.sendMessage(ownerJid, { 
+                                    text: msgBotOnConfig.message 
+                                });
+                                console.log('✅ Mensagem de inicialização enviada para o dono');
+                            } catch (sendError) {
+                                console.error('❌ Erro ao enviar mensagem de inicialização:', sendError.message);
+                            }
+                        }, 3000);
+                    } else {
+                        console.log('ℹ️ Mensagem de inicialização desativada');
+                    }
+                } catch (msgError) {
+                    console.error('❌ Erro ao processar mensagem de inicialização:', msgError.message);
+                }
+                
                 // Inicializa sub-bots automaticamente
                 try {
                     const subBotManagerModule = await import('./utils/subBotManager.js');
@@ -1223,7 +1300,7 @@ async function createBotSocket(authDir) {
                 const reason = new Boom(lastDisconnect?.error)?.output?.statusCode;
                 const reasonMessage = {
                     [DisconnectReason.loggedOut]: 'Deslogado do WhatsApp',
-                    401: 'Sessão expirada ou não autorizada',
+                    401: 'Sessão expirada',
                     403: 'Acesso proibido (Forbidden)',
                     [DisconnectReason.connectionClosed]: 'Conexão fechada',
                     [DisconnectReason.connectionLost]: 'Conexão perdida',
@@ -1241,35 +1318,7 @@ async function createBotSocket(authDir) {
                     cacheCleanupInterval = null;
                 }
                 
-                // --- CORREÇÃO SOLICITADA: TRATAMENTO ESPECÍFICO PARA ERRO 401 ---
-                if (reason === 401) {
-                    console.log('🔐 Erro 401 detectado: Sessão expirada ou não autorizada.');
-                    console.log('🗑️ Limpando pasta de autenticação (QR code)...');
-                    
-                    // Limpa a pasta de autenticação
-                    await clearAuthDir(authDir);
-                    
-                    console.log('🔄 Fechando conexão e reiniciando o bot para gerar novo QR code...');
-                    
-                    // Cancela qualquer timer de reconexão pendente
-                    if (reconnectTimer) {
-                        clearTimeout(reconnectTimer);
-                        reconnectTimer = null;
-                    }
-                    
-                    // Reseta flags
-                    isReconnecting = false;
-                    reconnectAttempts = 0;
-                    
-                    // Aguarda um momento antes de reiniciar
-                    setTimeout(() => {
-                        startNazu();
-                    }, 2000);
-                    
-                    return; // Importante: retorna para não executar o resto do código
-                }
-                
-                // Tratamento especial para erro 403 (Forbidden) - mantido como estava
+                // Tratamento especial para erro 403 (Forbidden)
                 if (reason === 403) {
                     forbidden403Attempts++;
                     console.log(`⚠️ Erro 403 detectado. Tentativa ${forbidden403Attempts}/${MAX_403_ATTEMPTS}`);
@@ -1295,7 +1344,6 @@ async function createBotSocket(authDir) {
                 // Reset do contador 403 se for outro tipo de erro
                 forbidden403Attempts = 0;
                 
-                // Para outros tipos de erro, tentamos reconectar (comportamento original)
                 if (reason === DisconnectReason.badSession || reason === DisconnectReason.loggedOut) {
                     await clearAuthDir(authDir);
                     console.log('🔄 Nova autenticação será necessária na próxima inicialização.');
