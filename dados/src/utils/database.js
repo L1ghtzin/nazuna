@@ -511,7 +511,7 @@ Muito obrigada por ter me escolhido! Fui desenvolvida do zero pelo *Hiudy* e sã
 Espero que você goste da bot! ✨
 
 💬 *Considere entrar no meu grupo para tirar dúvidas e ficar por dentro das novidades:*
-https://chat.whatsapp.com/Ev4juPpjZYFF6xYJnkPcAF
+https://chat.whatsapp.com/I5d5tCyZsV4J7Cjn51IkbV
 
 _Para desativar esta mensagem de inicialização, use o comando *msgboton*_`
   });
