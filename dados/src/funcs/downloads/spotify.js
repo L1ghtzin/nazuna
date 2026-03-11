@@ -1,11 +1,11 @@
 /**
  * Spotify Download - Implementação direta sem API externa
- * Usa nayan-video-downloader para busca e spotisaver.net para download
+ * Usa api. vrenden.my.id para busca e spotisaver.net para download
  */
 
 import axios from 'axios';
 
-const SEARCH_BASE_URL = 'https://nayan-video-downloader.vercel.app';
+const SEARCH_BASE_URL = 'https://api.vreden.my.id';
 const DOWNLOAD_BASE_URL = 'https://spotisaver.net';
 
 // Cache simples
@@ -44,8 +44,17 @@ const SPOTISAVER_HEADERS = {
  * Extrair ID da track do Spotify de uma URL
  */
 function extractTrackId(url) {
+  if (!url) return null;
   const trackMatch = url.match(/track\/([a-zA-Z0-9]+)/);
   return trackMatch ? trackMatch[1] : null;
+}
+
+/**
+ * Valida se é uma URL válida do Spotify
+ */
+function isValidSpotifyUrl(url) {
+  if (!url || typeof url !== 'string') return false;
+  return url.includes('open.spotify.com/') || url.includes('spotify.com/');
 }
 
 /**
@@ -54,20 +63,26 @@ function extractTrackId(url) {
  * @param {number} limit - Número de resultados
  * @returns {Promise<Object>} Resultados da busca
  */
-async function search(query, limit = 10) {
+async function search(query) {
   try {
-    const cached = getCached(`search:${query}:${limit}`);
+    if (!query || typeof query !== 'string') {
+      return {
+        ok: false,
+        msg: 'Query inválida'
+      };
+    }
+
+    const cached = getCached(`search:${query}`);
     if (cached) return cached;
 
-    const response = await axios.get(`${SEARCH_BASE_URL}/spotify-search`, {
+    const response = await axios.get(`${SEARCH_BASE_URL}/api/v2/search/spotify`, {
       params: {
-        name: query,
-        limit: Math.min(limit, 50)
+        query: query,
       },
       timeout: 120000
     });
 
-    if (!response.data || response.data.status !== 200) {
+    if (!response.data || response.data.status_code !== 200) {
       return {
         ok: false,
         msg: 'Erro ao buscar no Spotify'
@@ -77,17 +92,17 @@ async function search(query, limit = 10) {
     const result = {
       ok: true,
       query,
-      total: response.data.results?.length || 0,
-      results: response.data.results || []
+      total: response.data.result?.length || 0,
+      results: response.data.result.search_data || []
     };
 
-    setCache(`search:${query}:${limit}`, result);
+    setCache(`search:${query}`, result);
     return result;
   } catch (error) {
     console.error('Erro na busca do Spotify:', error.message);
     return {
       ok: false,
-      msg: 'Erro ao buscar no Spotify'
+      msg: 'Erro ao buscar no Spotify: ' + error.message
     };
   }
 }
@@ -99,10 +114,12 @@ async function search(query, limit = 10) {
  */
 async function download(url) {
   try {
-    if (!url || !url.includes('spotify.com')) {
+    // Validação melhorada da URL
+    if (!isValidSpotifyUrl(url)) {
+      console.log('[Spotify] URL inválida:', url);
       return {
         ok: false,
-        msg: 'URL inválida do Spotify'
+        msg: 'URL inválida do Spotify. Certifique-se de usar uma URL do Spotify válida.'
       };
     }
 
@@ -113,9 +130,10 @@ async function download(url) {
     // Extrair ID da track
     const trackId = extractTrackId(url);
     if (!trackId) {
+      console.log('[Spotify] Não foi possível extrair ID da URL:', url);
       return {
         ok: false,
-        msg: 'Não foi possível extrair o ID da música'
+        msg: 'Não foi possível extrair o ID da música. Verifique se a URL está correta.'
       };
     }
 
@@ -238,7 +256,7 @@ async function download(url) {
 async function searchDownload(query) {
   try {
     // Buscar primeiro resultado
-    const searchResult = await search(query, 1);
+    const searchResult = await search(query);
     
     if (!searchResult.ok || !searchResult.results?.length) {
       return {
@@ -249,7 +267,7 @@ async function searchDownload(query) {
 
     const track = searchResult.results[0];
     
-    if (!track.link) {
+    if (!track.song_link) {
       return {
         ok: false,
         msg: 'Link da música não encontrado'
@@ -257,7 +275,7 @@ async function searchDownload(query) {
     }
 
     // Fazer download
-    const downloadResult = await download(track.link);
+    const downloadResult = await download(track.song_link);
     
     if (!downloadResult.ok) {
       return downloadResult;
