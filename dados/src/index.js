@@ -1,4 +1,3 @@
-import makeWASocket from 'whaileys';
 import {
   downloadContentFromMessage,
   generateWAMessageFromContent,
@@ -18751,7 +18750,7 @@ case 'playspotify':
     await reply('🔎 Buscando no Spotify... Aguarde!');
 
     // 1. Buscar a música
-    const searchResult = await spotifyModule.search(q, 1);
+    const searchResult = await spotifyModule.search(q);
 
     if (!searchResult.ok || !searchResult.results?.length) {
       return reply('❌ Nenhuma música encontrada com esse nome.');
@@ -18762,13 +18761,14 @@ case 'playspotify':
     const searchCaption = `🎵 *Música Encontrada!* 🎵\n\n` +
       `🔍 *Busca:* ${q}\n\n` +
       `📌 *Título:* ${track.name}\n` +
-      `🔗 *Link:* ${track.link}\n\n` +
+      `🔗 *Link:* ${track.song_link}\n` +
+      `⏳ *Duração:* ${track.duration}\n\n` +
       `📥 *Baixando...*`;
 
     await reply(searchCaption);
 
     // 2. Baixar a música
-    const downloadResult = await spotifyModule.download(track.link);
+    const downloadResult = await spotifyModule.download(track.song_link);
 
     if (!downloadResult.ok) {
       return reply(`❌ ${downloadResult.msg}`);
