@@ -71,6 +71,7 @@ ${middleBorder}${menuItemIcon}${prefix}tapa
 ${middleBorder}${menuItemIcon}${prefix}soco
 ${middleBorder}${menuItemIcon}${prefix}socar
 ${middleBorder}${menuItemIcon}${prefix}explodir
+${middleBorder}${menuItemIcon}${prefix}tomate
 ${middleBorder}${menuItemIcon}${prefix}abraco
 ${middleBorder}${menuItemIcon}${prefix}abracar
 ${middleBorder}${menuItemIcon}${prefix}morder
