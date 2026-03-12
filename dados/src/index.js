@@ -30240,6 +30240,7 @@ ${nivelSorte >= 70 ? '🎉 Hoje é seu dia de sorte!' : nivelSorte >= 40 ? '🤔
       case 'lambida':
       case 'explodir':
       case 'sexo':
+      case 'tomate':
         try {
           const comandosImpróprios = ['sexo', 'surubao', 'goza', 'gozar', 'mamar', 'mamada', 'beijob', 'beijarb', 'tapar'];
           if (isModoLite && comandosImpróprios.includes(command)) return nazu.react('❌', {
