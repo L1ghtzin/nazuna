@@ -5926,9 +5926,9 @@ Entre em contato com o dono do bot:
           const total = (me.wallet||0) + (me.bank||0);
           return reply(`╭━━━⊱ 👤 *PERFIL FINANCEIRO* 👤 ⊱━━━╮
 │
-│ � *Carteira:* ${fmt(me.wallet)}
+│   *Carteira:* ${fmt(me.wallet)}
 │ 🏦 *Banco:* ${fmt(me.bank)}
-│ � *Total:* ${fmt(total)}
+│   *Total:* ${fmt(total)}
 │
 │ 💼 *Emprego:* ${me.job ? econ.jobCatalog[me.job]?.name || me.job : 'Desempregado(a)'}
 │
@@ -6154,7 +6154,7 @@ Entre em contato com o dono do bot:
           saveEconomy(econ);
           return reply(`╭━━━⊱ ✅ *VENDA* ✅ ⊱━━━╮
 │
-│ � Vendeu: ${qty}x ${matKey}
+│   Vendeu: ${qty}x ${matKey}
 │ 💰 Ganhou: ${fmt(gain)}
 │
 ╰━━━━━━━━━━━━━━━━━━━━━╯`);
@@ -7459,7 +7459,7 @@ Entre em contato com o dono do bot:
           text += `│ Você ainda não tem companheiros!\n`;
           text += `╰━━━━━━━━━━━━━━━━━━━━╯\n\n`;
           text += `🦊 *PETS DISPONÍVEIS:*\n\n`;
-          text += `� *Lobo* - Veloz e leal\n`;
+          text += `  *Lobo* - Veloz e leal\n`;
           text += `🐉 *Dragão* - Poderoso e raro\n`;
           text += `🔥 *Fênix* - Imortal e místico\n`;
           text += `🐯 *Tigre* - Feroz e forte\n`;
@@ -7571,14 +7571,14 @@ Entre em contato com o dono do bot:
             text += `${pet.emoji} *${pet.name}*\n`;
             text += `┌─────────────────\n`;
             text += `│ 📝 ${pet.desc}\n`;
-            text += `│ � Preço: ${pet.cost.toLocaleString()}\n`;
+            text += `│   Preço: ${pet.cost.toLocaleString()}\n`;
             text += `│ ❤️ HP: ${pet.hp}\n`;
             text += `│ ⚔️ ATK: ${pet.attack}\n`;
             text += `│ 🛡️ DEF: ${pet.defense}\n`;
             text += `└─────────────────\n\n`;
           });
           
-          text += `�💡 Use ${prefix}adotar <nome> para adotar`;
+          text += ` 💡 Use ${prefix}adotar <nome> para adotar`;
           return reply(text);
         }
         
@@ -7721,7 +7721,7 @@ Entre em contato com o dono do bot:
           pet.hp = pet.maxHp;
           pet.exp = 0;
           
-          text += `╭━━━⊱ � *PET EVOLUIU!* � ⊱━━━╮\n`;
+          text += `╭━━━⊱   *PET EVOLUIU!*   ⊱━━━╮\n`;
           text += `│\n`;
           text += `│ 🐾 *${pet.name}* ${pet.emoji}\n`;
           text += `│\n`;
@@ -8504,11 +8504,11 @@ Entre em contato com o dono do bot:
           if (leveledUp) {
             text += `│\n`;
             text += `╰━━━━━━━━━━━━━━━━━━━━╯\n\n`;
-            text += `╭━━━⊱ � *LEVEL UP!* � ⊱━━━╮\n`;
+            text += `╭━━━⊱   *LEVEL UP!*   ⊱━━━╮\n`;
             text += `│\n`;
             text += `│ 📊 Você subiu *${levelsGained}*`;
             text += levelsGained > 1 ? ` *níveis!*\n` : ` *nível!*\n`;
-            text += `│ � Nível atual: *${me.level}*\n`;
+            text += `│   Nível atual: *${me.level}*\n`;
             text += `│\n`;
             text += `╰━━━━━━━━━━━━━━━━━━━━━╯`;
           } else {
@@ -8780,7 +8780,7 @@ Entre em contato com o dono do bot:
           if (leveledUp) {
             text += `│\n`;
             text += `╰━━━━━━━━━━━━━━━━━━━━━╯\n\n`;
-            text += `╭━━━⊱ � *LEVEL UP!* 🌟 ⊱━━━╮\n`;
+            text += `╭━━━⊱   *LEVEL UP!* 🌟 ⊱━━━╮\n`;
             text += `│\n`;
             text += `│ 📊 Nível atual: *${me.level}*\n`;
             text += `│ ❤️ HP restante: *${Math.max(0, myHp)}*\n`;
@@ -12551,7 +12551,7 @@ Entre em contato com o dono do bot:
               await fs.unlinkSync(ran);
             });
           } else {
-            reply("� Para aplicar este efeito de áudio, responda a uma mensagem que contenha um áudio.");
+            reply("  Para aplicar este efeito de áudio, responda a uma mensagem que contenha um áudio.");
           }
         } catch (e) {
           console.error(e);
@@ -28872,7 +28872,7 @@ Membros que falarem palavras da blacklist serão BANIDOS AUTOMATICAMENTE do grup
 
       case 'chance':
         try {
-          if (!isGroup) return reply("🎮 Ops! Esse comando só funciona em grupos! Chama a galera! 👥�");
+          if (!isGroup) return reply("🎮 Ops! Esse comando só funciona em grupos! Chama a galera! 👥 ");
           if (!isModoBn) return reply('❌ O modo brincadeira está off nesse grupo! Pede pro admin ativar a diversão! 🎉');
           if (!q) return reply(`🎲 Me conta algo para eu calcular as chances! 📊
 
@@ -28894,12 +28894,12 @@ Membros que falarem palavras da blacklist serão BANIDOS AUTOMATICAMENTE do grup
 ${chance >= 80 ? '🚀 Uau! Apostaria minhas fichas nisso!' : chance >= 60 ? '😎 Chances promissoras!' : chance >= 40 ? '🤔 Meio termo, pode rolar!' : chance >= 20 ? '😅 Hmm... complicado!' : '😂 Melhor sonhar com outra coisa!'}`);
         } catch (e) {
           console.error(e);
-          await reply("😵 Minha bola de cristal bugou! Tenta de novo! 🔮�");
+          await reply("😵 Minha bola de cristal bugou! Tenta de novo! 🔮 ");
         }
         break;
       case 'quando':
         try {
-          if (!isGroup) return reply("🕰️ Esse comando só funciona em grupos! Vem com a galera! �✨");
+          if (!isGroup) return reply("🕰️ Esse comando só funciona em grupos! Vem com a galera!  ✨");
           if (!isModoBn) return reply('❌ O modo brincadeira está dormindo nesse grupo! Acorda ele! 😴🎉');
           if (!q) return reply(`🔮 Me conta o que você quer que eu preveja! 🌠
 
@@ -28923,12 +28923,12 @@ ${chance >= 80 ? '🚀 Uau! Apostaria minhas fichas nisso!' : chance >= 60 ? '�
           const prefixo = prefixos[Math.floor(Math.random() * prefixos.length)];
           await reply(`${prefixo}...
 
-�️ "${q}" vai acontecer: *${tempo}*!
+ ️ "${q}" vai acontecer: *${tempo}*!
 
 ${tempo.includes('nunca') ? '😂 Brincadeira! Nunca desista dos seus sonhos!' : '🍀 Boa sorte na espera!'}`);
         } catch (e) {
           console.error(e);
-          await reply("🔮 Minha máquina do tempo pifou! Tenta de novo! ⏰�");
+          await reply("🔮 Minha máquina do tempo pifou! Tenta de novo! ⏰ ");
         }
         break;
       case 'brincadeira': {
@@ -29371,7 +29371,7 @@ ${tempo.includes('nunca') ? '😂 Brincadeira! Nunca desista dos seus sonhos!' :
         break;
       case 'sn':
         try {
-          if (!isGroup) return reply("🎱 Esse comando só funciona em grupos! Chama todo mundo! �✨");
+          if (!isGroup) return reply("🎱 Esse comando só funciona em grupos! Chama todo mundo!  ✨");
           if (!isModoBn) return reply('❌ O modo brincadeira está pausado nesse grupo! Hora de ativar a diversão! 🎉');
           if (!q) return reply(`🎱 Faça uma pergunta para o oráculo! 🔮
 
@@ -29396,7 +29396,7 @@ ${tempo.includes('nunca') ? '😂 Brincadeira! Nunca desista dos seus sonhos!' :
           const confianca = Math.floor(Math.random() * 30) + 70; // 70-100%
           const emoji = isPositive ? '🎆' : '💔';
           
-          await reply(`� **ORÁCULO RESPONDE** 🎱
+          await reply(`  **ORÁCULO RESPONDE** 🎱
 
 🤔 *Pergunta:* "${q}"
 
@@ -29407,7 +29407,7 @@ ${emoji} **Resposta:** *${resposta}*
 ${isPositive ? '🎉 O destino sorri para você!' : '😅 Mas não desista dos seus sonhos!'}`);
         } catch (e) {
           console.error(e);
-          await reply("🎱 A bola 8 travou! Tenta de novo! �");
+          await reply("🎱 A bola 8 travou! Tenta de novo!  ");
         }
         break;
       case 'sorte':
@@ -29716,6 +29716,8 @@ ${nivelSorte >= 70 ? '🎉 Hoje é seu dia de sorte!' : nivelSorte >= 40 ? '🤔
         }
         break;
       case 'suicidio':
+          if (isGroupAdmin) return reply("❌ Awn, admin, você é precioso demais para isso. Fica aqui com a gente, tá? <3");
+          if (!isBotAdmin) return reply("❌ Preciso ser admin para fazer isso.");
         reply(`*É uma pena que tenha tomado essa decisão ${pushname}, vamos sentir saudades... 😕*`).then(() => {
           setTimeout(() => {
             nazu.groupParticipantsUpdate(from, [sender], "remove").then(() => {
