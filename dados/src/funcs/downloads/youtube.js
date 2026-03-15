@@ -1,179 +1,19 @@
 /**
- * YouTube Download - Usando API Vex
+ * YouTube Download - Usando API ApisNodz
  */
 
-import https from 'https';
 import yts from 'yt-search';
+import axios from 'axios';
 
 // ============================================
 // CONFIGURAÇÕES
 // ============================================
 
 const CONFIG = {
-  TIMEOUT: 60000,
-  VEX_API_KEY: 'SUA_API_KEY_AQUI', // 🔑 Coloque sua API Key aqui
-  VEX_API_BASE: 'https://vexapi.com.br/api/downloads',
-  DOWNLOAD_TIMEOUT: 180000
+  API_BASE: 'https://apisnodz.com.br/api/downloads/youtube',
+  DOWNLOAD_TIMEOUT: 180000,
+  USER_AGENT: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
 };
-
-// ============================================
-// FUNÇÃO VEX API (conforme documentação)
-// ============================================
-
-function buscarVexAPI(url) {
-    return new Promise((resolve, reject) => {
-        https.get(url, (res) => {
-            let data = '';
-
-            res.on('data', chunk => data += chunk);
-            res.on('end', () => {
-                try {
-                    if (res.headers['content-type']?.includes('application/json')) {
-                        return resolve(JSON.parse(data));
-                    }
-
-                    if (res.headers['content-type']?.includes('text/html')) {
-                        const match = data.match(/<pre[^>]*id=["']json["'][^>]*>([\s\S]*?)<\/pre>/i);
-                        if (match) return resolve(JSON.parse(match[1].trim()));
-
-                        try {
-                            return resolve(JSON.parse(data));
-                        } catch {
-                            return reject(new Error('HTML sem JSON detectado'));
-                        }
-                    }
-
-                    reject(new Error('Tipo de resposta desconhecido: ' + res.headers['content-type']));
-                } catch (err) {
-                    reject(err);
-                }
-            });
-        }).on('error', err => reject(err));
-    });
-}
-
-function downloadFile(url) {
-  return new Promise((resolve, reject) => {
-    console.log(`Baixando arquivo...`);
-    
-    const urlObj = new URL(url);
-    
-    const req = https.get({
-      hostname: urlObj.hostname,
-      path: urlObj.pathname + urlObj.search,
-      timeout: CONFIG.DOWNLOAD_TIMEOUT
-    }, (res) => {
-      if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
-        const redirectUrl = new URL(res.headers.location, url);
-        return downloadFile(redirectUrl.href).then(resolve).catch(reject);
-      }
-
-      if (res.statusCode !== 200) {
-        reject(new Error(`HTTP ${res.statusCode}`));
-        return;
-      }
-
-      const chunks = [];
-      res.on('data', chunk => chunks.push(chunk));
-      res.on('end', () => resolve(Buffer.concat(chunks)));
-    });
-
-    req.on('error', reject);
-    req.on('timeout', () => {
-      req.destroy();
-      reject(new Error('Timeout do download'));
-    });
-    req.end();
-  });
-}
-
-// ============================================
-// CLASSE VEXAPI
-// ============================================
-
-class VexAPI {
-  constructor() {
-    this.apiKey = CONFIG.VEX_API_KEY;
-    this.baseUrl = CONFIG.VEX_API_BASE;
-    
-    // Verifica se a API key foi configurada
-    if (!this.apiKey || this.apiKey === 'SUA_API_KEY_AQUI') {
-      console.warn('⚠️  AVISO: API Key não configurada! Coloque sua chave no arquivo.');
-    }
-  }
-
-  youtube(url) {
-    if (!url) return null;
-    const patterns = [
-      /youtube\.com\/watch\?v=([a-zA-Z0-9_-]{11})/,
-      /youtube\.com\/embed\/([a-zA-Z0-9_-]{11})/,
-      /youtube\.com\/shorts\/([a-zA-Z0-9_-]{11})/,
-      /youtu\.be\/([a-zA-Z0-9_-]{11})/
-    ];
-    for (let pattern of patterns) {
-      if (pattern.test(url)) return url.match(pattern)[1];
-    }
-    return null;
-  }
-
-  async downloadAudio(url) {
-    try {
-      const videoId = this.youtube(url);
-      if (!videoId) throw new Error('URL do YouTube inválida');
-
-      console.log(`Baixando áudio: ${videoId}`);
-      
-      const apiUrl = `${this.baseUrl}/youtubemp3?apikey=${this.apiKey}&query=${encodeURIComponent(`https://youtube.com/watch?v=${videoId}`)}`;
-      const data = await buscarVexAPI(apiUrl);
-
-      if (!data?.resposta) throw new Error('Resposta inválida da API');
-
-      return {
-        status: true,
-        result: {
-          title: data.resposta.title || 'YouTube Audio',
-          download: data.resposta.dlurl,
-          thumbnail: `https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg`,
-          id: videoId
-        }
-      };
-    } catch (error) {
-      return { status: false, error: error.message };
-    }
-  }
-
-  async downloadVideo(url) {
-    try {
-      const videoId = this.youtube(url);
-      if (!videoId) throw new Error('URL do YouTube inválida');
-
-      console.log(`Baixando vídeo: ${videoId}`);
-      
-      const apiUrl = `${this.baseUrl}/youtubemp4?apikey=${this.apiKey}&query=${encodeURIComponent(`https://youtube.com/watch?v=${videoId}`)}`;
-      const data = await buscarVexAPI(apiUrl);
-
-      if (!data?.resposta) throw new Error('Resposta inválida da API');
-
-      return {
-        status: true,
-        result: {
-          title: data.resposta.title || 'YouTube Video',
-          download: data.resposta.dlurl,
-          thumbnail: `https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg`,
-          id: videoId
-        }
-      };
-    } catch (error) {
-      return { status: false, error: error.message };
-    }
-  }
-}
-
-// ============================================
-// INSTÂNCIA
-// ============================================
-
-const vexApi = new VexAPI();
 
 // ============================================
 // FUNÇÕES AUXILIARES
@@ -197,75 +37,138 @@ function formatDuration(seconds) {
   return `${minutes}:${secs.toString().padStart(2, '0')}`;
 }
 
+async function downloadFile(url) {
+  try {
+    console.log(`Baixando arquivo...`);
+    
+    const response = await axios({
+      method: 'GET',
+      url: url,
+      responseType: 'arraybuffer',
+      timeout: CONFIG.DOWNLOAD_TIMEOUT,
+      maxRedirects: 5,
+      headers: {
+        'User-Agent': CONFIG.USER_AGENT
+      }
+    });
+
+    return Buffer.from(response.data);
+  } catch (error) {
+    throw new Error(`Falha no download: ${error.message}`);
+  }
+}
+
 // ============================================
 // DOWNLOADS
 // ============================================
 
-async function DownloadVexAudio(url) {
+async function DownloadAudio(url) {
   try {
     console.log(`Iniciando download de áudio...`);
     
-    const vexResult = await vexApi.downloadAudio(url);
-    if (!vexResult.status) throw new Error(vexResult.error);
+    const videoId = getYouTubeVideoId(url);
+    if (!videoId) throw new Error('URL do YouTube inválida');
 
-    const result = vexResult.result;
-    if (!result.download) throw new Error('URL de download não encontrada');
+    const apiUrl = `${CONFIG.API_BASE}/audio?url=${encodeURIComponent(`https://youtube.com/watch?v=${videoId}`)}`;
+    
+    const response = await axios.get(apiUrl, {
+      timeout: 10000,
+      headers: {
+        'User-Agent': CONFIG.USER_AGENT
+      }
+    });
 
+    const data = response.data;
+    
+    if (!data.success || !data.resultado) {
+      throw new Error(data.message || 'Resposta inválida da API');
+    }
+
+    const resultado = data.resultado;
+
+    // Busca informações adicionais do vídeo
     let videoInfo = null;
     try {
       const searchResults = await yts(url);
       videoInfo = searchResults?.videos?.[0] || null;
     } catch (e) {}
 
-    const buffer = await downloadFile(result.download);
+    // Faz o download do arquivo
+    const buffer = await downloadFile(resultado.url);
     if (!buffer) throw new Error('Falha ao baixar o arquivo');
 
     return {
       success: true,
       buffer,
-      title: result.title || videoInfo?.title || 'YouTube Audio',
-      thumbnail: result.thumbnail || videoInfo?.thumbnail || '',
-      quality: '128 kbps',
-      filename: `${(result.title || 'audio').replace(/[^\w\s]/gi, '')}.mp3`,
+      title: resultado.titulo || videoInfo?.title || 'YouTube Audio',
+      thumbnail: videoInfo?.thumbnail || `https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg`,
+      quality: resultado.qualidade || '128 kbps',
+      filename: resultado.filename || `${(resultado.titulo || 'audio').replace(/[^\w\s]/gi, '')}.mp3`,
       tempo: videoInfo?.seconds || 0,
-      source: 'vex'
+      duration: resultado.tempo || '0:00',
+      source: 'apisnodz'
     };
   } catch (error) {
-    return { success: false, error: error.message, source: 'vex' };
+    return { 
+      success: false, 
+      error: error.response?.data?.message || error.message, 
+      source: 'apisnodz' 
+    };
   }
 }
 
-async function DownloadVexVideo(url, qualidade = '720p') {
+async function DownloadVideo(url, qualidade = '360p') {
   try {
     console.log(`Iniciando download de vídeo...`);
     
-    const vexResult = await vexApi.downloadVideo(url);
-    if (!vexResult.status) throw new Error(vexResult.error);
+    const videoId = getYouTubeVideoId(url);
+    if (!videoId) throw new Error('URL do YouTube inválida');
 
-    const result = vexResult.result;
-    if (!result.download) throw new Error('URL de download não encontrada');
+    const apiUrl = `${CONFIG.API_BASE}/video?url=${encodeURIComponent(`https://youtube.com/watch?v=${videoId}`)}`;
+    
+    const response = await axios.get(apiUrl, {
+      timeout: 10000,
+      headers: {
+        'User-Agent': CONFIG.USER_AGENT
+      }
+    });
 
+    const data = response.data;
+    
+    if (!data.success || !data.resultado) {
+      throw new Error(data.message || 'Resposta inválida da API');
+    }
+
+    const resultado = data.resultado;
+
+    // Busca informações adicionais do vídeo
     let videoInfo = null;
     try {
       const searchResults = await yts(url);
       videoInfo = searchResults?.videos?.[0] || null;
     } catch (e) {}
 
-    const buffer = await downloadFile(result.download);
+    // Faz o download do arquivo
+    const buffer = await downloadFile(resultado.url);
     if (!buffer) throw new Error('Falha ao baixar o arquivo');
 
     return {
       success: true,
       buffer,
-      title: result.title || videoInfo?.title || 'YouTube Video',
-      thumbnail: result.thumbnail || videoInfo?.thumbnail || '',
-      quality: qualidade,
-      filename: `${(result.title || 'video').replace(/[^\w\s]/gi, '')}.mp4`,
+      title: resultado.titulo || videoInfo?.title || 'YouTube Video',
+      thumbnail: videoInfo?.thumbnail || `https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg`,
+      quality: resultado.qualidade || qualidade,
+      filename: resultado.filename || `${(resultado.titulo || 'video').replace(/[^\w\s]/gi, '')}.mp4`,
       tempo: videoInfo?.seconds || 0,
-      source: 'vex'
+      duration: resultado.tempo || '0:00',
+      source: 'apisnodz'
     };
   } catch (error) {
-    return { success: false, error: error.message, source: 'vex' };
+    return { 
+      success: false, 
+      error: error.response?.data?.message || error.message, 
+      source: 'apisnodz' 
+    };
   }
 }
 
@@ -310,7 +213,7 @@ async function mp3(url) {
     const id = getYouTubeVideoId(url);
     if (!id) return { ok: false, msg: 'URL inválida do YouTube' };
 
-    const result = await DownloadVexAudio(`https://youtube.com/watch?v=${id}`);
+    const result = await DownloadAudio(`https://youtube.com/watch?v=${id}`);
     
     if (!result.success || !result.buffer) {
       return { ok: false, msg: result.error || 'Erro ao processar áudio' };
@@ -332,12 +235,12 @@ async function mp3(url) {
   }
 }
 
-async function mp4(url, qualidade = '720p') {
+async function mp4(url, qualidade = '360p') {
   try {
     const id = getYouTubeVideoId(url);
     if (!id) return { ok: false, msg: 'URL inválida do YouTube' };
 
-    const result = await DownloadVexVideo(`https://youtube.com/watch?v=${id}`, qualidade);
+    const result = await DownloadVideo(`https://youtube.com/watch?v=${id}`, qualidade);
     
     if (!result.success || !result.buffer) {
       return { ok: false, msg: result.error || 'Erro ao processar vídeo' };
