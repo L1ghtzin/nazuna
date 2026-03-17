@@ -1,4 +1,4 @@
-import a, { useMultiFileAuthState, DisconnectReason, fetchLatestBaileysVersion, makeCacheableSignalKeyStore } from 'whaileys';
+import a, { useMultiFileAuthState, DisconnectReason, makeCacheableSignalKeyStore } from 'whaileys';
 const makeWASocket = a.default;
 import { Boom } from '@hapi/boom';
 import NodeCache from 'node-cache';
@@ -1027,7 +1027,7 @@ async function createBotSocket(authDir) {
         } = await useMultiFileAuthState(authDir, makeCacheableSignalKeyStore);
         
         // Busca a versão mais recente do WhatsApp
-        const { version } = await fetchLatestBaileysVersion();
+        const version = [2, 3000, 1035194821];
         console.log(`📱 Usando versão do WhatsApp: ${version.join('.')}`);
         
         const NazunaSock = makeWASocket({
@@ -1105,8 +1105,8 @@ async function createBotSocket(authDir) {
                 console.log('🆔 Group ID:', inf.id || inf.jid || 'unknown');
                 console.log('⚡ Action:', inf.action);
                 console.log('👥 Participants:', inf.participants);
-                console.log('� Author:', inf.author || 'N/A');
-                console.log('�📦 Full event data:', JSON.stringify(inf, null, 2));
+                console.log('  Author:', inf.author || 'N/A');
+                console.log(' 📦 Full event data:', JSON.stringify(inf, null, 2));
                 console.log('🐛 ================================================\n');
             }
             await handleGroupParticipantsUpdate(NazunaSock, inf);
