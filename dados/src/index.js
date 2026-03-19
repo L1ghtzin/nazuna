@@ -826,6 +826,13 @@ async function NazuninhaBotExec(nazu, info, store, messagesCache, rentalExpirati
    return texto.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
    }
 
+  // Extrai o motivo real removendo menções do texto
+  function extractReason(text, mentionedJids) {
+    let reason = text;
+    if (mentionedJids) mentionedJids.forEach(jid => { reason = reason.replace('@' + jid.split('@')[0], ''); });
+    return reason.trim() || 'Não especificado';
+  }
+
   // Calcula tempo restante de cooldown
   function timeLeft(timestamp) {
     const diff = Math.max(0, timestamp - Date.now());
@@ -24638,16 +24645,18 @@ ${prefix}togglecmdvip premium_ia off`);
           if (menc_os2 === botNumber) return reply("❌ Ops! Eu faço parte da bagunça, não dá pra me remover 💔");
           await nazu.groupParticipantsUpdate(from, [menc_os2], 'remove');
           
+          const banReason = extractReason(q, menc_jid2);
+
           // Notificação X9 para banimento
           if (groupData.x9) {
-            const reason = q && q.length > 0 ? `\n📝 Motivo: ${q}` : '';
+            const reasonText = `\n📝 Motivo: ${banReason}`;
             await nazu.sendMessage(from, {
-              text: `🚪 *X9 Report:* @${menc_os2.split('@')[0]} foi removido(a) do grupo por @${sender.split('@')[0]}.${reason}`,
+              text: `🚪 *X9 Report:* @${menc_os2.split('@')[0]} foi removido(a) do grupo por @${sender.split('@')[0]}.${reasonText}`,
               mentions: [menc_os2, sender],
             }).catch(err => console.error(`❌ Erro ao enviar X9: ${err.message}`));
           }
           
-          reply(`✅ Usuário banido com sucesso!${q && q.length > 0 ? '\n\nMotivo: ' + q : ''}`);
+          reply(`✅ Usuário banido com sucesso!\n\nMotivo: ${banReason}`);
         } catch (e) {
           console.error(e);
           reply("ocorreu um erro 💔");
@@ -24676,17 +24685,19 @@ ${prefix}togglecmdvip premium_ia off`);
           // Remove o usuário
           await nazu.groupParticipantsUpdate(from, [menc_os2], 'remove');
           
+          const banReason = extractReason(q, menc_jid2);
+
           // Notificação X9 para banimento
           if (groupData.x9) {
-            const reason = q && q.length > 0 ? `\n📝 Motivo: ${q}` : '';
+            const reasonText = `\n📝 Motivo: ${banReason}`;
             await nazu.sendMessage(from, {
-              text: `🚪 *X9 Report:* @${menc_os2.split('@')[0]} foi removido(a) do grupo por @${sender.split('@')[0]}.${reason}`,
+              text: `🚪 *X9 Report:* @${menc_os2.split('@')[0]} foi removido(a) do grupo por @${sender.split('@')[0]}.${reasonText}`,
               mentions: [menc_os2, sender],
             }).catch(err => console.error(`❌ Erro ao enviar X9: ${err.message}`));
           }
           
           await nazu.sendMessage(from, {
-            text: `👋 @${menc_os2.split('@')[0]} foi banido! Adeus! 🚪${q && q.length > 0 ? '\n\n📝 Motivo: ' + q : ''}`,
+            text: `👋 @${menc_os2.split('@')[0]} foi banido! Adeus! 🚪\n\n📝 Motivo: ${banReason}`,
             mentions: [menc_os2]
           });
         } catch (e) {
@@ -27134,7 +27145,7 @@ Exemplos:
           if (!isGroupAdmin) return reply("Você precisa ser administrador 💔");
           if (!menc_os2) return reply("Marque um usuário 🙄");
           if (menc_os2 === botNumber) return reply("❌ Não posso advertir a mim mesma!");
-          const reason = q ? (q.includes('@') || !menc_os2) ? (args.length > 1 ? args.slice(1).join(' ') : 'Motivo não informado') : q.trim() : 'Motivo não informado';
+          const reason = extractReason(q, menc_jid2) || 'Motivo não informado';
           const groupFilePath = buildGroupFilePath(from);
           let groupData = fs.existsSync(groupFilePath) ? JSON.parse(fs.readFileSync(groupFilePath)) : {
             warnings: {}
