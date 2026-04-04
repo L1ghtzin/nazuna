@@ -1,4 +1,4 @@
-# Assistente completa para WhatsApp
+# Nazuna Bot
 
 ![Banner](https://raw.githubusercontent.com/nazuninha/uploads/main/fotos/1775259991532_zf0c44.jpg)
 
