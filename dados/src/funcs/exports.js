@@ -111,6 +111,7 @@ async function loadModules() {
 
         // --- utils (ESM via dynamic import) ---
         const [
+            Dicionario, 
             styleTextMod,
             LogosMod, 
             LogosMod2, 
@@ -140,6 +141,7 @@ async function loadModules() {
             imagetoolsMod,
             freefireMod,
         ] = await Promise.all([
+            import('./utils/dicionario.js'), 
             import('./utils/gerarnick.js'),
             import('./utils/logotipos.js'),
             import('./utils/logotipos2.js'),
@@ -171,6 +173,7 @@ async function loadModules() {
         ]);
 
         // Utils modules with null checking
+        modules.Dicionary = Dicionario.default ?? Dicionario;
         modules.styleText = styleTextMod.default ?? styleTextMod;
         modules.Logos = LogosMod.default ?? LogosMod;
         modules.Logos2 = LogosMod2.default ?? LogosMod2;
