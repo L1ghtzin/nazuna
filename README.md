@@ -1,11 +1,11 @@
 # NAZUNA BOT (WHATSAPP) 
 
-![Banner](https://files.catbox.moe/iix8ae.gif)
+   ![Banner](https://files.catbox.moe/iix8ae.gif)
 
 > **Nazuna** é um bot de WhatsApp poderoso, fácil de usar e cheio de funcionalidades.  
 > Ele foi criado para ajudar na administração de grupos, entretenimento e automação.
 
-> **Nosso grupo de WhatsApp!**
+## **Nosso grupo de WhatsApp!**
 https://chat.whatsapp.com/EnND4ZCkjVO7hEDwAxblzg?mode=gi_t
 
 ## 🧠 Sobre a Nazuna
