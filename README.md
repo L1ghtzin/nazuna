@@ -1,4 +1,4 @@
-# 🤖 Nazuna Bot — Assistente completo para WhatsApp
+# 🤖 Nazuna Bot — Assistente completa para WhatsApp
 
 ![Banner](https://raw.githubusercontent.com/nazuninha/uploads/main/fotos/1775259991532_zf0c44.jpg)
 
@@ -7,8 +7,7 @@
 
 ## 🧠 Sobre o Nazuna
 
-O Nazuna é um bot versátil desenvolvido com **Node.js** e **WaLib**.  
-Mesmo sendo tecnicamente uma **bot mulher**, ele é tratado no projeto como **ele** — uma escolha de estilo da documentação.
+A Nazuna é um bot versátil desenvolvido com **Node.js** e **WaLib**.  
 
 ✅ Rápido  
 ✅ Fácil de instalar  
@@ -43,17 +42,17 @@ Depois é só escanear o QR code ou usar código de pareamento.
 
 ⚠️ Use um número secundário no WhatsApp para evitar bloqueios.
 
-📋 Pré-requisitos
+## 📋 Pré-requisitos
 
 Item Versão / Obs
-Node.js 18 ou superior
+Node.js 20 ou superior
 Git Qualquer versão recente
 WhatsApp Número secundário
 Internet Estável
 RAM mínima 256 MB
 Disco mínimo 256 MB
 
-🔌 Como conectar o bot
+## 🔌 Como conectar o bot
 
 Opção 1 — QR Code (recomendado)
 
@@ -69,7 +68,7 @@ Opção 2 — Código de pareamento
 
 A sessão é salva automaticamente.
 
-🔄 Atualizar o bot
+## 🔄 Atualizar o bot
 
 ```bash
 npm run update
@@ -77,7 +76,7 @@ npm run update
 
 Seus dados e configurações não serão perdidos.
 
-🖥️ Plataformas compatíveis
+## 🖥️ Plataformas compatíveis
 
 · Windows
 · Linux
@@ -85,7 +84,7 @@ Seus dados e configurações não serão perdidos.
 · Android (via Termux)
 · Servidores (Pterodactyl, VPS)
 
-❓ Dúvidas comuns (FAQ rápido)
+## ❓ Dúvidas comuns (FAQ rápido)
 
 Problema Solução
 npm: comando não encontrado Instale o Node.js
@@ -93,7 +92,7 @@ QR code não aparece Aumente o terminal ou use pareamento
 Bot cai sozinho Verifique sua internet ou reinicie
 Termux para em segundo plano Desative a otimização de bateria
 
-💖 Apoie o projeto
+## 💖 Apoie o projeto
 
 Se você gosta do Nazuna, considere apoiar:
 
@@ -101,20 +100,15 @@ Chave Pix (CNPJ): 60.374.533/0001-65
 
 Qualquer valor ajuda 💙
 
-📜 Licença
+## 📜 Licença
 
 © 2025 Hiudy — Todos os direitos reservados.
 Uso gratuito permitido, venda proibida.
 
-👤 Criador
+## 👤 Criador
 
 Feito com ❤️ por Hiudy
 
 · GitHub: hiudyy
 · Discord: hiudyyy
 · Instagram: @hiudyyy_
-
-
-🌐 Comunidade
-
-https://img.shields.io/badge/Entrar-WhatsApp-25D366?style=flat-square&logo=whatsapp
