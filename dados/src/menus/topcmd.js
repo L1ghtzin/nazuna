@@ -1,17 +1,22 @@
 async function menuTopCmd(prefix, botName = "MeuBot", userName = "Usuário", topCommands = [], {
-    header = `╭┈⊰ 🌸 『 *${botName}* 』\n┊Olá, #user#!\n╰─┈┈┈┈┈◜❁◞┈┈┈┈┈─╯`,
+    header = `╭┈⊰ 🫟 『 *${botName}* 』\n┊💭 *Usuário:* #nome#\n┊👑 *Prefixo:* #prefix#\n╰─┈┈┈┈┈┈┈┈┈┈◜❁◞┈┈┈┈┈┈┈┈┈┈─╯`,
     menuTopBorder = "╭┈",
-    bottomBorder = "╰─┈┈┈┈┈◜❁◞┈┈┈┈┈─╯",
+    bottomBorder = "╰─┈┈┈┈┈┈┈┈┈┈◜❁◞┈┈┈┈┈┈┈┈┈┈─╯",
     menuTitleIcon = "🍧ฺꕸ▸",
-    menuItemIcon = "•.̇𖥨֗🍓⭟",
+    menuItemIcon = "•.̇𖥨֗🫟⭟",
     separatorIcon = "❁",
-    middleBorder = "┊",
+    middleBorder = "┊", 
     topCommandsMenuTitle = "MAIS USADOS",
     infoSectionTitle = "Informações"
 } = {}) {
-    const formattedHeader = header.replace(/#user#/g, userName);
+
+    let formattedHeader = header
+    .replace(/#user#/g, userName)
+    .replace(/#prefix#/g, prefix);
+    
+    
     if (!topCommands || topCommands.length === 0) {
-        return `${formattedHeader}
+return `${formattedHeader}
 
 ${menuTopBorder}${separatorIcon} *${topCommandsMenuTitle}*
 ${middleBorder}

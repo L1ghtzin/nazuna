@@ -1,11 +1,11 @@
 export default async function menurpg(prefix, botName = "MeuBot", userName = "Usuário", {
-    header = `╭┈⊰ ⚔️ 『 *MODO RPG* 』\n┊Olá, #user#!\n╰─┈┈┈┈┈◜⚔️◞┈┈┈┈┈─╯`,
+    header = `╭┈⊰ 🫟 『 *${botName}* 』\n┊💭 *Usuário:* #nome#\n┊👑 *Prefixo:* #prefix#\n╰─┈┈┈┈┈┈┈┈┈┈◜❁◞┈┈┈┈┈┈┈┈┈┈─╯`,
     menuTopBorder = "╭┈",
-    bottomBorder = "╰─┈┈┈┈┈◜⚔️◞┈┈┈┈┈─╯",
-    menuTitleIcon = "⚔️ฺꕸ▸",
-    menuItemIcon = "•.̇𖥨֗✨⭟",
-    separatorIcon = "⚔️",
-    middleBorder = "┊",
+    bottomBorder = "╰─┈┈┈┈┈┈┈┈┈┈◜❁◞┈┈┈┈┈┈┈┈┈┈─╯",
+    menuTitleIcon = "🍧ฺꕸ▸",
+    menuItemIcon = "•.̇𖥨֗🫟⭟",
+    separatorIcon = "❁",
+    middleBorder = "┊", 
     profileMenuTitle = "👤 PERFIL & STATUS",
     economyMenuTitle = "💰 ECONOMIA & FINANÇAS",
     activitiesMenuTitle = "🎯 ATIVIDADES DIÁRIAS",
@@ -25,8 +25,12 @@ export default async function menurpg(prefix, botName = "MeuBot", userName = "Us
     premiumMenuTitle = "💎 LOJA PREMIUM",
     adminMenuTitle = "🔧 ADMIN RPG (DONO)"
 } = {}) {
-  const h = header.replace(/#user#/g, userName);
-    return `${h} 
+
+  let formattedHeader = header
+    .replace(/#user#/g, userName)
+    .replace(/#prefix#/g, prefix);
+    
+ return `${formattedHeader} 
 
 ${menuTopBorder}${separatorIcon} *${profileMenuTitle}*
 ${middleBorder}

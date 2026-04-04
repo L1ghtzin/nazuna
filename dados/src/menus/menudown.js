@@ -1,11 +1,11 @@
 export default async function menudown(prefix, botName = "MeuBot", userName = "Usuário", {
-    header = `╭┈⊰ 🌸 『 *${botName}* 』\n┊Olá, #user#!\n╰─┈┈┈┈┈◜❁◞┈┈┈┈┈─╯`,
+    header = `╭┈⊰ 🫟 『 *${botName}* 』\n┊💭 *Usuário:* #nome#\n┊👑 *Prefixo:* #prefix#\n╰─┈┈┈┈┈┈┈┈┈┈◜❁◞┈┈┈┈┈┈┈┈┈┈─╯`,
     menuTopBorder = "╭┈",
-    bottomBorder = "╰─┈┈┈┈┈◜❁◞┈┈┈┈┈─╯",
+    bottomBorder = "╰─┈┈┈┈┈┈┈┈┈┈◜❁◞┈┈┈┈┈┈┈┈┈┈─╯",
     menuTitleIcon = "🍧ฺꕸ▸",
-    menuItemIcon = "•.̇𖥨֗🍓⭟",
+    menuItemIcon = "•.̇𖥨֗🫟⭟",
     separatorIcon = "❁",
-    middleBorder = "┊",
+    middleBorder = "┊", 
     searchMenuTitle = "🔍 PESQUISAS & CONSULTAS",
     audioMenuTitle = "🎵 MÚSICA & ÁUDIO", 
     videoMenuTitle = "🎬 VÍDEOS & STREAMING",
@@ -13,8 +13,12 @@ export default async function menudown(prefix, botName = "MeuBot", userName = "U
     mediaMenuTitle = "📱 MÍDIAS SOCIAIS",
     gamesMenuTitle = "🎮 GAMING & APPS"
 } = {}) {
-    const formattedHeader = header.replace(/#user#/g, userName);
-    return `${formattedHeader}
+
+    let formattedHeader = header
+    .replace(/#user#/g, userName)
+    .replace(/#prefix#/g, prefix);
+    
+  return `${formattedHeader}
 
 ${menuTopBorder}${separatorIcon} *${searchMenuTitle}*
 ${middleBorder}

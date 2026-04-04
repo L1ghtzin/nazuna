@@ -4,17 +4,21 @@ import { groupVipCommandsByCategory, getVipStats } from '../utils/vipCommandsMan
  * Gera o menu VIP dinamicamente baseado nos comandos cadastrados
  */
 async function menuVIP(prefix, botName = "MeuBot", userName = "Usuário", {
-  header = `╭┈⊰ 🌸 『 *${botName}* 』\n┊Olá, #user#!\n╰─┈┈┈┈┈◜❁◞┈┈┈┈┈─╯`,
-  menuTopBorder = "╭┈",
-  bottomBorder = "╰─┈┈┈┈┈◜❁◞┈┈┈┈┈─╯",
-  menuItemIcon = "•.̇𖥨֗🍓⭟",
-  separatorIcon = "❁",
-  middleBorder = "┊"
+    header = `╭┈⊰ 🫟 『 *${botName}* 』\n┊💭 *Usuário:* #nome#\n┊👑 *Prefixo:* #prefix#\n╰─┈┈┈┈┈┈┈┈┈┈◜❁◞┈┈┈┈┈┈┈┈┈┈─╯`,
+    menuTopBorder = "╭┈",
+    bottomBorder = "╰─┈┈┈┈┈┈┈┈┈┈◜❁◞┈┈┈┈┈┈┈┈┈┈─╯",
+    menuTitleIcon = "🍧ฺꕸ▸",
+    menuItemIcon = "•.̇𖥨֗🫟⭟",
+    separatorIcon = "❁",
+    middleBorder = "┊"
 } = {}) {
   try {
     const grouped = groupVipCommandsByCategory();
     const stats = getVipStats();
-    const formattedHeader = header.replace(/#user#/g, userName);
+    
+    let formattedHeader = header
+    .replace(/#user#/g, userName)
+    .replace(/#prefix#/g, prefix);
     
     let menu = `${formattedHeader}
 
@@ -57,7 +61,7 @@ ${bottomBorder}
 }
 
 async function menuVIPInfo(prefix, botName = "MeuBot", userName = "Usuário", {
-  header = `╭┈⊰ 🌸 『 *${botName}* 』\n┊Olá, #user#!\n╰─┈┈┈┈┈◜❁◞┈┈┈┈┈─╯`,
+  header = `╭┈⊰ 🫟 『 *${botName}* 』\n┊Olá, #user#!\n╰─┈┈┈┈┈◜❁◞┈┈┈┈┈─╯`,
   menuTopBorder = "╭┈",
   bottomBorder = "╰─┈┈┈┈┈◜❁◞┈┈┈┈┈─╯",
   separatorIcon = "❁",
@@ -96,10 +100,10 @@ ${bottomBorder}
 }
 
 async function listVIPCommands(prefix, botName = "MeuBot", userName = "Usuário", {
-  header = `╭┈⊰ 🌸 『 *${botName}* 』\n┊Olá, #user#!\n╰─┈┈┈┈┈◜❁◞┈┈┈┈┈─╯`,
+  header = `╭┈⊰ 🫟 『 *${botName}* 』\n┊Olá, #user#!\n╰─┈┈┈┈┈◜❁◞┈┈┈┈┈─╯`,
   menuTopBorder = "╭┈",
   bottomBorder = "╰─┈┈┈┈┈◜❁◞┈┈┈┈┈─╯",
-  menuItemIcon = "•.̇𖥨֗🍓⭟",
+  menuItemIcon = "•.̇𖥨֗🫟⭟",
   separatorIcon = "❁",
   middleBorder = "┊"
 } = {}) {

@@ -1,11 +1,11 @@
 export default async function menuFerramentas(prefix, botName = "MeuBot", userName = "Usuário", {
-    header = `╭┈⊰ 🌸 『 *${botName}* 』\n┊Olá, #user#!\n╰─┈┈┈┈┈◜❁◞┈┈┈┈┈─╯`,
+    header = `╭┈⊰ 🫟 『 *${botName}* 』\n┊💭 *Usuário:* #nome#\n┊👑 *Prefixo:* #prefix#\n╰─┈┈┈┈┈┈┈┈┈┈◜❁◞┈┈┈┈┈┈┈┈┈┈─╯`,
     menuTopBorder = "╭┈",
-    bottomBorder = "╰─┈┈┈┈┈◜❁◞┈┈┈┈┈─╯",
+    bottomBorder = "╰─┈┈┈┈┈┈┈┈┈┈◜❁◞┈┈┈┈┈┈┈┈┈┈─╯",
     menuTitleIcon = "🍧ฺꕸ▸",
-    menuItemIcon = "•.̇𖥨֗🍓⭟",
+    menuItemIcon = "•.̇𖥨֗🫟⭟",
     separatorIcon = "❁",
-    middleBorder = "┊",
+    middleBorder = "┊", 
     nicknameMenuTitle = "📱 GERADOR DE NOMES & IDENTIDADE",
     captureMenuTitle = "🖼️ CAPTURAS & VISUALIZAÇÃO",
     linkMenuTitle = "🌐 LINKS & UPLOADS",
@@ -14,8 +14,11 @@ export default async function menuFerramentas(prefix, botName = "MeuBot", userNa
     languageMenuTitle = "📚 DICIONÁRIO & TRADUÇÃO",
     reminderMenuTitle = "⏰ LEMBRETES & LISTAS"
 } = {}) {
-    const formattedHeader = header.replace(/#user#/g, userName);
-    return `${formattedHeader}
+    let formattedHeader = header
+    .replace(/#user#/g, userName)
+    .replace(/#prefix#/g, prefix);
+
+return `${formattedHeader}
 
 ${menuTopBorder}${separatorIcon} *${nicknameMenuTitle}*
 ${middleBorder}

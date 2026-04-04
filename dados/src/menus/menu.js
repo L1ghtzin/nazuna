@@ -1,28 +1,32 @@
-export default async function menu(prefix, botName = "MeuBot", userName = "Usuário", {
-    header = `╭┈⊰ 🌸 『 *${botName}* 』\n┊Olá, #user#!\n╰─┈┈┈┈┈◜❁◞┈┈┈┈┈─╯`,
+export default async function menu(prefix, botName = "MeuBot", userName, {
+    header = `╭┈⊰ 🫟 『 *${botName}* 』\n┊💭 *Usuário:* #nome#\n┊👑 *Prefixo:* #prefix#\n╰─┈┈┈┈┈┈┈┈┈┈◜❁◞┈┈┈┈┈┈┈┈┈┈─╯`,
     menuTopBorder = "╭┈",
-    bottomBorder = "╰─┈┈┈┈┈◜❁◞┈┈┈┈┈─╯",
+    bottomBorder = "╰─┈┈┈┈┈┈┈┈┈┈◜❁◞┈┈┈┈┈┈┈┈┈┈─╯",
     menuTitleIcon = "🍧ฺꕸ▸",
-    menuItemIcon = "•.̇𖥨֗🍓⭟",
+    menuItemIcon = "•.̇𖥨֗🫟⭟",
     separatorIcon = "❁",
     middleBorder = "┊"
 } = {}) {
-    const formattedHeader = header.replace(/#user#/g, userName);
+    
+    let formattedHeader = header
+        .replace(/#nome#/g, userName)
+        .replace(/#prefix#/g, prefix);
+
     return `${formattedHeader}
 
-${menuTopBorder}${separatorIcon} *MENU PRINCIPAL*
+${menuTopBorder}${separatorIcon} ${menuTitleIcon} *MENU PRINCIPAL*
 ${middleBorder}
-${middleBorder}${menuItemIcon}${prefix}menuia
-${middleBorder}${menuItemIcon}${prefix}menudown
-${middleBorder}${menuItemIcon}${prefix}menulogos
-${middleBorder}${menuItemIcon}${prefix}menuadm
-${middleBorder}${menuItemIcon}${prefix}menubn
-${middleBorder}${menuItemIcon}${prefix}menudono
-${middleBorder}${menuItemIcon}${prefix}menumemb
-${middleBorder}${menuItemIcon}${prefix}ferramentas
-${middleBorder}${menuItemIcon}${prefix}menufig
-${middleBorder}${menuItemIcon}${prefix}alteradores
-${middleBorder}${menuItemIcon}${prefix}menurpg
-${middleBorder}${menuItemIcon}${prefix}menuvip
+${middleBorder}${menuItemIcon}${prefix}menuia -> Inteligencias IAs
+${middleBorder}${menuItemIcon}${prefix}menudown -> Downloads
+${middleBorder}${menuItemIcon}${prefix}menulogos -> Logos
+${middleBorder}${menuItemIcon}${prefix}menuadm -> Administração
+${middleBorder}${menuItemIcon}${prefix}menubn -> Brincadeiras
+${middleBorder}${menuItemIcon}${prefix}menudono -> Dono
+${middleBorder}${menuItemIcon}${prefix}menumemb -> Membros
+${middleBorder}${menuItemIcon}${prefix}ferramentas -> Ferramentas
+${middleBorder}${menuItemIcon}${prefix}menufig -> Figurinhas
+${middleBorder}${menuItemIcon}${prefix}alteradores -> Alteradores
+${middleBorder}${menuItemIcon}${prefix}menurpg -> RPG
+${middleBorder}${menuItemIcon}${prefix}menuvip -> VIP
 ${bottomBorder}`;
 }

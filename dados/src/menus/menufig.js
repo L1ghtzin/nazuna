@@ -1,16 +1,20 @@
 async function menuSticker(prefix, botName = "MeuBot", userName = "Usuário", {
-    header = `╭┈⊰ 🌸 『 *${botName}* 』\n┊Olá, #user#!\n╰─┈┈┈┈┈◜❁◞┈┈┈┈┈─╯`,
+    header = `╭┈⊰ 🫟 『 *${botName}* 』\n┊💭 *Usuário:* #nome#\n┊👑 *Prefixo:* #prefix#\n╰─┈┈┈┈┈┈┈┈┈┈◜❁◞┈┈┈┈┈┈┈┈┈┈─╯`,
     menuTopBorder = "╭┈",
-    bottomBorder = "╰─┈┈┈┈┈◜❁◞┈┈┈┈┈─╯",
+    bottomBorder = "╰─┈┈┈┈┈┈┈┈┈┈◜❁◞┈┈┈┈┈┈┈┈┈┈─╯",
     menuTitleIcon = "🍧ฺꕸ▸",
-    menuItemIcon = "•.̇𖥨֗🍓⭟",
+    menuItemIcon = "•.̇𖥨֗🫟⭟",
     separatorIcon = "❁",
-    middleBorder = "┊",
+    middleBorder = "┊", 
     createStickerMenuTitle = "🎨 CRIAÇÃO DE FIGURINHAS",
-    managementMenuTitle = "⚙️ GERENCIAMENTO DE FIGURINHAS"
+    managementMenuTitle = "⚙️ GERENCIAMENTO"
 } = {}) {
-    const formattedHeader = header.replace(/#user#/g, userName);
-    return `${formattedHeader}
+
+    let formattedHeader = header
+    .replace(/#user#/g, userName)
+    .replace(/#prefix#/g, prefix);
+    
+  return `${formattedHeader}
 
 ${menuTopBorder}${separatorIcon} *${createStickerMenuTitle}*
 ${middleBorder}
@@ -22,6 +26,8 @@ ${middleBorder}${menuItemIcon}${prefix}sticker2
 ${middleBorder}${menuItemIcon}${prefix}sbg
 ${middleBorder}${menuItemIcon}${prefix}sfundo
 ${middleBorder}${menuItemIcon}${prefix}qc
+${middleBorder}${menuItemIcon}${prefix}brat
+${middleBorder}${menuItemIcon}${prefix}bratvid
 ${bottomBorder}
 
 ${menuTopBorder}${separatorIcon} *${managementMenuTitle}*

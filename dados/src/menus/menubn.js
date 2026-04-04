@@ -1,11 +1,11 @@
 export default async function menubn(prefix, botName = "MeuBot", userName = "Usuário", isLiteMode = false, {
-    header = `╭┈⊰ 🌸 『 *${botName}* 』\n┊Olá, #user#!\n╰─┈┈┈┈┈◜❁◞┈┈┈┈┈─╯`,
+    header = `╭┈⊰ 🫟 『 *${botName}* 』\n┊💭 *Usuário:* #nome#\n┊👑 *Prefixo:* #prefix#\n╰─┈┈┈┈┈┈┈┈┈┈◜❁◞┈┈┈┈┈┈┈┈┈┈─╯`,
     menuTopBorder = "╭┈",
-    bottomBorder = "╰─┈┈┈┈┈◜❁◞┈┈┈┈┈─╯",
+    bottomBorder = "╰─┈┈┈┈┈┈┈┈┈┈◜❁◞┈┈┈┈┈┈┈┈┈┈─╯",
     menuTitleIcon = "🍧ฺꕸ▸",
-    menuItemIcon = "•.̇𖥨֗🍓⭟",
+    menuItemIcon = "•.̇𖥨֗🫟⭟",
     separatorIcon = "❁",
-    middleBorder = "┊",
+    middleBorder = "┊", 
     gamesMenuTitle = "🎮 JOGOS & DIVERSÃO 🎲",
     phrasesMenuTitle = "💬 FRASES & TEXTOS 📜",
     interactionsMenuTitle = "💬 INTERAÇÕES SOCIAIS 🤝",
@@ -16,7 +16,11 @@ export default async function menubn(prefix, botName = "MeuBot", userName = "Usu
     maleRanksMenuTitle = "🏆 RANKINGS MASCULINOS 👑",
     femaleRanksMenuTitle = "👸 RANKINGS FEMININOS 💎"
 } = {}) {
-    const formattedHeader = header.replace(/#user#/g, userName);
+
+    let formattedHeader = header
+    .replace(/#user#/g, userName)
+    .replace(/#prefix#/g, prefix);
+    
     let menuContent = `${formattedHeader}
 
 ${menuTopBorder}${separatorIcon} *${gamesMenuTitle}*

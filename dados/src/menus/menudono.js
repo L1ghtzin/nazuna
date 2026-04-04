@@ -1,11 +1,11 @@
 async function menuDono(prefix, botName = "MeuBot", userName = "Usuário", {
-    header = `╭┈⊰ 🌸 『 *${botName}* 』\n┊Olá, #user#!\n╰─┈┈┈┈┈◜❁◞┈┈┈┈┈─╯`,
+    header = `╭┈⊰ 🫟 『 *${botName}* 』\n┊💭 *Usuário:* #nome#\n┊👑 *Prefixo:* #prefix#\n╰─┈┈┈┈┈┈┈┈┈┈◜❁◞┈┈┈┈┈┈┈┈┈┈─╯`,
     menuTopBorder = "╭┈",
-    bottomBorder = "╰─┈┈┈┈┈◜❁◞┈┈┈┈┈─╯",
+    bottomBorder = "╰─┈┈┈┈┈┈┈┈┈┈◜❁◞┈┈┈┈┈┈┈┈┈┈─╯",
     menuTitleIcon = "🍧ฺꕸ▸",
-    menuItemIcon = "•.̇𖥨֗🍓⭟",
+    menuItemIcon = "•.̇𖥨֗🫟⭟",
     separatorIcon = "❁",
-    middleBorder = "┊",
+    middleBorder = "┊", 
     botConfigMenuTitle = "🤖 CONFIGURAÇÕES DO BOT",
     menuDesignMenuTitle = "🎨 DESIGN & APARÊNCIA",
     automationMenuTitle = "⚙️ SISTEMA & AUTOMAÇÃO",
@@ -19,7 +19,11 @@ async function menuDono(prefix, botName = "MeuBot", userName = "Usuário", {
     monitoringMenuTitle = "📊 MONITORAMENTO & ANÁLISE",
     broadcastMenuTitle = "📡 TRANSMISSÕES"
 } = {}) {
-    const formattedHeader = header.replace(/#user#/g, userName);
+
+    let formattedHeader = header
+    .replace(/#user#/g, userName)
+    .replace(/#prefix#/g, prefix);
+    
     return `${formattedHeader}
 
 ${menuTopBorder}${separatorIcon} *📚 INÍCIO*

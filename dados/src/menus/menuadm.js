@@ -1,11 +1,11 @@
 export default async function menuadm(prefix, botName = "MeuBot", userName = "Usuário", {
-    header = `╭┈⊰ 🌸 『 *${botName}* 』\n┊Olá, #user#!\n╰─┈┈┈┈┈◜❁◞┈┈┈┈┈─╯`,
+    header = `╭┈⊰ 🫟 『 *${botName}* 』\n┊💭 *Usuário:* #nome#\n┊👑 *Prefixo:* #prefix#\n╰─┈┈┈┈┈┈┈┈┈┈◜❁◞┈┈┈┈┈┈┈┈┈┈─╯`,
     menuTopBorder = "╭┈",
-    bottomBorder = "╰─┈┈┈┈┈◜❁◞┈┈┈┈┈─╯",
+    bottomBorder = "╰─┈┈┈┈┈┈┈┈┈┈◜❁◞┈┈┈┈┈┈┈┈┈┈─╯",
     menuTitleIcon = "🍧ฺꕸ▸",
-    menuItemIcon = "•.̇𖥨֗🍓⭟",
+    menuItemIcon = "•.̇𖥨֗🫟⭟",
     separatorIcon = "❁",
-    middleBorder = "┊",
+    middleBorder = "┊", 
     adminMenuTitle = "🛡️ GESTÃO DE USUÁRIOS",
     managementMenuTitle = "💬 GESTÃO DO GRUPO",
     securityMenuTitle = "🔒 SEGURANÇA",
@@ -14,7 +14,11 @@ export default async function menuadm(prefix, botName = "MeuBot", userName = "Us
     activationsMenuTitle = "⚡ ATIVAÇÕES",
     settingsMenuTitle = "🎨 CONFIGURAÇÕES"
 } = {}) {
-    const formattedHeader = header.replace(/#user#/g, userName);
+
+    let formattedHeader = header
+    .replace(/#user#/g, userName)
+    .replace(/#prefix#/g, prefix);
+    
     return `${formattedHeader}
 
 ${menuTopBorder}${separatorIcon} *${adminMenuTitle}*
@@ -123,6 +127,8 @@ ${middleBorder}${menuItemIcon}${prefix}antilinkhard
 ${middleBorder}${menuItemIcon}${prefix}antilinksoft
 ${middleBorder}${menuItemIcon}${prefix}antiporn
 ${middleBorder}${menuItemIcon}${prefix}antistatus
+${middleBorder}${menuItemIcon}${prefix}x9
+${middleBorder}${menuItemIcon}${prefix}captcha
 ${middleBorder}${menuItemIcon}${prefix}antitoxic <on/off>
 ${middleBorder}${menuItemIcon}${prefix}antitoxic config <ação>
 ${middleBorder}${menuItemIcon}${prefix}antitoxic sensibilidade <0-100>
