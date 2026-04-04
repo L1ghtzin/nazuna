@@ -8,16 +8,7 @@
 ## 🧠 Sobre a Nazuna
 
 - A Nazuna é um bot versátil desenvolvido com **Node.js** e **WaLib**.  
-
-✅ Rápido  
-✅ Fácil de instalar  
-✅ Funciona 24/7  
-✅ Totalmente personalizável  
-
-> ⚠️ **Aviso importante**  
-> O Nazuna é **gratuito e de código aberto**, mas é protegido por direitos autorais.  
-> ❌ **Venda proibida**  
-> ❌ **Remoção dos créditos proibida**
+- A Nazuna é **gratuito e de código aberto**, mas é protegido por direitos autorais.  
 
 ## 🚀 Funcionalidades principais
 
@@ -30,17 +21,29 @@
 
 ## 📦 Como instalar (resumo)
 
+1° Primeiro Comando:
 ```bash
 git clone https://github.com/devcrician/nazuna.git
+```
+2° Segundo Comando:
+```bash
 cd nazuna
+```
+3° Terceiro Comando:
+```bash
 npm run config
+```
+4° Quarto Comando:
+```bash
 npm run config:install
+```
+5° Quinto Comando:
+```bash
 npm start
 ```
 
 - Depois é só escanear o QR code ou usar código de pareamento.
-
-- ⚠️ Use um número secundário no WhatsApp para evitar bloqueios.
+- Use um número secundário no WhatsApp para evitar bloqueios.
 
 ## 📋 Pré-requisitos
 
@@ -53,18 +56,17 @@ npm start
 
 ## 🔌 Como conectar o bot
 
-- Opção 1 — QR Code (recomendado)
+> Opção 1 — QR Code (recomendado)
 
 - Execute npm start
 - Abra WhatsApp > Configurações > Aparelhos Conectados
 - Escaneie o código
 
-- Opção 2 — Código de pareamento
+> Opção 2 — Código de pareamento
 
 - Execute npm start e informe o número do bot
 - Copie o código gerado
 - Cole no WhatsApp em "Conectar com número de telefone"
-
 - A sessão é salva automaticamente.
 
 ## 🔄 Atualizar o bot
@@ -94,7 +96,7 @@ npm run update
 
 - Se você gosta do Nazuna, considere apoiar:
 - Chave Pix (CNPJ): 60.374.533/0001-65
-- Qualquer valor ajuda 💙
+- Qualquer valor ajuda! 
 
 ## 📜 Licença
 
