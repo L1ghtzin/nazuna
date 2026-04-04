@@ -1,4 +1,4 @@
-import a, { useMultiFileAuthState, DisconnectReason, fetchLatestBaileysVersion, makeCacheableSignalKeyStore } from 'whaileys';
+import a, { useMultiFileAuthState, DisconnectReason, makeCacheableSignalKeyStore } from 'baileys';
 const makeWASocket = a.default;
 import { Boom } from '@hapi/boom';
 import NodeCache from 'node-cache';
@@ -6,7 +6,7 @@ import pino from 'pino';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import axios from 'axios';
+
 import { buildUserId, getLidFromJidCached, getUserName } from './helpers.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -15,25 +15,6 @@ const __dirname = path.dirname(__filename);
 const SUBBOTS_FILE = path.join(__dirname, '../../database/subbots.json');
 const SUBBOTS_DIR = path.join(__dirname, '../../database/subbots');
 const BASE_DATABASE_DIR = path.join(__dirname, '../../database');
-
-/**
- * Busca a versão do Baileys diretamente do JSON do GitHub
- * @returns {Promise<{version: number[]}>}
- */
-async function fetchBaileysVersionFromGitHub() {
-    try {
-        const response = await axios.get('https://raw.githubusercontent.com/WhiskeySockets/Baileys/refs/heads/master/src/Defaults/baileys-version.json', {
-            timeout: 120000
-        });
-        return {
-            version: response.data.version
-        };
-    } catch (error) {
-        console.error('❌ Erro ao buscar versão do Baileys do GitHub, usando função fetchLatestBaileysVersion como fallback:', error.message);
-        // Fallback para função original caso falhe
-        return await fetchLatestBaileysVersion();
-    }
-}
 
 // Instâncias ativas de sub-bots
 const activeSubBots = new Map();
@@ -150,14 +131,13 @@ async function initializeSubBot(botId, phoneNumber, ownerNumber, generatePairing
         const { config, dirs } = createSubBotConfig(botId, phoneNumber, ownerNumber);
         
         const { state, saveCreds } = await useMultiFileAuthState(dirs.authDir, makeCacheableSignalKeyStore);
-        const version = [2, 3000, 1031821793];
+        const version = [2, 3000, 1035194821];
 
         const msgRetryCounterCache = new NodeCache();
 
         const sock = makeWASocket({
-            version,
+            version: version,
             logger,
-            browser: ['Windows', 'Edge', '143.0.3650.66'],
             emitOwnEvents: true,
             fireInitQueries: true,
             generateHighQualityLinkPreview: true,

@@ -116,11 +116,11 @@ ensureJsonFileExists(DONO_DIVULGACAO_FILE, {
   createdAt: new Date().toISOString()
 });
 ensureJsonFileExists(MENU_DESIGN_FILE, {
-  header: `╭┈⊰ 🌸 『 *{botName}* 』\n┊Olá, {userName}!\n╰─┈┈┈┈┈◜❁◞┈┈┈┈┈─╯`,
+        header: `╭┈⊰ 🫟 『 *{botName}* 』\n┊💭 *Usuário:* {userName}\n┊👑 *Prefixo:* {prefix}\n╰─┈┈┈┈┈┈┈┈┈┈◜❁◞┈┈┈┈┈┈┈┈┈┈─╯`,
   menuTopBorder: "╭┈",
-  bottomBorder: "╰─┈┈┈┈┈◜❁◞┈┈┈┈┈─╯",
+  bottomBorder: "╰─┈┈┈┈┈┈┈┈┈┈◜❁◞┈┈┈┈┈┈┈┈┈┈─╯",
   menuTitleIcon: "🍧ฺꕸ▸",
-  menuItemIcon: "•.̇𖥨֗🍓⭟",
+  menuItemIcon: "•.̇𖥨֗🫟⭟",
   separatorIcon: "❁",
   middleBorder: "┊"
 });
@@ -322,21 +322,37 @@ try {
 // Se o número do dono for 553391967445, a mensagem vem desativada por padrão
 const defaultMsgBotOnEnabled = configForMsgBotOn.numerodono === '553391967445' ? false : true;
 
-ensureJsonFileExists(MSGBOTON_FILE, { 
-  enabled: defaultMsgBotOnEnabled,
-  message: `✨ *Oiiiii!* ✨
+ensureJsonFileExists(MSGBOTON_FILE, { enabled: defaultMsgBotOnEnabled,
+message: `🫟🫟🫟🫟🫟🫟🫟🫟🫟🫟🫟🫟🫟🫟🫟
 
-Estou online e pronta para uso! 🤗💖
+        ✨ *Oiiiii!* ✨
+        🤗💖
 
-Muito obrigada por ter me escolhido! Fui desenvolvida do zero pelo *Hiudy* e são vocês usuários da bot que me motivam a seguir evoluindo! 🌸💕
+  Estou online e pronta para uso! 
+        🫟✨🫟✨🫟
 
-Espero que você goste da bot! ✨
+  Muito obrigada por ter me escolhido! 
+  Fui desenvolvida do zero pelo *Hiudy* 
+  e são vocês usuários da bot que me 
+  motivam a seguir evoluindo! 
+        💕🫟💕
 
-💬 *Considere entrar no meu grupo para tirar dúvidas e ficar por dentro das novidades:*
-https://chat.whatsapp.com/Ev4juPpjZYFF6xYJnkPcAF
+  Espero que você goste da bot! 
+        ✨🫟✨
 
-_Para desativar esta mensagem de inicialização, use o comando *msgboton*_`
+  💬 *Considere entrar no meu grupo 
+  para tirar dúvidas e ficar por dentro 
+  das novidades:*
+  https://chat.whatsapp.com/I5d5tCyZsV4J7Cjn51IkbV
+        🫟💬🫟
+
+  _Para desativar esta mensagem de 
+  inicialização, use o comando 
+  *msgboton*_
+
+🫟🫟🫟🫟🫟🫟🫟🫟🫟🫟🫟🫟🫟🫟🫟`
 });
+
 ensureJsonFileExists(CUSTOM_REACTS_FILE, { reacts: [] });
 ensureJsonFileExists(REMINDERS_FILE, { reminders: [] });
 ensureJsonFileExists(CMD_NOT_FOUND_FILE, {
@@ -502,18 +518,34 @@ const loadMsgBotOn = () => {
   
   const data = loadJsonFile(MSGBOTON_FILE, { 
     enabled: defaultEnabled,
-    message: `✨ *Oiiiii!* ✨
+    message: `🫟🫟🫟🫟🫟🫟🫟🫟🫟🫟🫟🫟🫟🫟🫟
 
-Estou online e pronta para uso! 🤗💖
+        ✨ *Oiiiii!* ✨
+        🤗💖
 
-Muito obrigada por ter me escolhido! Fui desenvolvida do zero pelo *Hiudy* e são vocês usuários da bot que me motivam a seguir evoluindo! 🌸💕
+  Estou online e pronta para uso! 
+        🫟✨🫟✨🫟
 
-Espero que você goste da bot! ✨
+  Muito obrigada por ter me escolhido! 
+  Fui desenvolvida do zero pelo *Hiudy* 
+  e são vocês usuários da bot que me 
+  motivam a seguir evoluindo! 
+        💕🫟💕
 
-💬 *Considere entrar no meu grupo para tirar dúvidas e ficar por dentro das novidades:*
-https://chat.whatsapp.com/I5d5tCyZsV4J7Cjn51IkbV
+  Espero que você goste da bot! 
+        ✨🫟✨
 
-_Para desativar esta mensagem de inicialização, use o comando *msgboton*_`
+  💬 *Considere entrar no meu grupo 
+  para tirar dúvidas e ficar por dentro 
+  das novidades:*
+  https://chat.whatsapp.com/I5d5tCyZsV4J7Cjn51IkbV
+        🫟💬🫟
+
+  _Para desativar esta mensagem de 
+  inicialização, use o comando 
+  *msgboton*_
+
+🫟🫟🫟🫟🫟🫟🫟🫟🫟🫟🫟🫟🫟🫟🫟`
   });
   return data;
 };
@@ -1117,33 +1149,51 @@ const getGroupRentalStatus = groupId => {
   };
 };
 
-const setGroupRental = (groupId, durationDays) => {
+const setGroupRental = (groupId, durationDays, prefix) => {
   if (!groupId || typeof groupId !== 'string' || !isGroupId(groupId)) {
     return {
       success: false,
       message: '🤔 ID de grupo inválido! Verifique se o ID está correto (geralmente termina com @g.us).'
     };
   }
+  
   let rentalData = loadRentalData();
   let expiresAt = null;
   let message = '';
+  const now = Date.now();
+  
   if (durationDays === 'permanent') {
-    expiresAt = 'permanent';
-    message = `✅ Aluguel permanente ativado!`;
+    expiresAt = null;
+    message = `♾️ *ALUGUEL PERMANENTE ATIVADO!*\n\n`;
+    message += `📱 *Grupo:* ${groupId}\n`;
+    message += `✨ Status: Permanente\n`;
+    message += `⏰ Não há data de expiração.`;
   } else if (typeof durationDays === 'number' && durationDays > 0) {
-    const expirationDate = new Date();
-    expirationDate.setDate(expirationDate.getDate() + durationDays);
-    expiresAt = expirationDate.toISOString();
-    message = `✅ Aluguel ativado por ${durationDays} dias! Expira em: ${expirationDate.toLocaleDateString('pt-BR')}.`;
+   
+    expiresAt = now + (durationDays * 24 * 60 * 60 * 1000);
+    const expirationDate = new Date(expiresAt);
+    
+    message = `✅ *ALUGUEL ATIVADO COM SUCESSO!*\n\n`;
+    message += `📱 *Grupo:* ${groupId}\n`;
+    message += `📅 *Duração:* ${durationDays} dia(s)\n`;
+    message += `⏰ *Expira em:* ${expirationDate.toLocaleDateString('pt-BR')} às ${expirationDate.toLocaleTimeString('pt-BR')}\n\n`;
+    message += `💡 Use *${prefix}infoaluguel* para ver os detalhes.`;
   } else {
     return {
       success: false,
       message: '🤔 Duração inválida! Use um número de dias (ex: 30) ou a palavra "permanente".'
     };
   }
+  
   rentalData.groups[groupId] = {
-    expiresAt
+    addedAt: now,                    
+    expiresAt: expiresAt,           
+    durationDays: durationDays, 
+    duration: durationDays === 'permanent' ? 'permanent' : 'temporary',
+    days: durationDays === 'permanent' ? null : durationDays,
+    status: 'active'
   };
+  
   if (saveRentalData(rentalData)) {
     return {
       success: true,
@@ -2706,25 +2756,25 @@ const loadMenuDesign = () => {
       return JSON.parse(fs.readFileSync(MENU_DESIGN_FILE, 'utf-8'));
     } else {
       return {
-        header: `╭┈⊰ 🌸 『 *{botName}* 』\n┊Olá, {userName}!\n╰─┈┈┈┈┈◜❁◞┈┈┈┈┈─╯`,
-        menuTopBorder: "╭┈",
-        bottomBorder: "╰─┈┈┈┈┈◜❁◞┈┈┈┈┈─╯",
-        menuTitleIcon: "🍧ฺꕸ▸",
-        menuItemIcon: "•.̇𖥨֗🍓⭟",
-        separatorIcon: "❁",
-        middleBorder: "┊"
+  header: `╭┈⊰ 🫟 『 *{botName}* 』\n┊💭 *Usuário:* {userName}\n┊👑 *Prefixo:* {prefix}\n╰─┈┈┈┈┈┈┈┈┈┈◜❁◞┈┈┈┈┈┈┈┈┈┈─╯`,
+  menuTopBorder: "╭┈",
+  bottomBorder: "╰─┈┈┈┈┈┈┈┈┈┈◜❁◞┈┈┈┈┈┈┈┈┈┈─╯",
+  menuTitleIcon: "🍧ฺꕸ▸",
+  menuItemIcon: "•.̇𖥨֗🫟⭟",
+  separatorIcon: "❁",
+  middleBorder: "┊"
       };
     }
   } catch (error) {
     console.error(`❌ Erro ao carregar design do menu: ${error.message}`);
     return {
-      header: `╭┈⊰ 🌸 『 *{botName}* 』\n┊Olá, {userName}!\n╰─┈┈┈┈┈◜❁◞┈┈┈┈┈─╯`,
-      menuTopBorder: "╭┈",
-      bottomBorder: "╰─┈┈┈┈┈◜❁◞┈┈┈┈┈─╯",
-      menuTitleIcon: "🍧ฺꕸ▸",
-      menuItemIcon: "•.̇𖥨֗🍓⭟",
-      separatorIcon: "❁",
-      middleBorder: "┊"
+  header: `╭┈⊰ 🫟 『 *{botName}* 』\n┊💭 *Usuário:* {userName}\n┊👑 *Prefixo:* {prefix}\n╰─┈┈┈┈┈┈┈┈┈┈◜❁◞┈┈┈┈┈┈┈┈┈┈─╯`,
+  menuTopBorder: "╭┈",
+  bottomBorder: "╰─┈┈┈┈┈┈┈┈┈┈◜❁◞┈┈┈┈┈┈┈┈┈┈─╯",
+  menuTitleIcon: "🍧ฺꕸ▸",
+  menuItemIcon: "•.̇𖥨֗🫟⭟",
+  separatorIcon: "❁",
+  middleBorder: "┊"
     };
   }
 };
@@ -2740,7 +2790,7 @@ const saveMenuDesign = (design) => {
   }
 };
 
-const getMenuDesignWithDefaults = (botName, userName) => {
+const getMenuDesignWithDefaults = (botName, userName, prefix) => {
   const design = loadMenuDesign();
 
   // Substitui os placeholders pelos valores atuais
@@ -2749,7 +2799,8 @@ const getMenuDesignWithDefaults = (botName, userName) => {
     if (typeof value === 'string') {
       processedDesign[key] = value
         .replace(/{botName}/g, botName)
-        .replace(/{userName}/g, userName);
+        .replace(/{userName}/g, userName)
+        .replace(/{prefix}/g, prefix);
     } else {
       processedDesign[key] = value;
     }
