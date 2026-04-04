@@ -1,4 +1,4 @@
-# Nazuna Bot
+# NAZUNA BOT (WHATSAPP) 
 
 ![Banner](https://raw.githubusercontent.com/nazuninha/uploads/main/fotos/1775259991532_zf0c44.jpg)
 
