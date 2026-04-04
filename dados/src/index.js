@@ -4139,7 +4139,7 @@ Código: *${roleCode}*`,
     if  (antitoxic && antitoxic.isEnabled && antitoxic.isEnabled(from) && body && ia) {
     // Função wrapper para a IA do antitoxic
     const aiFunction = (prompt) => {
-      return ia.makeCognimaRequest('qwen/qwen3-235b-a22b', prompt, null)
+      return ia.makeCognimaRequest('moonshotai/kimi-k2-instruct', prompt, null)
     .then(response => response?.data?.choices?.[0]?.message?.content || '');
     };
     
