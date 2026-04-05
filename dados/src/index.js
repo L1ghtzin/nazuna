@@ -24924,7 +24924,7 @@ case 'kick':
     if (!isGroupAdmin) return reply("Comando restrito a Administradores ou Moderadores com permissão. 💔");
     if (!isBotAdmin) return reply("Eu preciso ser adm 💔");
     if (!menc_os2) return reply("Marque alguém 🙄");
-    if (menc_os2 === nmrdn) return reply("❌ Não posso banir o dono do bot.");
+    if (menc_os2 === isOwner) return reply("❌ Não posso banir o dono do bot.");
     if (menc_os2 === isGroupAdmin) return reply("❌ Não posso banir um administrador do grupo.");
     if (menc_os2 === botNumber) return reply("❌ Ops! Eu faço parte da bagunça, não dá pra me remover 💔");
     
@@ -24953,7 +24953,7 @@ case 'banir2':
       if  (!isGroupAdmin) return reply("Comando restrito a Administradores ou Moderadores com permissão. 💔");
       if  (!isBotAdmin) return reply("Eu preciso ser adm 💔");
       if  (!menc_os2) return reply("Marque alguém 🙄");
-      if  (menc_os2 === nmrdn) return reply("❌ Não posso banir o dono do bot.");
+      if  (menc_os2 === isOwner) return reply("❌ Não posso banir o dono do bot.");
       if  (menc_os2 === botNumber) return reply("❌ Ops! Eu faço parte da bagunça, não dá pra me remover 💔");
     
     // Aviso com contagem regressiva
@@ -24992,7 +24992,7 @@ case 'banfake':
     if  (!isGroup) return reply("isso so pode ser usado em grupo 💔");
     if  (!isGroupAdmin) return reply("Comando restrito a Administradores ou Moderadores com permissão. 💔");
     if  (!menc_os2) return reply("Marque alguém 🙄");
-    if  (menc_os2 === nmrdn) return reply("❌ Não posso banir o dono do bot.");
+    if  (menc_os2 === isOwner) return reply("❌ Não posso banir o dono do bot.");
     if  (menc_os2 === botNumber) return reply("❌ Ops! Eu faço parte da bagunça, não dá pra me remover 💔");
     
   try  {
