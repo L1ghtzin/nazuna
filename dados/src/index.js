@@ -24919,31 +24919,32 @@ case 'banir':
 case 'ban':
 case 'b':
 case 'kick':
-  try  {
-      if  (!isGroup) return reply("isso so pode ser usado em grupo 💔");
-      if  (!isGroupAdmin) return reply("Comando restrito a Administradores ou Moderadores com permissão. 💔");
-      if  (!isBotAdmin) return reply("Eu preciso ser adm 💔");
-      if  (!menc_os2) return reply("Marque alguém 🙄");
-      if  (!menc_os2 === nmrdn) return reply("❌ Não posso banir o dono do bot.");
-      if  (!menc_os2 === isGroupAdmin) return reply("❌ Não posso banir um administrador do grupo.");
-      if  (!menc_os2 === botNumber) return reply("❌ Ops! Eu faço parte da bagunça, não dá pra me remover 💔");
+  try {
+    if (!isGroup) return reply("isso so pode ser usado em grupo 💔");
+    if (!isGroupAdmin) return reply("Comando restrito a Administradores ou Moderadores com permissão. 💔");
+    if (!isBotAdmin) return reply("Eu preciso ser adm 💔");
+    if (!menc_os2) return reply("Marque alguém 🙄");
+    if (menc_os2 === nmrdn) return reply("❌ Não posso banir o dono do bot.");
+    if (menc_os2 === isGroupAdmin) return reply("❌ Não posso banir um administrador do grupo.");
+    if (menc_os2 === botNumber) return reply("❌ Ops! Eu faço parte da bagunça, não dá pra me remover 💔");
+    
     await nazu.groupParticipantsUpdate(from, [menc_os2], 'remove');
     
     // Notificação X9 para banimento
-      if  (groupData.x9) {
+    if (groupData.x9) {
       const reason = q && q.length > 0 ? `\n📝 Motivo: ${q}` : '';
       await nazu.sendMessage(from, {
-    text: `🚪 *X9 Report:* @${menc_os2.split('@')[0]} foi removido(a) do grupo por @${sender.split('@')[0]}.${reason}`,
-    mentions: [menc_os2, sender],
+        text: `🚪 *X9 Report:* @${menc_os2.split('@')[0]} foi removido(a) do grupo por @${sender.split('@')[0]}.${reason}`,
+        mentions: [menc_os2, sender],
       }).catch(err => console.error(`❌ Erro ao enviar X9: ${err.message}`));
     }
     
     reply(`✅ Usuário banido com sucesso!${q && q.length > 0 ? '\n\nMotivo: ' + q : ''}`);
-    } catch (e) {
+  } catch (e) {
     console.error(e);
     reply("ocorreu um erro 💔");
-    }
-       break;
+  }
+  break;
 
 case 'ban2':
 case 'banir2':
