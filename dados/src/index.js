@@ -24925,6 +24925,7 @@ case 'kick':
       if  (!isBotAdmin) return reply("Eu preciso ser adm 💔");
       if  (!menc_os2) return reply("Marque alguém 🙄");
       if  (menc_os2 === nmrdn) return reply("❌ Não posso banir o dono do bot.");
+      if  (menc_os2 === isGroupAdmin) return reply("❌ Não posso banir um administrador do grupo.");
       if  (menc_os2 === botNumber) return reply("❌ Ops! Eu faço parte da bagunça, não dá pra me remover 💔");
     await nazu.groupParticipantsUpdate(from, [menc_os2], 'remove');
     
