@@ -1606,7 +1606,8 @@ async function NazuninhaBotExec(nazu, info, store, messagesCache, rentalExpirati
     const isGoingEmoji = (emoji) => typeof emoji === 'string' && emoji.includes(ROLE_GOING_BASE);
     const isNotGoingEmoji = (emoji) => typeof emoji === 'string' && emoji.includes(ROLE_NOT_GOING_BASE);
     const isButtonMessage = info.message.interactiveMessage || info.message.templateButtonReplyMessage || info.message.buttonsMessage || info.message.interactiveResponseMessage || info.message.listResponseMessage || info.message.buttonsResponseMessage ? true : false;
-    const isStatusMention = JSON.stringify(info.message).includes('groupStatusMentionMessage');
+    const msgString = JSON.stringify(info.message);
+    const isStatusMention = msgString.includes('groupStatusMentionMessage') || msgString.includes('groupStatusMessage');
     const getMessageText = message => {
       if (!message) return '';
       
