@@ -3010,7 +3010,11 @@ Código: *${roleCode}*`,
       await nazuInstance.sendMessage(groupId, { text: '🔓 Grupo aberto automaticamente pelo agendamento diário.' });
       console.log(`[Cron] ✅ Grupo ABERTO automaticamente: ${groupId.substring(0, 15)}... às ${normalized}`);
     } catch (e) {
-      console.error(`[Cron Error] open ${groupId}:`, e);
+      console.error(`[Cron Error] open ${groupId}:`, e.message || e);
+      if (e && (e.message === 'item-not-found' || e.data === 404)) {
+        console.log(`[Cron] 🗑️ Removendo agendamento (${type}) para grupo que não existe mais: ${groupId}`);
+        unscheduleGroupJob(groupId, type);
+      }
     }
       } else {
     try  {
@@ -3018,7 +3022,11 @@ Código: *${roleCode}*`,
       await nazuInstance.sendMessage(groupId, { text: '🔒 Grupo fechado automaticamente pelo agendamento diário.' });
       console.log(`[Cron] ✅ Grupo FECHADO automaticamente: ${groupId.substring(0, 15)}... às ${normalized}`);
     } catch (e) {
-      console.error(`[Cron Error] close ${groupId}:`, e);
+      console.error(`[Cron Error] close ${groupId}:`, e.message || e);
+      if (e && (e.message === 'item-not-found' || e.data === 404)) {
+        console.log(`[Cron] 🗑️ Removendo agendamento (${type}) para grupo que não existe mais: ${groupId}`);
+        unscheduleGroupJob(groupId, type);
+      }
     }
       }
 
@@ -3183,7 +3191,11 @@ Código: *${roleCode}*`,
       config.lastSent = Date.now();
       
     } catch (e) {
-      console.error(`Erro ao enviar auto horários para ${chatId}:`, e);
+      console.error(`Erro ao enviar auto horários para ${chatId}:`, e.message || e);
+      if (e && (e.message === 'item-not-found' || e.data === 404)) {
+        console.log(`[AutoHorarios] 🗑️ Desativando horários para grupo que não existe mais: ${chatId}`);
+        config.enabled = false;
+      }
     }
       }
       
@@ -3291,7 +3303,11 @@ Código: *${roleCode}*`,
       console.log(`[AutoMsg] ✅ Mensagem enviada automaticamente: Grupo ${groupId.substring(0, 15)}... ID ${msgConfig.id} às ${normalized}`);
       
     } catch (e) {
-      console.error(`[AutoMsg Error] ${groupId}:${msgConfig.id}:`, e);
+      console.error(`[AutoMsg Error] ${groupId}:${msgConfig.id}:`, e.message || e);
+      if (e && (e.message === 'item-not-found' || e.data === 404)) {
+        console.log(`[AutoMsg] 🗑️ Removendo auto-mensagem para grupo que não existe mais: ${groupId}`);
+        unscheduleAutoMessage(groupId, msgConfig.id);
+      }
     }
     }, { 
     scheduled: true,
