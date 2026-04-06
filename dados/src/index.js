@@ -16296,16 +16296,16 @@ case 'listaaluguel':
     }));
     const groupName = groupMetadata.subject || 'Sem Nome';
     let status = 'Expirado';
-    if  (info.expiresAt === 'permanent') {
+    if  (info.expiresAt === 'permanent' || info.duration === 'permanent' || info.durationDays === 'permanent') {
       
       status = 'Permanente';
     } else if (new Date(info.expiresAt) > new Date()) {
       
       status = 'Ativo';
     }
-    const shouldInclude = !filtro || filtro === 'ven' && status === 'Expirado' || filtro === 'atv' && status === 'Ativo' || filtro === 'perm' && status === 'Permanente';
+    const shouldInclude = !filtro || (filtro === 'ven' && status === 'Expirado') || (filtro === 'atv' && status === 'Ativo') || (filtro === 'perm' && status === 'Permanente');
     if  (!shouldInclude) continue;
-    const expires = info.expiresAt === 'permanent' ? '∞ Permanente' : info.expiresAt ? new Date(info.expiresAt).toLocaleString('pt-BR', {
+    const expires = (info.expiresAt === 'permanent' || info.duration === 'permanent') ? '∞ Permanente' : info.expiresAt ? new Date(info.expiresAt).toLocaleString('pt-BR', {
       timeZone: 'America/Sao_Paulo'
     }) : 'N/A';
     
@@ -16451,6 +16451,9 @@ case 'addaluguel':
     if  (!isOwner) return reply("🚫 Apenas o Dono principal pode adicionar aluguel!");
     if  (!isGroup) return reply("Este comando só pode ser usado em grupos.");
   try  {
+    if  (!q || !q.trim()) {
+      return reply(`🤔 Duração inválida. Use um número de dias (ex: 30) ou a palavra "permanente".\nExemplo: ${prefix}addaluguel 30`);
+    }
     const parts = q.toLowerCase().trim().split(' ');
     const durationArg = parts[0];
     let durationDays = null;
@@ -16498,7 +16501,7 @@ case 'listrentals':
       try  {
     const groupMeta = await getCachedGroupMetadata(groupId);
     const groupName = groupMeta?.subject || groupId;
-    const isPermanent = rental.duration === 'permanent';
+    const isPermanent = rental.duration === 'permanent' || rental.durationDays === 'permanent' || rental.expiresAt === 'permanent';
     const isExpired = !isPermanent && rental.expiresAt < now;
     
     if  (isPermanent) permanentCount++;
@@ -16745,7 +16748,7 @@ case 'detalhesaluguel':
       console.log("Erro ao buscar metadata:", e.message);
     }
     
-    const isPermanent = rental.duration === 'permanent' || rental.durationDays === 'permanent';
+    const isPermanent = rental.duration === 'permanent' || rental.durationDays === 'permanent' || rental.expiresAt === 'permanent';
     const now = Date.now();
     
     let message = `╭━━━⊱ 📋 *DETALHES DO ALUGUEL* ⊱━━━╮\n`;
@@ -16761,7 +16764,7 @@ case 'detalhesaluguel':
       message += `✨ Este grupo tem aluguel permanente!\n`;
       message += `⏰ Não há data de expiração.`;
     } else {
-      if (!rental.expiresAt || rental.expiresAt === 'permanent') {
+      if (!rental.expiresAt) {
         message += `⚠️ *STATUS:* DADOS CORROMPIDOS\n\n`;
         message += `❌ A data de expiração é inválida.\n`;
         message += `💡 Use ${prefix}removeraluguel para remover este aluguel e adicionar novamente.`;
@@ -23941,7 +23944,7 @@ case 'dadosgp':
     });
     const rentGlob = isRentalModeActive();
     const rentInfo = getGroupRentalStatus(from);
-    const rentStatus = rentGlob ? rentInfo.active ? `✅ Ativo até ${rentInfo.permanent ? 'Permanente' : new Date(rentInfo.expiresAt).toLocaleDateString('pt-BR')}` : "❌ Expirado" : "❌ Desativado";
+    const rentStatus = rentGlob ? rentInfo.active ? `${rentInfo.permanent ? '♾️ Permanente' : `✅ Ativo até ${new Date(rentInfo.expiresAt).toLocaleDateString('pt-BR')}`}` : "❌ Expirado" : "❌ Desativado";
     const isPremGp = !!premiumListaZinha[from] ? "✅" : "❌";
     const secFlags = [
       ["Antiporn", !!isAntiPorn],

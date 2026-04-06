@@ -1119,7 +1119,8 @@ const getGroupRentalStatus = groupId => {
       permanent: false
     };
   }
-  if (groupInfo.expiresAt === 'permanent') {
+  // Checa permanente por qualquer campo válido (expiresAt, duration, ou durationDays)
+  if (groupInfo.expiresAt === 'permanent' || groupInfo.duration === 'permanent' || groupInfo.durationDays === 'permanent') {
     return {
       active: true,
       expiresAt: 'permanent',
@@ -1163,7 +1164,7 @@ const setGroupRental = (groupId, durationDays, prefix) => {
   const now = Date.now();
   
   if (durationDays === 'permanent') {
-    expiresAt = null;
+    expiresAt = 'permanent';
     message = `♾️ *ALUGUEL PERMANENTE ATIVADO!*\n\n`;
     message += `📱 *Grupo:* ${groupId}\n`;
     message += `✨ Status: Permanente\n`;
@@ -1311,8 +1312,7 @@ const useActivationCode = (code, groupId, userId) => {
     };
   }
   const codeInfo = validation;
-  var code;
-  code = code.toUpperCase();
+  const normalizedCode = code.toUpperCase();
   if (codeInfo.targetGroup && codeInfo.targetGroup !== groupId) {
     return {
       success: false,
@@ -1327,17 +1327,17 @@ const useActivationCode = (code, groupId, userId) => {
     };
   }
   let codesData = loadActivationCodes();
-  codesData.codes[code].used = true;
-  codesData.codes[code].usedBy = userId;
-  codesData.codes[code].usedAt = new Date().toISOString();
-  codesData.codes[code].activatedGroup = groupId;
+  codesData.codes[normalizedCode].used = true;
+  codesData.codes[normalizedCode].usedBy = userId;
+  codesData.codes[normalizedCode].usedAt = new Date().toISOString();
+  codesData.codes[normalizedCode].activatedGroup = groupId;
   if (saveActivationCodes(codesData)) {
     return {
       success: true,
-      message: `🎉 Código *${code}* ativado com sucesso! ${rentalResult.message}`
+      message: `🎉 Código *${normalizedCode}* ativado com sucesso! ${rentalResult.message}`
     };
   } else {
-    console.error(`Falha CRÍTICA ao marcar código ${code} como usado após ativar aluguel para ${groupId}.`);
+    console.error(`Falha CRÍTICA ao marcar código ${normalizedCode} como usado após ativar aluguel para ${groupId}.`);
     return {
       success: false,
       message: '🚨 Erro Crítico! O aluguel foi ativado, mas não consegui marcar o código como usado. Por favor, contate o suporte informando o código!'
@@ -1367,21 +1367,21 @@ const extendGroupRental = (groupId, extraDays) => {
     };
   }
   let newExpiresAt = null;
-  if (groupInfo.expiresAt === 'permanent') {
+  // Checa permanente por qualquer campo válido
+  if (groupInfo.expiresAt === 'permanent' || groupInfo.duration === 'permanent' || groupInfo.durationDays === 'permanent') {
     return {
       success: false,
       message: 'Aluguel já é permanente, não é possível estender.'
     };
   }
-  const currentExpires = new Date(groupInfo.expiresAt);
-  const now = new Date();
-  if (currentExpires < now) {
-    const newExpiration = new Date();
-    newExpiration.setDate(newExpiration.getDate() + extraDays);
-    newExpiresAt = newExpiration.toISOString();
+  const now = Date.now();
+  const currentExpiresMs = new Date(groupInfo.expiresAt).getTime();
+  if (currentExpiresMs < now) {
+    // Expirado: conta a partir de agora
+    newExpiresAt = now + (extraDays * 24 * 60 * 60 * 1000);
   } else {
-    currentExpires.setDate(currentExpires.getDate() + extraDays);
-    newExpiresAt = currentExpires.toISOString();
+    // Ativo: soma a partir da expiração atual
+    newExpiresAt = currentExpiresMs + (extraDays * 24 * 60 * 60 * 1000);
   }
   rentalData.groups[groupId].expiresAt = newExpiresAt;
   if (saveRentalData(rentalData)) {
