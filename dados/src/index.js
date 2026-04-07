@@ -1082,7 +1082,7 @@ async function NazuninhaBotExec(nazu, info, store, messagesCache, rentalExpirati
       
       // TikTok
       else if (platformName === 'TikTok') {
-    result = await tiktok.dl(urls);
+    result = await tiktok.dl(url);
     if  (result && result.ok && result.urls && result.urls.length > 0) {
     const videoUrl = result.urls[0];
       if  (videoUrl) {
@@ -29904,9 +29904,9 @@ case 'perfil':
     }
     
     const createProgressBar = (percent, size = 10) => {
-      const filled = Math.round((percent / 100) * size);
-      return '▰'.repeat(filled) + '▱'.repeat(size - filled);
-    };
+  const filled = Math.min(size, Math.max(0, Math.round((percent / 100) * size)));
+  return '▰'.repeat(filled) + '▱'.repeat(size - filled);
+ };
     
     const getEmoji = (value, type) => {
       if (type === 'puta') {
