@@ -2257,7 +2257,7 @@ async function NazuninhaBotExec(nazu, info, store, messagesCache, rentalExpirati
     participant: sender
       }
     });
-    await reply(`🚫 *AntiStatus ativado!*\n\n@${getUserName(sender)}, compartilhar status não é permitido neste grupo. Você foi removido automaticamente.`, {
+    await reply(`🚫 @${getUserName(sender)}, status não são permitidos neste grupo. Você foi removido.`, {
       mentions: [sender]
     });
     } else {
@@ -2269,7 +2269,7 @@ async function NazuninhaBotExec(nazu, info, store, messagesCache, rentalExpirati
     participant: sender
       }
     });
-    await reply(`🚫 *AntiStatus ativado!*\n\nAtenção, @${getUserName(sender)}! Compartilhar status não é permitido neste grupo. Não consigo remover você pois não sou administrador, mas evite fazer isso.`, {
+    await reply(`🚫 Atenção, @${getUserName(sender)}! Status não são permitidos neste grupo. Não consigo remover você, mas evite compartilhar status aqui.`, {
       mentions: [sender]
     });
     }
