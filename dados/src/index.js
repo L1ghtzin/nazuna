@@ -2087,6 +2087,13 @@ async function NazuninhaBotExec(nazu, info, store, messagesCache, rentalExpirati
       return id;
     };
 
+    // Extrai o motivo real removendo menções do texto
+    function extractReason(text, mentionedJids) {
+      let reason = text;
+      if (mentionedJids) mentionedJids.forEach(jid => { reason = reason.replace('@' + jid.split('@')[0], ''); });
+      return reason.trim() || 'Não especificado';
+    }
+
     // Helper para normalizar nomes de clã - remove acentos e caracteres não alfanuméricos
     function normalizeClanName(name) {
       if (!name) return '';
@@ -24970,22 +24977,23 @@ case 'kick':
     if (!isGroupAdmin) return reply("Comando restrito a Administradores ou Moderadores com permissão. 💔");
     if (!isBotAdmin) return reply("Eu preciso ser adm 💔");
     if (!menc_os2) return reply("Marque alguém 🙄");
-    if (menc_os2 === isOwner) return reply("❌ Não posso banir o dono do bot.");
-    if (menc_os2 === isGroupAdmin) return reply("❌ Não posso banir um administrador do grupo.");
-    if (menc_os2 === botNumber) return reply("❌ Ops! Eu faço parte da bagunça, não dá pra me remover 💔");
+    if (idsMatch(menc_os2, ownerJid) || (lidowner && idsMatch(menc_os2, lidowner))) return reply("❌ Não posso banir o dono do bot.");
+    if (idsMatch(menc_os2, botNumber) || (botNumberLid && idsMatch(menc_os2, botNumberLid))) return reply("❌ Ops! Eu faço parte da bagunça, não dá pra me remover 💔");
+    if (idInArray(menc_os2, groupAdmins)) return reply("❌ Não posso banir um administrador do grupo.");
     
     await nazu.groupParticipantsUpdate(from, [menc_os2], 'remove');
     
+    const banReason = extractReason(q, menc_jid2);
     // Notificação X9 para banimento
     if (groupData.x9) {
-      const reason = q && q.length > 0 ? `\n📝 Motivo: ${q}` : '';
+      const reasonText = `\n📝 Motivo: ${banReason}`;
       await nazu.sendMessage(from, {
-        text: `🚪 *X9 Report:* @${menc_os2.split('@')[0]} foi removido(a) do grupo por @${sender.split('@')[0]}.${reason}`,
+        text: `🚪 *X9 Report:* @${menc_os2.split('@')[0]} foi removido(a) do grupo por @${sender.split('@')[0]}.${reasonText}`,
         mentions: [menc_os2, sender],
       }).catch(err => console.error(`❌ Erro ao enviar X9: ${err.message}`));
     }
     
-    reply(`✅ Usuário banido com sucesso!${q && q.length > 0 ? '\n\nMotivo: ' + q : ''}`);
+    reply(`✅ Usuário banido com sucesso!\n\nMotivo: ${banReason}`);
   } catch (e) {
     console.error(e);
     reply("ocorreu um erro 💔");
@@ -24999,8 +25007,9 @@ case 'banir2':
       if  (!isGroupAdmin) return reply("Comando restrito a Administradores ou Moderadores com permissão. 💔");
       if  (!isBotAdmin) return reply("Eu preciso ser adm 💔");
       if  (!menc_os2) return reply("Marque alguém 🙄");
-      if  (menc_os2 === isOwner) return reply("❌ Não posso banir o dono do bot.");
-      if  (menc_os2 === botNumber) return reply("❌ Ops! Eu faço parte da bagunça, não dá pra me remover 💔");
+      if  (idsMatch(menc_os2, ownerJid) || (lidowner && idsMatch(menc_os2, lidowner))) return reply("❌ Não posso banir o dono do bot.");
+      if  (idsMatch(menc_os2, botNumber) || (botNumberLid && idsMatch(menc_os2, botNumberLid))) return reply("❌ Ops! Eu faço parte da bagunça, não dá pra me remover 💔");
+      if  (idInArray(menc_os2, groupAdmins)) return reply("❌ Não posso banir um administrador do grupo.");
     
     // Aviso com contagem regressiva
     await nazu.sendMessage(from, {
@@ -25014,17 +25023,18 @@ case 'banir2':
     // Remove o usuário
     await nazu.groupParticipantsUpdate(from, [menc_os2], 'remove');
     
+    const banReason = extractReason(q, menc_jid2);
     // Notificação X9 para banimento
       if  (groupData.x9) {
-      const reason = q && q.length > 0 ? `\n📝 Motivo: ${q}` : '';
+      const reasonText = `\n📝 Motivo: ${banReason}`;
       await nazu.sendMessage(from, {
-    text: `🚪 *X9 Report:* @${menc_os2.split('@')[0]} foi removido(a) do grupo por @${sender.split('@')[0]}.${reason}`,
+    text: `🚪 *X9 Report:* @${menc_os2.split('@')[0]} foi removido(a) do grupo por @${sender.split('@')[0]}.${reasonText}`,
     mentions: [menc_os2, sender],
       }).catch(err => console.error(`❌ Erro ao enviar X9: ${err.message}`));
     }
     
     await nazu.sendMessage(from, {
-      text: `👋 @${menc_os2.split('@')[0]} foi banido! Adeus! 🚪${q && q.length > 0 ? '\n\n📝 Motivo: ' + q : ''}`,
+      text: `👋 @${menc_os2.split('@')[0]} foi banido! Adeus! 🚪\n\n📝 Motivo: ${banReason}`,
       mentions: [menc_os2]
     });
     } catch (e) {
@@ -25038,8 +25048,9 @@ case 'banfake':
     if  (!isGroup) return reply("isso so pode ser usado em grupo 💔");
     if  (!isGroupAdmin) return reply("Comando restrito a Administradores ou Moderadores com permissão. 💔");
     if  (!menc_os2) return reply("Marque alguém 🙄");
-    if  (menc_os2 === isOwner) return reply("❌ Não posso banir o dono do bot.");
-    if  (menc_os2 === botNumber) return reply("❌ Ops! Eu faço parte da bagunça, não dá pra me remover 💔");
+    if  (idsMatch(menc_os2, ownerJid) || (lidowner && idsMatch(menc_os2, lidowner))) return reply("❌ Não posso banir o dono do bot.");
+    if  (idsMatch(menc_os2, botNumber) || (botNumberLid && idsMatch(menc_os2, botNumberLid))) return reply("❌ Ops! Eu faço parte da bagunça, não dá pra me remover 💔");
+    if  (idInArray(menc_os2, groupAdmins)) return reply("❌ Não posso banir um administrador do grupo.");
     
   try  {
     await nazu.sendMessage(from, {
@@ -27540,7 +27551,7 @@ case 'warning':
       if  (!isGroupAdmin) return reply("Você precisa ser administrador 💔");
       if  (!menc_os2) return reply("Marque um usuário 🙄");
       if  (menc_os2 === botNumber) return reply("❌ Não posso advertir a mim mesma!");
-    const reason = q ? (q.includes('@') || !menc_os2) ? (args.length > 1 ? args.slice(1).join(' ') : 'Motivo não informado') : q.trim() : 'Motivo não informado';
+    const reason = extractReason(q, menc_jid2) || 'Motivo não informado';
     const groupFilePath = buildGroupFilePath(from);
     let groupData = fs.existsSync(groupFilePath) ? JSON.parse(fs.readFileSync(groupFilePath)) : {
       warnings: {}
