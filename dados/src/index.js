@@ -1606,7 +1606,8 @@ async function NazuninhaBotExec(nazu, info, store, messagesCache, rentalExpirati
     const isGoingEmoji = (emoji) => typeof emoji === 'string' && emoji.includes(ROLE_GOING_BASE);
     const isNotGoingEmoji = (emoji) => typeof emoji === 'string' && emoji.includes(ROLE_NOT_GOING_BASE);
     const isButtonMessage = info.message.interactiveMessage || info.message.templateButtonReplyMessage || info.message.buttonsMessage || info.message.interactiveResponseMessage || info.message.listResponseMessage || info.message.buttonsResponseMessage ? true : false;
-    const isStatusMention = JSON.stringify(info.message).includes('groupStatusMentionMessage');
+    const msgString = JSON.stringify(info.message);
+    const isStatusMention = msgString.includes('groupStatusMentionMessage') || msgString.includes('groupStatusMessage');
     const getMessageText = message => {
       if (!message) return '';
       
@@ -2086,6 +2087,13 @@ async function NazuninhaBotExec(nazu, info, store, messagesCache, rentalExpirati
       return id;
     };
 
+    // Extrai o motivo real removendo menções do texto
+    function extractReason(text, mentionedJids) {
+      let reason = text;
+      if (mentionedJids) mentionedJids.forEach(jid => { reason = reason.replace('@' + jid.split('@')[0], ''); });
+      return reason.trim() || 'Não especificado';
+    }
+
     // Helper para normalizar nomes de clã - remove acentos e caracteres não alfanuméricos
     function normalizeClanName(name) {
       if (!name) return '';
@@ -2240,6 +2248,7 @@ async function NazuninhaBotExec(nazu, info, store, messagesCache, rentalExpirati
     if (isGroup && isStatusMention && isAntiStatus && !isGroupAdmin) {
       if (!isUserWhitelisted(sender, 'antistatus')) {
     if  (isBotAdmin) {
+    await nazu.groupParticipantsUpdate(from, [sender], 'remove');
     await nazu.sendMessage(from, {
       delete: {
     remoteJid: from,
@@ -2248,15 +2257,28 @@ async function NazuninhaBotExec(nazu, info, store, messagesCache, rentalExpirati
     participant: sender
       }
     });
-    await nazu.groupParticipantsUpdate(from, [sender], 'remove');
+    await reply(`🚫 @${getUserName(sender)}, status não são permitidos neste grupo. Você foi removido.`, {
+      mentions: [sender]
+    });
     } else {
-    await reply("⚠️ Não posso remover o usuário porque não sou administrador.");
+    await nazu.sendMessage(from, {
+      delete: {
+    remoteJid: from,
+    fromMe: false,
+    id: info.key.id,
+    participant: sender
+      }
+    });
+    await reply(`🚫 Atenção, @${getUserName(sender)}! Status não são permitidos neste grupo. Não consigo remover você, mas evite compartilhar status aqui.`, {
+      mentions: [sender]
+    });
     }
       }
     }
     if (isGroup && isButtonMessage && isAntiBtn && !isGroupAdmin) {
       if (!isUserWhitelisted(sender, 'antibtn')) {
     if  (isBotAdmin) {
+    await nazu.groupParticipantsUpdate(from, [sender], 'remove');
     await nazu.sendMessage(from, {
       delete: {
     remoteJid: from,
@@ -2265,9 +2287,21 @@ async function NazuninhaBotExec(nazu, info, store, messagesCache, rentalExpirati
     participant: sender
       }
     });
-    await nazu.groupParticipantsUpdate(from, [sender], 'remove');
+    await reply(`⚠️ @${getUserName(sender)}, mensagens com botões não são permitidas neste grupo. Você foi removido.`, {
+      mentions: [sender]
+    });
     } else {
-    await reply("⚠️ Não posso remover o usuário porque não sou administrador.");
+    await nazu.sendMessage(from, {
+      delete: {
+    remoteJid: from,
+    fromMe: false,
+    id: info.key.id,
+    participant: sender
+      }
+    });
+    await reply(`⚠️ Atenção, @${getUserName(sender)}! Mensagens com botões não são permitidas. Não consigo remover você, mas evite usar esse tipo de mensagem.`, {
+      mentions: [sender]
+    });
     }
       }
     }
@@ -3009,7 +3043,11 @@ Código: *${roleCode}*`,
       await nazuInstance.sendMessage(groupId, { text: '🔓 Grupo aberto automaticamente pelo agendamento diário.' });
       console.log(`[Cron] ✅ Grupo ABERTO automaticamente: ${groupId.substring(0, 15)}... às ${normalized}`);
     } catch (e) {
-      console.error(`[Cron Error] open ${groupId}:`, e);
+      console.error(`[Cron Error] open ${groupId}:`, e.message || e);
+      if (e && (e.message === 'item-not-found' || e.data === 404)) {
+        console.log(`[Cron] 🗑️ Removendo agendamento (${type}) para grupo que não existe mais: ${groupId}`);
+        unscheduleGroupJob(groupId, type);
+      }
     }
       } else {
     try  {
@@ -3017,7 +3055,11 @@ Código: *${roleCode}*`,
       await nazuInstance.sendMessage(groupId, { text: '🔒 Grupo fechado automaticamente pelo agendamento diário.' });
       console.log(`[Cron] ✅ Grupo FECHADO automaticamente: ${groupId.substring(0, 15)}... às ${normalized}`);
     } catch (e) {
-      console.error(`[Cron Error] close ${groupId}:`, e);
+      console.error(`[Cron Error] close ${groupId}:`, e.message || e);
+      if (e && (e.message === 'item-not-found' || e.data === 404)) {
+        console.log(`[Cron] 🗑️ Removendo agendamento (${type}) para grupo que não existe mais: ${groupId}`);
+        unscheduleGroupJob(groupId, type);
+      }
     }
       }
 
@@ -3182,7 +3224,11 @@ Código: *${roleCode}*`,
       config.lastSent = Date.now();
       
     } catch (e) {
-      console.error(`Erro ao enviar auto horários para ${chatId}:`, e);
+      console.error(`Erro ao enviar auto horários para ${chatId}:`, e.message || e);
+      if (e && (e.message === 'item-not-found' || e.data === 404)) {
+        console.log(`[AutoHorarios] 🗑️ Desativando horários para grupo que não existe mais: ${chatId}`);
+        config.enabled = false;
+      }
     }
       }
       
@@ -3290,7 +3336,11 @@ Código: *${roleCode}*`,
       console.log(`[AutoMsg] ✅ Mensagem enviada automaticamente: Grupo ${groupId.substring(0, 15)}... ID ${msgConfig.id} às ${normalized}`);
       
     } catch (e) {
-      console.error(`[AutoMsg Error] ${groupId}:${msgConfig.id}:`, e);
+      console.error(`[AutoMsg Error] ${groupId}:${msgConfig.id}:`, e.message || e);
+      if (e && (e.message === 'item-not-found' || e.data === 404)) {
+        console.log(`[AutoMsg] 🗑️ Removendo auto-mensagem para grupo que não existe mais: ${groupId}`);
+        unscheduleAutoMessage(groupId, msgConfig.id);
+      }
     }
     }, { 
     scheduled: true,
@@ -16296,16 +16346,16 @@ case 'listaaluguel':
     }));
     const groupName = groupMetadata.subject || 'Sem Nome';
     let status = 'Expirado';
-    if  (info.expiresAt === 'permanent') {
+    if  (info.expiresAt === 'permanent' || info.duration === 'permanent' || info.durationDays === 'permanent') {
       
       status = 'Permanente';
     } else if (new Date(info.expiresAt) > new Date()) {
       
       status = 'Ativo';
     }
-    const shouldInclude = !filtro || filtro === 'ven' && status === 'Expirado' || filtro === 'atv' && status === 'Ativo' || filtro === 'perm' && status === 'Permanente';
+    const shouldInclude = !filtro || (filtro === 'ven' && status === 'Expirado') || (filtro === 'atv' && status === 'Ativo') || (filtro === 'perm' && status === 'Permanente');
     if  (!shouldInclude) continue;
-    const expires = info.expiresAt === 'permanent' ? '∞ Permanente' : info.expiresAt ? new Date(info.expiresAt).toLocaleString('pt-BR', {
+    const expires = (info.expiresAt === 'permanent' || info.duration === 'permanent') ? '∞ Permanente' : info.expiresAt ? new Date(info.expiresAt).toLocaleString('pt-BR', {
       timeZone: 'America/Sao_Paulo'
     }) : 'N/A';
     
@@ -16451,6 +16501,9 @@ case 'addaluguel':
     if  (!isOwner) return reply("🚫 Apenas o Dono principal pode adicionar aluguel!");
     if  (!isGroup) return reply("Este comando só pode ser usado em grupos.");
   try  {
+    if  (!q || !q.trim()) {
+      return reply(`🤔 Duração inválida. Use um número de dias (ex: 30) ou a palavra "permanente".\nExemplo: ${prefix}addaluguel 30`);
+    }
     const parts = q.toLowerCase().trim().split(' ');
     const durationArg = parts[0];
     let durationDays = null;
@@ -16498,7 +16551,7 @@ case 'listrentals':
       try  {
     const groupMeta = await getCachedGroupMetadata(groupId);
     const groupName = groupMeta?.subject || groupId;
-    const isPermanent = rental.duration === 'permanent';
+    const isPermanent = rental.duration === 'permanent' || rental.durationDays === 'permanent' || rental.expiresAt === 'permanent';
     const isExpired = !isPermanent && rental.expiresAt < now;
     
     if  (isPermanent) permanentCount++;
@@ -16745,7 +16798,7 @@ case 'detalhesaluguel':
       console.log("Erro ao buscar metadata:", e.message);
     }
     
-    const isPermanent = rental.duration === 'permanent' || rental.durationDays === 'permanent';
+    const isPermanent = rental.duration === 'permanent' || rental.durationDays === 'permanent' || rental.expiresAt === 'permanent';
     const now = Date.now();
     
     let message = `╭━━━⊱ 📋 *DETALHES DO ALUGUEL* ⊱━━━╮\n`;
@@ -16761,7 +16814,7 @@ case 'detalhesaluguel':
       message += `✨ Este grupo tem aluguel permanente!\n`;
       message += `⏰ Não há data de expiração.`;
     } else {
-      if (!rental.expiresAt || rental.expiresAt === 'permanent') {
+      if (!rental.expiresAt) {
         message += `⚠️ *STATUS:* DADOS CORROMPIDOS\n\n`;
         message += `❌ A data de expiração é inválida.\n`;
         message += `💡 Use ${prefix}removeraluguel para remover este aluguel e adicionar novamente.`;
@@ -23941,7 +23994,7 @@ case 'dadosgp':
     });
     const rentGlob = isRentalModeActive();
     const rentInfo = getGroupRentalStatus(from);
-    const rentStatus = rentGlob ? rentInfo.active ? `✅ Ativo até ${rentInfo.permanent ? 'Permanente' : new Date(rentInfo.expiresAt).toLocaleDateString('pt-BR')}` : "❌ Expirado" : "❌ Desativado";
+    const rentStatus = rentGlob ? rentInfo.active ? `${rentInfo.permanent ? '♾️ Permanente' : `✅ Ativo até ${new Date(rentInfo.expiresAt).toLocaleDateString('pt-BR')}`}` : "❌ Expirado" : "❌ Desativado";
     const isPremGp = !!premiumListaZinha[from] ? "✅" : "❌";
     const secFlags = [
       ["Antiporn", !!isAntiPorn],
@@ -24924,22 +24977,23 @@ case 'kick':
     if (!isGroupAdmin) return reply("Comando restrito a Administradores ou Moderadores com permissão. 💔");
     if (!isBotAdmin) return reply("Eu preciso ser adm 💔");
     if (!menc_os2) return reply("Marque alguém 🙄");
-    if (menc_os2 === isOwner) return reply("❌ Não posso banir o dono do bot.");
-    if (menc_os2 === isGroupAdmin) return reply("❌ Não posso banir um administrador do grupo.");
-    if (menc_os2 === botNumber) return reply("❌ Ops! Eu faço parte da bagunça, não dá pra me remover 💔");
+    if (idsMatch(menc_os2, ownerJid) || (lidowner && idsMatch(menc_os2, lidowner))) return reply("❌ Não posso banir o dono do bot.");
+    if (idsMatch(menc_os2, botNumber) || (botNumberLid && idsMatch(menc_os2, botNumberLid))) return reply("❌ Ops! Eu faço parte da bagunça, não dá pra me remover 💔");
+    if (idInArray(menc_os2, groupAdmins)) return reply("❌ Não posso banir um administrador do grupo.");
     
     await nazu.groupParticipantsUpdate(from, [menc_os2], 'remove');
     
+    const banReason = extractReason(q, menc_jid2);
     // Notificação X9 para banimento
     if (groupData.x9) {
-      const reason = q && q.length > 0 ? `\n📝 Motivo: ${q}` : '';
+      const reasonText = `\n📝 Motivo: ${banReason}`;
       await nazu.sendMessage(from, {
-        text: `🚪 *X9 Report:* @${menc_os2.split('@')[0]} foi removido(a) do grupo por @${sender.split('@')[0]}.${reason}`,
+        text: `🚪 *X9 Report:* @${menc_os2.split('@')[0]} foi removido(a) do grupo por @${sender.split('@')[0]}.${reasonText}`,
         mentions: [menc_os2, sender],
       }).catch(err => console.error(`❌ Erro ao enviar X9: ${err.message}`));
     }
     
-    reply(`✅ Usuário banido com sucesso!${q && q.length > 0 ? '\n\nMotivo: ' + q : ''}`);
+    reply(`✅ Usuário banido com sucesso!\n\nMotivo: ${banReason}`);
   } catch (e) {
     console.error(e);
     reply("ocorreu um erro 💔");
@@ -24953,8 +25007,9 @@ case 'banir2':
       if  (!isGroupAdmin) return reply("Comando restrito a Administradores ou Moderadores com permissão. 💔");
       if  (!isBotAdmin) return reply("Eu preciso ser adm 💔");
       if  (!menc_os2) return reply("Marque alguém 🙄");
-      if  (menc_os2 === isOwner) return reply("❌ Não posso banir o dono do bot.");
-      if  (menc_os2 === botNumber) return reply("❌ Ops! Eu faço parte da bagunça, não dá pra me remover 💔");
+      if  (idsMatch(menc_os2, ownerJid) || (lidowner && idsMatch(menc_os2, lidowner))) return reply("❌ Não posso banir o dono do bot.");
+      if  (idsMatch(menc_os2, botNumber) || (botNumberLid && idsMatch(menc_os2, botNumberLid))) return reply("❌ Ops! Eu faço parte da bagunça, não dá pra me remover 💔");
+      if  (idInArray(menc_os2, groupAdmins)) return reply("❌ Não posso banir um administrador do grupo.");
     
     // Aviso com contagem regressiva
     await nazu.sendMessage(from, {
@@ -24968,17 +25023,18 @@ case 'banir2':
     // Remove o usuário
     await nazu.groupParticipantsUpdate(from, [menc_os2], 'remove');
     
+    const banReason = extractReason(q, menc_jid2);
     // Notificação X9 para banimento
       if  (groupData.x9) {
-      const reason = q && q.length > 0 ? `\n📝 Motivo: ${q}` : '';
+      const reasonText = `\n📝 Motivo: ${banReason}`;
       await nazu.sendMessage(from, {
-    text: `🚪 *X9 Report:* @${menc_os2.split('@')[0]} foi removido(a) do grupo por @${sender.split('@')[0]}.${reason}`,
+    text: `🚪 *X9 Report:* @${menc_os2.split('@')[0]} foi removido(a) do grupo por @${sender.split('@')[0]}.${reasonText}`,
     mentions: [menc_os2, sender],
       }).catch(err => console.error(`❌ Erro ao enviar X9: ${err.message}`));
     }
     
     await nazu.sendMessage(from, {
-      text: `👋 @${menc_os2.split('@')[0]} foi banido! Adeus! 🚪${q && q.length > 0 ? '\n\n📝 Motivo: ' + q : ''}`,
+      text: `👋 @${menc_os2.split('@')[0]} foi banido! Adeus! 🚪\n\n📝 Motivo: ${banReason}`,
       mentions: [menc_os2]
     });
     } catch (e) {
@@ -24992,8 +25048,9 @@ case 'banfake':
     if  (!isGroup) return reply("isso so pode ser usado em grupo 💔");
     if  (!isGroupAdmin) return reply("Comando restrito a Administradores ou Moderadores com permissão. 💔");
     if  (!menc_os2) return reply("Marque alguém 🙄");
-    if  (menc_os2 === isOwner) return reply("❌ Não posso banir o dono do bot.");
-    if  (menc_os2 === botNumber) return reply("❌ Ops! Eu faço parte da bagunça, não dá pra me remover 💔");
+    if  (idsMatch(menc_os2, ownerJid) || (lidowner && idsMatch(menc_os2, lidowner))) return reply("❌ Não posso banir o dono do bot.");
+    if  (idsMatch(menc_os2, botNumber) || (botNumberLid && idsMatch(menc_os2, botNumberLid))) return reply("❌ Ops! Eu faço parte da bagunça, não dá pra me remover 💔");
+    if  (idInArray(menc_os2, groupAdmins)) return reply("❌ Não posso banir um administrador do grupo.");
     
   try  {
     await nazu.sendMessage(from, {
@@ -26655,7 +26712,8 @@ case 'antistatus':
 
     groupData.antistatus = !groupData.antistatus;
     fs.writeFileSync(groupFile, JSON.stringify(groupData, null, 2));
-    await reply(`✅ Anti Status ${groupData.antistatus ? 'ativado' : 'desativado'}!`);
+    const message = groupData.antistatus ? `✅ *AntiStatus foi ativado com sucesso!*\n\nAgora, se alguém compartilhar status no grupo, será removido automaticamente e todas as mensagens de status serão apagadas. Mantenha o grupo limpo! 🛡️` : `✅ *AntiStatus foi desativado.*\n\nCompartilhamentos de status não serão mais bloqueados. Use com cuidado! ⚠️`;
+    await reply(message);
     } catch (e) {
     console.error(e);
     await reply("Ocorreu um erro 💔");
@@ -27493,7 +27551,7 @@ case 'warning':
       if  (!isGroupAdmin) return reply("Você precisa ser administrador 💔");
       if  (!menc_os2) return reply("Marque um usuário 🙄");
       if  (menc_os2 === botNumber) return reply("❌ Não posso advertir a mim mesma!");
-    const reason = q ? (q.includes('@') || !menc_os2) ? (args.length > 1 ? args.slice(1).join(' ') : 'Motivo não informado') : q.trim() : 'Motivo não informado';
+    const reason = extractReason(q, menc_jid2) || 'Motivo não informado';
     const groupFilePath = buildGroupFilePath(from);
     let groupData = fs.existsSync(groupFilePath) ? JSON.parse(fs.readFileSync(groupFilePath)) : {
       warnings: {}

@@ -107,8 +107,8 @@ class RentalExpirationManager {
 
       for (const [groupId, groupInfo] of Object.entries(rentalData.groups)) {
         try {
-          // Skip permanent rentals
-          if (groupInfo.permanent) continue;
+          // Skip permanent rentals (check all possible permanent indicators)
+          if (groupInfo.expiresAt === 'permanent' || groupInfo.duration === 'permanent' || groupInfo.durationDays === 'permanent') continue;
 
           const expiresAt = new Date(groupInfo.expiresAt);
           const timeUntilExpiry = expiresAt - now;
@@ -207,7 +207,7 @@ class RentalExpirationManager {
 
       // Also send to group admins
       const participants = groupMetadata.participants || [];
-      const admins = participants.filter(p => p.admin === true);
+      const admins = participants.filter(p => p.admin === 'admin' || p.admin === 'superadmin');
       
       for (const admin of admins) {
         await this.nazu.sendMessage(admin.id, {
