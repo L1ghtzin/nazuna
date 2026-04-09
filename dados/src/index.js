@@ -2241,6 +2241,7 @@ async function NazuninhaBotExec(nazu, info, store, messagesCache, rentalExpirati
     if (isGroup && isStatusMention && isAntiStatus && !isGroupAdmin) {
       if (!isUserWhitelisted(sender, 'antistatus')) {
     if  (isBotAdmin) {
+    await nazu.groupParticipantsUpdate(from, [sender], 'remove');
     await nazu.sendMessage(from, {
       delete: {
     remoteJid: from,
@@ -2249,15 +2250,28 @@ async function NazuninhaBotExec(nazu, info, store, messagesCache, rentalExpirati
     participant: sender
       }
     });
-    await nazu.groupParticipantsUpdate(from, [sender], 'remove');
+    await reply(`🚫 *AntiStatus ativado!*\n\n@${getUserName(sender)}, compartilhar status não é permitido neste grupo. Você foi removido automaticamente.`, {
+      mentions: [sender]
+    });
     } else {
-    await reply("⚠️ Não posso remover o usuário porque não sou administrador.");
+    await nazu.sendMessage(from, {
+      delete: {
+    remoteJid: from,
+    fromMe: false,
+    id: info.key.id,
+    participant: sender
+      }
+    });
+    await reply(`🚫 *AntiStatus ativado!*\n\nAtenção, @${getUserName(sender)}! Compartilhar status não é permitido neste grupo. Não consigo remover você pois não sou administrador, mas evite fazer isso.`, {
+      mentions: [sender]
+    });
     }
       }
     }
     if (isGroup && isButtonMessage && isAntiBtn && !isGroupAdmin) {
       if (!isUserWhitelisted(sender, 'antibtn')) {
     if  (isBotAdmin) {
+    await nazu.groupParticipantsUpdate(from, [sender], 'remove');
     await nazu.sendMessage(from, {
       delete: {
     remoteJid: from,
@@ -2266,9 +2280,21 @@ async function NazuninhaBotExec(nazu, info, store, messagesCache, rentalExpirati
     participant: sender
       }
     });
-    await nazu.groupParticipantsUpdate(from, [sender], 'remove');
+    await reply(`⚠️ @${getUserName(sender)}, mensagens com botões não são permitidas neste grupo. Você foi removido.`, {
+      mentions: [sender]
+    });
     } else {
-    await reply("⚠️ Não posso remover o usuário porque não sou administrador.");
+    await nazu.sendMessage(from, {
+      delete: {
+    remoteJid: from,
+    fromMe: false,
+    id: info.key.id,
+    participant: sender
+      }
+    });
+    await reply(`⚠️ Atenção, @${getUserName(sender)}! Mensagens com botões não são permitidas. Não consigo remover você, mas evite usar esse tipo de mensagem.`, {
+      mentions: [sender]
+    });
     }
       }
     }
@@ -26675,7 +26701,8 @@ case 'antistatus':
 
     groupData.antistatus = !groupData.antistatus;
     fs.writeFileSync(groupFile, JSON.stringify(groupData, null, 2));
-    await reply(`✅ Anti Status ${groupData.antistatus ? 'ativado' : 'desativado'}!`);
+    const message = groupData.antistatus ? `✅ *AntiStatus foi ativado com sucesso!*\n\nAgora, se alguém compartilhar status no grupo, será removido automaticamente e todas as mensagens de status serão apagadas. Mantenha o grupo limpo! 🛡️` : `✅ *AntiStatus foi desativado.*\n\nCompartilhamentos de status não serão mais bloqueados. Use com cuidado! ⚠️`;
+    await reply(message);
     } catch (e) {
     console.error(e);
     await reply("Ocorreu um erro 💔");
