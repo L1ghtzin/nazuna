@@ -15627,7 +15627,7 @@ case 'updates':
   try  {
       if  (!isOwner || isOwner && isSubOwner) return reply("🚫 Apenas o Dono principal pode utilizar esse comando!");
       if  (!fs.existsSync(pathz.join(__dirname, '..', 'database', 'updateSave.json'))) return reply('❌ Sua versão não tem suporte a esse sistema ainda.');
-    const AtualCom = await axios.get('https://api.github.com/repos/devcrician/nazuna/commits?per_page=1', {
+    const AtualCom = await axios.get('https://api.github.com/repos/L1ghtzin/nazuna/commits?per_page=1', {
       headers: {
     Accept: 'application/vnd.github+json'
       }
@@ -15636,7 +15636,7 @@ case 'updates':
       total
     } = JSON.parse(fs.readFileSync(pathz.join(__dirname, '..', 'database', 'updateSave.json'), 'utf-8'));
       if  (AtualCom > total) {
-      const TextZin = await VerifyUpdate('devcrician/nazuna', AtualCom - total);
+      const TextZin = await VerifyUpdate('L1ghtzin/nazuna', AtualCom - total);
       await reply(TextZin);
     } else {
       await reply('Você ja esta utilizando a versão mais recente da bot.');
@@ -19912,7 +19912,7 @@ case 'download-bot':
   try  {
     await reply('📦 Baixando o código-fonte do bot... Aguarde!');
     
-    const zipResponse = await axios.get('https://github.com/devcrician/nazuna/archive/refs/heads/main.zip', {
+    const zipResponse = await axios.get('https://github.com/L1ghtzin/nazuna/archive/refs/heads/main.zip', {
       responseType: 'arraybuffer',
       timeout: 60000 // 60 segundos de timeout
     });
@@ -19925,7 +19925,7 @@ case 'download-bot':
       document: Buffer.from(zipResponse.data),
       fileName: 'nazuna-bot.zip',
       mimetype: 'application/zip',
-      caption: `📦 *Código-fonte do ${nomebot}*\n\n📖 Leia a documentação no repositório para entender melhor como instalar:\n🔗 https://github.com/devcrician/nazuna\n\n⚠️ *Importante:* Certifique-se de ter Node.js instalado e siga os passos do README.md!`
+      caption: `📦 *Código-fonte do ${nomebot}*\n\n📖 Leia a documentação no repositório para entender melhor como instalar:\n🔗 https://github.com/L1ghtzin/nazuna\n\n⚠️ *Importante:* Certifique-se de ter Node.js instalado e siga os passos do README.md!`
     }, { quoted: info });
     
     } catch (e) {
@@ -19936,7 +19936,7 @@ case 'download-bot':
       ? '❌ Tempo de conexão esgotado. Tente novamente.'
       : '❌ Erro ao baixar o arquivo.';
     
-    await reply(`${errorMsg}\n\nTente acessar diretamente:\n🔗 https://github.com/devcrician/nazuna`);
+    await reply(`${errorMsg}\n\nTente acessar diretamente:\n🔗 https://github.com/L1ghtzin/nazuna`);
     }
        break;
        
@@ -19954,8 +19954,8 @@ case 'source-code':
       const githubHeaders = { 'Accept': 'application/vnd.github+json' };
       
       Promise.all([
-    axios.get('https://api.github.com/repos/devcrician/nazuna', { headers: githubHeaders }),
-    axios.get('https://api.github.com/repos/devcrician/nazuna/commits?per_page=1', { headers: githubHeaders })
+    axios.get('https://api.github.com/repos/L1ghtzin/nazuna', { headers: githubHeaders }),
+    axios.get('https://api.github.com/repos/L1ghtzin/nazuna/commits?per_page=1', { headers: githubHeaders })
       ]).then(([repoResponse, commitsResponse]) => {
     const repo = repoResponse.data;
     
@@ -20022,7 +20022,7 @@ case 'source-code':
     reply(gitInfo);
       }).catch((e) => {
     console.error('Erro ao buscar info do GitHub:', e);
-    reply(`❌ Erro ao buscar informações. Acesse diretamente:\n🔗 https://github.com/devcrician/nazuna\n📞 Suporte: wa.me/559681361714`);
+    reply(`❌ Erro ao buscar informações. Acesse diretamente:\n🔗 https://github.com/L1ghtzin/nazuna\n📞 Suporte: wa.me/559681361714`);
       });
     });
     } catch (e) {

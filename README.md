@@ -26,7 +26,7 @@ https://chat.whatsapp.com/EnND4ZCkjVO7hEDwAxblzg?mode=gi_t
 
 1° Primeiro Comando:
 ```bash
-git clone https://github.com/devcrician/nazuna.git
+git clone https://github.com/L1ghtzin/nazuna.git
 ```
 2° Segundo Comando:
 ```bash
