@@ -1,113 +1,98 @@
 # NAZUNA BOT (WHATSAPP) 
 
-   ![Banner](https://files.catbox.moe/iix8ae.gif)
+![Banner](https://files.catbox.moe/iix8ae.gif)
 
 > **Nazuna** é um bot de WhatsApp poderoso, fácil de usar e cheio de funcionalidades.  
 > Ele foi criado para ajudar na administração de grupos, entretenimento e automação.
 
-## **Nosso grupo de WhatsApp!**
-https://chat.whatsapp.com/EnND4ZCkjVO7hEDwAxblzg?mode=gi_t
-
 ## 🧠 Sobre a Nazuna
 
-- A Nazuna é um bot versátil desenvolvido com **Node.js** e **WaLib**.  
-- A Nazuna é **gratuito e de código aberto**, mas é protegido por direitos autorais.  
+- A **Nazuna** é um bot versátil desenvolvido com **Node.js**.  
+- É um projeto **gratuito e de código aberto**, mas protegido por direitos autorais.  
 
 ## 🚀 Funcionalidades principais
 
-- Administração de grupos  
-- Entretenimento e jogos  
-- Ferramentas úteis  
-- Download de mídias  
-- Comandos personalizáveis  
-- Segurança e estabilidade
+- **Administração de grupos**
+- **Entretenimento e jogos**
+- **Ferramentas úteis**
+- **Download de mídias**
+- **Comandos personalizáveis**
+- **Segurança e estabilidade**
 
 ## 📦 Como instalar (resumo)
 
-1° Primeiro Comando:
+Siga os comandos abaixo na ordem para instalar e iniciar o bot:
+
 ```bash
+# 1. Clone o repositório
 git clone https://github.com/L1ghtzin/nazuna.git
-```
-2° Segundo Comando:
-```bash
+
+# 2. Entre na pasta
 cd nazuna
-```
-3° Terceiro Comando:
-```bash
+
+# 3. Configure o ambiente
 npm run config
-```
-4° Quarto Comando:
-```bash
+
+# 4. Instale as dependências
 npm run config:install
-```
-5° Quinto Comando:
-```bash
+
+# 5. Inicie o bot
 npm start
 ```
 
-- Depois é só escanear o QR code ou usar código de pareamento.
-- Use um número secundário no WhatsApp para evitar bloqueios.
+> **Dica:** Depois de iniciar, escaneie o código QR ou use o código de pareamento. Recomendamos o uso de um **número secundário** no WhatsApp para evitar bloqueios.
 
 ## 📋 Pré-requisitos
 
-- Node.js 20 ou superior
-- Git Qualquer versão recente
-- WhatsApp Número secundário
-- Internet Estável
-- RAM mínima 256 MB
-- Disco mínimo 256 MB
+- **Node.js**: 20 ou superior
+- **Git**: Qualquer versão recente
+- **WhatsApp**: Número secundário
+- **Internet**: Estável
+- **RAM**: No mínimo 256 MB
+- **Disco Livre**: No mínimo 256 MB
 
 ## 🔌 Como conectar o bot
 
-> Opção 1 — QR Code (recomendado)
+### Opção 1 — QR Code (Recomendado)
+1. Execute `npm start`
+2. Abra seu WhatsApp > Configurações > Aparelhos Conectados
+3. Escaneie o código que aparecerá no terminal
 
-- Execute npm start
-- Abra WhatsApp > Configurações > Aparelhos Conectados
-- Escaneie o código
+### Opção 2 — Código de Pareamento
+1. Execute `npm start` e informe o número do bot no terminal
+2. Copie o código gerado
+3. Cole no WhatsApp, na opção "Conectar com número de telefone"
+> *A sessão será salva automaticamente!*
 
-> Opção 2 — Código de pareamento
-
-- Execute npm start e informe o número do bot
-- Copie o código gerado
-- Cole no WhatsApp em "Conectar com número de telefone"
-- A sessão é salva automaticamente.
-
-## 🔄 Atualizar o bot
+## 🔄 Como atualizar o bot
 
 ```bash
 npm run update
 ```
-
-- Seus dados e configurações não serão perdidos.
+> *Fique tranquilo: seus dados e configurações não serão perdidos durante a atualização.*
 
 ## 🖥️ Plataformas compatíveis
 
-- Windows
-- Linux
-- macOS
-- Android (via Termux)
-- Servidores (Pterodactyl, VPS)
+- **Windows**
+- **Linux**
+- **macOS**
+- **Android** (via Termux)
+- **Servidores** (Pterodactyl, VPS, etc.)
 
 ## ❓ Dúvidas comuns (FAQ rápido)
 
-- npm: comando não encontrado Instale o Node.js
-- QR code não aparece Aumente o terminal ou use pareamento
-- Bot cai sozinho Verifique sua internet ou reinicie
-- Termux para em segundo plano Desative a otimização de bateria
+- **`npm: comando não encontrado`** — Instale o Node.js em sua máquina.
+- **O QR Code não aparece** — Aumente o tamanho da janela do seu terminal ou opte por usar o pareamento.
+- **O bot cai sozinho** — Verifique a estabilidade da sua internet ou reinicie o processo.
+- **O Termux para em segundo plano** — Desative a otimização de bateria do aplicativo em seu celular.
 
-## 💖 Apoie o projeto
+## 📜 Licença e Uso
 
-- Se você gosta do Nazuna, considere apoiar:
-- Chave Pix (CNPJ): 60.374.533/0001-65
-- Qualquer valor ajuda! 
+> **© 2025 Hiudy — Todos os direitos reservados.**  
+> Este software é de código aberto e seu uso é 100% gratuito. No entanto, a **venda ou comercialização é estritamente proibida**.
 
-## 📜 Licença
+## 👤 Desenvolvedor
 
-- © 2025 Hiudy — Todos os direitos reservados.
-- Uso gratuito permitido, venda proibida.
+Criado e mantido por **Hiudy**. Sinta-se livre para explorar meus outros projetos no repositório oficial:
 
-## 👤 Criador
-
-- GitHub: hiudyy
-- Discord: hiudyyy
-- Instagram: @hiudyyy_
+- 💻 **GitHub:** [hiudyy](https://github.com/hiudyy)
