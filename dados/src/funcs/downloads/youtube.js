@@ -31,7 +31,7 @@ async function convertToMp3(inputBuffer) {
     fs.writeFileSync(inp, inputBuffer);
     await new Promise((resolve, reject) => {
       ffmpeg(inp).toFormat('mp3').audioBitrate(128).audioChannels(2).audioFrequency(44100)
-        .outputOptions('-threads', '1')
+        .outputOptions('-threads', '0') // Usar todas as threads disponíveis
         .on('error', reject).on('end', resolve).save(out);
     });
     return fs.readFileSync(out);
@@ -53,26 +53,38 @@ function fmtDur(s) {
     : `${m}:${String(sec).padStart(2, '0')}`;
 }
 
-async function fetchNayan(url, format) {
-  const { data: raw } = await api.get('https://nayan-video-downloader.vercel.app/ytdown', { params: { url } });
+async function fetchNayan(url, format, retries = 3) {
+  let lastError;
+  for (let i = 0; i < retries; i++) {
+    try {
+      const { data: raw } = await api.get('https://nayan-video-downloader.vercel.app/ytdown', { params: { url } });
 
-  const body = (raw?.status !== undefined && raw.data) ? raw.data : raw;
-  if (!body || body.status === false) throw new Error('Resposta inválida');
+      const body = (raw?.status !== undefined && raw.data) ? raw.data : raw;
+      if (!body || body.status === false) throw new Error('Resposta inválida');
 
-  const media = (body.data?.title || body.data?.video || body.data?.audio) ? body.data : body;
-  const dlUrl = format === 'mp3' ? media.audio : (media.video_hd || media.video);
-  if (!dlUrl) throw new Error(`URL de ${format} não disponível`);
+      const media = (body.data?.title || body.data?.video || body.data?.audio) ? body.data : body;
+      const dlUrl = format === 'mp3' ? media.audio : (media.video_hd || media.video);
+      if (!dlUrl) throw new Error(`URL de ${format} não disponível`);
 
-  const { data } = await api.get(dlUrl, {
-    responseType: 'arraybuffer',
-    timeout: DL_TIMEOUT,
-    headers: { Referer: 'https://nayan-video-downloader.vercel.app/' }
-  });
+      const { data } = await api.get(dlUrl, {
+        responseType: 'arraybuffer',
+        timeout: DL_TIMEOUT,
+        headers: { Referer: 'https://nayan-video-downloader.vercel.app/' }
+      });
 
-  const buffer = Buffer.from(data);
-  if (buffer.length < 1000) throw new Error('Arquivo muito pequeno');
+      const buffer = Buffer.from(data);
+      if (buffer.length < 1000) throw new Error('Arquivo muito pequeno');
 
-  return { buffer, title: media.title || 'YouTube Media', thumb: media.thumb };
+      return { buffer, title: media.title || 'YouTube Media', thumb: media.thumb };
+    } catch (e) {
+      lastError = e;
+      if (i < retries - 1) {
+        // Aguarda 1.5 segundos antes de tentar novamente
+        await new Promise(res => setTimeout(res, 1500));
+      }
+    }
+  }
+  throw lastError;
 }
 
 async function search(query) {
@@ -101,7 +113,7 @@ async function search(query) {
   }
 }
 
-async function mp3(url) {
+async function mp3(url, preInfo = null) {
   try {
     const id = getVideoId(url);
     if (!id) return { ok: false, msg: 'URL inválida do YouTube' };
@@ -109,7 +121,7 @@ async function mp3(url) {
     const ytUrl = `https://youtube.com/watch?v=${id}`;
     const [dl, info] = await Promise.allSettled([
       fetchNayan(ytUrl, 'mp3'),
-      yts(url).then(r => r?.videos?.[0] || null)
+      preInfo ? Promise.resolve(preInfo) : yts(url).then(r => r?.videos?.[0] || null)
     ]);
 
     if (dl.status === 'rejected') return { ok: false, msg: dl.reason.message };
@@ -137,7 +149,7 @@ async function mp3(url) {
   }
 }
 
-async function mp4(url, qualidade = '360p') {
+async function mp4(url, qualidade = '360p', preInfo = null) {
   try {
     const id = getVideoId(url);
     if (!id) return { ok: false, msg: 'URL inválida do YouTube' };
@@ -145,7 +157,7 @@ async function mp4(url, qualidade = '360p') {
     const ytUrl = `https://youtube.com/watch?v=${id}`;
     const [dl, info] = await Promise.allSettled([
       fetchNayan(ytUrl, 'mp4'),
-      yts(url).then(r => r?.videos?.[0] || null)
+      preInfo ? Promise.resolve(preInfo) : yts(url).then(r => r?.videos?.[0] || null)
     ]);
 
     if (dl.status === 'rejected') return { ok: false, msg: dl.reason.message };

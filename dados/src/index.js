@@ -18838,7 +18838,7 @@ case 'ytmp3': {
 
       const [, dlRes] = await Promise.all([
         nazu.sendMessage(from, { image: { url: v.thumbnail }, caption, footer: `${nomebot} • Versão ${botVersion}` }, { quoted: info }).catch(() => {}),
-        youtube.mp3(v.url)
+        youtube.mp3(v.url, v)
       ]);
 
       await sendAudio(dlRes);
@@ -19206,7 +19206,7 @@ case 'ytmp4':
     footer: `By: ${nomebot}`
       }, { quoted: info }).catch((sendErr) => console.error('Erro ao enviar mensagem de resultado (playvid):', sendErr));
 
-      return youtube.mp4(videoUrl, 360);
+      return youtube.mp4(videoUrl, 360, videoInfo.data);
     })
     .then(async (dlRes) => {
       if  (!dlRes.ok) return reply(dlRes.msg);
