@@ -4118,35 +4118,35 @@ Código: *${roleCode}*`,
     const normalizedResponse = budy2.toLowerCase().trim();
     const result = tictactoe.processInvitationResponse(from, sender, normalizedResponse);
       if  (result.success) {
-      await nazu.sendMessage(from, {
+      nazu.sendMessage(from, {
     text: result.message,
     mentions: result.mentions || []
-      });
+      }).catch(e => console.error('[TICTACTOE] Erro ao enviar resposta de convite:', e.message));
     }
     }
     if  (tictactoe.hasActiveGame(from) && budy2) {
       if  (['tttend', 'rv', 'fimjogo'].includes(budy2)) {
     if  (!isGroupAdmin) {
-    await reply("⚠️ Apenas administradores podem encerrar um jogo da velha em andamento.");
+    reply("⚠️ Apenas administradores podem encerrar um jogo da velha em andamento.");
     return;
       }
       const result = tictactoe.endGame(from);
-      await reply(result.message);
+      reply(result.message);
       return;
     }
     const position = parseInt(budy2.trim());
       if  (!isNaN(position)) {
       const result = tictactoe.makeMove(from, sender, position);
     if  (result.success) {
-    await nazu.sendMessage(from, {
+    nazu.sendMessage(from, {
       text: result.message,
       mentions: result.mentions || [sender]
-    });
+    }).catch(e => console.error('[TICTACTOE] Erro ao enviar jogada:', e.message));
       } else if (result.message) {
-    await reply(result.message);
+    reply(result.message);
       }
-    }
     return;
+    }
     }
 
     // Processamento de respostas para Connect4
@@ -18800,53 +18800,55 @@ case 'ytmp3': {
 ╰━━━━━━━━━━━━━━━━━━━━━━━━━╯`);
   }
 
-  const sendAudio = async (dlRes) => {
-    if (!dlRes.ok) return nazu.sendMessage(from, { text: `❌ Erro ao baixar o áudio: ${dlRes.msg}` }, { quoted: info });
+  (async () => {
+    const sendAudio = async (dlRes) => {
+      if (!dlRes.ok) return nazu.sendMessage(from, { text: `❌ Erro ao baixar o áudio: ${dlRes.msg}` }, { quoted: info });
+      try {
+        await nazu.sendMessage(from, { audio: dlRes.buffer, mimetype: 'audio/mpeg' }, { quoted: info });
+      } catch (e) {
+        if (String(e).includes("ENOSPC") || String(e).includes("size")) {
+          await nazu.sendMessage(from, { text: '📦 Arquivo muito grande, enviando como documento...' }, { quoted: info });
+          await nazu.sendMessage(from, { document: dlRes.buffer, fileName: dlRes.filename, mimetype: 'audio/mpeg' }, { quoted: info });
+        } else {
+          nazu.sendMessage(from, { text: '❌ Ocorreu um erro ao enviar o áudio.' }, { quoted: info });
+        }
+      }
+    };
+
     try {
-      await nazu.sendMessage(from, { audio: dlRes.buffer, mimetype: 'audio/mpeg' }, { quoted: info });
-    } catch (e) {
-      if (String(e).includes("ENOSPC") || String(e).includes("size")) {
-        await nazu.sendMessage(from, { text: '📦 Arquivo muito grande, enviando como documento...' }, { quoted: info });
-        await nazu.sendMessage(from, { document: dlRes.buffer, fileName: dlRes.filename, mimetype: 'audio/mpeg' }, { quoted: info });
+      if (q.includes('youtube.com') || q.includes('youtu.be')) {
+        await reply('Aguarde um momentinho... ☀️');
+        const dlRes = await youtube.mp3(q);
+        await sendAudio(dlRes);
       } else {
-        nazu.sendMessage(from, { text: '❌ Ocorreu um erro ao enviar o áudio.' }, { quoted: info });
+        if (!youtube || typeof youtube.search !== 'function') {
+          return reply('❌ Sistema de busca do YouTube não está disponível no momento.');
+        }
+
+        await reply(`🔍 *Pesquisando no YouTube...*\n\n🎵 Música: *${q}*\n\n⏳ Aguarde um momento...`);
+
+        const result = await youtube.search(q);
+        if (!result.ok) return reply(`❌ Erro na pesquisa: ${result.msg}`);
+
+        const { data: v } = result;
+        if (v.seconds > 1800) return reply(`⚠️ Este vídeo é muito longo (${v.timestamp}).\nPor favor, escolha um vídeo com menos de 30 minutos.`);
+
+        const views = typeof v.views === 'number' ? v.views.toLocaleString('pt-BR') : v.views;
+        const desc = v.description ? v.description.slice(0, 100) + (v.description.length > 100 ? '...' : '') : 'Sem descrição disponível';
+        const caption = `🎵 *Música Encontrada* 🎵\n\n📌 *Título:* ${v.title}\n👤 *Artista/Canal:* ${v.author.name}\n⏱ *Duração:* ${v.timestamp} (${v.seconds} segundos)\n👀 *Visualizações:* ${views}\n📅 *Publicado:* ${v.ago}\n📜 *Descrição:* ${desc}\n🔗 *Link:* ${v.url}\n\n🎧 *Baixando e processando sua música, aguarde...*`;
+
+        const [, dlRes] = await Promise.all([
+          nazu.sendMessage(from, { image: { url: v.thumbnail }, caption, footer: `${nomebot} • Versão ${botVersion}` }, { quoted: info }).catch(() => {}),
+          youtube.mp3(v.url, v)
+        ]);
+
+        await sendAudio(dlRes);
       }
+    } catch (error) {
+      if (String(error).includes("age")) { reply('🔞 Este conteúdo possui restrição de idade e não pode ser baixado.'); return; }
+      reply('❌ Ocorreu um erro ao processar sua solicitação. Tente novamente mais tarde.');
     }
-  };
-
-  try {
-    if (q.includes('youtube.com') || q.includes('youtu.be')) {
-      reply('Aguarde um momentinho... ☀️');
-      const dlRes = await youtube.mp3(q);
-      await sendAudio(dlRes);
-    } else {
-      if (!youtube || typeof youtube.search !== 'function') {
-        return reply('❌ Sistema de busca do YouTube não está disponível no momento.');
-      }
-
-      await reply(`🔍 *Pesquisando no YouTube...*\n\n🎵 Música: *${q}*\n\n⏳ Aguarde um momento...`);
-
-      const result = await youtube.search(q);
-      if (!result.ok) return reply(`❌ Erro na pesquisa: ${result.msg}`);
-
-      const { data: v } = result;
-      if (v.seconds > 1800) return reply(`⚠️ Este vídeo é muito longo (${v.timestamp}).\nPor favor, escolha um vídeo com menos de 30 minutos.`);
-
-      const views = typeof v.views === 'number' ? v.views.toLocaleString('pt-BR') : v.views;
-      const desc = v.description ? v.description.slice(0, 100) + (v.description.length > 100 ? '...' : '') : 'Sem descrição disponível';
-      const caption = `🎵 *Música Encontrada* 🎵\n\n📌 *Título:* ${v.title}\n👤 *Artista/Canal:* ${v.author.name}\n⏱ *Duração:* ${v.timestamp} (${v.seconds} segundos)\n👀 *Visualizações:* ${views}\n📅 *Publicado:* ${v.ago}\n📜 *Descrição:* ${desc}\n🔗 *Link:* ${v.url}\n\n🎧 *Baixando e processando sua música, aguarde...*`;
-
-      const [, dlRes] = await Promise.all([
-        nazu.sendMessage(from, { image: { url: v.thumbnail }, caption, footer: `${nomebot} • Versão ${botVersion}` }, { quoted: info }).catch(() => {}),
-        youtube.mp3(v.url, v)
-      ]);
-
-      await sendAudio(dlRes);
-    }
-  } catch (error) {
-    if (String(error).includes("age")) return reply('🔞 Este conteúdo possui restrição de idade e não pode ser baixado.');
-    reply('❌ Ocorreu um erro ao processar sua solicitação. Tente novamente mais tarde.');
-  }
+  })();
   break;
 }
 
@@ -24540,7 +24542,7 @@ case 'attp':
     await reply("❌ Ocorreu um erro ao criar o sticker animado. Tente novamente em alguns minutos.");
     }
        break;
-       
+            
 case 'st':
 case 'stk':
 case 'sticker':
@@ -24609,7 +24611,7 @@ case 'randomsticker':
     await reply("❌ Ocorreu um erro interno. Tente novamente em alguns minutos.");
     }
        break;
-       
+
 case 'rename':
 case 'renomear':
 case 'mudarpack':
@@ -28144,11 +28146,18 @@ case 'tictactoe':
       console.warn('[TICTACTOE] invitePlayer not available');
       return reply("Sistema de jogo da velha temporariamente indisponível.");
     }
-    const result = await tictactoe.invitePlayer(from, sender, menc_os2);
-    await nazu.sendMessage(from, {
-      text: result.message,
-      mentions: result.mentions
-    });
+    (async () => {
+      try {
+        const result = await tictactoe.invitePlayer(from, sender, menc_os2);
+        await nazu.sendMessage(from, {
+          text: result.message,
+          mentions: result.mentions
+        });
+      } catch (e) {
+        console.error('[TICTACTOE] Erro:', e);
+        reply("❌ Ocorreu um erro no jogo da velha.");
+      }
+    })();
      break;
     }
 
