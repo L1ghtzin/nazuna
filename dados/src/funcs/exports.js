@@ -226,42 +226,16 @@ async function loadModules() {
         }
 
         // --- private (ESM via dynamic import) ---
-        const [iaMod, temuScammerMod, antitoxicMod, iaExpandedMod, antipalavra] = await Promise.all([
-            import('./private/ia.js'),
+        const [temuScammerMod, antitoxicMod, antipalavraMod] = await Promise.all([
             import('./private/temuScammer.js'),
             import('./private/antitoxic.js'),
-            import('./private/iaExpanded.js'),
             import('./private/antipalavra.js'),
         ]);
 
         // Private modules with null checking
-        if (iaMod.default || iaMod) {
-            modules.ia = {
-                makeAssistentRequest: iaMod.makeAssistentRequest || iaMod.processUserMessages,
-                makeCognimaRequest: iaMod.makeCognimaRequest,
-                ...(iaMod.default || iaMod)
-            };
-            // Add null checks for IA functions
-            if (typeof modules.ia.makeAssistentRequest !== 'function') {
-                console.warn('[EXPORTS] IA makeAssistentRequest not available');
-                modules.ia.makeAssistentRequest = () => { throw new Error('IA makeAssistentRequest not available'); };
-            }
-            if (typeof modules.ia.makeCognimaRequest !== 'function') {
-                console.warn('[EXPORTS] IA makeCognimaRequest not available');
-                modules.ia.makeCognimaRequest = () => { throw new Error('IA makeCognimaRequest not available'); };
-            }
-        } else {
-            console.warn('[EXPORTS] IA module not loaded');
-            modules.ia = {
-                makeAssistentRequest: () => { throw new Error('IA module not available'); },
-                makeCognimaRequest: () => { throw new Error('IA module not available'); }
-            };
-        }
-
         modules.temuScammer = temuScammerMod.default ?? temuScammerMod;
         modules.antitoxic = antitoxicMod.default ?? antitoxicMod;
-        modules.iaExpanded = iaExpandedMod.default ?? iaExpandedMod;
-        modules.antipalavra = antipalavra.default ?? antipalavra;
+        modules.antipalavra = antipalavraMod.default ?? antipalavraMod;
 
         // --- JSONs (sync read as before, exposed as functions) ---
         const toolsJsonData = loadJsonSync('json/tools.json');

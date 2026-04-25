@@ -16,7 +16,6 @@ export default async function menu(prefix, botName = "MeuBot", userName, {
 
 ${menuTopBorder}${separatorIcon} ${menuTitleIcon} *MENU PRINCIPAL*
 ${middleBorder}
-${middleBorder}${menuItemIcon}${prefix}menuia -> Inteligencias IAs
 ${middleBorder}${menuItemIcon}${prefix}menudown -> Downloads
 ${middleBorder}${menuItemIcon}${prefix}menulogos -> Logos
 ${middleBorder}${menuItemIcon}${prefix}menuadm -> Administração

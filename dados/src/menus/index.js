@@ -20,7 +20,7 @@ const menuModules = {
     menuMembros: './menumemb.js',
     menuFerramentas: './ferramentas.js',
     menuSticker: './menufig.js',
-    menuIa: './menuia.js',
+
     menuTopCmd: './topcmd.js',
     menuRPG: './menurpg.js',
     menuVIP: './menuvip.js'
