@@ -259,7 +259,7 @@ const writeJsonFile = (filePath, data) => {
       return false;
     }
     
-    // Testa se dados são serializáveis
+    // Serializa dados (JSON.stringify nunca produz JSON inválido)
     let jsonString;
     try {
       jsonString = JSON.stringify(data, null, 2);
@@ -268,31 +268,11 @@ const writeJsonFile = (filePath, data) => {
       return false;
     }
     
-    // Valida JSON gerado
-    try {
-      JSON.parse(jsonString);
-    } catch (validateError) {
-      console.error(`❌ writeJsonFile: JSON inválido gerado para ${filePath}`);
-      return false;
-    }
-    
     ensureDirectoryExists(pathz.dirname(filePath));
     
-    // Escreve em arquivo temporário primeiro (operação atômica)
+    // Escreve em arquivo temporário primeiro, depois move (operação atômica)
     const tempPath = filePath + '.tmp';
     fs.writeFileSync(tempPath, jsonString, 'utf-8');
-    
-    // Verifica integridade do arquivo temporário
-    try {
-      const writtenContent = fs.readFileSync(tempPath, 'utf-8');
-      JSON.parse(writtenContent);
-    } catch (verifyError) {
-      console.error(`❌ writeJsonFile: Verificação falhou para ${filePath}`);
-      try { fs.unlinkSync(tempPath); } catch (e) {}
-      return false;
-    }
-    
-    // Move arquivo temporário para destino (atômico)
     fs.renameSync(tempPath, filePath);
     return true;
   } catch (error) {
@@ -328,6 +308,37 @@ function fuzzySimilarity(word1, word2) {
   return isNaN(similarity) ? 0 : similarity;
 }
 
+// ==================== CACHE DE COMANDOS (Performance) ====================
+// Extrai a lista de comandos do index.js UMA VEZ e cacheia em memória.
+// Antes: 3 funções liam 1.2MB do disco a cada comando não-encontrado (3.6MB de I/O).
+// Agora: 0 bytes de I/O após a primeira chamada.
+let _commandListCache = null;
+
+function getCommandListCached() {
+  if (_commandListCache) return _commandListCache;
+  try {
+    const fileContent = fs.readFileSync(__dirname + '/index.js', 'utf8');
+    const commandsRegex = /case\s+['"](.+?)['"]/g;
+    const commands = [];
+    const seen = new Set();
+    let match;
+    while ((match = commandsRegex.exec(fileContent)) !== null) {
+      const cmd = match[1];
+      if (!seen.has(cmd)) {
+        seen.add(cmd);
+        commands.push(cmd);
+      }
+    }
+    _commandListCache = commands;
+    console.log(`📋 Cache de comandos criado: ${commands.length} comandos indexados`);
+    return commands;
+  } catch (error) {
+    console.error('Erro ao criar cache de comandos:', error);
+    return [];
+  }
+}
+// ==================== FIM: Cache de Comandos ====================
+
 /**
  * Busca comandos similares ao digitado pelo usuário
  * @param {string} targetWord - Comando digitado pelo usuário
@@ -336,15 +347,12 @@ function fuzzySimilarity(word1, word2) {
  */
 function Commands(targetWord, prefix = '.') {
   try {
-    const fileContent = fs.readFileSync(__dirname + '/index.js', "utf8")
-    const commandsRegex = /case\s+['"](.+?)['"]/g;
-    let mostSimilarCommand = "";
+    const commands = getCommandListCached();
+    let mostSimilarCommand = '';
     let highestSimilarity = -1;
-    let match;
     
-    while ((match = commandsRegex.exec(fileContent)) !== null) {
-      const extractedCommand = match[1];
-      const similarity = fuzzySimilarity(targetWord, extractedCommand)
+    for (const extractedCommand of commands) {
+      const similarity = fuzzySimilarity(targetWord, extractedCommand);
       if (similarity > highestSimilarity && extractedCommand !== targetWord) {
         highestSimilarity = similarity;
         mostSimilarCommand = extractedCommand;
@@ -372,20 +380,7 @@ function Commands(targetWord, prefix = '.') {
  * @returns {number} - Total de comandos encontrados
  */
 function getTotalCommands() {
-  try {
-    const fileContent = fs.readFileSync(__dirname + '/index.js', "utf8")
-    const commandsRegex = /case\s+['"](.+?)['"]/g;
-    let count = 0;
-    let match;
-    
-    while ((match = commandsRegex.exec(fileContent)) !== null) {
-      count++;
-    }
-    return count;
-  } catch (error) {
-    console.error('Erro ao contar comandos:', error);
-    return 0;
-  }
+  return getCommandListCached().length;
 }
 
 /**
@@ -396,13 +391,10 @@ function getTotalCommands() {
  */
 function getTopSimilarCommands(target, limit = 3) {
   try {
-    const fileContent = fs.readFileSync(__dirname + '/index.js', "utf8");
-    const commandsRegex = /case\s+['"](.+?)['"]/g;
+    const commands = getCommandListCached();
     const similarities = [];
-    let match;
     
-    while ((match = commandsRegex.exec(fileContent)) !== null) {
-      const extractedCommand = match[1];
+    for (const extractedCommand of commands) {
       const similarity = fuzzySimilarity(target, extractedCommand);
       if (similarity > 30 && extractedCommand !== target) {
         similarities.push({ command: extractedCommand, similarity });

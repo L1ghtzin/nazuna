@@ -305,16 +305,10 @@ ensureJsonFileExists(LEVELING_FILE, {
 ensureJsonFileExists(MSGPREFIX_FILE, { message: false });
 
 // Carrega config para verificar o número do dono
-import { fileURLToPath } from 'url';
-import path from 'path';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-const configPath = path.join(__dirname, '..', 'config.json');
+// (usa CONFIG_FILE já importado de paths.js, sem re-importar path/fileURLToPath)
 let configForMsgBotOn = {};
 try {
-  configForMsgBotOn = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+  configForMsgBotOn = JSON.parse(fs.readFileSync(CONFIG_FILE, 'utf8'));
 } catch (e) {
   console.error('Erro ao ler config.json para msgboton:', e.message);
 }
@@ -507,8 +501,7 @@ const loadMsgBotOn = () => {
   // Carrega config para verificar o número do dono
   let currentOwner = null;
   try {
-    const configPath = path.join(__dirname, '..', 'config.json');
-    const configData = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+    const configData = JSON.parse(fs.readFileSync(CONFIG_FILE, 'utf8'));
     currentOwner = configData.numerodono;
   } catch (e) {
     console.error('Erro ao ler config.json em loadMsgBotOn:', e.message);
