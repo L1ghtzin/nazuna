@@ -1285,6 +1285,7 @@ async function NazuninhaBotExec(nazu, info, store, messagesCache, rentalExpirati
     antitoxic,
 
     antipalavra,
+    antistickerplus,
     transmissao
   } = modules.default;
   // Otimização: Cache de dados estáticos com TTL
@@ -4256,6 +4257,22 @@ Código: *${roleCode}*`,
     } catch (antipalavraErr) {
       console.error('[ANTIPALAVRA] Erro ao processar:', antipalavraErr.message);
     }
+    }
+
+    // Processamento do AntiSticker Plus (Lottie)
+    if (isGroup && antistickerplus) {
+      try {
+        await antistickerplus.checkSticker(nazu, from, info, groupData, {
+          isGroupAdmin,
+          isOwner,
+          isParceiro,
+          isBotAdmin,
+          reply,
+          getUserName
+        });
+      } catch (stickerErr) {
+        console.error('[ANTISTICKERPLUS] Erro ao processar:', stickerErr.message);
+      }
     }
       } catch (error) {
 
@@ -27926,6 +27943,16 @@ Membros que falarem palavras da blacklist serão BANIDOS AUTOMATICAMENTE do grup
 
 💡 *Dica:* O sistema ignora acentos e maiúsculas/minúsculas na detecção.`);
        break;
+
+case 'antistickerplus':
+case 'antisticker+':
+case 'antisl':
+case 'antistickerplusbot':
+    if (!isGroup) return reply("🎮 Ops! Esse comando só funciona em grupos!");
+    if (!isGroupAdmin && !isOwner) return reply('⚠️ Este comando é apenas para administradores!');
+    if (!antistickerplus) return reply("❌ Sistema antistickerplus temporariamente indisponível.");
+    await antistickerplus.handleCommand(nazu, from, args, groupData, { reply, prefix });
+    break;
 
 case 'chance':
   try  {

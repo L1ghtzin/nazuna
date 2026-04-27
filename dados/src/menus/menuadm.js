@@ -120,6 +120,8 @@ ${middleBorder}${menuItemIcon}${prefix}antiflood
 ${middleBorder}${menuItemIcon}${prefix}antidoc
 ${middleBorder}${menuItemIcon}${prefix}antiloc
 ${middleBorder}${menuItemIcon}${prefix}antifig
+${middleBorder}${menuItemIcon}${prefix}antistickerplus
+${middleBorder}${menuItemIcon}${prefix}antistickerplus <apagar/remover>
 ${middleBorder}${menuItemIcon}${prefix}antibtn
 ${middleBorder}${menuItemIcon}${prefix}antilinkgp
 ${middleBorder}${menuItemIcon}${prefix}antilinkcanal
