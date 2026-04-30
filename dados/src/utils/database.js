@@ -2728,6 +2728,9 @@ const addGlobalBlacklist = async (userId, reason, addedBy, nazu = null) => {
       message: 'ID de usuário inválido. Use o LID ou marque o usuário.'
     };
   }
+  
+  const originalId = userId; // Guarda o ID original (geralmente o JID com o número)
+  
   // Se userId é um JID e temos o nazu, tentamos normalizar para LID
   if (nazu && isValidJid(userId)) {
     try {
@@ -2743,7 +2746,7 @@ const addGlobalBlacklist = async (userId, reason, addedBy, nazu = null) => {
   if (alreadyExistsKey) {
     return {
       success: false,
-      message: `✨ Usuário @${getUserName(userId)} já está na blacklist global!`
+      message: `✨ Usuário @${getUserName(originalId)} já está na blacklist global!`
     };
   }
   blacklistData.users[userId] = {
@@ -2754,7 +2757,7 @@ const addGlobalBlacklist = async (userId, reason, addedBy, nazu = null) => {
   if (saveGlobalBlacklist(blacklistData)) {
     return {
       success: true,
-      message: `🎉 Usuário @${getUserName(userId)} adicionado à blacklist global com sucesso! Motivo: ${reason || 'Não especificado'}`
+      message: `🎉 Usuário @${getUserName(originalId)} adicionado à blacklist global com sucesso! Motivo: ${reason || 'Não especificado'}`
     };
   } else {
     return {
@@ -2771,6 +2774,9 @@ const removeGlobalBlacklist = async (userId, nazu = null) => {
       message: 'ID de usuário inválido. Use o LID ou marque o usuário.'
     };
   }
+  
+  const originalId = userId;
+  
   // Tenta normalizar para LID se tivermos acesso ao nazu
   if (nazu && isValidJid(userId)) {
     try {
@@ -2787,7 +2793,7 @@ const removeGlobalBlacklist = async (userId, nazu = null) => {
   if (!blacklistData.users[userId] && !foundKey) {
     return {
       success: false,
-      message: `🤔 Usuário @${getUserName(userId)} não está na blacklist global.`
+      message: `🤔 Usuário @${getUserName(originalId)} não está na blacklist global.`
     };
   }
   // Se encontrou por correspondência, deleta a chave encontrada
@@ -2799,7 +2805,7 @@ const removeGlobalBlacklist = async (userId, nazu = null) => {
   if (saveGlobalBlacklist(blacklistData)) {
     return {
       success: true,
-      message: `👋 Usuário @${getUserName(userId)} removido da blacklist global com sucesso!`
+      message: `👋 Usuário @${getUserName(originalId)} removido da blacklist global com sucesso!`
     };
   } else {
     return {

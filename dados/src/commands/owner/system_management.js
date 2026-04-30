@@ -125,7 +125,7 @@ export default {
         if (!target) return reply("⚠️ Marque, responda a mensagem ou digite o número do usuário.");
         
         const res = await addGlobalBlacklist(target, reason || 'Não especificado', pushname, nazu);
-        return reply(res.message);
+        return reply(res.message, { mentions: [target] });
       }
       if (cmd.startsWith('rm')) {
         let target = menc_os2;
@@ -133,7 +133,7 @@ export default {
         if (!target) return reply("⚠️ Marque, responda a mensagem ou digite o número do usuário.");
         
         const res = await removeGlobalBlacklist(target, nazu);
-        return reply(res.message);
+        return reply(res.message, { mentions: [target] });
       }
       const list = getGlobalBlacklist();
       return reply(`🛑 *Blacklist Global:*\n\n` + Object.keys(list.users).join('\n'));
