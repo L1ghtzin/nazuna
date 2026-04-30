@@ -267,27 +267,15 @@ export async function getModules() {
  */
 const modules = await loadModules();
 
-// Additional safety checks at export level
+// Additional safety checks at export level (sem Proxy aninhado para performance)
 const safeModules = new Proxy(modules, {
     get(target, prop) {
+        if (typeof prop === 'symbol') return target[prop];
         if (!(prop in target)) {
             console.warn(`[EXPORTS] Module '${prop}' not found in exports`);
             return undefined;
         }
-        const value = target[prop];
-        if (typeof value === 'object' && value !== null) {
-            // Add property access validation for objects
-            return new Proxy(value, {
-                get(obj, key) {
-                    if (!(key in obj)) {
-                        console.warn(`[EXPORTS] Property '${key}' not found in module '${prop}'`);
-                        return undefined;
-                    }
-                    return obj[key];
-                }
-            });
-        }
-        return value;
+        return target[prop];
     }
 });
 
