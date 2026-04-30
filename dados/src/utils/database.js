@@ -3,6 +3,7 @@ import pathz from 'path';
 import crypto from 'crypto';
 
 import { ensureDirectoryExists, ensureJsonFileExists, loadJsonFile, normalizar, getUserName, isGroupId, isUserId, isValidLid, isValidJid, buildUserId, getLidFromJidCached, idsMatch, loadJsonFileSafe, saveJsonFileSafe, validateLevelingUser, validateEconomyUser, validateGroupData, createBackup, normalizeParam, compareParams, findKeyIgnoringAccents, findInArrayIgnoringAccents, resolveParamAlias, matchParam, PARAM_ALIASES } from './helpers.js';
+import { recalcEquipmentBonuses } from './equipment.js';
 
 import {
   DATABASE_DIR,
@@ -45,6 +46,25 @@ import {
   SUPPORT_TICKETS_FILE,
   CONFIG_FILE
 } from './paths.js';
+
+function writeJsonFile(filePath, data) {
+  try {
+    if (data === undefined || data === null) {
+      console.error(`❌ writeJsonFile: Tentativa de salvar dados nulos em ${filePath}`);
+      return false;
+    }
+    const jsonString = JSON.stringify(data, null, 2);
+    ensureDirectoryExists(pathz.dirname(filePath));
+    const tempPath = filePath + '.tmp';
+    fs.writeFileSync(tempPath, jsonString, 'utf-8');
+    fs.renameSync(tempPath, filePath);
+    return true;
+  } catch (error) {
+    console.error(`❌ Erro ao escrever JSON em ${filePath}:`, error.message);
+    return false;
+  }
+}
+
 
 ensureDirectoryExists(GRUPOS_DIR);
 ensureDirectoryExists(USERS_DIR);
@@ -483,7 +503,7 @@ const runDatabaseSelfTest = ({ log = false } = {}) => {
 };
 
 const loadMsgPrefix = () => {
-  return loadJsonFile(MSGPREFIX_FILE, { message: false }).message;
+  return loadJsonFile(MSGPREFIX_FILE, { message: false }, true).message;
 };
 
 const saveMsgPrefix = (message) => {
@@ -573,7 +593,7 @@ const loadCmdNotFoundConfig = () => {
       botName: '{botName}',
       userName: '{userName}'
     }
-  });
+  }, true);
 };
 
 const loadRelationships = () => {
@@ -740,6 +760,16 @@ const acceptSupportTicket = (ticketId, adminId) => {
   return { success: true, ticket };
 };
 
+const listSupportTickets = (groupId) => {
+  const data = loadSupportTicketsData();
+  const groupData = data.groups?.[groupId];
+  if (!groupData || !groupData.queue || !groupData.tickets) return [];
+  
+  return groupData.queue
+    .map(id => groupData.tickets[id])
+    .filter(t => t && t.status === 'pending');
+};
+
 const saveCmdNotFoundConfig = (config, action = 'update') => {
   try {
     ensureDirectoryExists(DONO_DIR);
@@ -824,7 +854,7 @@ const formatMessageWithFallback = (template, variables, fallbackMessage) => {
 };
 
 const loadCustomReacts = () => {
-  return loadJsonFile(CUSTOM_REACTS_FILE, { reacts: [] }).reacts || [];
+  return loadJsonFile(CUSTOM_REACTS_FILE, { reacts: [] }, true).reacts || [];
 };
 
 const saveCustomReacts = (reacts) => {
@@ -917,7 +947,7 @@ const saveDonoDivulgacao = (data) => {
 const loadSubdonos = () => {
   return loadJsonFile(SUBDONOS_FILE, {
     subdonos: []
-  }).subdonos || [];
+  }, true).subdonos || [];
 };
 
 const saveSubdonos = subdonoList => {
@@ -2570,7 +2600,7 @@ const sendAutoResponse = async (nazu, from, response, quotedMessage) => {
       case 'audio':
         if (responseData.buffer) {
           messageContent.audio = Buffer.from(responseData.buffer, 'base64');
-        } else if (responseData.url) {
+                } else if (responseData.url) {
           messageContent.audio = { url: responseData.url };
         }
         messageContent.mimetype = 'audio/mp4';
@@ -2583,6 +2613,7 @@ const sendAutoResponse = async (nazu, from, response, quotedMessage) => {
         } else if (responseData.url) {
           messageContent.sticker = { url: responseData.url };
         }
+        break;
         break;
 
       default:
@@ -2617,7 +2648,7 @@ const saveNoPrefixCommands = commands => {
 const loadCommandAliases = () => {
   return loadJsonFile(COMMAND_ALIASES_FILE, {
     aliases: []
-  }).aliases || [];
+  }, true).aliases || [];
 };
 
 const saveCommandAliases = aliases => {
@@ -2631,6 +2662,45 @@ const saveCommandAliases = aliases => {
     console.error('❌ Erro ao salvar apelidos de comandos:', error);
     return false;
   }
+};
+
+const addAlias = (alias, command) => {
+  const aliases = loadCommandAliases();
+  const index = aliases.findIndex(a => a.alias === alias);
+  if (index !== -1) {
+    aliases[index].command = command;
+  } else {
+    aliases.push({ alias, command });
+  }
+  return saveCommandAliases(aliases);
+};
+
+const removeAlias = (alias) => {
+  const aliases = loadCommandAliases();
+  const newAliases = aliases.filter(a => a.alias !== alias);
+  return saveCommandAliases(newAliases);
+};
+
+const listAliases = () => {
+  return loadCommandAliases();
+};
+
+const addNoPrefix = (command) => {
+  const commands = loadNoPrefixCommands();
+  if (!commands.includes(command)) {
+    commands.push(command);
+  }
+  return saveNoPrefixCommands(commands);
+};
+
+const removeNoPrefix = (command) => {
+  const commands = loadNoPrefixCommands();
+  const newCommands = commands.filter(c => c !== command);
+  return saveNoPrefixCommands(newCommands);
+};
+
+const listNoPrefix = () => {
+  return loadNoPrefixCommands();
 };
 
 const loadGlobalBlacklist = () => {
@@ -3298,6 +3368,12 @@ export {
   saveNoPrefixCommands,
   loadCommandAliases,
   saveCommandAliases,
+  addAlias,
+  removeAlias,
+  listAliases,
+  addNoPrefix,
+  removeNoPrefix,
+  listNoPrefix,
   loadGlobalBlacklist,
   saveGlobalBlacklist,
   addGlobalBlacklist,
@@ -3314,6 +3390,7 @@ export {
   findSupportTicketById,
   createSupportTicket,
   acceptSupportTicket,
+  listSupportTickets,
   // Command limiting functions
   loadCommandLimits,
   saveCommandLimits,
@@ -3365,5 +3442,56 @@ export {
   loadMenuLerMais,
   isMenuLerMaisEnabled,
   setMenuLerMais,
-  getMenuLerMaisText
+  getMenuLerMaisText,
+  getUserName,
+  loadJsonFile,
+  recalcEquipmentBonuses,
+  writeJsonFile,
+  applyPetDegradation
 };
+
+function applyPetDegradation(pets) {
+  if (!Array.isArray(pets) || pets.length === 0) return { changed: false };
+  
+  const now = Date.now();
+  const oneHour = 3600000;
+  const oneDayInHours = 24;
+  
+  let changed = false;
+  
+  pets.forEach(pet => {
+    if (!pet.lastUpdate) {
+      pet.lastUpdate = now;
+      changed = true;
+      return;
+    }
+    
+    const timePassed = now - pet.lastUpdate;
+    const hoursPassed = timePassed / oneHour;
+    
+    if (hoursPassed >= 1) {
+      const hungerDegrade = Math.floor(hoursPassed * (100 / oneDayInHours));
+      const moodDegrade = Math.floor(hoursPassed * (100 / (oneDayInHours * 2)));
+      
+      const oldHunger = pet.hunger || 100;
+      const oldMood = pet.mood || 100;
+      
+      pet.hunger = Math.max(0, oldHunger - hungerDegrade);
+      pet.mood = Math.max(0, oldMood - moodDegrade);
+      
+      if (pet.hunger < 30) {
+        pet.mood = Math.max(0, pet.mood - Math.floor(hoursPassed * 5));
+      }
+      
+      if (pet.hunger === 0 && hoursPassed >= 2) {
+        const hpLoss = Math.floor(hoursPassed * (pet.maxHp * 0.02));
+        pet.hp = Math.max(1, (pet.hp || pet.maxHp) - hpLoss);
+      }
+      
+      pet.lastUpdate = now;
+      changed = true;
+    }
+  });
+  
+  return { changed };
+}
