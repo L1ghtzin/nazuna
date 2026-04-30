@@ -211,6 +211,11 @@ const normalizar = (texto, keepCase = false) => {
   return keepCase ? normalizedText : normalizedText.toLowerCase();
 };
 
+const normalizeClanName = (name) => {
+  if (!name) return "";
+  return normalizar(name).replace(/\s+/g, "");
+};
+
 /**
  * Normaliza parâmetro de comando para comparação
  * Remove acentos, espaços extras, converte para minúsculas
@@ -274,6 +279,14 @@ const findInArrayIgnoringAccents = (arr, searchItem) => {
     return false;
   });
 };
+
+function timeLeft(targetMs) {
+  const diff = targetMs - Date.now();
+  if (diff <= 0) return '0s';
+  const s = Math.ceil(diff / 1000);
+  const m = Math.floor(s / 60); const rs = s % 60; const h = Math.floor(m / 60); const rm = m % 60;
+  return h > 0 ? `${h}h ${rm}m` : (m > 0 ? `${m}m ${rs}s` : `${rs}s`);
+}
 
 /**
  * Aliases/variações comuns de parâmetros
@@ -947,13 +960,18 @@ export {
   validateEconomyUser,
   validateGroupData,
   // Funções de normalização de parâmetros
+  normalizeClanName,
   normalizeParam,
   compareParams,
   findKeyIgnoringAccents,
   findInArrayIgnoringAccents,
   resolveParamAlias,
   matchParam,
-  PARAM_ALIASES
+  PARAM_ALIASES,
+  // Novas funções de parâmetros
+  normalizeParamName,
+  validateParamValue,
+  timeLeft
 };
 
 /**
@@ -1248,4 +1266,19 @@ function validateParamValue(value, def = {}) {
   }
 }
 
-export { normalizeParamName, validateParamValue };
+/**
+ * Formata respostas de IA para o padrão do WhatsApp
+ */
+export const formatAIResponse = (text) => {
+  if (!text || typeof text !== 'string') return text;
+  return text
+    .replace(/\*\*\*([^*]+)\*\*\*/g, '*$1*')  // ***text*** -> *text*
+    .replace(/\*\*([^*]+)\*\*/g, '*$1*')      // **text** -> *text*
+    .replace(/_{2,}([^_]+)_{2,}/g, '_$1_')    // __text__ -> _text_
+    .replace(/```[\s\S]*?```/g, '')     // Remove blocos de código
+    .replace(/`([^`]+)`/g, '$1')    // Remove inline code
+    .replace(/^#{1,6}\s+/gm, '')    // Remove headers markdown
+    .replace(/\n{3,}/g, '\n\n')     // Limita quebras de linha
+    .trim();
+};
+
