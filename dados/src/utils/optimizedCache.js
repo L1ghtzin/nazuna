@@ -1,6 +1,10 @@
 import NodeCache from 'node-cache';
 import path from 'path';
 import zlib from 'zlib';
+import { promisify } from 'util';
+
+const gzipAsync = promisify(zlib.gzip);
+const gunzipAsync = promisify(zlib.gunzip);
 
 class OptimizedCacheManager {
     constructor() {
@@ -228,12 +232,19 @@ class OptimizedCacheManager {
     }
 
     /**
+     * Verifica se dados estão comprimidos
+     */
+    isCompressed(data) {
+        return data && typeof data === 'object' && data.__compressed === true;
+    }
+
+    /**
      * Comprime dados usando zlib
      */
     async compressData(data) {
         try {
             const dataString = JSON.stringify(data);
-            const compressed = zlib.gzipSync(dataString);
+            const compressed = await gzipAsync(dataString);
             return {
                 __compressed: true,
                 data: compressed,
@@ -248,13 +259,6 @@ class OptimizedCacheManager {
     }
 
     /**
-     * Verifica se dados estão comprimidos
-     */
-    isCompressed(data) {
-        return data && typeof data === 'object' && data.__compressed === true;
-    }
-
-    /**
      * Descomprime dados usando zlib
      */
     async decompressData(compressedData) {
@@ -262,7 +266,7 @@ class OptimizedCacheManager {
             if (!this.isCompressed(compressedData)) {
                 return compressedData;
             }
-            const decompressed = zlib.gunzipSync(compressedData.data);
+            const decompressed = await gunzipAsync(compressedData.data);
             return JSON.parse(decompressed.toString());
         } catch (error) {
             console.error('❌ Erro na descompressão:', error.message);
