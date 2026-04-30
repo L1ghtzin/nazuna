@@ -3,11 +3,14 @@
 // Exporta buildMessageContext() que retorna o objeto ctx completo.
 
 import { downloadContentFromMessage, generateWAMessageFromContent, generateWAMessage, getContentType } from 'baileys';
+import menus from '../menus/index.js';
+import modulesExport from '../funcs/exports.js';
 
 import { exec, execSync, spawn } from 'child_process';
 import { promisify } from 'util';
 
 const execAsync = promisify(exec);
+let modoLiteFileChecked = false;
 import { parseHTML } from 'linkedom';
 import axios from 'axios';
 import pathz from 'path';
@@ -22,7 +25,7 @@ import { PerformanceOptimizer, getPerformanceOptimizer } from './performanceOpti
 import { MESSAGES } from './messages.js';
 import { writeJsonFileAsync, readJsonFileAsync, fileExistsAsync } from './asyncFs.js';
 import { Commands, getTotalCommands, getTopSimilarCommands, getCommandListCached } from './commandSearch.js';
-import { MASS_MENTION_THRESHOLD, checkMassMentionLimit, registerMassMentionUse, loadMassMentionConfig, saveMassMentionConfig } from './massMentionGuard.js';
+import { MASS_MENTION_THRESHOLD, checkMassMentionLimit, registerMassMentionUse, loadMassMentionConfig, saveMassMentionConfig, loadMassMentionLimit, MASS_MENTION_MAX_USES } from './massMentionGuard.js';
 
 import { ROLE_GOING_BASE, ROLE_NOT_GOING_BASE, isGoingEmoji, isNotGoingEmoji, ensureRoleParticipants, refreshRoleAnnouncement } from './roleManager.js';
 import { processReactionMessage } from '../middleware/reactionHandler.js';
@@ -68,7 +71,8 @@ import {
   normalizeUserId,
   convertIdsToLid,
   idsMatch,
-  idInArray
+  idInArray,
+  formatAIResponse
 } from './helpers.js';
 
 import {
@@ -180,6 +184,7 @@ import {
   findSupportTicketById,
   createSupportTicket,
   acceptSupportTicket,
+  listSupportTickets,
   loadCommandLimits,
   saveCommandLimits,
   addCommandLimit,
@@ -284,8 +289,12 @@ export async function buildMessageContext(nazu, info, store, messagesCache, rent
   const msgId = info?.key?.id?.slice(-6) || 'unknown';
   const from = info?.key?.remoteJid || 'unknown';
 
-  let config = loadJsonFile(CONFIG_FILE, {});
-  ensureDatabaseIntegrity({ log: Boolean(config?.debug) });
+  const optimizer = await initializePerformanceOptimizer();
+  let config = await optimizer.getCachedFile(
+    CONFIG_FILE,
+    10000, // 10 segundos
+    (path) => loadJsonFile(path, {})
+  );
   
   // Verificação e correção do prefixo reservado $ ao inicializar
   if (config.prefixo === '$') {
@@ -413,138 +422,52 @@ export async function buildMessageContext(nazu, info, store, messagesCache, rent
 
 
   // handleAutoDownload importado de handlers/autoDownload.js
-  const { default: menus } = await import('../menus/index.js');
   const {
-    menu,
-    menudown,
-    menuadm,
-    menubn,
-    menuDono,
-    menuMembros,
-    menuFerramentas,
-    menuSticker,
-
-    menuAlterador,
-    menuLogos,
-    menuTopCmd,
-    menuRPG,
-    menuVIP,
-    menuBuscas,
-    menuBrawlStars
+    menu, menudown, menuadm, menubn, menuDono, menuMembros,
+    menuFerramentas, menuSticker, menuAlterador, menuLogos,
+    menuTopCmd, menuRPG, menuVIP, menuBuscas, menuBrawlStars
   } = menus;
   const prefix = prefixo;
   const numerodonoStr = String(numerodono);
-  const modules = await import('../funcs/exports.js');
+  
   const {
-    youtube,
-    tiktok,
-    pinterest,
-    igdl,
-    kwai, 
-    sendSticker,
-    Dicionary, 
-    styleText,
-    Logos, 
-    Logos2, 
-    emojiMix,
-    upload,
-    mcPlugin,
-    tictactoe,
-    toolsJson,
-    vabJson,
-    Lyrics,
-    commandStats,
-    VerifyUpdate,
-    temuScammer,
-    relationshipManager,
-    spotify,
-    soundcloud,
-    facebook,
-    twitter,
-    gdrive,
-    mediafire,
-    search,
-    imagetools,
-    freefire,
+    youtube, tiktok, pinterest, igdl, kwai, sendSticker, Dicionary, styleText,
+    Logos, Logos2, emojiMix, upload, mcPlugin, tictactoe, toolsJson, vabJson,
+    Lyrics, commandStats, VerifyUpdate, temuScammer, relationshipManager,
+    spotify, soundcloud, facebook, twitter, gdrive, mediafire, search, imagetools, freefire,
     // Novos módulos
-    connect4,
-    uno,
-    memoria,
-    achievements,
-    gifts,
-    reputation,
-    qrcode,
-    notes,
-    calculator,
-    audioEdit,
-    antitoxic,
-
-    antipalavra,
-    antistickerplus,
-    transmissao
-  } = modules.default;
+    connect4, uno, memoria, achievements, gifts, reputation, qrcode, notes,
+    calculator, audioEdit, antitoxic, antipalavra, antistickerplus, transmissao
+  } = modulesExport;
   // Otimização: Cache de dados estáticos com TTL
-  const optimizer = getPerformanceOptimizer();
   
-  const antipvData = await optimizer.getCachedFile(
-    DATABASE_DIR + '/antipv.json',
-    30000, // 30 segundos
-    (path) => loadJsonFile(path)
-  );
-  const premiumListaZinha = await optimizer.getCachedFile(
-    DONO_DIR + '/premium.json',
-    60000, // 1 minuto
-    (path) => loadJsonFile(path)
-  );
-  const banGpIds = await optimizer.getCachedFile(
-    DONO_DIR + '/bangp.json',
-    30000, // 30 segundos
-    (path) => loadJsonFile(path)
-  );
-  const antifloodData = await optimizer.getCachedFile(
-    DATABASE_DIR + '/antiflood.json',
-    30000, // 30 segundos
-    (path) => loadJsonFile(path)
-  );
-  
-  const antiSpamGlobal = await optimizer.getCachedFile(
-    DATABASE_DIR + '/antispam.json',
-    30000, // 30 segundos
-    (path) => loadJsonFile(path, {
-      enabled: false,
-      limit: 5,
-      interval: 10,
-      blockTime: 600,
-      users: {},
-      blocks: {}
-    })
-  );
-  const globalBlocks = await optimizer.getCachedFile(
-    DATABASE_DIR + '/globalBlocks.json',
-    30000, // 30 segundos
-    (path) => loadJsonFile(path, {
-      commands: {},
-      users: {}
-    })
-  );
-  const botState = await optimizer.getCachedFile(
-    DATABASE_DIR + '/botState.json',
-    30000, // 30 segundos
-    (path) => loadJsonFile(path, {
-      status: 'on'
-    })
-  );
   const modoLiteFile = DATABASE_DIR + '/modolite.json';
-  let modoLiteGlobal = await optimizer.getCachedFile(
-    modoLiteFile,
-    30000, // 30 segundos
-    (path) => loadJsonFile(path, {
-      status: false
-    })
-  );
-  if (!fs.existsSync(modoLiteFile)) {
-    writeJsonFile(modoLiteFile, modoLiteGlobal);
-  };
+  
+  const [
+    antipvData,
+    premiumListaZinha,
+    banGpIds,
+    antifloodData,
+    antiSpamGlobal,
+    globalBlocks,
+    botState,
+    modoLiteGlobal
+  ] = await Promise.all([
+    optimizer.getCachedFile(DATABASE_DIR + '/antipv.json', 30000, (path) => loadJsonFile(path)),
+    optimizer.getCachedFile(DONO_DIR + '/premium.json', 60000, (path) => loadJsonFile(path)),
+    optimizer.getCachedFile(DONO_DIR + '/bangp.json', 30000, (path) => loadJsonFile(path)),
+    optimizer.getCachedFile(DATABASE_DIR + '/antiflood.json', 30000, (path) => loadJsonFile(path)),
+    optimizer.getCachedFile(DATABASE_DIR + '/antispam.json', 30000, (path) => loadJsonFile(path, { enabled: false, limit: 5, interval: 10, blockTime: 600, users: {}, blocks: {} })),
+    optimizer.getCachedFile(DATABASE_DIR + '/globalBlocks.json', 30000, (path) => loadJsonFile(path, { commands: {}, users: {} })),
+    optimizer.getCachedFile(DATABASE_DIR + '/botState.json', 30000, (path) => loadJsonFile(path, { status: 'on' })),
+    optimizer.getCachedFile(modoLiteFile, 30000, (path) => loadJsonFile(path, { status: false }))
+  ]);
+  if (!modoLiteFileChecked) {
+    if (!fs.existsSync(modoLiteFile)) {
+      writeJsonFile(modoLiteFile, modoLiteGlobal);
+    }
+    modoLiteFileChecked = true;
+  }
   
   if (typeof global.autoStickerMode === 'undefined') {
     global.autoStickerMode = 'default';
@@ -596,7 +519,7 @@ export async function buildMessageContext(nazu, info, store, messagesCache, rent
     const pushname = info.pushName || '';
     const isStatus = from?.endsWith('@broadcast') || false;
     const nmrdn = buildUserId(numerodono, config);
-    const subDonoList = loadSubdonos();
+    const subDonoList = await optimizer.memoize('subdonos:global', () => Promise.resolve(loadSubdonos()), 30000);
     const isSubOwner = isSubdono(sender);
     const ownerJid = `${numerodono}@s.whatsapp.net`;
     const botId = getBotId(nazu);
@@ -638,8 +561,7 @@ export async function buildMessageContext(nazu, info, store, messagesCache, rent
     const isVisuU2 = type === 'viewOnceMessageV2';
     const isVisuU = type === 'viewOnceMessage';
     const isButtonMessage = info.message.interactiveMessage || info.message.templateButtonReplyMessage || info.message.buttonsMessage || info.message.interactiveResponseMessage || info.message.listResponseMessage || info.message.buttonsResponseMessage ? true : false;
-    const msgString = JSON.stringify(info.message);
-    const isStatusMention = msgString.includes('groupStatusMentionMessage') || msgString.includes('groupStatusMessage');
+    const isStatusMention = !!(info.message?.groupStatusMentionMessage || info.message?.groupStatusMessage);
     const body = getMessageText(info.message) || info?.text || '';
 
     let args = body.trim().split(/ +/).slice(1);
@@ -649,7 +571,9 @@ export async function buildMessageContext(nazu, info, store, messagesCache, rent
     const menc_jid2 = info.message?.extendedTextMessage?.contextInfo?.mentionedJid;
     const menc_os2 = (menc_jid2 && menc_jid2.length > 0) ? menc_jid2[0] : menc_prt;
     const sender_ou_n = (menc_jid2 && menc_jid2.length > 0) ? menc_jid2[0] : menc_prt || sender;
-  const groupFile = buildGroupFilePath(from);
+    const groupFile = buildGroupFilePath(from);
+    const groupMetadata = isGroup ? await getCachedGroupMetadata(from) : {};
+    const groupName = groupMetadata?.subject || '';
     const groupData = await loadGroupData(isGroup, from, groupFile, groupName, optimizer);
 
     // Otimização: Cache de parcerias
@@ -667,12 +591,12 @@ export async function buildMessageContext(nazu, info, store, messagesCache, rent
     const isUserWhitelisted = (userId, antiType) => isUserWhitelistedCore(groupData, userId, antiType);
     
     const groupPrefix = groupData.customPrefix || prefixo;
-    var isCmd = body.trim().startsWith(groupPrefix);
+    const isCmd = body.trim().startsWith(groupPrefix);
     
     // Suporte para "! comando" (com espaço após o prefixo)
     const bodyWithoutPrefix = body.trim().slice(groupPrefix.length).trimStart();
     
-    const aliases = loadCommandAliases();
+    const aliases = await optimizer.memoize('aliases:global', () => Promise.resolve(loadCommandAliases()), 30000);
     const matchedAlias = aliases.find(item => normalizar(bodyWithoutPrefix.split(/ +/).shift().trim()) === item.alias);
     
     // Se encontrou um alias, aplicar parâmetros fixos
@@ -684,7 +608,7 @@ export async function buildMessageContext(nazu, info, store, messagesCache, rent
       args.push(...combinedParams.split(/ +/));
     }
     
-    var command = isCmd ? matchedAlias ? matchedAlias.command : normalizar(bodyWithoutPrefix.split(/ +/).shift().trim()).replace(/\s+/g, '') : null;
+    const command = isCmd ? matchedAlias ? matchedAlias.command : normalizar(bodyWithoutPrefix.split(/ +/).shift().trim()).replace(/\s+/g, '') : null;
     
     // Recalcular args usando bodyWithoutPrefix para suportar "! comando" (com espaço)
     if (isCmd && !matchedAlias) {
@@ -695,6 +619,87 @@ export async function buildMessageContext(nazu, info, store, messagesCache, rent
     }
     
     const isPremium = premiumListaZinha[sender] || premiumListaZinha[from] || isOwner;
+
+    async function reply(text, options = {}) {
+      try {
+        const {
+          mentions = [],
+          noForward = false,
+          noQuote = false
+        } = options;
+        const messageContent = {
+          text: text.trim(),
+          mentions: mentions
+        };
+        const sendOptions = {
+          sendEphemeral: true
+        };
+        if (!noForward) {
+          sendOptions.contextInfo = {
+            forwardingScore: 50,
+            isForwarded: true,
+            externalAdReply: {
+              showAdAttribution: true
+            }
+          };
+        }
+        if (!noQuote) {
+          sendOptions.quoted = info;
+        }
+        const result = await nazu.sendMessage(from, messageContent, sendOptions);
+        return result;
+      } catch (error) {
+        console.error("Erro ao enviar mensagem:", error);
+        return null;
+      }
+    }
+    nazu.reply = reply;
+
+    const reagir = async (emj, options = {}) => {
+      try {
+        const messageKey = options.key || info.key;
+        const delay = options.delay || 500;
+        if (!messageKey) {
+          console.error("Chave de mensagem inválida para reação");
+          return false;
+        }
+        if (typeof emj === 'string') {
+          if (emj.length < 1 || emj.length > 5) {
+            console.warn("Emoji inválido para reação:", emj);
+            return false;
+          }
+          await nazu.sendMessage(from, {
+            react: {
+              text: emj,
+              key: messageKey
+            }
+          });
+          return true;
+        } else if (Array.isArray(emj) && emj.length > 0) {
+          for (const emoji of emj) {
+            if (typeof emoji !== 'string' || emoji.length < 1 || emoji.length > 5) {
+              console.warn("Emoji inválido na sequência:", emoji);
+              continue;
+            }
+            await nazu.sendMessage(from, {
+              react: {
+                text: emoji,
+                key: messageKey
+              }
+            });
+            if (delay > 0 && emj.indexOf(emoji) < emj.length - 1) {
+              await new Promise(resolve => setTimeout(resolve, delay));
+            }
+          }
+          return true;
+        }
+        return false;
+      } catch (error) {
+        console.error("Erro ao reagir com emoji:", error);
+        return false;
+      }
+    };
+    nazu.react = reagir;
     
     // Verificação de captcha para solicitações de entrada em grupos (DEVE vir ANTES de antipv)
     const captchaHandled = await handleCaptchaResponse(nazu, sender, body, isGroup, info, reply, GRUPOS_DIR, debug);
@@ -715,9 +720,20 @@ export async function buildMessageContext(nazu, info, store, messagesCache, rent
     const rawAdmins = !isGroup ? [] :
       groupMetadata.participants?.filter(p => p.admin === 'admin' || p.admin === 'superadmin').map(extractParticipantId).filter(Boolean) || [];
 
-    // Converte todos os membros e admins para LID (usando cache)
-    const AllgroupMembers = await convertIdsToLid(nazu, rawMembers);
-    const groupAdmins = await convertIdsToLid(nazu, rawAdmins);
+    // Converte todos os membros e admins para LID (com cache per-group otimizado 1 min)
+    let AllgroupMembers = [];
+    let groupAdmins = [];
+    if (isGroup && rawMembers.length > 0) {
+      [AllgroupMembers, groupAdmins] = await Promise.all([
+        optimizer.memoize(`lid_members:${from}`, () => convertIdsToLid(nazu, rawMembers), 300000),
+        optimizer.memoize(`lid_admins:${from}`, () => convertIdsToLid(nazu, rawAdmins), 300000)
+      ]);
+    } else {
+      [AllgroupMembers, groupAdmins] = await Promise.all([
+        convertIdsToLid(nazu, rawMembers),
+        convertIdsToLid(nazu, rawAdmins)
+      ]);
+    }
     
     // Debug log
     debugLog('Membros e Admins convertidos:', {
@@ -789,95 +805,14 @@ export async function buildMessageContext(nazu, info, store, messagesCache, rent
       isVisuU, isVisuU2, isBotAdmin, isGroupAdmin, isOwner, isStatusMention, isButtonMessage, 
       from, pushname, reply, messagesCache, type, body, isOwnerOrSub, antiSpamGlobal, writeJsonFile,
       DATABASE_DIR, optimizer, groupFile, getUserName, isUserWhitelisted, getGroupRentalStatus,
-      isRentalModeActive, validateActivationCode, useActivationCode
+      isRentalModeActive, validateActivationCode, useActivationCode, isMuted, isMuted2
     });
     if (securityResult?.stopProcessing) return;
-    await processStats({
+    // Stats em fire-and-forget: não bloqueia o pipeline do comando
+    processStats({
       nazu, info, isGroup, sender, groupData, isCmd, type, pushname, 
       writeJsonFile, groupFile, optimizer, from
-    });
-    async function reply(text, options = {}) {
-      try {
-    const {
-    mentions = [],
-    noForward = false,
-    noQuote = false
-    } = options;
-    const messageContent = {
-    text: text.trim(),
-    mentions: mentions
-    };
-    const sendOptions = {
-    sendEphemeral: true
-    };
-    if  (!noForward) {
-    sendOptions.contextInfo = {
-      forwardingScore: 50,
-      isForwarded: true,
-      externalAdReply: {
-    showAdAttribution: true
-      }
-    };
-    }
-    if  (!noQuote) {
-    sendOptions.quoted = info;
-    }
-    const result = await nazu.sendMessage(from, messageContent, sendOptions);
-    return result;
-      } catch (error) {
-    console.error("Erro ao enviar mensagem:", error);
-    return null;
-      }
-    }
-    nazu.reply = reply;
-    const reagir = async (emj, options = {}) => {
-      try {
-    const messageKey = options.key || info.key;
-    const delay = options.delay || 500;
-    if  (!messageKey) {
-    console.error("Chave de mensagem inválida para reação");
-    return false;
-    }
-    if  (typeof emj === 'string') {
-      if  (emj.length < 1 || emj.length > 5) {
-      console.warn("Emoji inválido para reação:", emj);
-      return false;
-    }
-    await nazu.sendMessage(from, {
-      react: {
-    text: emj,
-    key: messageKey
-      }
-    });
-    return true;
-    } else if (Array.isArray(emj) && emj.length > 0) {
-    for (const emoji of emj) {
-    if  (typeof emoji !== 'string' || emoji.length < 1 || emoji.length > 5) {
-    console.warn("Emoji inválido na sequência:", emoji);
-    continue;
-      }
-      await nazu.sendMessage(from, {
-    react: {
-      text: emoji,
-      key: messageKey
-    }
-      });
-    if  (delay > 0 && emj.indexOf(emoji) < emj.length - 1) {
-    await new Promise(resolve => setTimeout(resolve, delay));
-      }
-    }
-    return true;
-    }
-    return false;
-      } catch (error) {
-    console.error("Erro ao reagir com emoji:", error);
-    return false;
-      }
-    };
-    nazu.react = reagir;
-
-    startAllWorkers(nazu);
-
+    }).catch(e => console.error('❌ Erro no processStats:', e.message));
 
 
 
@@ -934,7 +869,7 @@ export async function buildMessageContext(nazu, info, store, messagesCache, rent
     reply, reagir, debugLog, persistGroupDataLocal, isUserWhitelisted,
     getCachedGroupMetadata, deleteChatByLastMessage, clearChatHistorySafe,
     // Módulos
-    menus, modules: modules.default, optimizer,
+    menus, modules: modulesExport, optimizer,
     youtube, tiktok, pinterest, igdl, kwai, sendSticker, Dicionary, styleText,
     Logos, Logos2, emojiMix, upload, mcPlugin, tictactoe, toolsJson, vabJson,
     Lyrics, commandStats, VerifyUpdate, temuScammer, relationshipManager,
@@ -945,7 +880,7 @@ export async function buildMessageContext(nazu, info, store, messagesCache, rent
     antipvData, premiumListaZinha, banGpIds, antifloodData, antiSpamGlobal,
     globalBlocks, botState, modoLiteGlobal,
     // Variáveis de mensagem
-    isCmd, command, menc_prt, menc_jid2, menc_os2, sender_ou_n, msgString,
+    isCmd, command, menc_prt, menc_jid2, menc_os2, sender_ou_n, msgString: "",
     matchedAlias,
     // Handlers
     handleAutoDownload, getFileBuffer, getMediaInfo, processImageForProfile,
@@ -956,7 +891,7 @@ export async function buildMessageContext(nazu, info, store, messagesCache, rent
     CONFIG_FILE, ECONOMY_FILE, LEVELING_FILE,
     // Database functions
     loadEconomy, saveEconomy, getEcoUser, parseAmount, fmt, timeLeft,
-    loadReminders, saveReminders, formatUptime,
+    loadReminders, saveReminders, formatUptime, getTotalCommands,
     loadRentalData, saveRentalData, setGroupRental, extendGroupRental,
     addAutoResponse, loadCustomAutoResponses, saveCustomAutoResponses,
     loadGroupAutoResponses, saveGroupAutoResponses,
@@ -968,9 +903,10 @@ export async function buildMessageContext(nazu, info, store, messagesCache, rent
     loadGlobalBlacklist, loadNoPrefixCommands, loadCommandAliases,
     parseCustomCommandMeta, buildUsageFromParams, normalizeUserId, removeUserFromMap,
     isValidJid, isValidLid, buildUserId, getLidFromJidCached, convertIdsToLid, idsMatch, idInArray,
-    setSupportMode, createSupportTicket, acceptSupportTicket, findSupportTicketById,
+    setSupportMode, createSupportTicket, acceptSupportTicket, findSupportTicketById, listSupportTickets,
+    loadMassMentionConfig, saveMassMentionConfig, MASS_MENTION_MAX_USES, MASS_MENTION_THRESHOLD, loadMassMentionLimit, registerMassMentionUse,
     getGroupCustomization, isGroupCustomizationEnabled, getMenuDesignWithDefaults,
-    getMenuLerMaisText, isMenuAudioEnabled, getMenuAudioPath,
+    getMenuLerMaisText, isMenuAudioEnabled, getMenuAudioPath, formatAIResponse,
     saveParceriasData, isRentalModeActive, getGroupRentalStatus, validateActivationCode, useActivationCode,
     vipCommandsManager, spotifyModule, gdriveGetInfo, mediafireGetInfo, twitterGetInfo,
     removeBg, upscale, search, searchNews,
@@ -978,7 +914,7 @@ export async function buildMessageContext(nazu, info, store, messagesCache, rent
     // Middleware results (pre-computed)
     joinRequestHandled: false, captchaHandled: false, pvBlocked: false,
     // Extras
-    subDonoList: loadSubdonos(),
+    subDonoList,
     __dirname: indexDir,
     MODO_LITE_FILE
   };
