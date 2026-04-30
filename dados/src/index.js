@@ -7,17 +7,13 @@ import pathz from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
 
-import { PerformanceOptimizer } from './utils/performanceOptimizer.js';
+import { PerformanceOptimizer, getPerformanceOptimizer } from './utils/performanceOptimizer.js';
 import { initJidLidCache, saveJidLidCache } from './utils/helpers.js';
 import { runDatabaseSelfTest } from './utils/database.js';
 import { PACKAGE_JSON_PATH, JID_LID_CACHE_FILE } from './utils/paths.js';
 
 // Middlewares
-import { processReactionMessage } from './middleware/reactionHandler.js';
 import { processAntiLink } from './middleware/antiLinkHandler.js';
-import { processGroupSecurity } from './middleware/groupSecurityHandler.js';
-import { processAutomation } from './middleware/automationHandler.js';
-import { processStats } from './middleware/statsHandler.js';
 import { processInteraction } from './middleware/interactionHandler.js';
 import { processGames } from './middleware/gameHandler.js';
 import { processSecurity } from './middleware/securityMiddleware.js';
@@ -42,7 +38,7 @@ async function initializePerformanceOptimizer() {
   if (!performanceOptimizerInitPromise) {
     performanceOptimizerInitPromise = (async () => {
       try {
-        const inst = new PerformanceOptimizer();
+        const inst = getPerformanceOptimizer();
         await inst.initialize();
         performanceOptimizerInstance = inst;
         return inst;
@@ -73,8 +69,23 @@ const botVersion = packageJson.version;
 initJidLidCache(JID_LID_CACHE_FILE);
 setInterval(() => saveJidLidCache(), 5 * 60 * 1000);
 
+// Deduplicação de mensagens recentes
+const processedMessages = new Set();
+const MAX_PROCESSED_CACHE = 200;
+
 // ==================== FUNÇÃO PRINCIPAL ====================
 async function NazuninhaBotExec(nazu, info, store, messagesCache, rentalExpirationManager = null) {
+  const fullMsgId = info?.key?.id;
+  if (fullMsgId && processedMessages.has(fullMsgId)) return;
+  
+  if (fullMsgId) {
+    processedMessages.add(fullMsgId);
+    if (processedMessages.size > MAX_PROCESSED_CACHE) {
+      const firstValue = processedMessages.values().next().value;
+      processedMessages.delete(firstValue);
+    }
+  }
+
   const msgId = info?.key?.id?.slice(-6) || '?';
   try {
     // 1. Constrói contexto completo (parsing, permissões, cache, reply)
@@ -83,51 +94,78 @@ async function NazuninhaBotExec(nazu, info, store, messagesCache, rentalExpirati
     });
     if (!ctx) return;
 
-    // 2. Pre-checks (já computados no contextBuilder)
-    if (ctx.joinRequestHandled) return;
-    if (ctx.captchaHandled) return;
-    if (ctx.pvBlocked) return;
-    if (ctx.isGroup && ctx.banGpIds[ctx.from] && !ctx.isOwner && !ctx.isPremium) return;
+    // === LOGGING DE MENSAGENS E COMANDOS ===
+    if (ctx.body && ctx.body.length > 1) {
+      try {
+        const timestamp = new Date().toLocaleTimeString('pt-BR', {
+          hour12: false,
+          timeZone: 'America/Sao_Paulo'
+        });
+        const messageType = ctx.isCmd ? 'COMANDO' : 'MENSAGEM';
+        const context = ctx.isGroup ? 'GRUPO' : 'PRIVADO';
+        const messagePreview = ctx.isCmd 
+          ? `${ctx.prefix}${ctx.command}${ctx.q ? ` ${ctx.q.substring(0, 25)}${ctx.q.length > 25 ? '...' : ''}` : ''}` 
+          : ctx.body.substring(0, 35) + (ctx.body.length > 35 ? '...' : '');
 
-    // 3. Reações
-    if (ctx.type === 'reactionMessage') {
-      await processReactionMessage(ctx);
-      return;
+        const userLine = ctx.isGroup
+          ? `┃ 👥 Grupo: ${(ctx.groupName || 'Desconhecido').substring(0, 28).padEnd(28)}┃\n┃ 👤 Usuário: ${(ctx.pushname || 'Sem Nome').substring(0, 28).padEnd(28)}┃`
+          : `┃ 👤 Usuário: ${(ctx.pushname || 'Sem Nome').substring(0, 28).padEnd(28)}┃\n┃ 📱 Número: ${ctx.getUserName(ctx.sender).substring(0, 28).padEnd(28)}┃`;
+
+        console.log(`┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓\n┃ ${messageType} [${context}]${' '.repeat(Math.max(0, 26 - messageType.length - context.length))}┃\n┣━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫\n┃ 📜 Conteúdo: ${messagePreview.substring(0, 28).padEnd(28)}┃\n${userLine}\n┣━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫\n┃ 🕒 Data/Hora: ${timestamp.padEnd(27)}┃\n┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛\n`);
+      } catch (error) {
+        console.error('┃ 🚨 Erro ao gerar logs:', error);
+      }
     }
 
-    // 4. Segurança de grupo
-    if ((await processGroupSecurity(ctx))?.stopProcessing) return;
-    await processStats(ctx);
-
-    // 5. Workers
+    // 2. Inicialização dos workers (executará apenas na primeira mensagem)
     startAllWorkers(nazu);
 
-    // 6. Automação (auto-download, anti-flood, etc.)
-    if ((await processAutomation(ctx))?.stopProcessing) return;
-
-    // 7. Eval do dono ($ e >>)
+    // 3. Eval do dono ($ e >>)
     if (ctx.body.startsWith('$') && ctx.isOwner) {
-      exec(ctx.q, (err, stdout) => {
-        if (err) return ctx.reply(`❌ *Erro*\n\n${err}`);
-        if (stdout) ctx.reply(`✅ *Resultado*\n\n${stdout}`);
+      const shellCmd = ctx.body.slice(1).trim();
+      if (!shellCmd) return;
+      exec(shellCmd, (err, stdout) => {
+        if (err) return ctx.reply(`❌ *Erro na execução*\n\n${String(err)}`);
+        if (stdout) ctx.reply(`✅ *Resultado da execução*\n\n${stdout}`);
       });
       return;
     }
     if (ctx.body.startsWith('>>') && ctx.isOwner) {
       try {
-        const code = ctx.body.slice(2).trim();
-        const result = await eval(`(async () => { return ${code} })()`);
-        await ctx.reply(`✅ *Resultado*\n\n${typeof result === 'object' ? JSON.stringify(result, null, 2) : String(result)}`);
-      } catch (e) { await ctx.reply(`❌ *Erro*\n\n${e}`); }
+        const codeLines = ctx.body.slice(2).trim().split('\n');
+        if (codeLines.length > 1) {
+          if (!codeLines[codeLines.length - 1].includes('return')) {
+            codeLines[codeLines.length - 1] = 'return ' + codeLines[codeLines.length - 1];
+          }
+        } else {
+          if (!codeLines[0].includes('return')) {
+            codeLines[0] = 'return ' + codeLines[0];
+          }
+        }
+        const result = await eval(`(async () => { ${codeLines.join('\n')} })()`);
+        
+        let output;
+        if (typeof result === 'object' && result !== null) {
+          output = JSON.stringify(result, null, 2);
+        } else if (typeof result === 'function') {
+          output = result.toString();
+        } else {
+          output = String(result);
+        }
+        
+        await ctx.reply(`✅ *Resultado da execução*\n\n${output}`).catch(e => ctx.reply(String(e)));
+      } catch (e) { 
+        await ctx.reply(`❌ *Erro na execução*\n\n${String(e)}`); 
+      }
       return;
     }
 
-    // 8. Anti-link + Estado do bot
+    // 4. Anti-link + Estado do bot
     if ((await processAntiLink(ctx))?.stopProcessing) return;
     if (ctx.botState.status === 'off' && !ctx.isOwner) return;
     if (ctx.botState.viewMessages) nazu.readMessages([info.key]);
 
-    // 9. Middlewares restantes
+    // 5. Middlewares restantes
     await processInteraction(ctx);
     if (await processGames(ctx)) return;
     if (await processSecurity(ctx)) return;
@@ -135,10 +173,10 @@ async function NazuninhaBotExec(nazu, info, store, messagesCache, rentalExpirati
     if (await processAccessControl(ctx)) return;
     if (await processPartnership(ctx)) return;
 
-    // 10. Comandos personalizados e sem prefixo
+    // 6. Comandos personalizados e sem prefixo
     if (await handleCustomCommand(ctx)) return;
 
-    // 11. Despacho de comandos dinâmicos + não encontrado + pós-processamento
+    // 7. Despacho de comandos dinâmicos + não encontrado + pós-processamento
     await dispatchCommand(ctx);
 
   } catch (error) {
