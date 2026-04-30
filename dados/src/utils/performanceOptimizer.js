@@ -164,8 +164,16 @@ class PerformanceOptimizer {
         data = await loader(filePath);
       } else {
         // Loader padrão para JSON
-        if (fs.existsSync(filePath)) {
-          const content = fs.readFileSync(filePath, 'utf-8');
+        let exists = false;
+        try {
+          await fs.promises.access(filePath);
+          exists = true;
+        } catch (e) {
+          exists = false;
+        }
+        
+        if (exists) {
+          const content = await fs.promises.readFile(filePath, 'utf-8');
           data = JSON.parse(content);
         } else {
           data = {};
@@ -426,6 +434,38 @@ class PerformanceOptimizer {
     } catch (error) {
       console.error(`❌ Erro ao carregar JSON ${filePath}:`, error.message);
       return cached?.data || defaultValue;
+    }
+  }
+
+  /**
+   * Salva JSON e invalida o cache automaticamente
+   */
+  async saveJsonWithCache(filePath, data) {
+    try {
+      if (data === undefined || data === null) {
+        console.error(`❌ saveJsonWithCache: Tentativa de salvar dados nulos em ${filePath}`);
+        return false;
+      }
+
+      // Prepara o diretório
+      const dirPath = path.dirname(filePath);
+      if (!fs.existsSync(dirPath)) {
+        fs.mkdirSync(dirPath, { recursive: true });
+      }
+
+      // Escrita atômica
+      const jsonString = JSON.stringify(data, null, 2);
+      const tempPath = filePath + '.tmp';
+      fs.writeFileSync(tempPath, jsonString, 'utf-8');
+      fs.renameSync(tempPath, filePath);
+
+      // Invalida o cache para que a próxima leitura pegue o dado novo
+      this.invalidateJson(filePath);
+      
+      return true;
+    } catch (error) {
+      console.error(`❌ Erro ao salvar JSON com cache em ${filePath}:`, error.message);
+      return false;
     }
   }
 
