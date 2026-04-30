@@ -377,11 +377,17 @@ const listReasons = (prefix = '/') => {
     };
 };
 
+// Alias for compatibility
+const reportUser = (reporterId, targetId, groupId, reason, description = '') => {
+    return createReport(reporterId, targetId, reason, description, groupId);
+};
+
 export {
     giveRep,
     getRep,
     getRepRanking,
     createReport,
+    reportUser,
     listPendingReports,
     resolveReport,
     getUserReports,
@@ -394,6 +400,7 @@ export default {
     getRep,
     getRepRanking,
     createReport,
+    reportUser,
     listPendingReports,
     resolveReport,
     getUserReports,
