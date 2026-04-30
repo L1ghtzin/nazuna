@@ -170,8 +170,6 @@ class MessageQueue {
     console.error('❌ Error handler failed:', handlerError.message);
     }
     }
-    
-    item.reject(error);
     }
 
     getStatus() {
@@ -1244,6 +1242,7 @@ async function createBotSocket(authDir) {
     if (connection === 'open') {
     console.log(`🔄 Conexão aberta. Inicializando sistema de otimização...`);
     
+    forbidden403Attempts = 0; // Reset contador de erro 403 em caso de sucesso
     await initializeOptimizedCaches();
     
     await updateOwnerLid(NazunaSock);
@@ -1372,7 +1371,6 @@ async function createBotSocket(authDir) {
     
     reconnectTimer = setTimeout(() => {
         reconnectAttempts = 0; // Reset ao reconectar por desconexão normal
-        forbidden403Attempts = 0; // Reset contador de erro 403
         startNazu();
     }, reconnectDelay);
     }
@@ -1395,7 +1393,6 @@ async function startNazu() {
     
     try {
     reconnectAttempts = 0; // Reset contador ao conectar com sucesso
-    forbidden403Attempts = 0; // Reset contador de erro 403
     console.log('🚀 Iniciando Nazuna...');
 
     await createBotSocket(AUTH_DIR);
