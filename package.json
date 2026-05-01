@@ -21,10 +21,10 @@
     "dependencies": {
         "@hapi/boom": "^10.0.1",
         "axios": "^1.13.2",
-        "baileys": "npm:baileys-mod", 
+        "baileys": "^7.0.0-rc.9",
         "cheerio": "^1.2.0",
         "fluent-ffmpeg": "^2.1.3", 
-        "jimp": "^0.16.13",
+        "jimp": "^1.6.0",
         "linkedom": "^0.18.12",
         "node-cache": "^5.1.2",
         "node-cron": "^4.2.1",

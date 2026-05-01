@@ -1,4 +1,4 @@
-import { useMultiFileAuthState, DisconnectReason, makeCacheableSignalKeyStore, makeWASocket } from 'baileys';
+import { useMultiFileAuthState, DisconnectReason, fetchLatestBaileysVersion, makeCacheableSignalKeyStore, makeWASocket } from 'baileys';
 import { Boom } from '@hapi/boom';
 import NodeCache from 'node-cache';
 import readline from 'readline';
@@ -6,20 +6,22 @@ import pino from 'pino';
 import fs from 'fs/promises';
 import path, { dirname, join } from 'path';
 import qrcode from 'qrcode-terminal';
-import { readFile } from 'fs/promises';
 import { readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
-import crypto from 'crypto';
-import axios from 'axios';
+
 
 import PerformanceOptimizer from './utils/performanceOptimizer.js';
 import RentalExpirationManager from './utils/rentalExpirationManager.js';
 import { loadMsgBotOn } from './utils/database.js';
 import { buildUserId } from './utils/helpers.js';
-import { initCaptchaIndex } from './utils/captchaIndex.js';
+import { initCaptchaIndex, loadCaptchaJson, saveCaptchaJson } from './utils/captchaIndex.js';
+
+import CaptchaIndex from './utils/captchaIndex.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
+
+
 
 class MessageQueue {
     constructor(maxWorkers = 4, batchSize = 10, messagesPerBatch = 2) {
@@ -302,30 +304,37 @@ const GLOBAL_BLACKLIST_PATH = path.join(__dirname, '..', 'database', 'dono', 'gl
 let msgRetryCounterCache;
 let messagesCache;
 
-async function initializeOptimizedCaches() {
+async function initializeOptimizedCaches(NazunaSock) {
     try {
-    await performanceOptimizer.initialize();
-    
-    // Inicializa índice de captcha para busca rápida
-    await initCaptchaIndex();
-    
-    msgRetryCounterCache = {
-    get: (key) => performanceOptimizer.cacheGet('msgRetry', key),
-    set: (key, value, ttl) => performanceOptimizer.cacheSet('msgRetry', key, value, ttl),
-    del: (key) => performanceOptimizer.modules.cacheManager?.del('msgRetry', key)
-    };
-    
-    messagesCache = new Map();
-    
+        await performanceOptimizer.initialize();
+
+        // Inicializa índice de captcha para busca rápida
+        const requestCaptchaMsg = async (dataCaptcha) => {
+            /*
+                Vai receber apenas os ids expirados
+            */
+            await NazunaSock.sendMessage(dataCaptcha.groupId, { text: `⚠️ @${dataCaptcha.idOrigin.split('@')[0]} não resolveu o captcha a tempo e foi removido.` });
+            await NazunaSock.groupParticipantsUpdate(dataCaptcha.groupId, [dataCaptcha.idOrigin], 'remove').catch(() => { });
+        };
+        await initCaptchaIndex(requestCaptchaMsg);
+
+        msgRetryCounterCache = {
+            get: (key) => performanceOptimizer.cacheGet('msgRetry', key),
+            set: (key, value, ttl) => performanceOptimizer.cacheSet('msgRetry', key, value, ttl),
+            del: (key) => performanceOptimizer.modules.cacheManager?.del('msgRetry', key)
+        };
+
+        messagesCache = new Map();
+
     } catch (error) {
-    console.error('❌ Erro ao inicializar sistema de otimização:', error.message);
-    
-    msgRetryCounterCache = new NodeCache({
-    stdTTL: 5 * 60,
-    useClones: false
-    });
-    messagesCache = new Map();
-    
+        console.error('❌ Erro ao inicializar sistema de otimização:', error.message);
+
+        msgRetryCounterCache = new NodeCache({
+            stdTTL: 5 * 60,
+            useClones: false
+        });
+        messagesCache = new Map();
+
     }
 }
 const codeMode = process.argv.includes('--code') || process.env.NAZUNA_CODE_MODE === '1';
@@ -464,188 +473,307 @@ async function createGroupMessage(NazunaSock, groupMetadata, participants, setti
 
 async function handleGroupParticipantsUpdate(NazunaSock, inf) {
     try {
-    const from = inf.id || inf.jid || (inf.participants && inf.participants.length > 0 ? inf.participants[0].split('@')[0] + '@s.whatsapp.net' : null);
-    
-    if (DEBUG_MODE) {
-    console.log('🐛 [handleGroupParticipantsUpdate] Processando evento...');
-    console.log('🐛 Group ID extraído:', from);
-    }
-    
-    if (!from) {
-    console.error('❌ Erro: ID do grupo não encontrado nos dados do evento.');
-    if (DEBUG_MODE) {
-    console.log('🐛 Dados do evento:', JSON.stringify(inf, null, 2));
-    }
-    return;
-    }
+        const from = inf.id || inf.jid || (inf.participants?.length
+            ? inf.participants[0].split('@')[0] + '@s.whatsapp.net'
+            : null);
 
-    // Valida se são participantes válidos
-    if (!inf.participants || !Array.isArray(inf.participants) || inf.participants.length === 0) {
-    console.warn('⚠️ Evento de participantes sem lista válida');
-    return;
-    }
-    
-    // Ignora eventos do próprio bot
-    const botId = NazunaSock.user.id.split(':')[0];
+        if (DEBUG_MODE) {
+            console.log('🐛 [EVENTO]');
+            console.log('📌 Grupo:', from);
+            console.log('📌 Ação:', inf.action);
+        }
 
-    inf.participants = inf.participants.map(isValidParticipant).filter(Boolean);
+        if (!from) return;
+        if (!inf.participants?.length) return;
 
-    if (inf.participants.some(p => p && typeof p === 'string' && p.startsWith(botId))) {
-    return;
-    }
-    
-    let groupMetadata = await NazunaSock.groupMetadata(from).catch(err => {
-    console.error(`❌ Erro ao buscar metadados do grupo ${from}: ${err.message}`);
-    return null;
-    });
-    
-    if (!groupMetadata) {
-    console.error(`❌ Metadados do grupo ${from} não encontrados.`);
-    return;
-    }
-    
-    const groupSettings = await loadGroupSettings(from);
-    const globalBlacklist = await loadGlobalBlacklist();
-    switch (inf.action) {
-    case 'add': {
-    const membersToWelcome = [];
-    const membersToRemove = [];
-    const removalReasons = [];
-    for (const participant of inf.participants) {
-        if (globalBlacklist[participant]) {
-        membersToRemove.push(participant);
-        removalReasons.push(`@${participant.split('@')[0]} (blacklist global: ${globalBlacklist[participant].reason})`);
-        continue;
+        const botId = NazunaSock.user.id.split(':')[0];
+
+        inf.participants = inf.participants.map(isValidParticipant).filter(Boolean);
+        if (inf.participants.some(p => p.startsWith(botId))) return;
+
+        const groupMetadata = await NazunaSock.groupMetadata(from).catch(() => null);
+        if (!groupMetadata) return;
+
+        const groupSettings = await loadGroupSettings(from);
+        const globalBlacklist = await loadGlobalBlacklist();
+        const captchaData = await loadCaptchaJson();
+
+        switch (inf.action) {
+
+
+            case 'add': {
+                global.CAPTCHA_LOCK = global.CAPTCHA_LOCK || new Set();
+
+                const membersToWelcome = [];
+                const membersToRemove = [];
+                const removalReasons = [];
+
+                const entradaPorLink = !inf.author || inf.participants.includes(inf.author);
+
+
+                for (const participant of inf.participants) {
+
+                    const userId = participant.split('@')[0];
+
+
+                    if (globalBlacklist?.[participant]) {
+                        membersToRemove.push(participant);
+                        removalReasons.push(`@${userId} (blacklist global)`);
+                        continue;
+                    }
+
+
+                    if (groupSettings.blacklist?.[participant]) {
+                        membersToRemove.push(participant);
+                        removalReasons.push(`@${userId} (blacklist grupo)`);
+                        continue;
+                    }
+
+
+                    const participantStripped = participant.replace(/@.*/, '');
+                    let participantNumber = participantStripped;
+
+                    let isLid = false;
+
+                    if (participant.endsWith('@lid')) {
+                        isLid = true;
+                        try {
+                            const resolved = await NazunaSock.onWhatsApp(participant);
+                            if (resolved?.[0]?.jid) {
+                                participantNumber = resolved[0].jid.replace(/@.*/, '');
+
+                            }
+                        } catch { }
+                    }
+
+
+
+
+                    const hasCaptchaJson = Object.values(captchaData).find(c => {
+                        const lid = c.lid?.replace(/@.*/, '');
+                        const id = c.id?.replace(/@.*/, '');
+                        const idOrigin = c.idOrigin?.replace(/@.*/, '');
+
+                        return (
+                            lid === participantStripped ||
+                            id === participantStripped ||
+                            id === participantNumber ||
+                            idOrigin === participantStripped ||
+                            idOrigin === participantNumber
+                        );
+                    });
+
+
+                    const hasCaptchaLock = [...global.CAPTCHA_LOCK].some(x => {
+                        const xStripped = x.replace(/@.*/, '');
+                        return xStripped === participantNumber;
+                    });
+
+                    if (groupSettings.captchaEnabled) {
+
+                        if (hasCaptchaJson || hasCaptchaLock) {
+
+                            continue;
+                        }
+
+
+                        if (!entradaPorLink) {
+
+                            continue;
+                        }
+
+                        if (isLid && participantNumber === participantStripped) {
+
+                            continue;
+                        }
+
+
+
+                        global.CAPTCHA_LOCK.add(`${participantNumber}@s.whatsapp.net`);
+
+                        const typeIds = {
+                            id: `${participantNumber}@s.whatsapp.net`,
+                            lid: isLid ? participant : '',
+                            participant
+                        };
+
+                        const num1 = Math.floor(Math.random() * 10) + 1;
+                        const num2 = Math.floor(Math.random() * 10) + 1;
+
+                        const answer = num1 + num2;
+                        const expiresAt = Date.now() + 5 * 60 * 1000;
+
+                        CaptchaIndex.add(typeIds, from, answer, expiresAt, participantNumber);
+
+                        await NazunaSock.sendMessage(from, {
+                            text: `🔐 *VERIFICAÇÃO*\n\nOlá @${participantNumber}\n\n❓ ${num1} + ${num2} = ?\n\n⏱️ 5 minutos.`,
+                            mentions: [`${participantNumber}@s.whatsapp.net`]
+                        });
+
+                        continue; 
+                    }
+
+
+                    if (groupSettings.bemvindo) {
+                        console.log(`✅ Enviando welcome para ${participantNumber}`);
+                        membersToWelcome.push(participant);
+                    }
+                }
+
+
+                if (membersToRemove.length) {
+                    await NazunaSock.groupParticipantsUpdate(from, membersToRemove, 'remove');
+
+                    await NazunaSock.sendMessage(from, {
+                        text: `🚫 Removidos:\n- ${removalReasons.join('\n- ')}`,
+                        mentions: membersToRemove
+                    });
+                }
+
+
+                if (membersToWelcome.length) {
+                    const message = await createGroupMessage(
+                        NazunaSock,
+                        groupMetadata,
+                        membersToWelcome,
+                        groupSettings.welcome || { text: groupSettings.textbv }
+                    );
+
+                    await NazunaSock.sendMessage(from, message);
+                }
+
+                break;
+            }
+
+            case 'remove': {
+                if (groupSettings.exit?.enabled) {
+                    const message = await createGroupMessage(
+                        NazunaSock,
+                        groupMetadata,
+                        inf.participants,
+                        groupSettings.exit,
+                        false
+                    );
+
+                    await NazunaSock.sendMessage(from, message)
+                        .catch(err => console.log('❌ erro saída:', err.message));
+                }
+                break;
+            }
+
+            case 'promote':
+            case 'demote': {
+
+                if (!groupSettings?.x9) return;
+
+                const autor = inf.author || '';
+
+                for (const user of inf.participants) {
+
+                    const userNum = user.split('@')[0];
+                    const autorNum = autor ? autor.split('@')[0] : 'desconhecido';
+
+                    const texto =
+                        inf.action === 'promote'
+                            ? `⬆️ @${userNum} virou ADM por @${autorNum}`
+                            : `⬇️ @${userNum} deixou de ser ADM por @${autorNum}`;
+
+                    await NazunaSock.sendMessage(from, {
+                        text: texto,
+                        mentions: autor ? [user, autor] : [user]
+                    }).catch(() => { });
+                }
+
+                break;
+            }
         }
-        if (groupSettings.blacklist?.[participant]) {
-        membersToRemove.push(participant);
-        removalReasons.push(`@${participant.split('@')[0]} (lista negra do grupo: ${groupSettings.blacklist[participant].reason})`);
-        continue;
-        }
-        if (groupSettings.bemvindo) {
-        membersToWelcome.push(participant);
-        }
-    }
-    if (membersToRemove.length > 0) {
-        await NazunaSock.groupParticipantsUpdate(from, membersToRemove, 'remove').catch(err => {
-        console.error(`❌ Erro ao remover membros do grupo ${from}: ${err.message}`);
-        });
-        
-        await NazunaSock.sendMessage(from, {
-        text: `🚫 Foram removidos ${membersToRemove.length} membros por regras de moderação:\n- ${removalReasons.join('\n- ')}`,
-        mentions: membersToRemove,
-        }).catch(err => {
-        console.error(`❌ Erro ao enviar notificação de remoção: ${err.message}`);
-        });
-    }
-    
-    if (membersToWelcome.length > 0) {
-        const message = await createGroupMessage(NazunaSock, groupMetadata, membersToWelcome, groupSettings.welcome || {
-        text: groupSettings.textbv
-        });
-        
-        await NazunaSock.sendMessage(from, message).catch(err => {
-        console.error(`❌ Erro ao enviar mensagem de boas-vindas: ${err.message}`);
-        });
-    }
-    break;
-    }
-    case 'remove': {
-    if (groupSettings.exit?.enabled) {
-        const message = await createGroupMessage(NazunaSock, groupMetadata, inf.participants, groupSettings.exit, false);
-        await NazunaSock.sendMessage(from, message).catch(err => {
-        console.error(`❌ Erro ao enviar mensagem de saída: ${err.message}`);
-        });
-    }
-    break;
-    }
-    case 'promote':
-    case 'demote': {
-    // Ação sem notificação
-    break;
-    }
-    }
+
     } catch (error) {
-    console.error(`❌ Erro em handleGroupParticipantsUpdate: ${error.message}\n${error.stack}`);
+        console.error('❌ ERRO GERAL:', error);
     }
 }
 
-// Handler para solicitações de entrada em grupos
-// Evento 'group.join-request' emitido pelo Baileys
 async function handleGroupJoinRequest(NazunaSock, inf) {
     try {
-    const from = inf.id;
-    
-    if (DEBUG_MODE) {
-    console.log('🐛 [handleGroupJoinRequest] Processando solicitação...');
-    console.log('🐛 Group ID:', from);
-    console.log('🐛 Action:', inf.action);
-    console.log('🐛 Participant (LID):', inf.participant);
-    console.log('🐛 Participant Phone:', inf.participantPn);
-    console.log('🐛 Author:', inf.author);
-    console.log('🐛 Method:', inf.method);
-    }
-    
-    if (!from) {
-    if (DEBUG_MODE) console.log('🐛 Group ID não encontrado, abortando');
-    return;
-    }
-    
-    const groupSettings = await loadGroupSettings(from);
-    
-    if (DEBUG_MODE) {
-    console.log('🐛 Group settings:');
-    console.log('  - autoAcceptRequests:', groupSettings.autoAcceptRequests);
-    console.log('  - captchaEnabled:', groupSettings.captchaEnabled);
-    console.log('  - x9:', groupSettings.x9);
-    }
-    
-    // O participante pode vir como LID ou phone number
-    const participantJid = inf.participantPn || inf.participant;
-    const participantDisplay = participantJid ? participantJid.split('@')[0] : 'Desconhecido';
-    
-    // Auto-aceitar se configurado e for uma nova solicitação
-    if (groupSettings.autoAcceptRequests && inf.action === 'created' && participantJid) {
-    try {
-    // Se captcha estiver ativado
-    if (groupSettings.captchaEnabled) {
-        const num1 = Math.floor(Math.random() * 10) + 1;
-        const num2 = Math.floor(Math.random() * 10) + 1;
-        const answer = num1 + num2;
-        
-        // Salvar captcha pendente
-        if (!groupSettings.pendingCaptchas) groupSettings.pendingCaptchas = {};
-        groupSettings.pendingCaptchas[participantJid] = {
-        answer,
-        groupId: from,
-        timestamp: Date.now()
-        };
-        await saveGroupSettings(from, groupSettings);
-        
-        // Enviar captcha no PV
-        await NazunaSock.sendMessage(participantJid, {
-        text: `🔐 *Verificação de Segurança*\n\nVocê solicitou entrar no grupo. Para ser aprovado, resolva esta conta:\n\n❓ Quanto é *${num1} + ${num2}*?\n\n⏱️ Você tem 5 minutos para responder.\n\n💡 Responda apenas com o número.`
-        }).catch(err => console.error(`❌ Erro ao enviar captcha: ${err.message}`));
-        
-        // Auto-rejeitar após 5 minutos se não responder
-        setTimeout(async () => {
-        const currentSettings = await loadGroupSettings(from);
-        if (currentSettings.pendingCaptchas?.[participantJid]) {
-        delete currentSettings.pendingCaptchas[participantJid];
-        await saveGroupSettings(from, currentSettings);
-        await NazunaSock.groupRequestParticipantsUpdate(from, [participantJid], 'reject').catch(() => {});
+        const typeIds = { id: '', lid: '', participant: '' };
+        const from = inf.id;
+        let participantJid = inf.participantPn || inf.participant;
+
+        if (!from || !participantJid) return;
+
+
+        if (typeof participantJid === "object") {
+            Object.assign(typeIds, {
+                id: participantJid?.pn?.endsWith("s.whatsapp.net") ? participantJid?.pn : '',
+                lid: participantJid?.pn?.endsWith("lid") ? participantJid?.pn : participantJid?.lid,
+            });
+            participantJid = participantJid.pn || participantJid.lid;
+        } else {
+            typeIds.lid = participantJid.endsWith("lid") ? participantJid : '';
+            typeIds.id = participantJid.endsWith("s.whatsapp.net") ? participantJid : '';
         }
-        }, 5 * 60 * 1000);
-    } else {
-        // Auto-aceitar direto sem captcha
-        await NazunaSock.groupRequestParticipantsUpdate(from, [participantJid], 'approve');
-    }
-    } catch (err) {
-    console.error(`Erro ao processar auto-aceitar: ${err.message}`);
-    }
-    }
+
+        typeIds.participant = participantJid;
+
+
+        global.CAPTCHA_LOCK.add(participantJid);
+
+        if (typeIds.lid) {
+            global.CAPTCHA_LOCK.add(typeIds.lid);
+
+        }
+        if (typeIds.id) {
+            global.CAPTCHA_LOCK.add(typeIds.id);
+
+        }
+
+
+        const groupSettings = await loadGroupSettings(from);
+
+
+        if (groupSettings.autoAcceptRequests) {
+            if (DEBUG_MODE) console.log(`[Auto-Accept] Aceitando ${participantJid} no grupo ${from}`);
+            await NazunaSock.groupRequestParticipantsUpdate(from, [participantJid], 'approve');
+            if (!groupSettings.captchaEnabled) return;
+        }
+
+
+        if (groupSettings.captchaEnabled) {
+
+            const num1 = Math.floor(Math.random() * 10) + 1;
+            const num2 = Math.floor(Math.random() * 10) + 1;
+            const answer = num1 + num2;
+            const timeAt = 5 * 60 * 1000;
+            const expiresAt = Date.now() + timeAt;
+
+            const numero = participantJid.split('@')[0];
+
+            const foto = await NazunaSock.profilePictureUrl(participantJid, 'image')
+                .catch(() => 'sem foto');
+
+            const waInfo = await NazunaSock.onWhatsApp(participantJid)
+                .catch(() => null);
+
+            let nome = inf.participant;
+            try {
+                nome = await NazunaSock.getName(participantJid);
+            } catch { }
+
+            const metadata = await NazunaSock.groupMetadata(from).catch(() => null);
+            const participanteMeta = metadata?.participants?.find(p => p.id === participantJid);
+
+
+
+            CaptchaIndex.add(typeIds, from, answer, expiresAt, nome);
+
+            await NazunaSock.sendMessage(from, {
+                text: `🔐 *VERIFICAÇÃO DE SEGURANÇA*\n\n👋 Olá @${numero}!\n\nPara garantir que você não é um bot, resolva:\n❓ *${num1} + ${num2} = ?*\n\n⏱️ Você tem 5 minutos ou será removido.`,
+                mentions: [participantJid]
+            });
+        }
+
     } catch (error) {
-    console.error(`❌ Erro em handleGroupJoinRequest: ${error.message}`);
+        console.error(`❌ Erro em handleGroupJoinRequest: ${error.message}`);
     }
 }
 
@@ -963,23 +1091,23 @@ async function updateOwnerLid(NazunaSock) {
 async function performMigration(NazunaSock) {
     let scanResult;
     try {
-    scanResult = await scanForJids(DATABASE_DIR);
+        scanResult = await scanForJids(DATABASE_DIR);
     } catch (err) {
-    console.error(`Erro crítico no scan: ${err.message}`);
-    return;
+        console.error(`Erro crítico no scan: ${err.message}`);
+        return;
     }
 
     const { uniqueJids, affectedFiles, jidFiles } = scanResult;
 
     if (uniqueJids.length === 0) {
-    return;
+        return;
     }
-    
+
     const { jidToLidMap, successfulFetches } = await fetchLidsInBatches(NazunaSock, uniqueJids);
     const orphanJidsSet = new Set(uniqueJids.filter(jid => !jidToLidMap.has(jid)));
 
     if (jidToLidMap.size === 0) {
-    return;
+        return;
     }
 
     let totalReplacements = 0;
@@ -987,21 +1115,20 @@ async function performMigration(NazunaSock) {
     const allUpdatedFiles = [];
 
     try {
-    const renameResult = await handleJidFiles(jidFiles, jidToLidMap, orphanJidsSet);
-    totalReplacements += renameResult.totalReplacements;
-    totalRemovals += renameResult.totalRemovals;
-    allUpdatedFiles.push(...renameResult.updatedFiles);
+        const renameResult = await handleJidFiles(jidFiles, jidToLidMap, orphanJidsSet);
+        totalReplacements += renameResult.totalReplacements;
+        totalRemovals += renameResult.totalRemovals;
+        allUpdatedFiles.push(...renameResult.updatedFiles);
 
-    const filteredAffected = affectedFiles.filter(([filePath]) => !jidFiles.some(([, jidPath]) => jidPath === filePath));
-    const contentResult = await replaceJidsInContent(filteredAffected, jidToLidMap, orphanJidsSet);
-    totalReplacements += contentResult.totalReplacements;
-    totalRemovals += contentResult.totalRemovals;
-    allUpdatedFiles.push(...contentResult.updatedFiles);
+        const filteredAffected = affectedFiles.filter(([filePath]) => !jidFiles.some(([, jidPath]) => jidPath === filePath));
+        const contentResult = await replaceJidsInContent(filteredAffected, jidToLidMap, orphanJidsSet);
+        totalReplacements += contentResult.totalReplacements;
+        totalRemovals += contentResult.totalRemovals;
+        allUpdatedFiles.push(...contentResult.updatedFiles);
     } catch (processErr) {
-    console.error(`Erro no processamento de substituições: ${processErr.message}`);
-    return;
+        console.error(`Erro no processamento de substituições: ${processErr.message}`);
+        return;
     }
-
 }
 
 // Variáveis de controle de reconexão (declaradas aqui para evitar temporal dead zone)
@@ -1024,15 +1151,15 @@ async function createBotSocket(authDir) {
     } = await useMultiFileAuthState(authDir, makeCacheableSignalKeyStore);
     
     // Busca a versão mais recente do WhatsApp
-    const version = [2, 3000, 1035194821];
+    const { version } = await fetchLatestBaileysVersion();
     console.log(`📱 Usando versão do WhatsApp: ${version.join('.')}`);
     
     const NazunaSock = makeWASocket({
     version: version,
     emitOwnEvents: true,
     fireInitQueries: true,
-    generateHighQualityLinkPreview: false,
-    syncFullHistory: false,
+    generateHighQualityLinkPreview: true,
+    syncFullHistory: true,
     markOnlineOnConnect: true,
     connectTimeoutMs: 120000,
     retryRequestDelayMs: 5000,
@@ -1240,10 +1367,10 @@ async function createBotSocket(authDir) {
     console.log('📱 Escaneie o QR code acima com o WhatsApp para autenticar o bot.');
     }
     if (connection === 'open') {
-    console.log(`🔄 Conexão aberta. Inicializando sistema de otimização...`);
+    console.log(`🔄 Conexão aberta. Bot ID: ${NazunaSock.user?.id} | Inicializando sistema de otimização...`);
     
     forbidden403Attempts = 0; // Reset contador de erro 403 em caso de sucesso
-    await initializeOptimizedCaches();
+    await initializeOptimizedCaches(NazunaSock);
     
     await updateOwnerLid(NazunaSock);
     await performMigration(NazunaSock);
@@ -1278,6 +1405,8 @@ async function createBotSocket(authDir) {
         console.error('❌ Erro ao processar mensagem de inicialização:', msgError.message);
     }
     
+
+
     // Inicializa sub-bots automaticamente
     try {
         const subBotManagerModule = await import('./utils/subBotManager.js');
@@ -1486,11 +1615,13 @@ async function gracefulShutdown(signal) {
     console.log('✅ Desligamento concluído');
     process.exit(0);
     } catch (error) {
-    console.error('❌ Erro durante desligamento:', error.message);
-    clearTimeout(shutdownTimeout);
-    process.exit(1);
+      console.error('❌ Erro durante desligamento:', error.message);
+      clearTimeout(shutdownTimeout);
+      process.exit(1);
     }
 }
+
+export { performMigration, updateOwnerLid };
 
 process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
 process.on('SIGINT', () => gracefulShutdown('SIGINT'));

@@ -170,8 +170,6 @@ export default {
       return;
     }
 
-    // 📸 INSTAGRAM, 👥 FACEBOOK, 🐦 TWITTER, 📂 GDRIVE, MEDIAFIRE... (Restante do arquivo omitido para brevidade, mas mantido)
-    // Nota: Apliquei a mesma lógica background para todos os downloaders acima.
 
     // ═══════════════════════════════════════════════════════════════
     // 📸 INSTAGRAM
@@ -180,13 +178,21 @@ export default {
       if (!q || !q.includes('instagram.com')) return reply(`📸 Envie um link vindo do Instagram!`);
       try {
         await reply('⏳ Baixando do Instagram...');
-        igdl(q).then(async (dlRes) => {
-          if (!dlRes || dlRes.length === 0) return reply(`💔 Não foi possível baixar.`);
-          for (const item of dlRes) {
-            if (item.type === 'image') await nazu.sendMessage(from, { image: { url: item.url } }, { quoted: info });
-            else await nazu.sendMessage(from, { video: { url: item.url } }, { quoted: info });
+        igdl.dl(q).then(async (dlRes) => {
+          if (!dlRes || !dlRes.ok || !dlRes.data || dlRes.data.length === 0) {
+            return reply(`💔 Não foi possível baixar. Verifique se o link é público.`);
           }
-        }).catch(() => reply(MESSAGES.error.general));
+          for (const item of dlRes.data) {
+            if (item.type === 'image') {
+              await nazu.sendMessage(from, { image: item.buff || { url: item.url } }, { quoted: info });
+            } else {
+              await nazu.sendMessage(from, { video: item.buff || { url: item.url } }, { quoted: info });
+            }
+          }
+        }).catch((err) => {
+          console.error('Erro no download Instagram:', err);
+          reply(MESSAGES.error.general);
+        });
       } catch (e) { reply(MESSAGES.error.general); }
       return;
     }

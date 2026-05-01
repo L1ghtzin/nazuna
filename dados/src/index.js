@@ -63,7 +63,7 @@ const ensureDatabaseIntegrity = ({ log = false, force = false } = {}) => {
 ensureDatabaseIntegrity();
 
 let packageJson = {};
-try { packageJson = JSON.parse(fs.readFileSync(PACKAGE_JSON_PATH, 'utf-8')); } catch (e) {}
+try { packageJson = JSON.parse(fs.readFileSync(PACKAGE_JSON_PATH, 'utf-8')); } catch (e) { }
 const botVersion = packageJson.version;
 
 initJidLidCache(JID_LID_CACHE_FILE);
@@ -77,7 +77,7 @@ const MAX_PROCESSED_CACHE = 200;
 async function NazuninhaBotExec(nazu, info, store, messagesCache, rentalExpirationManager = null) {
   const fullMsgId = info?.key?.id;
   if (fullMsgId && processedMessages.has(fullMsgId)) return;
-  
+
   if (fullMsgId) {
     processedMessages.add(fullMsgId);
     if (processedMessages.size > MAX_PROCESSED_CACHE) {
@@ -92,30 +92,64 @@ async function NazuninhaBotExec(nazu, info, store, messagesCache, rentalExpirati
     const ctx = await buildMessageContext(nazu, info, store, messagesCache, rentalExpirationManager, {
       initializePerformanceOptimizer, ensureDatabaseIntegrity, botVersion, __dirname
     });
+
     if (!ctx) return;
 
-    // === LOGGING DE MENSAGENS E COMANDOS ===
-    if (ctx.body && ctx.body.length > 1) {
-      try {
-        const timestamp = new Date().toLocaleTimeString('pt-BR', {
-          hour12: false,
-          timeZone: 'America/Sao_Paulo'
-        });
-        const messageType = ctx.isCmd ? 'COMANDO' : 'MENSAGEM';
-        const context = ctx.isGroup ? 'GRUPO' : 'PRIVADO';
-        const messagePreview = ctx.isCmd 
-          ? `${ctx.prefix}${ctx.command}${ctx.q ? ` ${ctx.q.substring(0, 25)}${ctx.q.length > 25 ? '...' : ''}` : ''}` 
-          : ctx.body.substring(0, 35) + (ctx.body.length > 35 ? '...' : '');
+        // === LOGGING DE MENSAGENS E COMANDOS (ALINHADO)
+        try {
+          if (ctx.body && ctx.body.length > 1) {
+            const timestamp = new Date().toLocaleTimeString('pt-BR', {
+              hour12: false,
+              timeZone: 'America/Sao_Paulo'
+            });
+            const messageType = ctx.isCmd ? 'COMANDO' : 'MENSAGEM';
+            const context = ctx.isGroup ? 'GRUPO' : 'PRIVADO';
+            const messagePreview = ctx.isCmd ? `${ctx.prefix}${ctx.command}${ctx.q ? ` ${ctx.q.substring(0, 25)}${ctx.q.length > 25 ? '...' : ''}` : ''}` : ctx.body.substring(0, 35) + (ctx.body.length > 35 ? '...' : '');
 
-        const userLine = ctx.isGroup
-          ? `┃ 👥 Grupo: ${(ctx.groupName || 'Desconhecido').substring(0, 28).padEnd(28)}┃\n┃ 👤 Usuário: ${(ctx.pushname || 'Sem Nome').substring(0, 28).padEnd(28)}┃`
-          : `┃ 👤 Usuário: ${(ctx.pushname || 'Sem Nome').substring(0, 28).padEnd(28)}┃\n┃ 📱 Número: ${ctx.getUserName(ctx.sender).substring(0, 28).padEnd(28)}┃`;
+            // Função para calcular largura visual real (emojis = 2, texto/símbolos = 1)
+            const getVisualWidth = (str) => {
+              let width = 0;
+              for (const char of str) {
+                const cp = char.codePointAt(0);
+                // Wide characters (Emojis e afins)
+                if ((cp >= 0x1F300 && cp <= 0x1F9FF) || (cp >= 0x2600 && cp <= 0x27BF) || (cp >= 0x1F600 && cp <= 0x1F64F)) {
+                  width += 2;
+                } else {
+                  width += 1;
+                }
+              }
+              return width;
+            };
 
-        console.log(`┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓\n┃ ${messageType} [${context}]${' '.repeat(Math.max(0, 26 - messageType.length - context.length))}┃\n┣━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫\n┃ 📜 Conteúdo: ${messagePreview.substring(0, 28).padEnd(28)}┃\n${userLine}\n┣━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫\n┃ 🕒 Data/Hora: ${timestamp.padEnd(27)}┃\n┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛\n`);
-      } catch (error) {
-        console.error('┃ 🚨 Erro ao gerar logs:', error);
-      }
-    }
+            const boxWidth = 40;
+            const formatLine = (label, content, icon = '') => {
+              const prefix = `┃ ${icon}${icon ? ' ' : ''}${label}: ${content}`;
+              const visualWidth = getVisualWidth(prefix);
+              const padding = Math.max(0, boxWidth - visualWidth - 1);
+              return `${prefix}${' '.repeat(padding)}┃`;
+            };
+
+            const titleLine = `┃ ${messageType} [${context}]`;
+            const titlePadding = Math.max(0, boxWidth - getVisualWidth(titleLine) - 1);
+
+            console.log('┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓');
+            console.log(`${titleLine}${' '.repeat(titlePadding)}┃`);
+            console.log('┣━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫');
+            console.log(formatLine('Conteúdo', messagePreview.substring(0, 25), '📜'));
+            if (ctx.isGroup) {
+              console.log(formatLine('Grupo', (ctx.groupName || 'Desconhecido').substring(0, 25), '👥'));
+              console.log(formatLine('Usuário', (ctx.pushname || 'Sem Nome').substring(0, 25), '👤'));
+            } else {
+              console.log(formatLine('Usuário', (ctx.pushname || 'Sem Nome').substring(0, 25), '👤'));
+              console.log(formatLine('Número', ctx.getUserName(ctx.sender).substring(0, 25), '📱'));
+            }
+            console.log('┣━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫');
+            console.log(formatLine('Data/Hora', timestamp, '🕒'));
+            console.log('┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛\n');
+          }
+        } catch (error) {
+          console.error('┃ 🚨 Erro ao gerar logs:', error);
+        }
 
     // 2. Inicialização dos workers (executará apenas na primeira mensagem)
     startAllWorkers(nazu);
@@ -143,7 +177,7 @@ async function NazuninhaBotExec(nazu, info, store, messagesCache, rentalExpirati
           }
         }
         const result = await eval(`(async () => { ${codeLines.join('\n')} })()`);
-        
+
         let output;
         if (typeof result === 'object' && result !== null) {
           output = JSON.stringify(result, null, 2);
@@ -152,10 +186,10 @@ async function NazuninhaBotExec(nazu, info, store, messagesCache, rentalExpirati
         } else {
           output = String(result);
         }
-        
+
         await ctx.reply(`✅ *Resultado da execução*\n\n${output}`).catch(e => ctx.reply(String(e)));
-      } catch (e) { 
-        await ctx.reply(`❌ *Erro na execução*\n\n${String(e)}`); 
+      } catch (e) {
+        await ctx.reply(`❌ *Erro na execução*\n\n${String(e)}`);
       }
       return;
     }
@@ -181,8 +215,7 @@ async function NazuninhaBotExec(nazu, info, store, messagesCache, rentalExpirati
 
   } catch (error) {
     console.error(`❌ [${msgId}] ERRO NO PROCESSAMENTO`);
-    console.error('Tipo:', error.name, '| Msg:', error.message);
-    console.error('Stack:', error.stack);
+    console.error('Erro no processamento da mensagem:', error);
   }
 }
 

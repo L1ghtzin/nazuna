@@ -40,8 +40,7 @@ export default {
           statusCor = '🟥';
         }
         
-        return nazu.sendMessage(from, {
-          text: `╭⊱ ⚡ *STATUS DA CONEXÃO* ⚡ ⊱╮
+        return reply(`╭⊱ ⚡ *STATUS DA CONEXÃO* ⚡ ⊱╮
 │
 │ 📡 *Informações de Latência*
 │ ├─ ${statusEmoji} Velocidade: *${speedConverted.toFixed(3)}s*
@@ -53,8 +52,7 @@ export default {
 │ ├─ 📈 Resposta: *${speedConverted <= 1 ? 'Instantânea' : speedConverted <= 3 ? 'Rápida' : 'Lenta'}*
 │ └─ 🌐 Servidor: *Online*
 │
-╰━━━━━━━━━━━━━━━━━━━━━━━━╯`
-        }, { quoted: info });
+╰━━━━━━━━━━━━━━━━━━━━━━━━╯`);
       } catch (e) {
         console.error("Erro no comando ping:", e);
         return reply(MESSAGES.error.internal);

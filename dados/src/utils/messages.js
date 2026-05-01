@@ -6,20 +6,20 @@ export const MESSAGES = {
     simple: "ocorreu um erro 💔",
     notFound: "❌ Comando não encontrado!",
     noMedia: "Marque uma mídia 💔",
-    noText: "Cade o texto? 💔"
+    noText: "Cadê o texto? 💔"
   },
   permission: {
     ownerOnly: "🚫 Este comando é exclusivo para o meu dono!",
     adminOnly: "Comando restrito a Administradores ou Moderadores com permissão. 💔",
     botAdminOnly: "Eu preciso ser adm 💔",
-    userAdminOnly: "você precisa ser adm 💔",
-    groupOnly: "isso so pode ser usado em grupo 💔",
+    userAdminOnly: "Você precisa ser adm 💔",
+    groupOnly: "Isso só pode ser usado em grupo 💔",
     privateOnly: "❌ Este comando só funciona no privado!",
     mentionRequired: "Marque alguém 🙄",
     cantBanOwner: "💔 Não posso banir o dono do bot.",
     cantBanSelf: "💔 Ops! Eu faço parte da bagunça, não dá pra me remover 💔",
     cantBanAdmin: "💔 Não posso banir um administrador do grupo.",
-    premiumOnly: "isso so pode ser usado por membros premium 💔"
+    premiumOnly: "Isso só pode ser usado por membros premium 💔"
   },
   general: {
     wait: "⏳ Aguarde um momento, processando...",

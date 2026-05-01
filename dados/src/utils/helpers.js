@@ -106,6 +106,21 @@ async function getLidFromJidCached(nazu, jid) {
   return jid;
 }
 
+// Busca reversa: dado um LID, encontra o JID correspondente no cache
+function getJidFromLid(lid) {
+  if (!lid || !lid.includes('@lid')) return null;
+  
+  for (const [jid, cachedLid] of jidLidMemoryCache.entries()) {
+    // Normaliza para comparação (remove :XX se houver)
+    const normalizedCached = cachedLid.includes(':') ? cachedLid.split(':')[0] + '@lid' : cachedLid;
+    if (normalizedCached === lid) {
+      return jid;
+    }
+  }
+  
+  return null;
+}
+
 // Converte um array de IDs (JID/LID) para LID em batch
 async function convertIdsToLid(nazu, ids) {
   if (!Array.isArray(ids) || ids.length === 0) return [];
@@ -337,7 +352,7 @@ const PARAM_ALIASES = {
   'pickaxe_diamante': ['pickaxe_diamante', 'picareta_diamante', 'picaretadiamante', 'pdiamante'],
   // Itens premium
   'titulo_lendario': ['titulo_lendario', 'titulo', 'título', 'titulolendario'],
-  'mascote_raro': ['mascote_raro', 'mascote', 'mascoterato'],
+  'mascote_raro': ['mascote_raro', 'mascote', 'mascoteraro'],
   'mansao': ['mansao', 'mansão', 'mansion', 'casa'],
   'yate': ['yate', 'iate', 'yacht', 'barco'],
   'jet_privado': ['jet_privado', 'jato', 'jet', 'aviao', 'avião'],
@@ -945,6 +960,7 @@ export {
   saveJidLidCache,
   flushJidLidCache,
   getLidFromJidCached,
+  getJidFromLid,
   normalizeUserId,
   convertIdsToLid,
   idsMatch,

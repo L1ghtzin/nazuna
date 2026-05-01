@@ -1,9 +1,10 @@
 import pathz from 'path';
 import { readJsonFileAsync, writeJsonFileAsync } from '../utils/asyncFs.js';
-import { getCaptcha, removeCaptcha } from '../utils/captchaIndex.js';
+import CaptchaIndex, { getCaptcha, removeCaptcha } from '../utils/captchaIndex.js';
+
 
 /**
- * Middleware para processar respostas de captcha no PV
+ * Middleware para processar respostas de captcha no PV ou no Grupo
  * 
  * @param {object} nazu - Instância do bot
  * @param {string} sender - ID de quem enviou a mensagem
@@ -16,96 +17,96 @@ import { getCaptcha, removeCaptcha } from '../utils/captchaIndex.js';
  * @returns {Promise<boolean>} Retorna true se o fluxo principal deve ser interrompido (handled)
  */
 export async function handleCaptchaResponse(nazu, sender, body, isGroup, info, reply, GRUPOS_DIR, debug = false) {
-  // Ignora mensagens de grupo ou do próprio bot
-  if (isGroup || info.key.fromMe) {
+  if (info.key.fromMe) return false;
+
+  await CaptchaIndex.init();
+
+  const now = Date.now();
+  const senderNormalized = (info.key?.participantAlt || sender)?.replace(/@.*/, '');
+
+  const isCapUser = CaptchaIndex.get(senderNormalized);
+
+  if (!isCapUser) {
     return false;
   }
 
-  const captchaData = getCaptcha(sender);
-  if (!captchaData) {
-    return false; // Não tem captcha pendente
-  }
-
-  if (debug) {
-    console.log('[DEBUG CAPTCHA] Captcha pendente encontrado via índice:', {
-      sender,
-      body: body?.trim(),
-      expectedAnswer: captchaData.answer,
-      groupId: captchaData.groupId
-    });
-  }
-
-  const userAnswer = parseInt(body?.trim());
-
-  if (debug) {
-    console.log('[DEBUG CAPTCHA] Resposta do usuário:', userAnswer, 'É número?', !isNaN(userAnswer));
-  }
-
-  if (isNaN(userAnswer)) {
-    await reply('❌ Resposta inválida! Por favor, envie apenas o número da resposta.');
-    return true; // Interrompe pois processamos a mensagem
-  }
-
-  const groupPath = pathz.join(GRUPOS_DIR, captchaData.groupFile || `${captchaData.groupId.replace('@g.us', '')}.json`);
-
-  if (userAnswer === captchaData.answer) {
-    // Resposta correta - aprovar no grupo
+  if (now >= isCapUser.expiresAt) {
+    if (debug) console.log('[CAPTCHA] EXPIRADO');
     try {
-      if (debug) {
-        console.log('[DEBUG CAPTCHA] ✅ Resposta correta! Aprovando no grupo:', captchaData.groupId);
-      }
-      await nazu.groupRequestParticipantsUpdate(captchaData.groupId, [sender], 'approve');
-      await reply('✅ *Correto!* Você foi aprovado no grupo. Bem-vindo! 🎉');
-      
-      // Limpar captcha pendente do índice
-      removeCaptcha(sender);
-      
-      // Também limpa do arquivo do grupo (async para não bloquear)
-      readJsonFileAsync(groupPath, {}).then(async groupDataCaptcha => {
-        if (groupDataCaptcha.pendingCaptchas?.[sender]) {
-          delete groupDataCaptcha.pendingCaptchas[sender];
-          await writeJsonFileAsync(groupPath, groupDataCaptcha);
-        }
-        
-        // Notificação X9
-        if (groupDataCaptcha.x9) {
-          await nazu.sendMessage(captchaData.groupId, {
-            text: `✅ *X9 Report:* @${sender.split('@')[0]} passou na verificação de captcha e foi aprovado automaticamente.`,
-            mentions: [sender],
-          }).catch(err => console.error(`❌ Erro ao enviar X9: ${err.message}`));
-        }
-      }).catch(err => console.error('Erro ao limpar captcha do arquivo:', err));
-      
-    } catch (err) {
-      await reply('❌ Erro ao aprovar sua solicitação. Tente novamente mais tarde.');
-      console.error('Erro ao aprovar após captcha:', err);
+      await nazu.sendMessage(isCapUser.groupId, {
+        text: `⏰ @${senderNormalized} demorou demais e foi removido.`,
+        mentions: [isCapUser.idOrigin]
+      });
+      await nazu.groupParticipantsUpdate(
+        isCapUser.groupId,
+        [isCapUser.idOrigin],
+        'remove'
+      );
+    } catch (e) {
+      console.log('[ERRO EXPIRAÇÃO]:', e.message);
     }
-  } else {
-    // Resposta incorreta - recusar
-    try {
-      if (debug) {
-        console.log('[DEBUG CAPTCHA] ❌ Resposta incorreta! Recusando no grupo:', captchaData.groupId);
-      }
-      await nazu.groupRequestParticipantsUpdate(captchaData.groupId, [sender], 'reject');
-      await reply('❌ *Resposta incorreta!* Sua solicitação foi recusada. Você pode tentar solicitar novamente.');
-      
-      // Limpar captcha pendente do índice
-      removeCaptcha(sender);
-      
-      // Também limpa do arquivo do grupo (async)
-      readJsonFileAsync(groupPath, {}).then(async groupDataCaptcha => {
-        if (groupDataCaptcha.pendingCaptchas?.[sender]) {
-          delete groupDataCaptcha.pendingCaptchas[sender];
-          await writeJsonFileAsync(groupPath, groupDataCaptcha);
-        }
-      }).catch(err => console.error('Erro ao limpar captcha do arquivo:', err));
-      
-    } catch (err) {
-      await reply('❌ Resposta incorreta!');
-      console.error('Erro ao recusar após captcha:', err);
-    }
+    CaptchaIndex.remove(senderNormalized);
+    return true; // Interrompe
   }
 
-  // Interrompe execução pois lidamos com o captcha
-  return true;
+  const text = body || '';
+  const respInt = parseInt(text.trim());
+  const answerInt = parseInt(isCapUser.answer);
+
+  if (debug) console.log('[DEBUG] RESP:', respInt, '| CORRETO:', answerInt);
+
+  if (respInt === answerInt) {
+    CaptchaIndex.remove(senderNormalized);
+
+    try {
+      const groupMetadata = await nazu.groupMetadata(isCapUser.groupId).catch(() => null);
+      const groupPath = pathz.join(GRUPOS_DIR, isCapUser.groupFile || `${isCapUser.groupId.replace('@g.us', '')}.json`);
+      const groupSettings = await readJsonFileAsync(groupPath, {});
+
+      if (groupSettings && groupSettings.bemvindo && groupMetadata) {
+        // Envia boas vindas usando o formato original do captcha
+        // Nota: se você tem o createGroupMessage disponível, importe-o. 
+        // Caso contrário, enviamos uma resposta de aprovação padronizada.
+        try {
+            const { createGroupMessage } = await import('../connect.js').catch(() => ({}));
+            if (createGroupMessage) {
+                const message = await createGroupMessage(
+                  nazu,
+                  groupMetadata,
+                  [isCapUser.idOrigin],
+                  groupSettings.welcome || { text: groupSettings.textbv }
+                );
+                await nazu.sendMessage(isCapUser.groupId, message);
+            } else {
+                throw new Error("createGroupMessage não encontrado");
+            }
+        } catch (e) {
+            await nazu.sendMessage(isCapUser.groupId, {
+              text: `✅ @${senderNormalized} liberado com sucesso!`,
+              mentions: [isCapUser.idOrigin]
+            });
+        }
+      } else {
+        await nazu.sendMessage(isCapUser.groupId, {
+          text: `✅ @${senderNormalized} liberado com sucesso!`,
+          mentions: [isCapUser.idOrigin]
+        });
+      }
+    } catch (e) {
+      console.log('[ERRO WELCOME PÓS-CAPTCHA]:', e.message);
+      await nazu.sendMessage(isCapUser.groupId, {
+        text: `✅ @${senderNormalized} liberado com sucesso!`,
+        mentions: [isCapUser.idOrigin]
+      }).catch(() => {});
+    }
+    
+    // Se a lógica do nazuna aprova a requisição de grupo (para autoAccept), faz aqui também
+    try {
+        await nazu.groupRequestParticipantsUpdate(isCapUser.groupId, [isCapUser.idOrigin], 'approve').catch(() => {});
+    } catch {}
+
+    return true;
+  }
+
+  return false;
 }

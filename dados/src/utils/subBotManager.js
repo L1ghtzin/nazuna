@@ -1,11 +1,11 @@
-import a, { useMultiFileAuthState, DisconnectReason, makeCacheableSignalKeyStore } from 'baileys';
-const makeWASocket = a.default;
+import { useMultiFileAuthState, DisconnectReason, fetchLatestBaileysVersion, makeCacheableSignalKeyStore, makeWASocket } from 'baileys';
 import { Boom } from '@hapi/boom';
 import NodeCache from 'node-cache';
 import pino from 'pino';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+
 
 import { buildUserId, getLidFromJidCached, getUserName } from './helpers.js';
 
@@ -15,6 +15,8 @@ const __dirname = path.dirname(__filename);
 const SUBBOTS_FILE = path.join(__dirname, '../../database/subbots.json');
 const SUBBOTS_DIR = path.join(__dirname, '../../database/subbots');
 const BASE_DATABASE_DIR = path.join(__dirname, '../../database');
+
+
 
 // Instâncias ativas de sub-bots
 const activeSubBots = new Map();
@@ -131,7 +133,7 @@ async function initializeSubBot(botId, phoneNumber, ownerNumber, generatePairing
         const { config, dirs } = createSubBotConfig(botId, phoneNumber, ownerNumber);
         
         const { state, saveCreds } = await useMultiFileAuthState(dirs.authDir, makeCacheableSignalKeyStore);
-        const version = [2, 3000, 1035194821];
+        const { version } = await fetchLatestBaileysVersion();
 
         const msgRetryCounterCache = new NodeCache();
 
@@ -149,8 +151,7 @@ async function initializeSubBot(botId, phoneNumber, ownerNumber, generatePairing
             keepAliveIntervalMs: 30_000,
             defaultQueryTimeoutMs: undefined,
             msgRetryCounterCache,
-            auth: state,
-            shouldResendMessageOn475AckError: true
+            auth: state
         });
 
         let pairingCode = null;
@@ -228,9 +229,20 @@ async function initializeSubBot(botId, phoneNumber, ownerNumber, generatePairing
                 if (reason === DisconnectReason.loggedOut) {
                     console.log(`🗑️ Sub-bot ${botId} foi deslogado, removendo dados...`);
                     await removeSubBot(botId);
-                } else if (reason === 428) {
-                    // Erro 428 = aguardando pareamento, não reconectar automaticamente
-                    console.log(`⏸️ Sub-bot ${botId} aguardando pareamento. Use o código enviado para conectar.`);
+                } else if (reason === DisconnectReason.badSession) {
+                    console.log(`⚠️ Sub-bot ${botId} com sessão corrompida (Bad Session). Tentando limpeza parcial...`);
+                    try {
+                        const { badMacHandler } = await import('./badMacHandler.js');
+                        await badMacHandler.clearProblematicSessionFiles(dirs.authDir);
+                    } catch (e) {
+                        console.error('Erro ao tentar limpar sessão corrompida do sub-bot:', e.message);
+                    }
+                    
+                    // Agenda reconexão
+                    setTimeout(() => {
+                        initializeSubBot(botId, phoneNumber, ownerNumber, false);
+                    }, 5000);
+                } else if (reason !== DisconnectReason.connectionReplaced) {
                     if (subbots[botId]) {
                         subbots[botId].status = 'aguardando_pareamento';
                         saveSubBots(subbots);

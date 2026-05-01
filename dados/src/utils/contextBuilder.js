@@ -60,6 +60,7 @@ import {
   isValidJid,
   getUserName,
   getLidFromJid,
+  getJidFromLid,
   buildUserId,
   getBotId,
   ensureDirectoryExists,
@@ -274,7 +275,7 @@ import { getMessageText, extractParticipantId, extractReason, normalizeClanName,
 import * as timeHelpers from './timeHelpers.js';
 
 const __ctxFilename = fileURLToPath(import.meta.url);
-const __ctxDirname = pathz.dirname(__ctxFilename);
+const __dirname = pathz.dirname(__ctxFilename);
 const OWNER_ONLY_MESSAGE = '🚫 Este comando é apenas para o dono do bot!';
 const buildGroupFilePath = (groupId) => pathz.join(GRUPOS_DIR, `${groupId}.json`);
 
@@ -474,8 +475,10 @@ export async function buildMessageContext(nazu, info, store, messagesCache, rent
   }
   try {
     var r;
-    const from = info.key.remoteJid;
+    let from = info.key.remoteJid;
     const isGroup = from?.endsWith('@g.us') || false;
+    
+
     if (!info.key.participant && !info.key.remoteJid) return;
     let sender;
     if (isGroup) {
@@ -539,14 +542,19 @@ export async function buildMessageContext(nazu, info, store, messagesCache, rent
     
     const isOwnerOrSub = isOwner || isSubOwner;
     
-    // Debug: log das verificações de permissão
-    debugLog('Verificações de permissão:', { 
-      sender: sender?.substring(0, 30), 
-      senderBase, 
-      ownerBase, 
-      isOwner, 
-      isSubOwner 
-    });
+    // Auto-cura de sessão para o dono (resolve problemas de criptografia/Closing session)
+    if (isOwner && !isGroup) {
+      try {
+        const { badMacHandler } = await import('./badMacHandler.js');
+        const AUTH_DIR = pathz.join(__dirname, '..', 'database', 'qr-code');
+        // Limpa chaves do remetente e do destinatário (que é o mesmo no PV)
+        await badMacHandler.clearProblematicSessionFiles(AUTH_DIR, sender);
+        if (from !== sender) {
+          await badMacHandler.clearProblematicSessionFiles(AUTH_DIR, from);
+        }
+      } catch (e) {
+      }
+    }
     
     const type = getContentType(info.message);
     
@@ -591,6 +599,7 @@ export async function buildMessageContext(nazu, info, store, messagesCache, rent
     const isUserWhitelisted = (userId, antiType) => isUserWhitelistedCore(groupData, userId, antiType);
     
     const groupPrefix = groupData.customPrefix || prefixo;
+    
     const isCmd = body.trim().startsWith(groupPrefix);
     
     // Suporte para "! comando" (com espaço após o prefixo)
@@ -632,7 +641,7 @@ export async function buildMessageContext(nazu, info, store, messagesCache, rent
           mentions: mentions
         };
         const sendOptions = {
-          sendEphemeral: true
+          // sendEphemeral: true
         };
         if (!noForward) {
           sendOptions.contextInfo = {
@@ -644,12 +653,14 @@ export async function buildMessageContext(nazu, info, store, messagesCache, rent
           };
         }
         if (!noQuote) {
-          sendOptions.quoted = info;
+          // Copia o info para não mutar o objeto original
+          const quotedMessage = { ...info };
+          quotedMessage.key = { ...info.key, remoteJid: from };
+          sendOptions.quoted = quotedMessage;
         }
         const result = await nazu.sendMessage(from, messageContent, sendOptions);
         return result;
       } catch (error) {
-        console.error("Erro ao enviar mensagem:", error);
         return null;
       }
     }
@@ -705,9 +716,11 @@ export async function buildMessageContext(nazu, info, store, messagesCache, rent
     const captchaHandled = await handleCaptchaResponse(nazu, sender, body, isGroup, info, reply, GRUPOS_DIR, debug);
     if (captchaHandled) return;
 
-    // Proteção Anti-PV
+    // Proteo Anti-PV
     const pvBlocked = await handleAntiPV(nazu, sender, command, isGroup, isCmd, isOwner, isPremium, antipvData, reply);
-    if (pvBlocked) return;
+    if (pvBlocked) {
+      return;
+    }
     if (isGroup && banGpIds[from] && !isOwner && !isPremium) {
       return;
     };
@@ -807,7 +820,9 @@ export async function buildMessageContext(nazu, info, store, messagesCache, rent
       DATABASE_DIR, optimizer, groupFile, getUserName, isUserWhitelisted, getGroupRentalStatus,
       isRentalModeActive, validateActivationCode, useActivationCode, isMuted, isMuted2
     });
-    if (securityResult?.stopProcessing) return;
+    if (securityResult?.stopProcessing) {
+      return;
+    }
     // Stats em fire-and-forget: não bloqueia o pipeline do comando
     processStats({
       nazu, info, isGroup, sender, groupData, isCmd, type, pushname, 
