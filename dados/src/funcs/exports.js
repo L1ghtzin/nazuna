@@ -260,22 +260,33 @@ export async function getModules() {
 }
 
 /**
- * Default export resolves the aggregated modules object via top-level await.
- * This keeps existing ESM consumers using:
- *   const modules = (await import('./funcs/exports.js')).default;
- * working as expected.
+ * Default export usa um Proxy para evitar bloqueio no startup (top-level await).
+ * Os módulos são carregados em background e ficam disponíveis logo depois.
  */
-const modules = await loadModules();
+let loadedModules = null;
+loadModules().then(m => {
+    loadedModules = m;
+}).catch(e => {
+    console.error('[EXPORTS] Falha crítica ao carregar módulos em background:', e);
+});
 
-// Additional safety checks at export level (sem Proxy aninhado para performance)
-const safeModules = new Proxy(modules, {
+// Proxy para acesso seguro aos módulos
+const safeModules = new Proxy({}, {
     get(target, prop) {
-        if (typeof prop === 'symbol') return target[prop];
-        if (!(prop in target)) {
+        if (typeof prop === 'symbol') return undefined;
+        
+        if (!loadedModules) {
+            // Módulos ainda estão carregando (startup)
+            // Retorna um proxy encadeado ou undefined dependendo do uso
+            return undefined;
+        }
+        
+        if (!(prop in loadedModules)) {
             console.warn(`[EXPORTS] Module '${prop}' not found in exports`);
             return undefined;
         }
-        return target[prop];
+        
+        return loadedModules[prop];
     }
 });
 

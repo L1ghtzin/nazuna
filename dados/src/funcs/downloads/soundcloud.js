@@ -5,29 +5,20 @@
 
 import axios from 'axios';
 import { mediaClient } from '../../utils/httpClient.js';
+import SimpleCache from '../../utils/simpleCache.js';
 
 const BASE_URL = 'https://nayan-video-downloader.vercel.app';
 
 // Cache simples para evitar requisições duplicadas
-const cache = new Map();
 const CACHE_TTL = 30 * 60 * 1000; // 30 minutos
+const cache = new SimpleCache(CACHE_TTL);
 
 function getCached(key) {
-  const item = cache.get(key);
-  if (!item) return null;
-  if (Date.now() - item.ts > CACHE_TTL) {
-    cache.delete(key);
-    return null;
-  }
-  return item.val;
+  return cache.get(key);
 }
 
 function setCache(key, val) {
-  if (cache.size >= 500) {
-    const oldestKey = cache.keys().next().value;
-    cache.delete(oldestKey);
-  }
-  cache.set(key, { val, ts: Date.now() });
+  cache.set(key, val, CACHE_TTL);
 }
 
 /**

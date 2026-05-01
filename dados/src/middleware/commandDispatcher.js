@@ -60,6 +60,7 @@ export async function dispatchCommand(ctx) {
     } else {
       await nazu.react('❌', { key: info.key });
     }
+    return; // Evitar o pós-processamento (reacts, auto-repo) se já identificou que era um comando falho
   }
 
   // === PÓS-PROCESSAMENTO ===

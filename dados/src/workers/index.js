@@ -140,17 +140,22 @@ const scheduleGroupJob = (groupId, type, timeStr, nazuInstance) => {
   }
 };
 
-const loadAllGroupSchedules = (nazuInstance) => {
+const loadAllGroupSchedules = async (nazuInstance) => {
   try {
     if (!ensureDirectoryExists(GRUPOS_DIR)) return;
-    const files = fs.readdirSync(GRUPOS_DIR).filter(f => f.endsWith('.json'));
+    const files = await fs.promises.readdir(GRUPOS_DIR);
+    const jsonFiles = files.filter(f => f.endsWith('.json'));
     let loadedCount = 0;
-    for (const f of files) {
+    
+    await Promise.all(jsonFiles.map(async (f) => {
       const groupId = f.replace(/\.json$/, '');
-      if (!groupId.endsWith('@g.us')) continue;
+      if (!groupId.endsWith('@g.us')) return;
       const filePath = pathz.join(GRUPOS_DIR, f);
       let data = {};
-      try { data = JSON.parse(fs.readFileSync(filePath, 'utf8')) || {}; } catch (e) { continue; }
+      try { 
+        const fileContent = await fs.promises.readFile(filePath, 'utf8');
+        data = JSON.parse(fileContent) || {}; 
+      } catch (e) { return; }
       const schedule = data.schedule && typeof data.schedule === 'object' ? data.schedule : {};
       if (schedule.openTime) {
         scheduleGroupJob(groupId, 'open', schedule.openTime, nazuInstance);
@@ -162,7 +167,7 @@ const loadAllGroupSchedules = (nazuInstance) => {
         console.log(`[Cron] ✅ Agendamento FECHAR carregado: Grupo ${groupId.substring(0, 15)}... às ${schedule.closeTime}`);
         loadedCount++;
       }
-    }
+    }));
     if (loadedCount > 0) {
       console.log(`[Cron] 📅 Total de ${loadedCount} agendamento(s) carregado(s) com sucesso`);
     }
@@ -398,19 +403,23 @@ const scheduleAutoMessage = (groupId, msgConfig, nazuInstance) => {
   }
 };
 
-const loadAllAutoMessages = (nazuInstance) => {
+const loadAllAutoMessages = async (nazuInstance) => {
   try {
     if (!ensureDirectoryExists(GRUPOS_DIR)) return;
-    const files = fs.readdirSync(GRUPOS_DIR).filter(f => f.endsWith('.json'));
+    const files = await fs.promises.readdir(GRUPOS_DIR);
+    const jsonFiles = files.filter(f => f.endsWith('.json'));
     let loadedCount = 0;
     
-    for (const f of files) {
+    await Promise.all(jsonFiles.map(async (f) => {
       const groupId = f.replace(/\.json$/, '');
-      if (!groupId.endsWith('@g.us')) continue;
+      if (!groupId.endsWith('@g.us')) return;
       
       const filePath = pathz.join(GRUPOS_DIR, f);
       let data = {};
-      try { data = JSON.parse(fs.readFileSync(filePath, 'utf8')) || {}; } catch (e) { continue; }
+      try { 
+        const fileContent = await fs.promises.readFile(filePath, 'utf8');
+        data = JSON.parse(fileContent) || {}; 
+      } catch (e) { return; }
       
       const autoMessages = data.autoMessages && Array.isArray(data.autoMessages) ? data.autoMessages : [];
       
@@ -421,7 +430,7 @@ const loadAllAutoMessages = (nazuInstance) => {
           loadedCount++;
         }
       }
-    }
+    }));
     
     if (loadedCount > 0) {
       console.log(`[AutoMsg] 📨 Total de ${loadedCount} mensagem(ns) automática(s) carregada(s) com sucesso`);

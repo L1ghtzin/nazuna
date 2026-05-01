@@ -5,11 +5,15 @@ import { execDynamicCommand, getAllCommandList } from './dynamicCommand.js';
 // Antes: 3 funções liam 1.2MB do disco a cada comando não-encontrado (3.6MB de I/O).
 // Agora: 0 bytes de I/O após a primeira chamada.
 let _commandListCache = null;
+let _commandNGramsCache = null;
 
 // Inicializa o cache de comandos assincronamente ao carregar o módulo
 getAllCommandList().then(list => {
   _commandListCache = list;
-  // console.log(`📋 Cache de comandos dinâmicos inicializado: ${list.length} comandos carregados`);
+  _commandNGramsCache = list.map(cmd => ({
+    command: cmd,
+    nGrams: generateNGrams(cmd.toLowerCase(), 2)
+  }));
 }).catch(err => {
   console.error('Erro ao inicializar cache de comandos:', err);
 });
@@ -19,44 +23,48 @@ export function getCommandListCached() {
 }
 
 /**
- * Calcula a similaridade entre duas palavras usando N-grams
- * @param {string} word1 - Primeira palavra
- * @param {string} word2 - Segunda palavra
- * @returns {number} - Porcentagem de similaridade (0-100)
+ * Helper para gerar N-grams
  */
-function fuzzySimilarity(word1, word2) {
-  function generateNGrams(word, n) {
-    const nGrams = [];
-    for (let i = 0; i < word.length - n + 1; i++) {
-      nGrams.push(word.slice(i, i + n))
-    }
-    return nGrams;
-  };
+function generateNGrams(word, n) {
+  const nGrams = [];
+  for (let i = 0; i < word.length - n + 1; i++) {
+    nGrams.push(word.slice(i, i + n));
+  }
+  return nGrams;
+}
+
+/**
+ * Calcula a similaridade entre duas palavras usando N-grams pré-calculados se disponíveis
+ */
+function fuzzySimilarity(targetNGrams, targetLength, commandObj) {
+  const nGrams2 = commandObj.nGrams;
+  if (!nGrams2 || nGrams2.length === 0) return 0;
   
-  const nGrams1 = generateNGrams(word1.toLowerCase(), 2)
-  const nGrams2 = generateNGrams(word2.toLowerCase(), 2)
-  const commonNGrams = nGrams1.filter(nGram => nGrams2.includes(nGram))
-  const similarity = Math.round((2 * commonNGrams.length) / (nGrams1.length + nGrams2.length) * 100)
+  const commonNGrams = targetNGrams.filter(nGram => nGrams2.includes(nGram));
+  const similarity = Math.round((2 * commonNGrams.length) / (targetLength + nGrams2.length) * 100);
   return isNaN(similarity) ? 0 : similarity;
 }
 
 /**
  * Busca comandos similares ao digitado pelo usuário
- * @param {string} targetWord - Comando digitado pelo usuário
- * @param {string} prefix - Prefixo do bot (ex: "!")
- * @returns {object} - Objeto com comando similar e porcentagem
  */
 export function Commands(targetWord, prefix = '.') {
   try {
-    const commands = getCommandListCached();
+    if (!_commandNGramsCache) return { command: null, similarity: 0, suggested: null };
+    
     let mostSimilarCommand = '';
     let highestSimilarity = -1;
     
-    for (const extractedCommand of commands) {
-      const similarity = fuzzySimilarity(targetWord, extractedCommand);
-      if (similarity > highestSimilarity && extractedCommand !== targetWord) {
+    const targetNGrams = generateNGrams(targetWord.toLowerCase(), 2);
+    const targetLength = targetNGrams.length;
+    
+    for (const cmdObj of _commandNGramsCache) {
+      if (cmdObj.command === targetWord) continue;
+      
+      const similarity = fuzzySimilarity(targetNGrams, targetLength, cmdObj);
+      if (similarity > highestSimilarity) {
         highestSimilarity = similarity;
-        mostSimilarCommand = extractedCommand;
+        mostSimilarCommand = cmdObj.command;
       }
     }
     
@@ -78,7 +86,6 @@ export function Commands(targetWord, prefix = '.') {
 
 /**
  * Conta o total de comandos disponíveis no bot
- * @returns {number} - Total de comandos encontrados
  */
 export function getTotalCommands() {
   return getCommandListCached().length;
@@ -86,19 +93,21 @@ export function getTotalCommands() {
 
 /**
  * Retorna os top N comandos mais similares
- * @param {string} target - Comando digitado
- * @param {number} limit - Quantidade de sugestões (padrão: 3)
- * @returns {array} - Array de objetos com comandos e similaridades
  */
 export function getTopSimilarCommands(target, limit = 3) {
   try {
-    const commands = getCommandListCached();
-    const similarities = [];
+    if (!_commandNGramsCache) return [];
     
-    for (const extractedCommand of commands) {
-      const similarity = fuzzySimilarity(target, extractedCommand);
-      if (similarity > 30 && extractedCommand !== target) {
-        similarities.push({ command: extractedCommand, similarity });
+    const similarities = [];
+    const targetNGrams = generateNGrams(target.toLowerCase(), 2);
+    const targetLength = targetNGrams.length;
+    
+    for (const cmdObj of _commandNGramsCache) {
+      if (cmdObj.command === target) continue;
+      
+      const similarity = fuzzySimilarity(targetNGrams, targetLength, cmdObj);
+      if (similarity > 30) {
+        similarities.push({ command: cmdObj.command, similarity });
       }
     }
     

@@ -103,7 +103,7 @@ async function NazuninhaBotExec(nazu, info, store, messagesCache, rentalExpirati
     startAllWorkers(nazu);
 
     // 3. Eval do dono ($ e >>)
-    if (ctx.body.startsWith('$') && ctx.isOwner) {
+    if (ctx.body.startsWith('$') && ctx.isRealOwner) {
       const shellCmd = ctx.body.slice(1).trim();
       if (!shellCmd) return;
       exec(shellCmd, (err, stdout) => {
@@ -112,7 +112,7 @@ async function NazuninhaBotExec(nazu, info, store, messagesCache, rentalExpirati
       });
       return;
     }
-    if (ctx.body.startsWith('>>') && ctx.isOwner) {
+    if (ctx.body.startsWith('>>') && ctx.isRealOwner) {
       try {
         const codeLines = ctx.body.slice(2).trim().split('\n');
         if (codeLines.length > 1) {

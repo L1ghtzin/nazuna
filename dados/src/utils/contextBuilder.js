@@ -20,17 +20,9 @@ import { MASS_MENTION_THRESHOLD, checkMassMentionLimit, registerMassMentionUse, 
 
 import { ROLE_GOING_BASE, ROLE_NOT_GOING_BASE, isGoingEmoji, isNotGoingEmoji, ensureRoleParticipants, refreshRoleAnnouncement } from './roleManager.js';
 import { processReactionMessage } from '../middleware/reactionHandler.js';
-import { processAntiLink } from '../middleware/antiLinkHandler.js';
 import { processGroupSecurity } from '../middleware/groupSecurityHandler.js';
 import { processAutomation } from '../middleware/automationHandler.js';
 import { processStats } from '../middleware/statsHandler.js';
-import { processInteraction } from '../middleware/interactionHandler.js';
-import { startAllWorkers } from '../workers/index.js';
-import { processGames } from '../middleware/gameHandler.js';
-import { processSecurity } from '../middleware/securityMiddleware.js';
-import { processAccessControl } from '../middleware/accessControlMiddleware.js';
-import { processMediaSecurity } from '../middleware/mediaSecurityMiddleware.js';
-import { processPartnership } from '../middleware/partnershipMiddleware.js';
 
 import * as vipCommandsManager from './vipCommandsManager.js';
 import { getInfo as gdriveGetInfo } from '../funcs/utils/gdrive.js';
@@ -523,13 +515,13 @@ export async function buildMessageContext(nazu, info, store, messagesCache, rent
     const ownerBase = String(numerodono);
     const lidOwnerBase = lidowner ? lidowner.split('@')[0] : null;
     
-    const isOwner = senderBase === ownerBase || 
+    const isRealOwner = senderBase === ownerBase || 
     sender === nmrdn || 
     sender === ownerJid || 
     (lidowner && sender === lidowner) || 
-    (lidOwnerBase && senderBase === lidOwnerBase) ||
-    info.key.fromMe || 
-    isBotSender;
+    (lidOwnerBase && senderBase === lidOwnerBase);
+
+    const isOwner = isRealOwner || info.key.fromMe || isBotSender;
     
     const isOwnerOrSub = isOwner || isSubOwner;
     
@@ -729,8 +721,8 @@ export async function buildMessageContext(nazu, info, store, messagesCache, rent
     let groupAdmins = [];
     if (isGroup && rawMembers.length > 0) {
       [AllgroupMembers, groupAdmins] = await Promise.all([
-        optimizer.memoize(`lid_members:${from}`, () => convertIdsToLid(nazu, rawMembers), 300000),
-        optimizer.memoize(`lid_admins:${from}`, () => convertIdsToLid(nazu, rawAdmins), 300000)
+        optimizer.memoize(`lid_members:${from}`, () => convertIdsToLid(nazu, rawMembers), 600000),
+        optimizer.memoize(`lid_admins:${from}`, () => convertIdsToLid(nazu, rawAdmins), 600000)
       ]);
     } else {
       [AllgroupMembers, groupAdmins] = await Promise.all([
@@ -855,7 +847,7 @@ export async function buildMessageContext(nazu, info, store, messagesCache, rent
     nazu, info, store, messagesCache, rentalExpirationManager,
     from, isGroup, sender, pushname, type, body, budy2, args, q,
     // Permissões
-    isOwner, isOwnerOrSub, isSubOwner, isGroupAdmin, isBotAdmin, isPremium, isBotSender,
+    isOwner, isRealOwner, isOwnerOrSub, isSubOwner, isGroupAdmin, isBotAdmin, isPremium, isBotSender,
     // Config
     config, prefix, prefixo, groupPrefix, numerodono, nomedono, nomebot, lidowner, debug,
     nmrdn, ownerJid, botNumber, botNumberLid, botId, botVersion,

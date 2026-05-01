@@ -29,7 +29,7 @@ export async function handleAutoDownload(nazu, from, url, info, modules) {
     // Kwai
     else if (urlLower.includes('kwai.com') || urlLower.includes('kwa.am')) {
       downloadModule = kwai;
-      platformName = 'kwai';
+      platformName = 'Kwai';
     }
     // Facebook
     else if (urlLower.includes('facebook.com') || urlLower.includes('fb.watch')) {
@@ -95,13 +95,13 @@ export async function handleAutoDownload(nazu, from, url, info, modules) {
         const media = result.data[0];
         if (media.type === 'video') {
           await nazu.sendMessage(from, {
-            video: media.buff,
+            video: media.buff || { url: media.url },
             caption: '📸 *Instagram*',
             mimetype: 'video/mp4'
           }, { quoted: info });
         } else {
           await nazu.sendMessage(from, {
-            image: media.buff,
+            image: media.buff || { url: media.url },
             caption: '📸 *Instagram*'
           }, { quoted: info });
         }
@@ -116,13 +116,13 @@ export async function handleAutoDownload(nazu, from, url, info, modules) {
         const media = result.data[0];
         if (media.type === 'video') {
           await nazu.sendMessage(from, {
-            video: media.buff,
+            video: media.buff || { url: media.url },
             caption: '📸 *Kwai*',
             mimetype: 'video/mp4'
           }, { quoted: info });
         } else {
           await nazu.sendMessage(from, {
-            image: media.buff,
+            image: media.buff || { url: media.url },
             caption: '📸 *Kwai*'
           }, { quoted: info });
         }
@@ -189,33 +189,7 @@ export async function handleAutoDownload(nazu, from, url, info, modules) {
         return true;
       }
     }
-    
-    else {
-      // Mapeamento de métodos para cada plataforma
-      const methodMap = {
-        'Instagram': 'dl',
-        'Facebook': 'downloadHD',
-        'TikTok': 'dl',
-        'Pinterest': 'dl'
-      };
-      
-      const methodName = methodMap[platformName] || 'download';
-      
-      if (downloadModule && typeof downloadModule[methodName] === 'function') {
-        result = await downloadModule[methodName](url);
-        if (result && result.data) {
-          const videoUrl = result.data.video || result.data.videoUrl || result.data.url;
-          if (videoUrl) {
-            await nazu.sendMessage(from, {
-              video: { url: videoUrl },
-              caption: `🎬 *${platformName}*`,
-              mimetype: 'video/mp4'
-            }, { quoted: info });
-            return true;
-          }
-        }
-      }
-    }
+
     
     return false;
     

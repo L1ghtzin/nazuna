@@ -120,7 +120,8 @@ export default {
       
       try {
         await reply('🎵 Processando solicitação do Spotify...');
-        spotifyModule.download(q).then(async (dlRes) => {
+        const spotifyFn = q.includes('spotify.com') ? spotifyModule.download : spotifyModule.searchDownload;
+        spotifyFn(q).then(async (dlRes) => {
           if (!dlRes.ok) return reply(MESSAGES.error.general);
           await nazu.sendMessage(from, { audio: dlRes.buffer, mimetype: 'audio/mpeg' }, { quoted: info });
         }).catch(() => reply(MESSAGES.error.general));
@@ -135,7 +136,8 @@ export default {
       if (!q) return reply(`🎵 Envie o nome ou link do SoundCloud!\n\nExemplo: ${prefix}${cmd} https://soundcloud.com/...`);
       try {
         await reply('☁️ Baixando do SoundCloud...');
-        soundcloud.download(q).then(async (dlRes) => {
+        const scFn = q.includes('soundcloud.com') ? soundcloud.download : soundcloud.searchDownload;
+        scFn(q).then(async (dlRes) => {
           if (!dlRes.ok) return reply(MESSAGES.error.general);
           await nazu.sendMessage(from, { audio: dlRes.buffer, mimetype: 'audio/mpeg' }, { quoted: info });
         }).catch(() => reply(MESSAGES.error.general));
@@ -154,17 +156,32 @@ export default {
           tiktok.dl(q).then(async (dlRes) => {
             if (!dlRes.ok) return reply(MESSAGES.error.general);
             if (cmd === 'tiktokaudio') {
-              await nazu.sendMessage(from, { audio: { url: dlRes.audio }, mimetype: 'audio/mpeg' }, { quoted: info });
+              if (dlRes.audio) {
+                await nazu.sendMessage(from, { audio: { url: dlRes.audio }, mimetype: 'audio/mpeg' }, { quoted: info });
+              } else {
+                return reply(`💔 Áudio não encontrado no TikTok.`);
+              }
             } else {
-              await nazu.sendMessage(from, { video: { url: dlRes.video }, caption: `✨ TikTok de *${dlRes.author}*` }, { quoted: info });
+              if (dlRes.type === 'image' && dlRes.urls) {
+                for (let url of dlRes.urls) {
+                  await nazu.sendMessage(from, { image: { url }, caption: `✨ TikTok: *${dlRes.title || ''}*` }, { quoted: info });
+                }
+              } else if (dlRes.urls && dlRes.urls.length > 0) {
+                await nazu.sendMessage(from, { video: { url: dlRes.urls[0] }, caption: `✨ TikTok: *${dlRes.title || ''}*` }, { quoted: info });
+              } else {
+                return reply(`💔 Mídia não encontrada no TikTok.`);
+              }
             }
           }).catch(() => reply(MESSAGES.error.general));
         } else {
           await reply(`🔍 Pesquisando TikToks: *${q}*...`);
           const results = await tiktok.search(q);
-          if (!results || results.length === 0) return reply(`💔 Nenhum resultado encontrado.`);
-          const video = results[0];
-          await nazu.sendMessage(from, { video: { url: video.url }, caption: `✨ *${video.title}*\n👤 Autor: ${video.author}` }, { quoted: info });
+          if (!results || !results.ok) return reply(`💔 Nenhum resultado encontrado.`);
+          if (results.type === 'image' && results.urls) {
+            await nazu.sendMessage(from, { image: { url: results.urls[0] }, caption: `✨ *${results.title || ''}*` }, { quoted: info });
+          } else if (results.urls && results.urls.length > 0) {
+            await nazu.sendMessage(from, { video: { url: results.urls[0] }, caption: `✨ *${results.title || ''}*` }, { quoted: info });
+          }
         }
       } catch (e) { reply(MESSAGES.error.general); }
       return;
@@ -201,9 +218,9 @@ export default {
       if (!q || !q.includes('facebook.com')) return reply(`👥 Envie um link do Facebook!`);
       try {
         await reply('⏳ Baixando do Facebook...');
-        facebook.dl(q).then(async (dlRes) => {
+        facebook.downloadHD(q).then(async (dlRes) => {
           if (!dlRes.ok) return reply(MESSAGES.error.general);
-          await nazu.sendMessage(from, { video: { url: dlRes.url }, caption: '✨ Vídeo do Facebook' }, { quoted: info });
+          await nazu.sendMessage(from, { video: dlRes.buffer, caption: `✨ Vídeo do Facebook (${dlRes.resolution || 'HD'})` }, { quoted: info });
         }).catch(() => reply(MESSAGES.error.general));
       } catch (e) { reply(MESSAGES.error.general); }
       return;
@@ -264,7 +281,9 @@ export default {
       if (!q) return reply(`📱 Envie o link do Kwai!`);
       try {
         kwai.dl(q).then(async (res) => {
-          await nazu.sendMessage(from, { video: { url: res.video }, caption: '✨ Kwai Video' }, { quoted: info });
+          if (!res.ok || !res.data || !res.data.length) return reply(MESSAGES.error.general);
+          const item = res.data[0];
+          await nazu.sendMessage(from, { video: item.buff || { url: item.url }, caption: `✨ Kwai Video: ${item.metadata?.titulo || ''}` }, { quoted: info });
         }).catch(() => reply(MESSAGES.error.general));
       } catch (e) { reply(MESSAGES.error.general); }
       return;

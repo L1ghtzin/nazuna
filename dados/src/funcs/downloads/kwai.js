@@ -6,29 +6,20 @@
 import axios from 'axios';
 import * as cheerio from 'cheerio';
 import { mediaClient } from '../../utils/httpClient.js';
+import SimpleCache from '../../utils/simpleCache.js';
 
 const USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36";
 
 // Cache simples
-const cache = new Map();
 const CACHE_TTL = 60 * 60 * 1000; // 1 hora
+const cache = new SimpleCache(CACHE_TTL);
 
 function getCached(key) {
-  const item = cache.get(key);
-  if (!item) return null;
-  if (Date.now() - item.ts > CACHE_TTL) {
-    cache.delete(key);
-    return null;
-  }
-  return item.val;
+  return cache.get(key);
 }
 
 function setCache(key, val) {
-  if (cache.size >= 1000) {
-    const oldestKey = cache.keys().next().value;
-    cache.delete(oldestKey);
-  }
-  cache.set(key, { val, ts: Date.now() });
+  cache.set(key, val, CACHE_TTL);
 }
 
 /**
