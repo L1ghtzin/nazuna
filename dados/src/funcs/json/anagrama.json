@@ -1,35 +1,376 @@
 {
   "palavras": [
-    { "palavra": "computador", "dica": "Máquina eletrônica" },
-    { "palavra": "elefante", "dica": "Animal grande com tromba" },
-    { "palavra": "chocolate", "dica": "Doce feito de cacau" },
-    { "palavra": "biblioteca", "dica": "Lugar com muitos livros" },
-    { "palavra": "astronauta", "dica": "Viaja para o espaço" },
-    { "palavra": "dinossauro", "dica": "Animal pré-histórico" },
-    { "palavra": "helicóptero", "dica": "Aeronave com hélices" },
-    { "palavra": "guitarra", "dica": "Instrumento musical" },
-    { "palavra": "borboleta", "dica": "Inseto colorido" },
-    { "palavra": "cachoeira", "dica": "Queda de água" },
-    { "palavra": "universo", "dica": "Tudo que existe" },
-    { "palavra": "tecnologia", "dica": "Conjunto de técnicas" },
-    { "palavra": "fotografia", "dica": "Arte de capturar imagens" },
-    { "palavra": "adventure", "dica": "Aventura em inglês" },
-    { "palavra": "misterioso", "dica": "Algo desconhecido" },
-    { "palavra": "fantasia", "dica": "Gênero literário" },
-    { "palavra": "criatividade", "dica": "Capacidade de criar" },
-    { "palavra": "descoberta", "dica": "Ato de encontrar algo" },
-    { "palavra": "exploracao", "dica": "Ato de explorar" },
-    { "palavra": "jornada", "dica": "Viagem longa" },
-    { "palavra": "desafio", "dica": "Prova difícil" },
-    { "palavra": "vitoria", "dica": "Sucesso em competição" },
-    { "palavra": "campeao", "dica": "Vencedor" },
-    { "palavra": "estrela", "dica": "Corpo celeste" },
-    { "palavra": "planeta", "dica": "Corpo que orbita estrela" },
-    { "palavra": "oceano", "dica": "Grande massa de água" },
-    { "palavra": "montanha", "dica": "Elevação de terra" },
-    { "palavra": "floresta", "dica": "Área com muitas árvores" },
-    { "palavra": "deserto", "dica": "Área seca e arenosa" },
-    { "palavra": "ilha", "dica": "Terra cercada por água" }
+    {
+      "palavra": "computador",
+      "dica": "Máquina eletrônica"
+    },
+    {
+      "palavra": "elefante",
+      "dica": "Animal grande com tromba"
+    },
+    {
+      "palavra": "chocolate",
+      "dica": "Doce feito de cacau"
+    },
+    {
+      "palavra": "biblioteca",
+      "dica": "Lugar com muitos livros"
+    },
+    {
+      "palavra": "astronauta",
+      "dica": "Viaja para o espaço"
+    },
+    {
+      "palavra": "dinossauro",
+      "dica": "Animal pré-histórico"
+    },
+    {
+      "palavra": "helicóptero",
+      "dica": "Aeronave com hélices"
+    },
+    {
+      "palavra": "guitarra",
+      "dica": "Instrumento musical"
+    },
+    {
+      "palavra": "borboleta",
+      "dica": "Inseto colorido"
+    },
+    {
+      "palavra": "cachoeira",
+      "dica": "Queda de água"
+    },
+    {
+      "palavra": "universo",
+      "dica": "Tudo que existe"
+    },
+    {
+      "palavra": "tecnologia",
+      "dica": "Conjunto de técnicas"
+    },
+    {
+      "palavra": "fotografia",
+      "dica": "Arte de capturar imagens"
+    },
+    {
+      "palavra": "adventure",
+      "dica": "Aventura em inglês"
+    },
+    {
+      "palavra": "misterioso",
+      "dica": "Algo desconhecido"
+    },
+    {
+      "palavra": "fantasia",
+      "dica": "Gênero literário"
+    },
+    {
+      "palavra": "criatividade",
+      "dica": "Capacidade de criar"
+    },
+    {
+      "palavra": "descoberta",
+      "dica": "Ato de encontrar algo"
+    },
+    {
+      "palavra": "exploracao",
+      "dica": "Ato de explorar"
+    },
+    {
+      "palavra": "jornada",
+      "dica": "Viagem longa"
+    },
+    {
+      "palavra": "desafio",
+      "dica": "Prova difícil"
+    },
+    {
+      "palavra": "vitoria",
+      "dica": "Sucesso em competição"
+    },
+    {
+      "palavra": "campeao",
+      "dica": "Vencedor"
+    },
+    {
+      "palavra": "estrela",
+      "dica": "Corpo celeste"
+    },
+    {
+      "palavra": "planeta",
+      "dica": "Corpo que orbita estrela"
+    },
+    {
+      "palavra": "oceano",
+      "dica": "Grande massa de água"
+    },
+    {
+      "palavra": "montanha",
+      "dica": "Elevação de terra"
+    },
+    {
+      "palavra": "floresta",
+      "dica": "Área com muitas árvores"
+    },
+    {
+      "palavra": "deserto",
+      "dica": "Área seca e arenosa"
+    },
+    {
+      "palavra": "ilha",
+      "dica": "Terra cercada por água"
+    },
+    {
+      "palavra": "satelite",
+      "dica": "Orbita planetas"
+    },
+    {
+      "palavra": "primavera",
+      "dica": "Estação das flores"
+    },
+    {
+      "palavra": "inverno",
+      "dica": "Estação do frio"
+    },
+    {
+      "palavra": "outono",
+      "dica": "Estação das folhas secas"
+    },
+    {
+      "palavra": "verao",
+      "dica": "Estação do calor"
+    },
+    {
+      "palavra": "girassol",
+      "dica": "Flor que segue o sol"
+    },
+    {
+      "palavra": "melancia",
+      "dica": "Fruta verde e vermelha"
+    },
+    {
+      "palavra": "abacaxi",
+      "dica": "Fruta com coroa"
+    },
+    {
+      "palavra": "morcego",
+      "dica": "Mamífero que voa"
+    },
+    {
+      "palavra": "ampulheta",
+      "dica": "Mede o tempo com areia"
+    },
+    {
+      "palavra": "bumerangue",
+      "dica": "Objeto que volta ao ser lançado"
+    },
+    {
+      "palavra": "canguru",
+      "dica": "Animal saltador australiano"
+    },
+    {
+      "palavra": "dinamite",
+      "dica": "Explosivo potente"
+    },
+    {
+      "palavra": "escavadeira",
+      "dica": "Máquina para cavar"
+    },
+    {
+      "palavra": "fronteira",
+      "dica": "Limite entre países"
+    },
+    {
+      "palavra": "gladiador",
+      "dica": "Lutador de Roma antiga"
+    },
+    {
+      "palavra": "hamburguer",
+      "dica": "Sanduíche popular"
+    },
+    {
+      "palavra": "iglu",
+      "dica": "Casa de gelo"
+    },
+    {
+      "palavra": "jornalista",
+      "dica": "Profissional das notícias"
+    },
+    {
+      "palavra": "kamikaze",
+      "dica": "Piloto suicida japonês"
+    },
+    {
+      "palavra": "labirinto",
+      "dica": "Caminho confuso"
+    },
+    {
+      "palavra": "maratona",
+      "dica": "Corrida longa"
+    },
+    {
+      "palavra": "navegador",
+      "dica": "Usa internet ou explora mares"
+    },
+    {
+      "palavra": "ornitorrinco",
+      "dica": "Mamífero que bota ovos"
+    },
+    {
+      "palavra": "piramide",
+      "dica": "Monumento do Egito"
+    },
+    {
+      "palavra": "quarentena",
+      "dica": "Isolamento sanitário"
+    },
+    {
+      "palavra": "rinoceronte",
+      "dica": "Animal com chifre no nariz"
+    },
+    {
+      "palavra": "submarino",
+      "dica": "Embarcação subaquática"
+    },
+    {
+      "palavra": "telescopio",
+      "dica": "Para ver as estrelas"
+    },
+    {
+      "palavra": "uniforme",
+      "dica": "Roupa padronizada"
+    },
+    {
+      "palavra": "vampiro",
+      "dica": "Lenda que bebe sangue"
+    },
+    {
+      "palavra": "xadrez",
+      "dica": "Jogo de tabuleiro com rei e rainha"
+    },
+    {
+      "palavra": "zumbi",
+      "dica": "Morto-vivo"
+    },
+    {
+      "palavra": "acrobacia",
+      "dica": "Movimento ginástico"
+    },
+    {
+      "palavra": "detetive",
+      "dica": "Investigador de crimes"
+    },
+    {
+      "palavra": "elétrico",
+      "dica": "Movido a eletricidade"
+    },
+    {
+      "palavra": "garrafa",
+      "dica": "Recipiente para líquidos"
+    },
+    {
+      "palavra": "horizonte",
+      "dica": "Linha que separa céu e terra"
+    },
+    {
+      "palavra": "jabuticaba",
+      "dica": "Fruta que nasce no tronco"
+    },
+    {
+      "palavra": "limonada",
+      "dica": "Bebida de limão"
+    },
+    {
+      "palavra": "macarrão",
+      "dica": "Massa italiana"
+    },
+    {
+      "palavra": "notebook",
+      "dica": "Computador portátil"
+    },
+    {
+      "palavra": "partitura",
+      "dica": "Folha com notas musicais"
+    },
+    {
+      "palavra": "relâmpago",
+      "dica": "Luz que vem antes do trovão"
+    },
+    {
+      "palavra": "saudade",
+      "dica": "Sentimento tipicamente brasileiro"
+    },
+    {
+      "palavra": "tempestade",
+      "dica": "Chuva forte com raios"
+    },
+    {
+      "palavra": "avalanche",
+      "dica": "Deslizamento de neve"
+    },
+    {
+      "palavra": "brinquedo",
+      "dica": "Objeto para diversão infantil"
+    },
+    {
+      "palavra": "catedral",
+      "dica": "Igreja grande e imponente"
+    },
+    {
+      "palavra": "embaixada",
+      "dica": "Representação de um país no exterior"
+    },
+    {
+      "palavra": "furacão",
+      "dica": "Tempestade tropical violenta"
+    },
+    {
+      "palavra": "gasolina",
+      "dica": "Combustível para carros"
+    },
+    {
+      "palavra": "incêndio",
+      "dica": "Fogo descontrolado"
+    },
+    {
+      "palavra": "lanterna",
+      "dica": "Dispositivo portátil de luz"
+    },
+    {
+      "palavra": "máscara",
+      "dica": "Cobre o rosto"
+    },
+    {
+      "palavra": "palmeira",
+      "dica": "Árvore tropical"
+    },
+    {
+      "palavra": "pentagono",
+      "dica": "Figura com cinco lados"
+    },
+    {
+      "palavra": "quilombo",
+      "dica": "Comunidade de resistência negra"
+    },
+    {
+      "palavra": "revolução",
+      "dica": "Mudança radical na sociedade"
+    },
+    {
+      "palavra": "sorvete",
+      "dica": "Doce gelado"
+    },
+    {
+      "palavra": "terremoto",
+      "dica": "Tremor no solo"
+    },
+    {
+      "palavra": "vulcão",
+      "dica": "Montanha que cospe lava"
+    },
+    {
+      "palavra": "zepelim",
+      "dica": "Aeronave flutuante antiga"
+    }
   ]
 }
-

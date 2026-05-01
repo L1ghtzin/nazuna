@@ -495,6 +495,326 @@
     {
       "palavra": "abóbora",
       "dica": "Fruta grande e laranja"
+    },
+    {
+      "palavra": "paraquedas",
+      "dica": "Equipamento para saltar de avião"
+    },
+    {
+      "palavra": "microscópio",
+      "dica": "Instrumento para ver coisas muito pequenas"
+    },
+    {
+      "palavra": "termômetro",
+      "dica": "Mede a temperatura"
+    },
+    {
+      "palavra": "semáforo",
+      "dica": "Controla o trânsito com luzes"
+    },
+    {
+      "palavra": "ventilador",
+      "dica": "Aparelho que produz vento"
+    },
+    {
+      "palavra": "geladeira",
+      "dica": "Eletrodoméstico que resfria alimentos"
+    },
+    {
+      "palavra": "máquina",
+      "dica": "Dispositivo mecânico"
+    },
+    {
+      "palavra": "travesseiro",
+      "dica": "Usado para apoiar a cabeça ao dormir"
+    },
+    {
+      "palavra": "calendário",
+      "dica": "Mostra os dias do ano"
+    },
+    {
+      "palavra": "dicionário",
+      "dica": "Livro com significados de palavras"
+    },
+    {
+      "palavra": "engenheiro",
+      "dica": "Profissional que projeta e constrói"
+    },
+    {
+      "palavra": "professor",
+      "dica": "Profissional que ensina"
+    },
+    {
+      "palavra": "advogado",
+      "dica": "Profissional do direito"
+    },
+    {
+      "palavra": "carpinteiro",
+      "dica": "Trabalha com madeira"
+    },
+    {
+      "palavra": "bombeiro",
+      "dica": "Combate incêndios"
+    },
+    {
+      "palavra": "farmacêutico",
+      "dica": "Profissional de medicamentos"
+    },
+    {
+      "palavra": "cozinheiro",
+      "dica": "Prepara refeições"
+    },
+    {
+      "palavra": "eletricista",
+      "dica": "Trabalha com eletricidade"
+    },
+    {
+      "palavra": "fotógrafo",
+      "dica": "Profissional que tira fotos"
+    },
+    {
+      "palavra": "jornalista",
+      "dica": "Profissional de notícias"
+    },
+    {
+      "palavra": "diamante",
+      "dica": "Pedra preciosa mais dura"
+    },
+    {
+      "palavra": "esmeralda",
+      "dica": "Pedra preciosa verde"
+    },
+    {
+      "palavra": "safira",
+      "dica": "Pedra preciosa azul"
+    },
+    {
+      "palavra": "rubi",
+      "dica": "Pedra preciosa vermelha"
+    },
+    {
+      "palavra": "ametista",
+      "dica": "Pedra preciosa roxa"
+    },
+    {
+      "palavra": "girassol",
+      "dica": "Flor que segue o sol"
+    },
+    {
+      "palavra": "margarida",
+      "dica": "Flor branca com miolo amarelo"
+    },
+    {
+      "palavra": "orquídea",
+      "dica": "Flor exótica e elegante"
+    },
+    {
+      "palavra": "tulipa",
+      "dica": "Flor símbolo da Holanda"
+    },
+    {
+      "palavra": "lavanda",
+      "dica": "Planta aromática roxa"
+    },
+    {
+      "palavra": "violino",
+      "dica": "Instrumento de cordas com arco"
+    },
+    {
+      "palavra": "bateria",
+      "dica": "Instrumento de percussão"
+    },
+    {
+      "palavra": "pandeiro",
+      "dica": "Instrumento de percussão manual"
+    },
+    {
+      "palavra": "acordeão",
+      "dica": "Instrumento com teclado e fole"
+    },
+    {
+      "palavra": "harpa",
+      "dica": "Instrumento grande com cordas verticais"
+    },
+    {
+      "palavra": "xilofone",
+      "dica": "Instrumento de lâminas de madeira"
+    },
+    {
+      "palavra": "berinjela",
+      "dica": "Legume roxo"
+    },
+    {
+      "palavra": "beterraba",
+      "dica": "Raiz roxa comestível"
+    },
+    {
+      "palavra": "brócolis",
+      "dica": "Vegetal verde em formato de árvore"
+    },
+    {
+      "palavra": "cenoura",
+      "dica": "Raiz laranja"
+    },
+    {
+      "palavra": "espinafre",
+      "dica": "Vegetal verde do Popeye"
+    },
+    {
+      "palavra": "alface",
+      "dica": "Folha usada em saladas"
+    },
+    {
+      "palavra": "cebola",
+      "dica": "Bulbo que faz chorar"
+    },
+    {
+      "palavra": "alho",
+      "dica": "Tempero com dentes"
+    },
+    {
+      "palavra": "pimentão",
+      "dica": "Legume colorido e oco"
+    },
+    {
+      "palavra": "abobrinha",
+      "dica": "Legume verde comprido"
+    },
+    {
+      "palavra": "continente",
+      "dica": "Grande massa de terra"
+    },
+    {
+      "palavra": "vulcanismo",
+      "dica": "Atividade de vulcões"
+    },
+    {
+      "palavra": "fotossíntese",
+      "dica": "Processo que plantas usam para fazer alimento"
+    },
+    {
+      "palavra": "gravidade",
+      "dica": "Força que puxa tudo para baixo"
+    },
+    {
+      "palavra": "eletricidade",
+      "dica": "Energia que alimenta aparelhos"
+    },
+    {
+      "palavra": "magnetismo",
+      "dica": "Força que atrai metais"
+    },
+    {
+      "palavra": "oxigênio",
+      "dica": "Gás que respiramos"
+    },
+    {
+      "palavra": "hidrogênio",
+      "dica": "Elemento mais leve do universo"
+    },
+    {
+      "palavra": "nitrogênio",
+      "dica": "Gás mais abundante na atmosfera"
+    },
+    {
+      "palavra": "carbono",
+      "dica": "Elemento base da vida orgânica"
+    },
+    {
+      "palavra": "algoritmo",
+      "dica": "Sequência de instruções para resolver problemas"
+    },
+    {
+      "palavra": "programação",
+      "dica": "Criação de software"
+    },
+    {
+      "palavra": "internet",
+      "dica": "Rede mundial de computadores"
+    },
+    {
+      "palavra": "teclado",
+      "dica": "Periférico para digitar"
+    },
+    {
+      "palavra": "monitor",
+      "dica": "Tela de computador"
+    },
+    {
+      "palavra": "servidor",
+      "dica": "Computador que fornece serviços"
+    },
+    {
+      "palavra": "impressora",
+      "dica": "Imprime documentos em papel"
+    },
+    {
+      "palavra": "pendrive",
+      "dica": "Dispositivo portátil de armazenamento"
+    },
+    {
+      "palavra": "bluetooth",
+      "dica": "Tecnologia de conexão sem fio"
+    },
+    {
+      "palavra": "câmera",
+      "dica": "Dispositivo para capturar imagens"
+    },
+    {
+      "palavra": "microfone",
+      "dica": "Captura som e voz"
+    },
+    {
+      "palavra": "canguru",
+      "dica": "Marsupial que salta"
+    },
+    {
+      "palavra": "ornitorrinco",
+      "dica": "Mamífero que bota ovos"
+    },
+    {
+      "palavra": "piranha",
+      "dica": "Peixe carnívoro da Amazônia"
+    },
+    {
+      "palavra": "pelicano",
+      "dica": "Ave com bico enorme"
+    },
+    {
+      "palavra": "morcego",
+      "dica": "Mamífero que voa"
+    },
+    {
+      "palavra": "iguana",
+      "dica": "Réptil grande e verde"
+    },
+    {
+      "palavra": "salamandra",
+      "dica": "Anfíbio com cauda"
+    },
+    {
+      "palavra": "escorpião",
+      "dica": "Aracnídeo com ferrão"
+    },
+    {
+      "palavra": "camaleão",
+      "dica": "Réptil que muda de cor"
+    },
+    {
+      "palavra": "ouriço",
+      "dica": "Animal com espinhos"
+    },
+    {
+      "palavra": "preguiça",
+      "dica": "Animal mais lento do mundo"
+    },
+    {
+      "palavra": "tamanduá",
+      "dica": "Animal que come formigas"
+    },
+    {
+      "palavra": "capivara",
+      "dica": "Maior roedor do mundo"
     }
   ]
 }
