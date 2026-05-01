@@ -549,6 +549,7 @@ export async function buildMessageContext(nazu, info, store, messagesCache, rent
     const isMedia = ["imageMessage", "videoMessage", "audioMessage"].includes(type);
     const isImage = type === 'imageMessage';
     const isVideo = type === 'videoMessage';
+    const isAudio = type === 'audioMessage';
     const isVisuU2 = type === 'viewOnceMessageV2';
     const isVisuU = type === 'viewOnceMessage';
     const isButtonMessage = info.message.interactiveMessage || info.message.templateButtonReplyMessage || info.message.buttonsMessage || info.message.interactiveResponseMessage || info.message.listResponseMessage || info.message.buttonsResponseMessage ? true : false;
@@ -855,7 +856,7 @@ export async function buildMessageContext(nazu, info, store, messagesCache, rent
     groupData, groupFile, groupName, groupMetadata, groupAdmins, AllgroupMembers,
     parceriasData, isOnlyAdmin, isModoBn, isModoLite,
     // Flags de mídia
-    isMedia, isImage, isVideo, isVisuU, isVisuU2, isButtonMessage, isStatusMention,
+    isMedia, isImage, isVideo, isAudio, isVisuU, isVisuU2, isButtonMessage, isStatusMention,
     isQuotedMsg, isQuotedMsg2, isQuotedImage, isQuotedVisuU, isQuotedVisuU2,
     isQuotedVideo, isQuotedDocument, isQuotedDocW, isQuotedAudio, isQuotedSticker,
     isQuotedContact, isQuotedLocation, isQuotedProduct, quotedMessageContent,
@@ -908,6 +909,7 @@ export async function buildMessageContext(nazu, info, store, messagesCache, rent
     saveParceriasData, isRentalModeActive, getGroupRentalStatus, validateActivationCode, useActivationCode,
     vipCommandsManager, spotifyModule, gdriveGetInfo, mediafireGetInfo, twitterGetInfo,
     removeBg, upscale, search, searchNews,
+    setMenuAudio, removeMenuAudio,
     isParceiro: parceriasData?.parceiros?.[sender] || false,
     // Middleware results (pre-computed)
     joinRequestHandled: false, captchaHandled: false, pvBlocked: false,

@@ -8,8 +8,8 @@ export default {
   commands: ["activate", "ajuda", "antipv", "antipv2", "antipv3", "antipv4", "antipvmessage", "antipvmsg", "ativar", "audiomenu", "configcmdnotfound", "deactivate", "desativar", "entrar", "fotomenu", "guia", "list", "lista", "mediamenu", "menuaudio", "midiamenu", "off", "on", "sairgp", "setcmdmsg", "setmenuaudio", "tutorial", "videomenu"],
   handle: async ({ 
     nazu, from, info, command, reply, isOwner, q, args, prefix, OWNER_ONLY_MESSAGE,
-    MESSAGES, optimizer, isImage, isQuotedImage, isVideo, isQuotedVideo, getFileBuffer,
-    isAudio, isQuotedAudio, setMenuAudio, removeMenuAudio, DATABASE_DIR, pathz
+    MESSAGES, optimizer, getFileBuffer, getMediaInfo,
+    setMenuAudio, removeMenuAudio, DATABASE_DIR, pathz
   }) => {
     if (!isOwner) return reply(OWNER_ONLY_MESSAGE);
     const cmd = command.toLowerCase();
@@ -64,17 +64,18 @@ export default {
     if (['fotomenu', 'videomenu', 'mediamenu', 'midiamenu'].includes(cmd)) {
       const midiasDir = path.resolve('./dados/midias');
       try {
-        var RSM = info.message?.extendedTextMessage?.contextInfo?.quotedMessage;
-        var boij2 = RSM?.imageMessage || info.message?.imageMessage || RSM?.viewOnceMessageV2?.message?.imageMessage || info.message?.viewOnceMessageV2?.message?.imageMessage || info.message?.viewOnceMessage?.message?.imageMessage || RSM?.viewOnceMessage?.message?.imageMessage;
-        var boij = RSM?.videoMessage || info.message?.videoMessage || RSM?.viewOnceMessageV2?.message?.videoMessage || info.message?.viewOnceMessageV2?.message?.videoMessage || info.message?.viewOnceMessage?.message?.videoMessage || RSM?.viewOnceMessage?.message?.videoMessage;
+        const quotedMsg = info.message?.extendedTextMessage?.contextInfo?.quotedMessage;
+        const mediaInfo = getMediaInfo(info.message) || (quotedMsg ? getMediaInfo(quotedMsg) : null);
+
+        if (!mediaInfo || (mediaInfo.type !== 'image' && mediaInfo.type !== 'video')) {
+          return reply(`Marque uma imagem ou um vídeo, com o comando: ${prefix + command} (mencionando a mídia)`);
+        }
         
-        if (!boij && !boij2) return reply(`Marque uma imagem ou um vídeo, com o comando: ${prefix + command} (mencionando a mídia)`);
-        
-        var isVideo2 = !!boij;
+        const isVideo2 = mediaInfo.type === 'video';
         if (fs.existsSync(path.join(midiasDir, 'menu.jpg'))) fs.unlinkSync(path.join(midiasDir, 'menu.jpg'));
         if (fs.existsSync(path.join(midiasDir, 'menu.mp4'))) fs.unlinkSync(path.join(midiasDir, 'menu.mp4'));
         
-        var buffer = await getFileBuffer(isVideo2 ? boij : boij2, isVideo2 ? 'video' : 'image');
+        const buffer = await getFileBuffer(mediaInfo.media, mediaInfo.type);
         fs.mkdirSync(midiasDir, { recursive: true });
         fs.writeFileSync(path.join(midiasDir, `menu.${isVideo2 ? 'mp4' : 'jpg'}`), buffer);
         return reply('✅ Mídia do menu atualizada com sucesso.');
@@ -93,15 +94,15 @@ export default {
         return reply("✅ Áudio do menu removido com sucesso!\n\nO menu voltará a ser enviado sem áudio.");
       }
       
-      const RSMAudio = info.message?.extendedTextMessage?.contextInfo?.quotedMessage;
-      const audioMsg = RSMAudio?.audioMessage || info.message?.audioMessage;
+      const quotedMsg = info.message?.extendedTextMessage?.contextInfo?.quotedMessage;
+      const mediaInfo = getMediaInfo(info.message) || (quotedMsg ? getMediaInfo(quotedMsg) : null);
       
-      if (!audioMsg) {
+      if (!mediaInfo || mediaInfo.type !== 'audio') {
         return reply(`❌ *Envie ou marque um áudio* com o comando: ${prefix}${command}\n\n🎵 Este áudio será enviado junto com o menu principal.\n\n💡 Para remover depois, use: ${prefix}${command} off`);
       }
       
       try {
-        const audioBuffer = await getFileBuffer(audioMsg, 'audio');
+        const audioBuffer = await getFileBuffer(mediaInfo.media, 'audio');
         const audioPath = path.resolve('./dados/midias/menu_audio.mp3');
         fs.mkdirSync(path.dirname(audioPath), { recursive: true });
         fs.writeFileSync(audioPath, audioBuffer);

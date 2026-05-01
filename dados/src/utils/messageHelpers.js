@@ -193,6 +193,10 @@ export const getMediaInfo = (message) => {
     media: message.videoMessage,
     type: 'video'
   };
+  if (message.audioMessage) return {
+    media: message.audioMessage,
+    type: 'audio'
+  };
   if (message.viewOnceMessage?.message?.imageMessage) return {
     media: message.viewOnceMessage.message.imageMessage,
     type: 'image'
@@ -201,6 +205,10 @@ export const getMediaInfo = (message) => {
     media: message.viewOnceMessage.message.videoMessage,
     type: 'video'
   };
+  if (message.viewOnceMessage?.message?.audioMessage) return {
+    media: message.viewOnceMessage.message.audioMessage,
+    type: 'audio'
+  };
   if (message.viewOnceMessageV2?.message?.imageMessage) return {
     media: message.viewOnceMessageV2.message.imageMessage,
     type: 'image'
@@ -208,6 +216,10 @@ export const getMediaInfo = (message) => {
   if (message.viewOnceMessageV2?.message?.videoMessage) return {
     media: message.viewOnceMessageV2.message.videoMessage,
     type: 'video'
+  };
+  if (message.viewOnceMessageV2?.message?.audioMessage) return {
+    media: message.viewOnceMessageV2.message.audioMessage,
+    type: 'audio'
   };
   return null;
 };
