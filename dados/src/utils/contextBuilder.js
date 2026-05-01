@@ -6,19 +6,10 @@ import { downloadContentFromMessage, generateWAMessageFromContent, generateWAMes
 import menus from '../menus/index.js';
 import modulesExport from '../funcs/exports.js';
 
-import { exec, execSync, spawn } from 'child_process';
-import { promisify } from 'util';
-
-const execAsync = promisify(exec);
 let modoLiteFileChecked = false;
-import { parseHTML } from 'linkedom';
 import axios from 'axios';
 import pathz from 'path';
 import fs from 'fs';
-import os from 'os';
-import https from 'https';
-import crypto from 'crypto';
-import cron from 'node-cron';
 import { fileURLToPath } from 'url';
 
 import { PerformanceOptimizer, getPerformanceOptimizer } from './performanceOptimizer.js';
@@ -454,7 +445,7 @@ export async function buildMessageContext(nazu, info, store, messagesCache, rent
     botState,
     modoLiteGlobal
   ] = await Promise.all([
-    optimizer.getCachedFile(DATABASE_DIR + '/antipv.json', 30000, (path) => loadJsonFile(path)),
+    optimizer.getCachedFile(DATABASE_DIR + '/antipv.json', 5000, (path) => loadJsonFile(path)),
     optimizer.getCachedFile(DONO_DIR + '/premium.json', 60000, (path) => loadJsonFile(path)),
     optimizer.getCachedFile(DONO_DIR + '/bangp.json', 30000, (path) => loadJsonFile(path)),
     optimizer.getCachedFile(DATABASE_DIR + '/antiflood.json', 30000, (path) => loadJsonFile(path)),
@@ -464,8 +455,8 @@ export async function buildMessageContext(nazu, info, store, messagesCache, rent
     optimizer.getCachedFile(modoLiteFile, 30000, (path) => loadJsonFile(path, { status: false }))
   ]);
   if (!modoLiteFileChecked) {
-    if (!fs.existsSync(modoLiteFile)) {
-      writeJsonFile(modoLiteFile, modoLiteGlobal);
+    if (!(await fileExistsAsync(modoLiteFile))) {
+      await writeJsonFileAsync(modoLiteFile, modoLiteGlobal);
     }
     modoLiteFileChecked = true;
   }

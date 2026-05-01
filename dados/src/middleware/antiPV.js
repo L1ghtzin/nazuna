@@ -15,7 +15,7 @@
 export async function handleAntiPV(nazu, sender, command, isGroup, isCmd, isOwner, isPremium, antipvData, reply) {
   // Se for grupo, AntiPV não se aplica
   if (isGroup) return false;
-  // Se não houver configuração, não aplica
+  // Se não houver configuração ou modo, não aplica
   if (!antipvData || !antipvData.mode) return false;
 
   // Exceção para comandos de transmissão que devem funcionar no PV e botões/tickets
@@ -27,24 +27,32 @@ export async function handleAntiPV(nazu, sender, command, isGroup, isCmd, isOwne
   // Se for autorizado, libera
   if (isOwner || isPremium || isTm2Command) return false;
 
-  // Aplica as regras de acordo com o modo
+  const defaultMsg = antipvData.message || '🚫 Este comando só funciona em grupos!';
+
+  // --- MODO 1: ANTIPV (Ignora e avisa) ---
   if (antipvData.mode === 'antipv') {
-    return true; // Apenas ignora
-  }
-  
-  if (antipvData.mode === 'antipv2' && isCmd) {
-    await reply(antipvData.message || '🚫 Este comando só funciona em grupos!');
+    await reply(defaultMsg);
     return true;
   }
   
-  if (antipvData.mode === 'antipv3' && isCmd) {
-    await nazu.updateBlockStatus(sender, 'block');
-    await reply('🚫 Você foi bloqueado por usar comandos no privado!');
-    return true;
+  // --- MODO 2: ANTIPV2 (Apenas comandos) ---
+  if (antipvData.mode === 'antipv2') {
+    if (isCmd) return false; // Permite se for comando
+    // Se não for comando, ignora silenciosamente ou avisa? 
+    // Geralmente antipv2 permite comandos e ignora conversa fiada.
+    return true; 
   }
   
+  // --- MODO 3: ANTIPV3 (Silencioso) ---
+  if (antipvData.mode === 'antipv3') {
+    return true; // Apenas ignora sem responder nada
+  }
+  
+  // --- MODO 4: ANTIPV4 (Bloqueio total) ---
   if (antipvData.mode === 'antipv4') {
-    await reply(antipvData.message || '🚫 Este comando só funciona em grupos!');
+    await reply(defaultMsg + '\n\n⚠️ Você será bloqueado.');
+    await new Promise(r => setTimeout(r, 2000));
+    await nazu.updateBlockStatus(sender, 'block');
     return true;
   }
 

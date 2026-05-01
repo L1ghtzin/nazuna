@@ -16,7 +16,7 @@ function initJidLidCache(cacheFilePath) {
     if (fs.existsSync(cacheFilePath)) {
       const data = JSON.parse(fs.readFileSync(cacheFilePath, 'utf-8'));
       jidLidMemoryCache = new Map(Object.entries(data.mappings || {}));
-      console.log(`✅ Cache JID→LID carregado: ${jidLidMemoryCache.size} entradas`);
+      // console.log(`✅ Cache JID→LID carregado: ${jidLidMemoryCache.size} entradas`);
     }
   } catch (error) {
     console.warn(`⚠️ Erro ao carregar cache JID→LID: ${error.message}`);

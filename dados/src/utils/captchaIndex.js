@@ -54,7 +54,7 @@ async function initCaptchaIndex(cb) {
             captchaIndex.set(userId, captchaData);
          }
 
-         console.log(`[CaptchaIndex] Carregado ${captchaIndex.size} captchas pendentes do índice`);
+         // console.log(`[CaptchaIndex] Carregado ${captchaIndex.size} captchas pendentes do índice`);
       } else {
          // Reconstrói o índice a partir dos arquivos de grupo
          await rebuildIndex();

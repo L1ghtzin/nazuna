@@ -324,47 +324,20 @@ ensureJsonFileExists(LEVELING_FILE, {
 });
 ensureJsonFileExists(MSGPREFIX_FILE, { message: false });
 
-// Carrega config para verificar o número do dono
-// (usa CONFIG_FILE já importado de paths.js, sem re-importar path/fileURLToPath)
-let configForMsgBotOn = {};
-try {
-  configForMsgBotOn = JSON.parse(fs.readFileSync(CONFIG_FILE, 'utf8'));
-} catch (e) {
-  console.error('Erro ao ler config.json para msgboton:', e.message);
-}
-
-// Se o número do dono for 553391967445, a mensagem vem desativada por padrão
-const defaultMsgBotOnEnabled = configForMsgBotOn.numerodono === '553391967445' ? false : true;
-
-ensureJsonFileExists(MSGBOTON_FILE, { enabled: defaultMsgBotOnEnabled,
-message: `🫟🫟🫟🫟🫟🫟🫟🫟🫟🫟🫟🫟🫟🫟🫟
-
-        ✨ *Oiiiii!* ✨
-        🤗💖
-
-  Estou online e pronta para uso! 
-        🫟✨🫟✨🫟
-
-  Muito obrigada por ter me escolhido! 
-  Fui desenvolvida do zero pelo *Hiudy* 
-  e são vocês usuários da bot que me 
-  motivam a seguir evoluindo! 
-        💕🫟💕
-
-  Espero que você goste da bot! 
-        ✨🫟✨
-
-  💬 *Considere entrar no meu grupo 
-  para tirar dúvidas e ficar por dentro 
-  das novidades:*
-  https://chat.whatsapp.com/I5d5tCyZsV4J7Cjn51IkbV
-        🫟💬🫟
-
-  _Para desativar esta mensagem de 
-  inicialização, use o comando 
-  *msgboton*_
-
-🫟🫟🫟🫟🫟🫟🫟🫟🫟🫟🫟🫟🫟🫟🫟`
+ensureJsonFileExists(MSGBOTON_FILE, { enabled: true,
+message: `╭───⊱ 🍥 『 *{botName}* 』 ⊱───╮
+┊
+┊ ✨ *Oiiiii! Estou online!* ✨
+┊
+┊ 🚀 *Status:* Pronta para uso!
+┊ 🌀 *Evolução:* Ativa
+┊
+┊ Aproveite a experiência! 🌟
+┊
+┊ _Para gerenciar este aviso, use:_
+┊ ⌨️ *{prefix}msgboton*
+┊
+╰────⊱ 🍥 ✨ 🍥 ⊱────╯`
 });
 
 ensureJsonFileExists(CUSTOM_REACTS_FILE, { reacts: [] });
@@ -518,47 +491,21 @@ const saveMsgPrefix = (message) => {
 };
 
 const loadMsgBotOn = () => {
-  // Carrega config para verificar o número do dono
-  let currentOwner = null;
-  try {
-    const configData = JSON.parse(fs.readFileSync(CONFIG_FILE, 'utf8'));
-    currentOwner = configData.numerodono;
-  } catch (e) {
-    console.error('Erro ao ler config.json em loadMsgBotOn:', e.message);
-  }
-  
-  const defaultEnabled = currentOwner === '553391967445' ? false : true;
-  
   const data = loadJsonFile(MSGBOTON_FILE, { 
-    enabled: defaultEnabled,
-    message: `🫟🫟🫟🫟🫟🫟🫟🫟🫟🫟🫟🫟🫟🫟🫟
-
-        ✨ *Oiiiii!* ✨
-        🤗💖
-
-  Estou online e pronta para uso! 
-        🫟✨🫟✨🫟
-
-  Muito obrigada por ter me escolhido! 
-  Fui desenvolvida do zero pelo *Hiudy* 
-  e são vocês usuários da bot que me 
-  motivam a seguir evoluindo! 
-        💕🫟💕
-
-  Espero que você goste da bot! 
-        ✨🫟✨
-
-  💬 *Considere entrar no meu grupo 
-  para tirar dúvidas e ficar por dentro 
-  das novidades:*
-  https://chat.whatsapp.com/I5d5tCyZsV4J7Cjn51IkbV
-        🫟💬🫟
-
-  _Para desativar esta mensagem de 
-  inicialização, use o comando 
-  *msgboton*_
-
-🫟🫟🫟🫟🫟🫟🫟🫟🫟🫟🫟🫟🫟🫟🫟`
+    enabled: true,
+    message: `╭───⊱ 🍥 『 *{botName}* 』 ⊱───╮
+┊
+┊ ✨ *Oiiiii! Estou online!* ✨
+┊
+┊ 🚀 *Status:* Pronta para uso!
+┊ 🌀 *Evolução:* Ativa
+┊
+┊ Aproveite a experiência! 🌟
+┊
+┊ _Para gerenciar este aviso, use:_
+┊ ⌨️ *{prefix}msgboton*
+┊
+╰────⊱ 🍥 ✨ 🍥 ⊱────╯`
   });
   return data;
 };

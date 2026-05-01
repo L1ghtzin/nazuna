@@ -15,234 +15,17 @@ import RentalExpirationManager from './utils/rentalExpirationManager.js';
 import { loadMsgBotOn } from './utils/database.js';
 import { buildUserId } from './utils/helpers.js';
 import { initCaptchaIndex, loadCaptchaJson, saveCaptchaJson } from './utils/captchaIndex.js';
-
 import CaptchaIndex from './utils/captchaIndex.js';
+import MessageQueue from './utils/messageQueue.js';
+import { performMigration, updateOwnerLid } from './utils/migration.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
+// Inicialização global de caches de segurança
+global.CAPTCHA_LOCK = global.CAPTCHA_LOCK || new Set();
 
 
-class MessageQueue {
-    constructor(maxWorkers = 4, batchSize = 10, messagesPerBatch = 2) {
-    this.queue = [];
-    this.maxWorkers = maxWorkers;
-    this.batchSize = batchSize;
-    this.messagesPerBatch = messagesPerBatch;
-    this.activeWorkers = 0;
-    this.isProcessing = false;
-    this.processingInterval = null;
-    this.errorHandler = null;
-    this.stats = {
-    totalProcessed: 0,
-    totalErrors: 0,
-    currentQueueLength: 0,
-    startTime: Date.now(),
-    batchesProcessed: 0,
-    avgBatchTime: 0
-    };
-    this.idCounter = 0; // Contador simples ao invés de crypto.randomUUID()
-    }
-
-    setErrorHandler(handler) {
-    this.errorHandler = handler;
-    }
-
-    async add(message, processor) {
-    return new Promise((resolve, reject) => {
-    this.queue.push({
-    message,
-    processor,
-    resolve,
-    reject,
-    timestamp: Date.now(),
-    id: `msg_${++this.idCounter}_${Date.now()}`
-    });
-    
-    this.stats.currentQueueLength = this.queue.length;
-    
-    if (!this.isProcessing) {
-    this.startProcessing();
-    }
-    });
-    }
-
-    startProcessing() {
-    if (this.isProcessing) return;
-    
-    this.isProcessing = true;
-    // Usa processo recursivo em vez de setInterval para melhor performance
-    this.processQueue();
-    }
-
-    stopProcessing() {
-    this.isProcessing = false;
-    }
-
-    resume() {
-    if (!this.isProcessing) {
-    console.log('[MessageQueue] Retomando processamento');
-    this.startProcessing();
-    }
-    }
-
-    async processQueue() {
-    // Processa mensagens em lotes paralelos
-    while (this.isProcessing && this.queue.length > 0) {
-    // Calcula quantos lotes podemos processar
-    const availableBatches = Math.min(
-    this.batchSize,
-    Math.ceil(this.queue.length / this.messagesPerBatch)
-    );
-
-    if (availableBatches === 0) break;
-
-    // Cria array de lotes
-    const batches = [];
-    for (let i = 0; i < availableBatches && this.queue.length > 0; i++) {
-    const batchItems = [];
-    for (let j = 0; j < this.messagesPerBatch && this.queue.length > 0; j++) {
-        const item = this.queue.shift();
-        if (item) batchItems.push(item);
-    }
-    if (batchItems.length > 0) {
-        batches.push(batchItems);
-    }
-    }
-
-    this.stats.currentQueueLength = this.queue.length;
-
-    // Processa todos os lotes em paralelo
-    const batchStartTime = Date.now();
-    await Promise.allSettled(
-    batches.map(batch => this.processBatch(batch))
-    );
-    
-    const batchDuration = Date.now() - batchStartTime;
-    this.stats.batchesProcessed++;
-    this.stats.avgBatchTime = 
-    (this.stats.avgBatchTime * (this.stats.batchesProcessed - 1) + batchDuration) / 
-    this.stats.batchesProcessed;
-    }
-
-    if (this.queue.length === 0) {
-    this.stopProcessing();
-    }
-    }
-
-    async processBatch(batchItems) {
-    // Processa todas as mensagens do lote em paralelo
-    const batchPromises = batchItems.map(item => this.processItem(item));
-    
-    const results = await Promise.allSettled(batchPromises);
-    
-    // Contabiliza resultados
-    results.forEach((result, index) => {
-    if (result.status === 'fulfilled') {
-    this.stats.totalProcessed++;
-    } else {
-    this.stats.totalErrors++;
-    }
-    });
-    }
-
-    async processItem(item) {
-    const { message, processor, resolve, reject } = item;
-    
-    try {
-    const result = await processor(message);
-    resolve(result);
-    return result;
-    } catch (error) {
-    await this.handleProcessingError(item, error);
-    reject(error);
-    throw error;
-    }
-    }
-
-    async handleProcessingError(item, error) {
-    this.stats.totalErrors++;
-    
-    console.error(`❌ Queue processing error for message ${item.id}:`, error.message);
-    
-    if (this.errorHandler) {
-    try {
-    await this.errorHandler(item, error);
-    } catch (handlerError) {
-    console.error('❌ Error handler failed:', handlerError.message);
-    }
-    }
-    }
-
-    getStatus() {
-    const uptime = Date.now() - this.stats.startTime;
-    return {
-    queueLength: this.queue.length,
-    activeWorkers: this.activeWorkers,
-    maxWorkers: this.maxWorkers,
-    batchSize: this.batchSize,
-    messagesPerBatch: this.messagesPerBatch,
-    isProcessing: this.isProcessing,
-    totalProcessed: this.stats.totalProcessed,
-    totalErrors: this.stats.totalErrors,
-    currentQueueLength: this.stats.currentQueueLength,
-    batchesProcessed: this.stats.batchesProcessed,
-    avgBatchTime: Math.round(this.stats.avgBatchTime),
-    uptime: uptime,
-    uptimeFormatted: this.formatUptime(uptime),
-    throughput: this.stats.totalProcessed > 0 ?
-    (this.stats.totalProcessed / (uptime / 1000)).toFixed(2) : 0,
-    errorRate: this.stats.totalProcessed > 0 ?
-    ((this.stats.totalErrors / this.stats.totalProcessed) * 100).toFixed(2) : 0
-    };
-    }
-
-    formatUptime(ms) {
-    const seconds = Math.floor(ms / 1000);
-    const minutes = Math.floor(seconds / 60);
-    const hours = Math.floor(minutes / 60);
-    
-    if (hours > 0) {
-    return `${hours}h ${minutes % 60}m ${seconds % 60}s`;
-    } else if (minutes > 0) {
-    return `${minutes}m ${seconds % 60}s`;
-    } else {
-    return `${seconds}s`;
-    }
-    }
-
-    clear() {
-    // Rejeita todas as mensagens pendentes antes de limpar
-    this.queue.forEach(item => {
-    if (item.reject) {
-    item.reject(new Error('Queue cleared'));
-    }
-    });
-    this.queue = [];
-    this.stats.currentQueueLength = 0;
-    this.stopProcessing();
-    }
-
-    async shutdown() {
-    console.log('🛑 Finalizando MessageQueue...');
-    this.stopProcessing();
-    
-    // Aguarda workers ativos terminarem (timeout de 10s)
-    const shutdownTimeout = 10000;
-    const startTime = Date.now();
-    
-    while (this.activeWorkers > 0 && (Date.now() - startTime) < shutdownTimeout) {
-    await new Promise(resolve => setTimeout(resolve, 100));
-    }
-    
-    if (this.activeWorkers > 0) {
-    console.warn(`⚠️ ${this.activeWorkers} workers ainda ativos após timeout de shutdown`);
-    }
-    
-    this.clear();
-    console.log('✅ MessageQueue finalizado');
-    }
-}
 
 const messageQueue = new MessageQueue(8, 10, 2); // 8 workers, 10 lotes, 2 mensagens por lote
 
@@ -355,10 +138,7 @@ const setupMessagesCacheCleanup = () => {
     }, 300000); // A cada 5 minutos
 };
 
-// Inicia cleanup quando o bot conectar
-const startCacheCleanup = () => {
-    setupMessagesCacheCleanup();
-};
+
 
 const ask = (question) => {
     const rl = readline.createInterface({
@@ -408,21 +188,25 @@ async function clearAuthDir(dirToRemove = AUTH_DIR) {
 async function loadGroupSettings(groupId) {
     const groupFilePath = path.join(DATABASE_DIR, 'grupos', `${groupId}.json`);
     try {
-    const data = await fs.readFile(groupFilePath, 'utf-8');
-    return JSON.parse(data);
+        return await performanceOptimizer.getCachedFile(groupFilePath, 30000, async (filePath) => {
+            const data = await fs.readFile(filePath, 'utf-8');
+            return JSON.parse(data);
+        });
     } catch (e) {
-    console.error(`❌ Erro ao ler configurações do grupo ${groupId}: ${e.message}`);
-    return {};
+        console.error(`❌ Erro ao ler configurações do grupo ${groupId}: ${e.message}`);
+        return {};
     }
 }
 
 async function loadGlobalBlacklist() {
     try {
-    const data = await fs.readFile(GLOBAL_BLACKLIST_PATH, 'utf-8');
-    return JSON.parse(data).users || {};
+        return await performanceOptimizer.getCachedFile(GLOBAL_BLACKLIST_PATH, 30000, async (filePath) => {
+            const data = await fs.readFile(filePath, 'utf-8');
+            return JSON.parse(data).users || {};
+        });
     } catch (e) {
-    console.error(`❌ Erro ao ler blacklist global: ${e.message}`);
-    return {};
+        console.error(`❌ Erro ao ler blacklist global: ${e.message}`);
+        return {};
     }
 }
 
@@ -502,7 +286,7 @@ async function handleGroupParticipantsUpdate(NazunaSock, inf) {
 
 
             case 'add': {
-                global.CAPTCHA_LOCK = global.CAPTCHA_LOCK || new Set();
+                // CAPTCHA_LOCK já inicializado globalmente no topo do arquivo
 
                 const membersToWelcome = [];
                 const membersToRemove = [];
@@ -748,19 +532,10 @@ async function handleGroupJoinRequest(NazunaSock, inf) {
 
             const numero = participantJid.split('@')[0];
 
-            const foto = await NazunaSock.profilePictureUrl(participantJid, 'image')
-                .catch(() => 'sem foto');
-
-            const waInfo = await NazunaSock.onWhatsApp(participantJid)
-                .catch(() => null);
-
             let nome = inf.participant;
             try {
                 nome = await NazunaSock.getName(participantJid);
             } catch { }
-
-            const metadata = await NazunaSock.groupMetadata(from).catch(() => null);
-            const participanteMeta = metadata?.participants?.find(p => p.id === participantJid);
 
 
 
@@ -777,9 +552,7 @@ async function handleGroupJoinRequest(NazunaSock, inf) {
     }
 }
 
-const isValidJid = (str) => /^\d+@s\.whatsapp\.net$/.test(str);
-const isValidLid = (str) => /^[a-zA-Z0-9_]+@lid$/.test(str);
-const isValidUserId = (str) => isValidJid(str) || isValidLid(str);
+
 
 /**
  * Validates if a participant object has a valid ID and extracts the ID
@@ -806,330 +579,7 @@ function isValidParticipant(participant) {
     return false;
 }
 
-function collectJidsFromJson(obj, jidsSet = new Set()) {
-    if (Array.isArray(obj)) {
-    obj.forEach(item => collectJidsFromJson(item, jidsSet));
-    } else if (obj && typeof obj === 'object') {
-    Object.values(obj).forEach(value => collectJidsFromJson(value, jidsSet));
-    } else if (typeof obj === 'string' && isValidJid(obj)) {
-    jidsSet.add(obj);
-    }
-    return jidsSet;
-}
-
-function replaceJidsInJson(obj, jidToLidMap, orphanJidsSet, replacementsCount = { count: 0 }, removalsCount = { count: 0 }) {
-    if (Array.isArray(obj)) {
-    obj.forEach((item, index) => {
-    const newItem = replaceJidsInJson(item, jidToLidMap, orphanJidsSet, replacementsCount, removalsCount);
-    if (newItem !== item) obj[index] = newItem;
-    });
-    } else if (obj && typeof obj === 'object' && !Array.isArray(obj)) {
-    Object.keys(obj).forEach(key => {
-    const value = obj[key];
-    if (typeof value === 'string' && isValidJid(value)) {
-    if (jidToLidMap.has(value)) {
-        obj[key] = jidToLidMap.get(value);
-        replacementsCount.count++;
-    } else if (orphanJidsSet.has(value)) {
-        delete obj[key];
-        removalsCount.count++;
-    }
-    } else {
-    const newValue = replaceJidsInJson(value, jidToLidMap, orphanJidsSet, replacementsCount, removalsCount);
-    if (newValue !== value) obj[key] = newValue;
-    }
-    });
-    } else if (typeof obj === 'string' && isValidJid(obj)) {
-    if (jidToLidMap.has(obj)) {
-    replacementsCount.count++;
-    return jidToLidMap.get(obj);
-    } else if (orphanJidsSet.has(obj)) {
-    removalsCount.count++;
-    return null;
-    }
-    }
-    return obj;
-}
-
-async function scanForJids(directory) {
-    const uniqueJids = new Set();
-    const affectedFiles = new Map();
-    const jidFiles = new Map();
-
-    const scanFileContent = async (filePath) => {
-    try {
-    const content = await fs.readFile(filePath, 'utf-8');
-    const jsonObj = JSON.parse(content);
-    const fileJids = collectJidsFromJson(jsonObj);
-    if (fileJids.size > 0) {
-    affectedFiles.set(filePath, Array.from(fileJids));
-    fileJids.forEach(jid => uniqueJids.add(jid));
-    }
-    } catch (parseErr) {
-    console.warn(`⚠️ Arquivo ${filePath} não é JSON válido. Usando fallback regex.`);
-    const jidPattern = /(\d+@s\.whatsapp\.net)/g;
-    const content = await fs.readFile(filePath, 'utf-8');
-    let match;
-    const fileJids = new Set();
-    while ((match = jidPattern.exec(content)) !== null) {
-    const jid = match[1];
-    uniqueJids.add(jid);
-    fileJids.add(jid);
-    }
-    if (fileJids.size > 0) {
-    affectedFiles.set(filePath, Array.from(fileJids));
-    }
-    }
-    };
-
-    const checkAndScanFilename = async (fullPath) => {
-    try {
-    const basename = path.basename(fullPath, '.json');
-    const filenameMatch = basename.match(/(\d+@s\.whatsapp\.net)/);
-    if (filenameMatch) {
-    const jidFromName = filenameMatch[1];
-    if (isValidJid(jidFromName)) {
-        uniqueJids.add(jidFromName);
-        jidFiles.set(jidFromName, fullPath);
-    }
-    }
-    await scanFileContent(fullPath);
-    } catch (err) {
-    console.error(`Erro ao processar ${fullPath}: ${err.message}`);
-    }
-    };
-
-    const scanDir = async (dirPath) => {
-    try {
-    const entries = await fs.readdir(dirPath, { withFileTypes: true });
-    for (const entry of entries) {
-    const fullPath = join(dirPath, entry.name);
-    if (entry.isDirectory()) {
-        await scanDir(fullPath);
-    } else if (entry.name.endsWith('.json')) {
-        await checkAndScanFilename(fullPath);
-    }
-    }
-    } catch (err) {
-    console.error(`Erro ao escanear diretório ${dirPath}: ${err.message}`);
-    }
-    };
-
-    await scanDir(directory);
-
-    try {
-    await scanFileContent(configPath);
-    const configBasename = path.basename(configPath, '.json');
-    const filenameMatch = configBasename.match(/(\d+@s\.whatsapp\.net)/);
-    if (filenameMatch) {
-    const jidFromName = filenameMatch[1];
-    if (isValidJid(jidFromName)) {
-    uniqueJids.add(jidFromName);
-    jidFiles.set(jidFromName, configPath);
-    }
-    }
-    } catch (err) {
-    console.error(`Erro ao escanear config.json: ${err.message}`);
-    }
-
-    return {
-    uniqueJids: Array.from(uniqueJids),
-    affectedFiles: Array.from(affectedFiles.entries()),
-    jidFiles: Array.from(jidFiles.entries())
-    };
-}
-
-async function replaceJidsInContent(affectedFiles, jidToLidMap, orphanJidsSet) {
-    let totalReplacements = 0;
-    let totalRemovals = 0;
-    const updatedFiles = [];
-
-    for (const [filePath, jids] of affectedFiles) {
-    try {
-    const content = await fs.readFile(filePath, 'utf-8');
-    let jsonObj = JSON.parse(content);
-    const replacementsCount = { count: 0 };
-    const removalsCount = { count: 0 };
-    replaceJidsInJson(jsonObj, jidToLidMap, orphanJidsSet, replacementsCount, removalsCount);
-    if (replacementsCount.count > 0 || removalsCount.count > 0) {
-    const updatedContent = JSON.stringify(jsonObj, null, 2);
-    await fs.writeFile(filePath, updatedContent, 'utf-8');
-    totalReplacements += replacementsCount.count;
-    totalRemovals += removalsCount.count;
-    updatedFiles.push(path.basename(filePath));
-    }
-    } catch (err) {
-    console.error(`Erro ao substituir em ${filePath}: ${err.message}`);
-    }
-    }
-
-    return { totalReplacements, totalRemovals, updatedFiles };
-}
-
-async function handleJidFiles(jidFiles, jidToLidMap, orphanJidsSet) {
-    let totalReplacements = 0;
-    let totalRemovals = 0;
-    const updatedFiles = [];
-    const renamedFiles = [];
-    const deletedFiles = [];
-
-    for (const [jid, oldPath] of jidFiles) {
-    if (orphanJidsSet.has(jid)) {
-    try {
-    await fs.unlink(oldPath);
-    deletedFiles.push(path.basename(oldPath));
-    totalRemovals++;
-    continue;
-    } catch (err) {
-    console.error(`Erro ao excluir arquivo órfão ${oldPath}: ${err.message}`);
-    }
-    }
-
-    const lid = jidToLidMap.get(jid);
-    if (!lid) {
-    continue;
-    }
-
-    try {
-    const content = await fs.readFile(oldPath, 'utf-8');
-    let jsonObj = JSON.parse(content);
-    const replacementsCount = { count: 0 };
-    const removalsCount = { count: 0 };
-    replaceJidsInJson(jsonObj, jidToLidMap, orphanJidsSet, replacementsCount, removalsCount);
-    totalReplacements += replacementsCount.count;
-    totalRemovals += removalsCount.count;
-
-    const dir = path.dirname(oldPath);
-    const newPath = join(dir, `${lid}.json`);
-
-    try {
-    await fs.access(newPath);
-    continue;
-    } catch {}
-
-    const updatedContent = JSON.stringify(jsonObj, null, 2);
-    await fs.writeFile(newPath, updatedContent, 'utf-8');
-    await fs.unlink(oldPath);
-
-    updatedFiles.push(path.basename(newPath));
-    renamedFiles.push({ old: path.basename(oldPath), new: path.basename(newPath) });
-
-    } catch (err) {
-    console.error(`Erro ao processar renomeação de ${oldPath}: ${err.message}`);
-    }
-    }
-
-    return { totalReplacements, totalRemovals, updatedFiles, renamedFiles, deletedFiles };
-}
-
-async function fetchLidWithRetry(NazunaSock, jid, maxRetries = 3) {
-    if (!jid || !isValidJid(jid)) {
-    console.warn(`⚠️ JID inválido fornecido: ${jid}`);
-    return null;
-    }
-    
-    for (let attempt = 1; attempt <= maxRetries; attempt++) {
-    try {
-    const result = await NazunaSock.onWhatsApp(jid);
-    if (result && result[0] && result[0].lid) {
-    return { jid, lid: result[0].lid };
-    }
-    return null;
-    } catch (err) {
-    if (attempt === maxRetries) {
-    console.warn(`⚠️ Falha ao buscar LID para ${jid} após ${maxRetries} tentativas`);
-    }
-    }
-    if (attempt < maxRetries) {
-    await new Promise(resolve => setTimeout(resolve, 100 * attempt));
-    }
-    }
-    return null;
-}
-
-async function fetchLidsInBatches(NazunaSock, uniqueJids, batchSize = 5) {
-    const lidResults = [];
-    const jidToLidMap = new Map();
-    let successfulFetches = 0;
-
-    for (let i = 0; i < uniqueJids.length; i += batchSize) {
-    const batch = uniqueJids.slice(i, i + batchSize);
-    
-    const batchPromises = batch.map(jid => fetchLidWithRetry(NazunaSock, jid));
-    const batchResults = await Promise.allSettled(batchPromises);
-    
-    batchResults.forEach((result, index) => {
-    if (result.status === 'fulfilled' && result.value) {
-    const { jid, lid } = result.value;
-    lidResults.push({ jid, lid });
-    jidToLidMap.set(jid, lid);
-    successfulFetches++;
-    }
-    });
-
-    if (i + batchSize < uniqueJids.length) {
-    await new Promise(resolve => setTimeout(resolve, 200));
-    }
-    }
-
-    return { lidResults, jidToLidMap, successfulFetches };
-}
-
-async function updateOwnerLid(NazunaSock) {
-    const ownerJid = `${numerodono}@s.whatsapp.net`;
-    try {
-    const result = await fetchLidWithRetry(NazunaSock, ownerJid);
-    if (result) {
-    config.lidowner = result.lid;
-    await fs.writeFile(configPath, JSON.stringify(config, null, 2), 'utf-8');
-    }
-    } catch (err) {
-    console.error(`❌ Erro ao atualizar LID do dono: ${err.message}`);
-    }
-}
-
-async function performMigration(NazunaSock) {
-    let scanResult;
-    try {
-        scanResult = await scanForJids(DATABASE_DIR);
-    } catch (err) {
-        console.error(`Erro crítico no scan: ${err.message}`);
-        return;
-    }
-
-    const { uniqueJids, affectedFiles, jidFiles } = scanResult;
-
-    if (uniqueJids.length === 0) {
-        return;
-    }
-
-    const { jidToLidMap, successfulFetches } = await fetchLidsInBatches(NazunaSock, uniqueJids);
-    const orphanJidsSet = new Set(uniqueJids.filter(jid => !jidToLidMap.has(jid)));
-
-    if (jidToLidMap.size === 0) {
-        return;
-    }
-
-    let totalReplacements = 0;
-    let totalRemovals = 0;
-    const allUpdatedFiles = [];
-
-    try {
-        const renameResult = await handleJidFiles(jidFiles, jidToLidMap, orphanJidsSet);
-        totalReplacements += renameResult.totalReplacements;
-        totalRemovals += renameResult.totalRemovals;
-        allUpdatedFiles.push(...renameResult.updatedFiles);
-
-        const filteredAffected = affectedFiles.filter(([filePath]) => !jidFiles.some(([, jidPath]) => jidPath === filePath));
-        const contentResult = await replaceJidsInContent(filteredAffected, jidToLidMap, orphanJidsSet);
-        totalReplacements += contentResult.totalReplacements;
-        totalRemovals += contentResult.totalRemovals;
-        allUpdatedFiles.push(...contentResult.updatedFiles);
-    } catch (processErr) {
-        console.error(`Erro no processamento de substituições: ${processErr.message}`);
-        return;
-    }
-}
+// Funções de migração e LID removidas para utils/migration.js
 
 // Variáveis de controle de reconexão (declaradas aqui para evitar temporal dead zone)
 let reconnectAttempts = 0;
@@ -1152,7 +602,6 @@ async function createBotSocket(authDir) {
     
     // Busca a versão mais recente do WhatsApp
     const { version } = await fetchLatestBaileysVersion();
-    console.log(`📱 Usando versão do WhatsApp: ${version.join('.')}`);
     
     const NazunaSock = makeWASocket({
     version: version,
@@ -1200,25 +649,6 @@ async function createBotSocket(authDir) {
     });
     console.log('🐛 ====================================\n');
     }
-    
-    // Processa atualizações em lote para melhor performance
-    const updatePromises = updates.map(async ([ev]) => {
-    if (!ev || !ev.id) return;
-    
-    try {
-        const meta = await NazunaSock.groupMetadata(ev.id).catch(() => null);
-        if (meta) {
-        // Metadados atualizados, pode ser usado para cache futuro
-        if (DEBUG_MODE) {
-        console.log('🐛 Metadata fetched for group:', ev.id);
-        }
-        }
-    } catch (e) {
-        console.error(`❌ Erro ao atualizar metadados do grupo ${ev.id}: ${e.message}`);
-    }
-    });
-    
-    await Promise.allSettled(updatePromises);
     });
 
     NazunaSock.ev.on('group-participants.update', async (inf) => {
@@ -1367,19 +797,19 @@ async function createBotSocket(authDir) {
     console.log('📱 Escaneie o QR code acima com o WhatsApp para autenticar o bot.');
     }
     if (connection === 'open') {
-    console.log(`🔄 Conexão aberta. Bot ID: ${NazunaSock.user?.id} | Inicializando sistema de otimização...`);
+    console.log(`🔄 Conexão aberta. Bot ID: ${NazunaSock.user?.id.split(':')[0]}`);
     
     forbidden403Attempts = 0; // Reset contador de erro 403 em caso de sucesso
     await initializeOptimizedCaches(NazunaSock);
     
-    await updateOwnerLid(NazunaSock);
-    await performMigration(NazunaSock);
+    await updateOwnerLid(NazunaSock, numerodono, config, configPath);
+    await performMigration(NazunaSock, DATABASE_DIR, configPath);
     
     rentalExpirationManager.nazu = NazunaSock;
     await rentalExpirationManager.initialize();
     
     attachMessagesListener();
-    startCacheCleanup(); // Inicia o sistema de limpeza de cache
+    setupMessagesCacheCleanup(); // Inicia o sistema de limpeza de cache
     
     // Envia mensagem de boas-vindas para o dono
     try {
@@ -1390,28 +820,26 @@ async function createBotSocket(authDir) {
         setTimeout(async () => {
         try {
         const ownerJid = buildUserId(numerodono, config);
+        const finalMessage = msgBotOnConfig.message
+            .replace(/{prefix}/g, config.prefixo || '!')
+            .replace(/{botName}/g, config.nomebot || 'Nazuna')
+            .replace(/{ownerName}/g, config.nomedono || 'Dono');
         await NazunaSock.sendMessage(ownerJid, { 
-            text: msgBotOnConfig.message 
+            text: finalMessage 
         });
-        console.log('✅ Mensagem de inicialização enviada para o dono');
         } catch (sendError) {
         console.error('❌ Erro ao enviar mensagem de inicialização:', sendError.message);
         }
         }, 3000);
-        } else {
-        console.log('ℹ️ Mensagem de inicialização desativada');
         }
     } catch (msgError) {
         console.error('❌ Erro ao processar mensagem de inicialização:', msgError.message);
     }
-    
-
 
     // Inicializa sub-bots automaticamente
     try {
         const subBotManagerModule = await import('./utils/subBotManager.js');
         const subBotManager = subBotManagerModule.default ?? subBotManagerModule;
-        console.log('🤖 Verificando sub-bots cadastrados...');
         setTimeout(async () => {
         await subBotManager.initializeAllSubBots();
         }, 5000);
@@ -1420,7 +848,6 @@ async function createBotSocket(authDir) {
     }
     
     console.log(`✅ Bot ${nomebot} iniciado com sucesso! Prefixo: ${prefixo} | Dono: ${nomedono}`);
-    console.log(`📊 Configuração: ${messageQueue.batchSize} lotes de ${messageQueue.messagesPerBatch} mensagens (${messageQueue.batchSize * messageQueue.messagesPerBatch} msgs paralelas)`);
     }
     if (connection === 'close') {
     const reason = new Boom(lastDisconnect?.error)?.output?.statusCode;
@@ -1522,7 +949,6 @@ async function startNazu() {
     
     try {
     reconnectAttempts = 0; // Reset contador ao conectar com sucesso
-    console.log('🚀 Iniciando Nazuna...');
 
     await createBotSocket(AUTH_DIR);
     isReconnecting = false; // Conexão estabelecida com sucesso

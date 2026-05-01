@@ -20,14 +20,23 @@ export default {
       let antipvData = await optimizer.loadJsonWithCache(dbPath, { mode: null, message: '🚫 Este comando só funciona em grupos!' });
 
       const arg0 = args[0] ? args[0].toLowerCase() : '';
+      let statusChanged = true;
+
       if (arg0 === '1' || arg0 === 'on') {
+        if (antipvData.mode === cmd) statusChanged = false;
         antipvData.mode = cmd;
       } else if (arg0 === '0' || arg0 === 'off') {
+        if (antipvData.mode === null) statusChanged = false;
         antipvData.mode = null;
       } else {
         antipvData.mode = antipvData.mode === cmd ? null : cmd;
       }
       
+      if (!statusChanged) {
+        const currentStatus = antipvData.mode ? 'já está ATIVADO' : 'já está DESATIVADO';
+        return reply(`⚠️ O Anti-PV (${cmd.toUpperCase()}) ${currentStatus}.`);
+      }
+
       await optimizer.saveJsonWithCache(dbPath, antipvData);
 
       const status = antipvData.mode ? 'ativado' : 'desativado';

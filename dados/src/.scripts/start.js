@@ -43,7 +43,7 @@ const version = getVersion();
 
 async function setupTermuxAutostart() {
   if (!isTermux) {
-    info('📱 Não está rodando no Termux. Ignorando configuração de autostart.');
+    // Silenciado para reduzir verbosidade no início
     return;
   }
 
@@ -183,7 +183,7 @@ function startBot(codeMode = false) {
   const args = ['--expose-gc', CONNECT_FILE];
   if (codeMode) args.push('--code');
 
-  info(`📷 Iniciando com ${codeMode ? 'código de pareamento' : 'QR Code'}`);
+  // info(`📷 Iniciando com ${codeMode ? 'código de pareamento' : 'QR Code'}`);
 
   botProcess = spawn('node', args, {
     stdio: 'inherit',
@@ -269,7 +269,7 @@ async function main() {
 
     const hasSession = await checkAutoConnect();
     if (hasSession) {
-      mensagem('📷 Sessão de QR Code detectada. Conectando automaticamente...');
+      mensagem('🚀 Sessão detectada. Iniciando Nazuna...');
       startBot(false);
     } else {
       const { method } = await promptConnectionMethod();

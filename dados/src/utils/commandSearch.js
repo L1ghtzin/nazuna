@@ -9,7 +9,7 @@ let _commandListCache = null;
 // Inicializa o cache de comandos assincronamente ao carregar o módulo
 getAllCommandList().then(list => {
   _commandListCache = list;
-  console.log(`📋 Cache de comandos dinâmicos inicializado: ${list.length} comandos carregados`);
+  // console.log(`📋 Cache de comandos dinâmicos inicializado: ${list.length} comandos carregados`);
 }).catch(err => {
   console.error('Erro ao inicializar cache de comandos:', err);
 });
