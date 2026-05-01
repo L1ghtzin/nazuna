@@ -2,819 +2,1619 @@
   "palavras": [
     {
       "palavra": "elefante",
-      "dica": "Animal grande com tromba"
+      "dica": "Animal"
     },
     {
       "palavra": "computador",
-      "dica": "Máquina eletrônica"
+      "dica": "Tecnologia / Eletrônico"
     },
     {
       "palavra": "chocolate",
-      "dica": "Doce feito de cacau"
+      "dica": "Alimento"
     },
     {
       "palavra": "abacaxi",
-      "dica": "Fruta tropical com coroa"
+      "dica": "Fruta"
     },
     {
       "palavra": "biblioteca",
-      "dica": "Lugar com muitos livros"
+      "dica": "Lugar / Construção"
     },
     {
       "palavra": "jacaré",
-      "dica": "Réptil encontrado em rios"
+      "dica": "Animal"
     },
     {
       "palavra": "guitarra",
-      "dica": "Instrumento musical de cordas"
+      "dica": "Instrumento Musical"
     },
     {
       "palavra": "borboleta",
-      "dica": "Inseto colorido que voa"
+      "dica": "Animal"
     },
     {
       "palavra": "astronauta",
-      "dica": "Viaja para o espaço"
+      "dica": "Profissão"
     },
     {
       "palavra": "dinossauro",
-      "dica": "Animal pré-histórico"
+      "dica": "Animal Extinto"
     },
     {
       "palavra": "pizza",
-      "dica": "Comida italiana redonda"
+      "dica": "Alimento"
     },
     {
       "palavra": "futebol",
-      "dica": "Esporte mais popular do Brasil"
+      "dica": "Esporte"
     },
     {
       "palavra": "arcoiris",
-      "dica": "Fenômeno colorido após chuva"
+      "dica": "Fenômeno Natural"
     },
     {
       "palavra": "celular",
-      "dica": "Aparelho de comunicação portátil"
+      "dica": "Tecnologia / Eletrônico"
     },
     {
       "palavra": "oceano",
-      "dica": "Grande massa de água salgada"
+      "dica": "Natureza"
     },
     {
       "palavra": "vulcão",
-      "dica": "Montanha que expele lava"
+      "dica": "Lugar / Natureza"
     },
     {
       "palavra": "pinguim",
-      "dica": "Ave que não voa e vive no gelo"
+      "dica": "Animal"
     },
     {
       "palavra": "cachoeira",
-      "dica": "Queda de água natural"
+      "dica": "Lugar / Natureza"
     },
     {
       "palavra": "relógio",
-      "dica": "Mostra as horas"
+      "dica": "Objeto"
     },
     {
       "palavra": "unicórnio",
-      "dica": "Criatura mítica com chifre"
+      "dica": "Animal"
     },
     {
       "palavra": "girafa",
-      "dica": "Animal com pescoço muito longo"
+      "dica": "Animal"
     },
     {
       "palavra": "helicóptero",
-      "dica": "Aeronave com hélices no topo"
+      "dica": "Animal"
     },
     {
       "palavra": "escola",
-      "dica": "Lugar onde se estuda"
+      "dica": "Lugar / Construção"
     },
     {
       "palavra": "hospital",
-      "dica": "Lugar onde se trata doenças"
+      "dica": "Lugar / Construção"
     },
     {
       "palavra": "cachorro",
-      "dica": "Melhor amigo do homem"
+      "dica": "Objeto"
     },
     {
       "palavra": "gato",
-      "dica": "Animal doméstico que mia"
+      "dica": "Animal"
     },
     {
       "palavra": "leão",
-      "dica": "Rei da selva"
+      "dica": "Objeto"
     },
     {
       "palavra": "tigre",
-      "dica": "Felino com listras"
+      "dica": "Animal"
     },
     {
       "palavra": "urso",
-      "dica": "Animal grande e peludo"
+      "dica": "Animal"
     },
     {
       "palavra": "macaco",
-      "dica": "Primata que vive em árvores"
+      "dica": "Animal"
     },
     {
       "palavra": "cavalo",
-      "dica": "Animal usado para montaria"
+      "dica": "Animal"
     },
     {
       "palavra": "vaca",
-      "dica": "Animal que dá leite"
+      "dica": "Animal"
     },
     {
       "palavra": "porco",
-      "dica": "Animal rosa que gosta de lama"
+      "dica": "Animal"
     },
     {
       "palavra": "galinha",
-      "dica": "Ave que bota ovos"
+      "dica": "Animal"
     },
     {
       "palavra": "pato",
-      "dica": "Ave que nada e voa"
+      "dica": "Animal"
     },
     {
       "palavra": "abelha",
-      "dica": "Inseto que faz mel"
+      "dica": "Animal"
     },
     {
       "palavra": "formiga",
-      "dica": "Inseto pequeno e trabalhador"
+      "dica": "Animal"
     },
     {
       "palavra": "aranha",
-      "dica": "Aracnídeo com oito pernas"
+      "dica": "Animal"
     },
     {
       "palavra": "cobra",
-      "dica": "Réptil sem pernas"
+      "dica": "Animal"
     },
     {
       "palavra": "peixe",
-      "dica": "Animal que vive na água"
+      "dica": "Animal"
     },
     {
       "palavra": "tubarão",
-      "dica": "Peixe grande e perigoso"
+      "dica": "Animal"
     },
     {
       "palavra": "golfinho",
-      "dica": "Mamífero marinho inteligente"
+      "dica": "Animal"
     },
     {
       "palavra": "baleia",
-      "dica": "Maior mamífero do mundo"
+      "dica": "Animal"
     },
     {
       "palavra": "tartaruga",
-      "dica": "Réptil com casco"
+      "dica": "Animal"
     },
     {
       "palavra": "coelho",
-      "dica": "Animal com orelhas grandes"
+      "dica": "Animal"
     },
     {
       "palavra": "rato",
-      "dica": "Roedor pequeno"
+      "dica": "Animal"
     },
     {
       "palavra": "esquilo",
-      "dica": "Roedor que come nozes"
+      "dica": "Animal"
     },
     {
       "palavra": "coruja",
-      "dica": "Ave noturna sábia"
+      "dica": "Animal"
     },
     {
       "palavra": "águia",
-      "dica": "Ave de rapina poderosa"
+      "dica": "Animal"
     },
     {
       "palavra": "papagaio",
-      "dica": "Ave que imita sons"
+      "dica": "Animal"
     },
     {
       "palavra": "flamingo",
-      "dica": "Ave rosa de pernas longas"
+      "dica": "Animal"
     },
     {
       "palavra": "pavão",
-      "dica": "Ave com cauda colorida"
+      "dica": "Animal"
     },
     {
       "palavra": "camelo",
-      "dica": "Animal do deserto com corcova"
+      "dica": "Animal"
     },
     {
       "palavra": "zebra",
-      "dica": "Animal com listras pretas e brancas"
+      "dica": "Animal"
     },
     {
       "palavra": "hipopótamo",
-      "dica": "Animal grande que vive na água"
+      "dica": "Animal"
     },
     {
       "palavra": "rinoceronte",
-      "dica": "Animal com chifre no nariz"
+      "dica": "Animal"
     },
     {
       "palavra": "crocodilo",
-      "dica": "Réptil grande e perigoso"
+      "dica": "Animal"
     },
     {
       "palavra": "lagarto",
-      "dica": "Réptil pequeno com cauda"
+      "dica": "Animal"
     },
     {
       "palavra": "sapo",
-      "dica": "Anfíbio que pula"
+      "dica": "Animal"
     },
     {
       "palavra": "rã",
-      "dica": "Anfíbio pequeno e verde"
+      "dica": "Animal"
     },
     {
       "palavra": "caranguejo",
-      "dica": "Crustáceo com garras"
+      "dica": "Animal"
     },
     {
       "palavra": "lagosta",
-      "dica": "Crustáceo marinho grande"
+      "dica": "Animal"
     },
     {
       "palavra": "polvo",
-      "dica": "Molusco com oito tentáculos"
+      "dica": "Animal"
     },
     {
       "palavra": "lula",
-      "dica": "Molusco com dez tentáculos"
+      "dica": "Animal"
     },
     {
       "palavra": "estrela",
-      "dica": "Corpo celeste que brilha"
+      "dica": "Espaço / Astronomia"
     },
     {
       "palavra": "lua",
-      "dica": "Satélite natural da Terra"
+      "dica": "Espaço / Astronomia"
     },
     {
       "palavra": "sol",
-      "dica": "Estrela do nosso sistema"
+      "dica": "Espaço / Astronomia"
     },
     {
       "palavra": "planeta",
-      "dica": "Corpo celeste que orbita uma estrela"
+      "dica": "Espaço / Astronomia"
     },
     {
       "palavra": "cometa",
-      "dica": "Corpo celeste com cauda"
+      "dica": "Espaço / Astronomia"
     },
     {
       "palavra": "meteoro",
-      "dica": "Rocha que cai do céu"
+      "dica": "Espaço / Astronomia"
     },
     {
       "palavra": "galáxia",
-      "dica": "Sistema de estrelas"
+      "dica": "Espaço / Astronomia"
     },
     {
       "palavra": "universo",
-      "dica": "Tudo que existe"
+      "dica": "Objeto"
     },
     {
       "palavra": "telescópio",
-      "dica": "Instrumento para ver estrelas"
+      "dica": "Instrumento / Objeto"
     },
     {
       "palavra": "foguete",
-      "dica": "Veículo espacial"
+      "dica": "Veículo"
     },
     {
       "palavra": "satélite",
-      "dica": "Objeto que orbita um planeta"
+      "dica": "Espaço / Astronomia"
     },
     {
       "palavra": "avião",
-      "dica": "Veículo que voa"
+      "dica": "Veículo"
     },
     {
       "palavra": "navio",
-      "dica": "Embarcação grande"
+      "dica": "Veículo"
     },
     {
       "palavra": "submarino",
-      "dica": "Veículo que navega debaixo d'água"
+      "dica": "Animal"
     },
     {
       "palavra": "trem",
-      "dica": "Veículo que anda sobre trilhos"
+      "dica": "Veículo"
     },
     {
       "palavra": "ônibus",
-      "dica": "Veículo de transporte público"
+      "dica": "Veículo"
     },
     {
       "palavra": "bicicleta",
-      "dica": "Veículo de duas rodas"
+      "dica": "Veículo"
     },
     {
       "palavra": "motocicleta",
-      "dica": "Veículo de duas rodas motorizado"
+      "dica": "Veículo"
     },
     {
       "palavra": "carro",
-      "dica": "Veículo de quatro rodas"
+      "dica": "Veículo"
     },
     {
       "palavra": "caminhão",
-      "dica": "Veículo grande para cargas"
+      "dica": "Veículo"
     },
     {
       "palavra": "barco",
-      "dica": "Embarcação pequena"
+      "dica": "Veículo"
     },
     {
       "palavra": "canoa",
-      "dica": "Embarcação pequena e estreita"
+      "dica": "Veículo"
     },
     {
       "palavra": "iate",
-      "dica": "Embarcação de luxo"
+      "dica": "Veículo"
     },
     {
       "palavra": "maçã",
-      "dica": "Fruta vermelha ou verde"
+      "dica": "Fruta"
     },
     {
       "palavra": "banana",
-      "dica": "Fruta amarela e comprida"
+      "dica": "Fruta"
     },
     {
       "palavra": "laranja",
-      "dica": "Fruta cítrica laranja"
+      "dica": "Fruta"
     },
     {
       "palavra": "uva",
-      "dica": "Fruta pequena em cachos"
+      "dica": "Fruta"
     },
     {
       "palavra": "morango",
-      "dica": "Fruta vermelha com sementes"
+      "dica": "Fruta"
     },
     {
       "palavra": "manga",
-      "dica": "Fruta tropical amarela"
+      "dica": "Fruta"
     },
     {
       "palavra": "melancia",
-      "dica": "Fruta grande e verde por fora"
+      "dica": "Fruta"
     },
     {
       "palavra": "abacate",
-      "dica": "Fruta verde com caroço grande"
+      "dica": "Fruta"
     },
     {
       "palavra": "limão",
-      "dica": "Fruta cítrica amarela"
+      "dica": "Fruta"
     },
     {
       "palavra": "coco",
-      "dica": "Fruta com casca dura"
+      "dica": "Fruta"
     },
     {
       "palavra": "kiwi",
-      "dica": "Fruta pequena e peluda"
+      "dica": "Fruta"
     },
     {
       "palavra": "pêssego",
-      "dica": "Fruta com caroço e pele aveludada"
+      "dica": "Animal"
     },
     {
       "palavra": "cereja",
-      "dica": "Fruta pequena e vermelha"
+      "dica": "Fruta"
     },
     {
       "palavra": "pêra",
-      "dica": "Fruta verde ou amarela"
+      "dica": "Fruta"
     },
     {
       "palavra": "ameixa",
-      "dica": "Fruta pequena e roxa"
+      "dica": "Fruta"
     },
     {
       "palavra": "figo",
-      "dica": "Fruta doce e macia"
+      "dica": "Fruta"
     },
     {
       "palavra": "tangerina",
-      "dica": "Fruta cítrica fácil de descascar"
+      "dica": "Fruta"
     },
     {
       "palavra": "goiaba",
-      "dica": "Fruta tropical com sementes"
+      "dica": "Fruta"
     },
     {
       "palavra": "maracujá",
-      "dica": "Fruta usada para suco"
+      "dica": "Fruta"
     },
     {
       "palavra": "caju",
-      "dica": "Fruta do nordeste brasileiro"
+      "dica": "Fruta"
     },
     {
       "palavra": "açaí",
-      "dica": "Fruta roxa do Pará"
+      "dica": "Fruta"
     },
     {
       "palavra": "pitaya",
-      "dica": "Fruta exótica colorida"
+      "dica": "Fruta"
     },
     {
       "palavra": "carambola",
-      "dica": "Fruta em formato de estrela"
+      "dica": "Fruta"
     },
     {
       "palavra": "jabuticaba",
-      "dica": "Fruta que cresce no tronco"
+      "dica": "Fruta"
     },
     {
       "palavra": "framboesa",
-      "dica": "Fruta vermelha pequena"
+      "dica": "Fruta"
     },
     {
       "palavra": "amora",
-      "dica": "Fruta pequena e roxa"
+      "dica": "Fruta"
     },
     {
       "palavra": "mirtilo",
-      "dica": "Fruta pequena e azul"
+      "dica": "Fruta"
     },
     {
       "palavra": "groselha",
-      "dica": "Fruta pequena e azeda"
+      "dica": "Fruta"
     },
     {
       "palavra": "cranberry",
-      "dica": "Fruta vermelha azeda"
+      "dica": "Fruta"
     },
     {
       "palavra": "romã",
-      "dica": "Fruta com muitas sementes"
+      "dica": "Fruta"
     },
     {
       "palavra": "damasco",
-      "dica": "Fruta laranja pequena"
+      "dica": "Fruta"
     },
     {
       "palavra": "tâmara",
-      "dica": "Fruta doce do deserto"
+      "dica": "Fruta"
     },
     {
       "palavra": "caqui",
-      "dica": "Fruta laranja doce"
+      "dica": "Fruta"
     },
     {
       "palavra": "nectarina",
-      "dica": "Fruta similar ao pêssego"
+      "dica": "Fruta"
     },
     {
       "palavra": "mamão",
-      "dica": "Fruta laranja tropical"
+      "dica": "Fruta"
     },
     {
       "palavra": "melão",
-      "dica": "Fruta grande e doce"
+      "dica": "Fruta"
     },
     {
       "palavra": "abóbora",
-      "dica": "Fruta grande e laranja"
+      "dica": "Fruta"
     },
     {
       "palavra": "paraquedas",
-      "dica": "Equipamento para saltar de avião"
+      "dica": "Objeto"
     },
     {
       "palavra": "microscópio",
-      "dica": "Instrumento para ver coisas muito pequenas"
+      "dica": "Instrumento / Objeto"
     },
     {
       "palavra": "termômetro",
-      "dica": "Mede a temperatura"
+      "dica": "Objeto"
     },
     {
       "palavra": "semáforo",
-      "dica": "Controla o trânsito com luzes"
+      "dica": "Objeto"
     },
     {
       "palavra": "ventilador",
-      "dica": "Aparelho que produz vento"
+      "dica": "Tecnologia / Eletrônico"
     },
     {
       "palavra": "geladeira",
-      "dica": "Eletrodoméstico que resfria alimentos"
+      "dica": "Objeto"
     },
     {
       "palavra": "máquina",
-      "dica": "Dispositivo mecânico"
+      "dica": "Tecnologia / Eletrônico"
     },
     {
       "palavra": "travesseiro",
-      "dica": "Usado para apoiar a cabeça ao dormir"
+      "dica": "Objeto"
     },
     {
       "palavra": "calendário",
-      "dica": "Mostra os dias do ano"
+      "dica": "Objeto"
     },
     {
       "palavra": "dicionário",
-      "dica": "Livro com significados de palavras"
+      "dica": "Objeto"
     },
     {
       "palavra": "engenheiro",
-      "dica": "Profissional que projeta e constrói"
+      "dica": "Profissão"
     },
     {
       "palavra": "professor",
-      "dica": "Profissional que ensina"
+      "dica": "Profissão"
     },
     {
       "palavra": "advogado",
-      "dica": "Profissional do direito"
+      "dica": "Profissão"
     },
     {
       "palavra": "carpinteiro",
-      "dica": "Trabalha com madeira"
+      "dica": "Profissão"
     },
     {
       "palavra": "bombeiro",
-      "dica": "Combate incêndios"
+      "dica": "Profissão"
     },
     {
       "palavra": "farmacêutico",
-      "dica": "Profissional de medicamentos"
+      "dica": "Profissão"
     },
     {
       "palavra": "cozinheiro",
-      "dica": "Prepara refeições"
+      "dica": "Objeto"
     },
     {
       "palavra": "eletricista",
-      "dica": "Trabalha com eletricidade"
+      "dica": "Profissão"
     },
     {
       "palavra": "fotógrafo",
-      "dica": "Profissional que tira fotos"
+      "dica": "Profissão"
     },
     {
       "palavra": "jornalista",
-      "dica": "Profissional de notícias"
+      "dica": "Profissão"
     },
     {
       "palavra": "diamante",
-      "dica": "Pedra preciosa mais dura"
+      "dica": "Pedra Preciosa"
     },
     {
       "palavra": "esmeralda",
-      "dica": "Pedra preciosa verde"
+      "dica": "Pedra Preciosa"
     },
     {
       "palavra": "safira",
-      "dica": "Pedra preciosa azul"
+      "dica": "Pedra Preciosa"
     },
     {
       "palavra": "rubi",
-      "dica": "Pedra preciosa vermelha"
+      "dica": "Pedra Preciosa"
     },
     {
       "palavra": "ametista",
-      "dica": "Pedra preciosa roxa"
+      "dica": "Pedra Preciosa"
     },
     {
       "palavra": "girassol",
-      "dica": "Flor que segue o sol"
+      "dica": "Flor"
     },
     {
       "palavra": "margarida",
-      "dica": "Flor branca com miolo amarelo"
+      "dica": "Flor"
     },
     {
       "palavra": "orquídea",
-      "dica": "Flor exótica e elegante"
+      "dica": "Flor"
     },
     {
       "palavra": "tulipa",
-      "dica": "Flor símbolo da Holanda"
+      "dica": "Flor"
     },
     {
       "palavra": "lavanda",
-      "dica": "Planta aromática roxa"
+      "dica": "Planta / Vegetal"
     },
     {
       "palavra": "violino",
-      "dica": "Instrumento de cordas com arco"
+      "dica": "Instrumento Musical"
     },
     {
       "palavra": "bateria",
-      "dica": "Instrumento de percussão"
+      "dica": "Instrumento Musical"
     },
     {
       "palavra": "pandeiro",
-      "dica": "Instrumento de percussão manual"
+      "dica": "Instrumento Musical"
     },
     {
       "palavra": "acordeão",
-      "dica": "Instrumento com teclado e fole"
+      "dica": "Instrumento Musical"
     },
     {
       "palavra": "harpa",
-      "dica": "Instrumento grande com cordas verticais"
+      "dica": "Instrumento Musical"
     },
     {
       "palavra": "xilofone",
-      "dica": "Instrumento de lâminas de madeira"
+      "dica": "Instrumento Musical"
     },
     {
       "palavra": "berinjela",
-      "dica": "Legume roxo"
+      "dica": "Planta / Vegetal"
     },
     {
       "palavra": "beterraba",
-      "dica": "Raiz roxa comestível"
+      "dica": "Planta / Vegetal"
     },
     {
       "palavra": "brócolis",
-      "dica": "Vegetal verde em formato de árvore"
+      "dica": "Planta / Vegetal"
     },
     {
       "palavra": "cenoura",
-      "dica": "Raiz laranja"
+      "dica": "Planta / Vegetal"
     },
     {
       "palavra": "espinafre",
-      "dica": "Vegetal verde do Popeye"
+      "dica": "Planta / Vegetal"
     },
     {
       "palavra": "alface",
-      "dica": "Folha usada em saladas"
+      "dica": "Alimento"
     },
     {
       "palavra": "cebola",
-      "dica": "Bulbo que faz chorar"
+      "dica": "Alimento"
     },
     {
       "palavra": "alho",
-      "dica": "Tempero com dentes"
+      "dica": "Alimento"
     },
     {
       "palavra": "pimentão",
-      "dica": "Legume colorido e oco"
+      "dica": "Planta / Vegetal"
     },
     {
       "palavra": "abobrinha",
-      "dica": "Legume verde comprido"
+      "dica": "Planta / Vegetal"
     },
     {
       "palavra": "continente",
-      "dica": "Grande massa de terra"
+      "dica": "Geografia"
     },
     {
       "palavra": "vulcanismo",
-      "dica": "Atividade de vulcões"
+      "dica": "Geologia"
     },
     {
       "palavra": "fotossíntese",
-      "dica": "Processo que plantas usam para fazer alimento"
+      "dica": "Planta / Vegetal"
     },
     {
       "palavra": "gravidade",
-      "dica": "Força que puxa tudo para baixo"
+      "dica": "Física"
     },
     {
       "palavra": "eletricidade",
-      "dica": "Energia que alimenta aparelhos"
+      "dica": "Tecnologia / Eletrônico"
     },
     {
       "palavra": "magnetismo",
-      "dica": "Força que atrai metais"
+      "dica": "Física"
     },
     {
       "palavra": "oxigênio",
-      "dica": "Gás que respiramos"
+      "dica": "Ciência / Natureza"
     },
     {
       "palavra": "hidrogênio",
-      "dica": "Elemento mais leve do universo"
+      "dica": "Ciência / Natureza"
     },
     {
       "palavra": "nitrogênio",
-      "dica": "Gás mais abundante na atmosfera"
+      "dica": "Ciência / Natureza"
     },
     {
       "palavra": "carbono",
-      "dica": "Elemento base da vida orgânica"
+      "dica": "Ciência / Natureza"
     },
     {
       "palavra": "algoritmo",
-      "dica": "Sequência de instruções para resolver problemas"
+      "dica": "Tecnologia / Informática"
     },
     {
       "palavra": "programação",
-      "dica": "Criação de software"
+      "dica": "Tecnologia / Informática"
     },
     {
       "palavra": "internet",
-      "dica": "Rede mundial de computadores"
+      "dica": "Tecnologia / Informática"
     },
     {
       "palavra": "teclado",
-      "dica": "Periférico para digitar"
+      "dica": "Tecnologia / Eletrônico"
     },
     {
       "palavra": "monitor",
-      "dica": "Tela de computador"
+      "dica": "Tecnologia / Eletrônico"
     },
     {
       "palavra": "servidor",
-      "dica": "Computador que fornece serviços"
+      "dica": "Tecnologia / Eletrônico"
     },
     {
       "palavra": "impressora",
-      "dica": "Imprime documentos em papel"
+      "dica": "Objeto"
     },
     {
       "palavra": "pendrive",
-      "dica": "Dispositivo portátil de armazenamento"
+      "dica": "Tecnologia / Eletrônico"
     },
     {
       "palavra": "bluetooth",
-      "dica": "Tecnologia de conexão sem fio"
+      "dica": "Tecnologia / Eletrônico"
     },
     {
       "palavra": "câmera",
-      "dica": "Dispositivo para capturar imagens"
+      "dica": "Tecnologia / Eletrônico"
     },
     {
       "palavra": "microfone",
-      "dica": "Captura som e voz"
+      "dica": "Objeto"
     },
     {
       "palavra": "canguru",
-      "dica": "Marsupial que salta"
+      "dica": "Animal"
     },
     {
       "palavra": "ornitorrinco",
-      "dica": "Mamífero que bota ovos"
+      "dica": "Animal"
     },
     {
       "palavra": "piranha",
-      "dica": "Peixe carnívoro da Amazônia"
+      "dica": "Animal"
     },
     {
       "palavra": "pelicano",
-      "dica": "Ave com bico enorme"
+      "dica": "Animal"
     },
     {
       "palavra": "morcego",
-      "dica": "Mamífero que voa"
+      "dica": "Animal"
     },
     {
       "palavra": "iguana",
-      "dica": "Réptil grande e verde"
+      "dica": "Animal"
     },
     {
       "palavra": "salamandra",
-      "dica": "Anfíbio com cauda"
+      "dica": "Animal"
     },
     {
       "palavra": "escorpião",
-      "dica": "Aracnídeo com ferrão"
+      "dica": "Animal"
     },
     {
       "palavra": "camaleão",
-      "dica": "Réptil que muda de cor"
+      "dica": "Animal"
     },
     {
       "palavra": "ouriço",
-      "dica": "Animal com espinhos"
+      "dica": "Animal"
     },
     {
       "palavra": "preguiça",
-      "dica": "Animal mais lento do mundo"
+      "dica": "Animal"
     },
     {
       "palavra": "tamanduá",
-      "dica": "Animal que come formigas"
+      "dica": "Animal"
     },
     {
       "palavra": "capivara",
-      "dica": "Maior roedor do mundo"
+      "dica": "Animal"
+    },
+    {
+      "palavra": "caderno",
+      "dica": "Objeto"
+    },
+    {
+      "palavra": "tesoura",
+      "dica": "Objeto"
+    },
+    {
+      "palavra": "borracha",
+      "dica": "Objeto"
+    },
+    {
+      "palavra": "garrafa",
+      "dica": "Objeto"
+    },
+    {
+      "palavra": "espelho",
+      "dica": "Objeto"
+    },
+    {
+      "palavra": "mochila",
+      "dica": "Objeto"
+    },
+    {
+      "palavra": "guarda-chuva",
+      "dica": "Objeto"
+    },
+    {
+      "palavra": "martelo",
+      "dica": "Objeto"
+    },
+    {
+      "palavra": "chave de fenda",
+      "dica": "Objeto"
+    },
+    {
+      "palavra": "cadeado",
+      "dica": "Objeto"
+    },
+    {
+      "palavra": "abajur",
+      "dica": "Objeto"
+    },
+    {
+      "palavra": "prateleira",
+      "dica": "Objeto"
+    },
+    {
+      "palavra": "torneira",
+      "dica": "Objeto"
+    },
+    {
+      "palavra": "chuveiro",
+      "dica": "Objeto"
+    },
+    {
+      "palavra": "vasoura",
+      "dica": "Objeto"
+    },
+    {
+      "palavra": "rodo",
+      "dica": "Objeto"
+    },
+    {
+      "palavra": "panela",
+      "dica": "Objeto"
+    },
+    {
+      "palavra": "frigideira",
+      "dica": "Objeto"
+    },
+    {
+      "palavra": "colher",
+      "dica": "Objeto"
+    },
+    {
+      "palavra": "garfo",
+      "dica": "Objeto"
+    },
+    {
+      "palavra": "faca",
+      "dica": "Objeto"
+    },
+    {
+      "palavra": "camiseta",
+      "dica": "Vestuário"
+    },
+    {
+      "palavra": "calça",
+      "dica": "Vestuário"
+    },
+    {
+      "palavra": "bermuda",
+      "dica": "Vestuário"
+    },
+    {
+      "palavra": "saia",
+      "dica": "Vestuário"
+    },
+    {
+      "palavra": "vestido",
+      "dica": "Vestuário"
+    },
+    {
+      "palavra": "jaqueta",
+      "dica": "Vestuário"
+    },
+    {
+      "palavra": "casaco",
+      "dica": "Vestuário"
+    },
+    {
+      "palavra": "cachecol",
+      "dica": "Vestuário"
+    },
+    {
+      "palavra": "luva",
+      "dica": "Vestuário"
+    },
+    {
+      "palavra": "meia",
+      "dica": "Vestuário"
+    },
+    {
+      "palavra": "sapato",
+      "dica": "Vestuário"
+    },
+    {
+      "palavra": "tenis",
+      "dica": "Vestuário"
+    },
+    {
+      "palavra": "sandalia",
+      "dica": "Vestuário"
+    },
+    {
+      "palavra": "chinelo",
+      "dica": "Vestuário"
+    },
+    {
+      "palavra": "chapeu",
+      "dica": "Vestuário"
+    },
+    {
+      "palavra": "bone",
+      "dica": "Vestuário"
+    },
+    {
+      "palavra": "cinto",
+      "dica": "Vestuário"
+    },
+    {
+      "palavra": "gravata",
+      "dica": "Vestuário"
+    },
+    {
+      "palavra": "cabeça",
+      "dica": "Corpo Humano"
+    },
+    {
+      "palavra": "ombro",
+      "dica": "Corpo Humano"
+    },
+    {
+      "palavra": "joelho",
+      "dica": "Corpo Humano"
+    },
+    {
+      "palavra": "cotovelo",
+      "dica": "Corpo Humano"
+    },
+    {
+      "palavra": "calcanhar",
+      "dica": "Corpo Humano"
+    },
+    {
+      "palavra": "sobrancelha",
+      "dica": "Corpo Humano"
+    },
+    {
+      "palavra": "pulmão",
+      "dica": "Corpo Humano"
+    },
+    {
+      "palavra": "coração",
+      "dica": "Corpo Humano"
+    },
+    {
+      "palavra": "estomago",
+      "dica": "Corpo Humano"
+    },
+    {
+      "palavra": "figado",
+      "dica": "Corpo Humano"
+    },
+    {
+      "palavra": "rim",
+      "dica": "Corpo Humano"
+    },
+    {
+      "palavra": "intestino",
+      "dica": "Corpo Humano"
+    },
+    {
+      "palavra": "esqueleto",
+      "dica": "Corpo Humano"
+    },
+    {
+      "palavra": "costela",
+      "dica": "Corpo Humano"
+    },
+    {
+      "palavra": "tornozelo",
+      "dica": "Corpo Humano"
+    },
+    {
+      "palavra": "trator",
+      "dica": "Veículo"
+    },
+    {
+      "palavra": "escavadeira",
+      "dica": "Veículo"
+    },
+    {
+      "palavra": "patinete",
+      "dica": "Veículo"
+    },
+    {
+      "palavra": "skate",
+      "dica": "Veículo"
+    },
+    {
+      "palavra": "carroça",
+      "dica": "Veículo"
+    },
+    {
+      "palavra": "charrete",
+      "dica": "Veículo"
+    },
+    {
+      "palavra": "teleferico",
+      "dica": "Veículo"
+    },
+    {
+      "palavra": "balao",
+      "dica": "Veículo"
+    },
+    {
+      "palavra": "dirigivel",
+      "dica": "Veículo"
+    },
+    {
+      "palavra": "planador",
+      "dica": "Veículo"
+    },
+    {
+      "palavra": "lancha",
+      "dica": "Veículo"
+    },
+    {
+      "palavra": "balsa",
+      "dica": "Veículo"
+    },
+    {
+      "palavra": "transatlantico",
+      "dica": "Veículo"
+    },
+    {
+      "palavra": "medico",
+      "dica": "Profissão"
+    },
+    {
+      "palavra": "enfermeiro",
+      "dica": "Profissão"
+    },
+    {
+      "palavra": "dentista",
+      "dica": "Profissão"
+    },
+    {
+      "palavra": "psicologo",
+      "dica": "Profissão"
+    },
+    {
+      "palavra": "veterinario",
+      "dica": "Profissão"
+    },
+    {
+      "palavra": "arquiteto",
+      "dica": "Profissão"
+    },
+    {
+      "palavra": "pedreiro",
+      "dica": "Profissão"
+    },
+    {
+      "palavra": "encanador",
+      "dica": "Profissão"
+    },
+    {
+      "palavra": "pintor",
+      "dica": "Profissão"
+    },
+    {
+      "palavra": "motorista",
+      "dica": "Profissão"
+    },
+    {
+      "palavra": "piloto",
+      "dica": "Profissão"
+    },
+    {
+      "palavra": "mecanico",
+      "dica": "Profissão"
+    },
+    {
+      "palavra": "padeiro",
+      "dica": "Profissão"
+    },
+    {
+      "palavra": "açougueiro",
+      "dica": "Profissão"
+    },
+    {
+      "palavra": "caixa",
+      "dica": "Profissão"
+    },
+    {
+      "palavra": "vendedor",
+      "dica": "Profissão"
+    },
+    {
+      "palavra": "policial",
+      "dica": "Profissão"
+    },
+    {
+      "palavra": "detetive",
+      "dica": "Profissão"
+    },
+    {
+      "palavra": "juiz",
+      "dica": "Profissão"
+    },
+    {
+      "palavra": "musico",
+      "dica": "Profissão"
+    },
+    {
+      "palavra": "ator",
+      "dica": "Profissão"
+    },
+    {
+      "palavra": "escritor",
+      "dica": "Profissão"
+    },
+    {
+      "palavra": "hiena",
+      "dica": "Animal"
+    },
+    {
+      "palavra": "chacal",
+      "dica": "Animal"
+    },
+    {
+      "palavra": "coiote",
+      "dica": "Animal"
+    },
+    {
+      "palavra": "lobo",
+      "dica": "Animal"
+    },
+    {
+      "palavra": "raposa",
+      "dica": "Animal"
+    },
+    {
+      "palavra": "urso polar",
+      "dica": "Animal"
+    },
+    {
+      "palavra": "urso panda",
+      "dica": "Animal"
+    },
+    {
+      "palavra": "lince",
+      "dica": "Animal"
+    },
+    {
+      "palavra": "guepardo",
+      "dica": "Animal"
+    },
+    {
+      "palavra": "leopardo",
+      "dica": "Animal"
+    },
+    {
+      "palavra": "pantera",
+      "dica": "Animal"
+    },
+    {
+      "palavra": "puma",
+      "dica": "Animal"
+    },
+    {
+      "palavra": "onça",
+      "dica": "Animal"
+    },
+    {
+      "palavra": "alce",
+      "dica": "Animal"
+    },
+    {
+      "palavra": "rena",
+      "dica": "Animal"
+    },
+    {
+      "palavra": "veado",
+      "dica": "Animal"
+    },
+    {
+      "palavra": "gazela",
+      "dica": "Animal"
+    },
+    {
+      "palavra": "antilope",
+      "dica": "Animal"
+    },
+    {
+      "palavra": "bizonte",
+      "dica": "Animal"
+    },
+    {
+      "palavra": "bufalo",
+      "dica": "Animal"
+    },
+    {
+      "palavra": "javali",
+      "dica": "Animal"
+    },
+    {
+      "palavra": "morsa",
+      "dica": "Animal"
+    },
+    {
+      "palavra": "foca",
+      "dica": "Animal"
+    },
+    {
+      "palavra": "leao marinho",
+      "dica": "Animal"
+    },
+    {
+      "palavra": "peixe boi",
+      "dica": "Animal"
+    },
+    {
+      "palavra": "arara",
+      "dica": "Animal"
+    },
+    {
+      "palavra": "tucano",
+      "dica": "Animal"
+    },
+    {
+      "palavra": "canario",
+      "dica": "Animal"
+    },
+    {
+      "palavra": "beija flor",
+      "dica": "Animal"
+    },
+    {
+      "palavra": "pomba",
+      "dica": "Animal"
+    },
+    {
+      "palavra": "corvo",
+      "dica": "Animal"
+    },
+    {
+      "palavra": "avestruz",
+      "dica": "Animal"
+    },
+    {
+      "palavra": "ema",
+      "dica": "Animal"
+    },
+    {
+      "palavra": "pavao",
+      "dica": "Animal"
+    },
+    {
+      "palavra": "cisne",
+      "dica": "Animal"
+    },
+    {
+      "palavra": "gaviao",
+      "dica": "Animal"
+    },
+    {
+      "palavra": "falcao",
+      "dica": "Animal"
+    },
+    {
+      "palavra": "samambaia",
+      "dica": "Planta / Vegetal"
+    },
+    {
+      "palavra": "cacto",
+      "dica": "Planta / Vegetal"
+    },
+    {
+      "palavra": "bambu",
+      "dica": "Planta / Vegetal"
+    },
+    {
+      "palavra": "palmeira",
+      "dica": "Planta / Vegetal"
+    },
+    {
+      "palavra": "pinheiro",
+      "dica": "Planta / Vegetal"
+    },
+    {
+      "palavra": "carvalho",
+      "dica": "Planta / Vegetal"
+    },
+    {
+      "palavra": "salgueiro",
+      "dica": "Planta / Vegetal"
+    },
+    {
+      "palavra": "eucalipto",
+      "dica": "Planta / Vegetal"
+    },
+    {
+      "palavra": "seringueira",
+      "dica": "Planta / Vegetal"
+    },
+    {
+      "palavra": "mandioca",
+      "dica": "Planta / Vegetal"
+    },
+    {
+      "palavra": "batata doce",
+      "dica": "Planta / Vegetal"
+    },
+    {
+      "palavra": "inhame",
+      "dica": "Planta / Vegetal"
+    },
+    {
+      "palavra": "rabanete",
+      "dica": "Planta / Vegetal"
+    },
+    {
+      "palavra": "nabo",
+      "dica": "Planta / Vegetal"
+    },
+    {
+      "palavra": "repolho",
+      "dica": "Planta / Vegetal"
+    },
+    {
+      "palavra": "couve flor",
+      "dica": "Planta / Vegetal"
+    },
+    {
+      "palavra": "alcachofra",
+      "dica": "Planta / Vegetal"
+    },
+    {
+      "palavra": "aspargo",
+      "dica": "Planta / Vegetal"
+    },
+    {
+      "palavra": "salsa",
+      "dica": "Planta / Vegetal"
+    },
+    {
+      "palavra": "cebolinha",
+      "dica": "Planta / Vegetal"
+    },
+    {
+      "palavra": "hortela",
+      "dica": "Planta / Vegetal"
+    },
+    {
+      "palavra": "manjericao",
+      "dica": "Planta / Vegetal"
+    },
+    {
+      "palavra": "alecrim",
+      "dica": "Planta / Vegetal"
+    },
+    {
+      "palavra": "smartphone",
+      "dica": "Tecnologia / Eletrônico"
+    },
+    {
+      "palavra": "tablet",
+      "dica": "Tecnologia / Eletrônico"
+    },
+    {
+      "palavra": "notebook",
+      "dica": "Tecnologia / Eletrônico"
+    },
+    {
+      "palavra": "televisao",
+      "dica": "Tecnologia / Eletrônico"
+    },
+    {
+      "palavra": "videogame",
+      "dica": "Tecnologia / Eletrônico"
+    },
+    {
+      "palavra": "roteador",
+      "dica": "Tecnologia / Eletrônico"
+    },
+    {
+      "palavra": "modem",
+      "dica": "Tecnologia / Eletrônico"
+    },
+    {
+      "palavra": "fone de ouvido",
+      "dica": "Tecnologia / Eletrônico"
+    },
+    {
+      "palavra": "caixa de som",
+      "dica": "Tecnologia / Eletrônico"
+    },
+    {
+      "palavra": "projetor",
+      "dica": "Tecnologia / Eletrônico"
+    },
+    {
+      "palavra": "calculadora",
+      "dica": "Tecnologia / Eletrônico"
+    },
+    {
+      "palavra": "carregador",
+      "dica": "Tecnologia / Eletrônico"
+    },
+    {
+      "palavra": "cabo usb",
+      "dica": "Tecnologia / Eletrônico"
+    },
+    {
+      "palavra": "hamburguer",
+      "dica": "Alimento"
+    },
+    {
+      "palavra": "cachorro quente",
+      "dica": "Alimento"
+    },
+    {
+      "palavra": "sanduiche",
+      "dica": "Alimento"
+    },
+    {
+      "palavra": "macarrao",
+      "dica": "Alimento"
+    },
+    {
+      "palavra": "lasanha",
+      "dica": "Alimento"
+    },
+    {
+      "palavra": "nhoque",
+      "dica": "Alimento"
+    },
+    {
+      "palavra": "sushi",
+      "dica": "Alimento"
+    },
+    {
+      "palavra": "sashimi",
+      "dica": "Alimento"
+    },
+    {
+      "palavra": "churrasco",
+      "dica": "Alimento"
+    },
+    {
+      "palavra": "feijoada",
+      "dica": "Alimento"
+    },
+    {
+      "palavra": "moqueca",
+      "dica": "Alimento"
+    },
+    {
+      "palavra": "acaraje",
+      "dica": "Alimento"
+    },
+    {
+      "palavra": "pao de queijo",
+      "dica": "Alimento"
+    },
+    {
+      "palavra": "coxinha",
+      "dica": "Alimento"
+    },
+    {
+      "palavra": "pastel",
+      "dica": "Alimento"
+    },
+    {
+      "palavra": "empada",
+      "dica": "Alimento"
+    },
+    {
+      "palavra": "brigadeiro",
+      "dica": "Alimento"
+    },
+    {
+      "palavra": "beijinho",
+      "dica": "Alimento"
+    },
+    {
+      "palavra": "pudim",
+      "dica": "Alimento"
+    },
+    {
+      "palavra": "sorvete",
+      "dica": "Alimento"
+    },
+    {
+      "palavra": "gelatina",
+      "dica": "Alimento"
+    },
+    {
+      "palavra": "basquete",
+      "dica": "Esporte"
+    },
+    {
+      "palavra": "volei",
+      "dica": "Esporte"
+    },
+    {
+      "palavra": "handebol",
+      "dica": "Esporte"
+    },
+    {
+      "palavra": "tenis de mesa",
+      "dica": "Esporte"
+    },
+    {
+      "palavra": "badminton",
+      "dica": "Esporte"
+    },
+    {
+      "palavra": "natacao",
+      "dica": "Esporte"
+    },
+    {
+      "palavra": "atletismo",
+      "dica": "Esporte"
+    },
+    {
+      "palavra": "ginastica",
+      "dica": "Esporte"
+    },
+    {
+      "palavra": "levantamento de peso",
+      "dica": "Esporte"
+    },
+    {
+      "palavra": "boxe",
+      "dica": "Esporte"
+    },
+    {
+      "palavra": "judo",
+      "dica": "Esporte"
+    },
+    {
+      "palavra": "karate",
+      "dica": "Esporte"
+    },
+    {
+      "palavra": "taekwondo",
+      "dica": "Esporte"
+    },
+    {
+      "palavra": "esgrima",
+      "dica": "Esporte"
+    },
+    {
+      "palavra": "ciclismo",
+      "dica": "Esporte"
+    },
+    {
+      "palavra": "hipismo",
+      "dica": "Esporte"
+    },
+    {
+      "palavra": "surfe",
+      "dica": "Esporte"
     }
   ]
 }
