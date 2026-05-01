@@ -155,6 +155,12 @@ async function NazuninhaBotExec(nazu, info, store, messagesCache, rentalExpirati
     if (await processAccessControl(ctx)) return;
     if (await processPartnership(ctx)) return;
 
+    // 5.5 Auto-resposta de Prefixo
+    if (!ctx.isCmd && ctx.body.trim().toLowerCase() === 'prefixo') {
+      await ctx.reply(`ℹ️ O meu prefixo atual é: *${ctx.groupPrefix}*\n\nPara ver meus comandos, digite: *${ctx.groupPrefix}menu*`);
+      return;
+    }
+
     // 6. Comandos personalizados e sem prefixo
     if (await handleCustomCommand(ctx)) return;
 
