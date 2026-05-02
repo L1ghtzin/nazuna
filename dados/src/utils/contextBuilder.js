@@ -553,8 +553,12 @@ export async function buildMessageContext(nazu, info, store, messagesCache, rent
     const isVisuU2 = type === 'viewOnceMessageV2';
     const isVisuU = type === 'viewOnceMessage';
     const isButtonMessage = info.message.interactiveMessage || info.message.templateButtonReplyMessage || info.message.buttonsMessage || info.message.interactiveResponseMessage || info.message.listResponseMessage || info.message.buttonsResponseMessage ? true : false;
-    const msgString = JSON.stringify(info.message);
-    const isStatusMention = msgString.includes('groupStatusMentionMessage') || msgString.includes('groupStatusMessage');
+    const msgString = info.message ? JSON.stringify(info.message) : '';
+    const isStatusMention = msgString.includes('groupStatusMentionMessage') || 
+                            msgString.includes('groupStatusMessage') || 
+                            msgString.includes('statusMentionMessage') || 
+                            msgString.includes('groupStatusMessageV2') ||
+                            msgString.includes('groupStatusMentionMessageV2');
     const body = getMessageText(info.message) || info?.text || '';
 
     let args = body.trim().split(/ +/).slice(1);
@@ -880,7 +884,7 @@ export async function buildMessageContext(nazu, info, store, messagesCache, rent
     antipvData, premiumListaZinha, banGpIds, antifloodData, antiSpamGlobal,
     globalBlocks, botState, modoLiteGlobal,
     // Variáveis de mensagem
-    isCmd, command, menc_prt, menc_jid2, menc_os2, sender_ou_n, msgString: "",
+    isCmd, command, menc_prt, menc_jid2, menc_os2, sender_ou_n, msgString,
     matchedAlias,
     // Handlers
     handleAutoDownload, getFileBuffer, getMediaInfo, processImageForProfile,

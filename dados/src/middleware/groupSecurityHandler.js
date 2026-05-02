@@ -47,10 +47,10 @@ export async function processGroupSecurity(context) {
       if (!isUserWhitelisted(sender, 'antistatus')) {
         if (isBotAdmin) {
           await nazu.groupParticipantsUpdate(from, [sender], 'remove');
-          await nazu.sendMessage(from, { delete: { remoteJid: from, fromMe: false, id: info.key.id, participant: sender } });
+          await nazu.sendMessage(from, { delete: info.key });
           await reply(`🚫 @${getUserName(sender)}, status não são permitidos neste grupo. Você foi removido.`, { mentions: [sender] });
         } else {
-          await nazu.sendMessage(from, { delete: { remoteJid: from, fromMe: false, id: info.key.id, participant: sender } });
+          await nazu.sendMessage(from, { delete: info.key });
           await reply(`🚫 Atenção, @${getUserName(sender)}! Status não são permitidos neste grupo. Não consigo remover você, mas evite compartilhar status aqui.`, { mentions: [sender] });
         }
       }
