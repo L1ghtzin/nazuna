@@ -16,6 +16,8 @@ export default {
 
     // --- UPDATES ---
     if (['updates', 'atualizar', 'update', 'atualizarbot'].includes(cmd)) {
+      if (!isOwner) return reply("🚫 Apenas o Dono principal pode atualizar o bot!");
+
       if (!q || q.toLowerCase() !== 'sim') {
         const avisoMsg = `⚠️ *ATENÇÃO - ATUALIZAÇÃO DO BOT* ⚠️\n\n` +
           `┏━━━━━━━━━━━━━━━━━━━━━\n` +
@@ -29,7 +31,7 @@ export default {
           `┃    *PRESERVADO*\n` +
           `┃\n` +
           `┃ ✅ Configurações (config.json)\n` +
-          `┃    serão *MANTIDAS*\n` +
+          `┃    *MANTIDAS*\n` +
           `┃\n` +
           `┗━━━━━━━━━━━━━━━━━━━━━\n\n` +
           `Para confirmar e atualizar, digite:\n` +
@@ -37,26 +39,70 @@ export default {
         return reply(avisoMsg);
       }
 
-      await reply('⏳ Baixando atualizações do GitHub...');
-      
       try {
-        const { exec } = await import('child_process');
-        exec('git pull', (err, stdout, stderr) => {
-          if (err) {
-            console.error('Erro na atualização:', err);
-            return reply(`❌ Erro ao atualizar:\n${err.message}`);
-          }
-          if (stdout.includes('Already up to date.') || stdout.includes('Already up-to-date.')) {
-            return reply('✨ *O bot já está na versão mais recente!*');
-          }
-          reply('✅ *Atualização concluída com sucesso!*\n\n🔄 *Reiniciando o bot para aplicar as mudanças...*');
-          setTimeout(() => process.exit(0), 2000);
+        const { spawn } = await import('child_process');
+        const pathz = await import('path');
+        const fs = await import('fs');
+        
+        const updateScriptPath = pathz.join(process.cwd(), 'dados', 'src', '.scripts', 'update.js');
+
+        if (!fs.existsSync(updateScriptPath)) {
+          return reply("❌ Script de atualização não encontrado!\n\n📂 Caminho esperado: dados/src/.scripts/update.js");
+        }
+
+        await reply("🚀 *INICIANDO ATUALIZAÇÃO...*\n\n🔄 Iniciando script de atualização e monitorando progresso...");
+
+        const updateProcess = spawn('node', [updateScriptPath], {
+          cwd: process.cwd(),
+          stdio: ['ignore', 'pipe', 'pipe'],
+          detached: false
         });
+
+        const messagesSent = new Set();
+        const updateMessages = {
+          'Verificando requisitos': '🔍 Verificando requisitos do sistema...',
+          'Criando backup': '📁 Criando backup dos arquivos importantes...',
+          'Backup salvo': '✅ Backup criado com sucesso!',
+          'Baixando a versão': '📥 Baixando atualização do GitHub...',
+          'Download concluído': '✅ Download concluído!\n\n🧹 Limpando arquivos antigos...',
+          'Limpeza concluída': '✅ Limpeza concluída!\n\n🚀 Aplicando atualização...',
+          'Atualização aplicada': '✅ Atualização aplicada!\n\n📂 Restaurando dados preservados...',
+          'Backup restaurado': '✅ Dados restaurados!\n\n📦 Instalando dependências...',
+          'Instalando dependências': '📦 Instalando/verificando dependências...\n⏳ Isso pode levar alguns minutos...',
+          'Dependências instaladas': '✅ Dependências instaladas com sucesso!',
+          'Atualização concluída': '🎉 *ATUALIZAÇÃO CONCLUÍDA COM SUCESSO!*\n\n🔄 *O bot será reiniciado agora...*'
+        };
+
+        updateProcess.stdout.on('data', (data) => {
+          const str = data.toString();
+          for (const [trigger, msg] of Object.entries(updateMessages)) {
+            if (str.includes(trigger) && !messagesSent.has(trigger)) {
+              messagesSent.add(trigger);
+              reply(msg).catch(() => {});
+            }
+          }
+        });
+
+        updateProcess.stderr.on('data', (data) => {
+          const str = data.toString();
+          console.error(`[UPDATE ERROR]: ${str}`);
+        });
+
+        updateProcess.on('close', (code) => {
+          if (code === 0) {
+            setTimeout(() => process.exit(0), 3000);
+          } else {
+            reply(`❌ O processo de atualização terminou com erro (Código: ${code}). Verifique o console para mais detalhes.`);
+          }
+        });
+
       } catch (e) {
-        return reply('❌ Erro interno ao tentar atualizar.');
+        console.error('Erro ao iniciar spawn de atualização:', e);
+        return reply(`❌ Erro interno ao tentar atualizar: ${e.message}`);
       }
       return;
     }
+
 
     // --- SUBDONOS ---
     if (['addsubdono', 'remsubdono', 'rmsubdono', 'delsubdono', 'listasubdonos', 'listsubdonos'].includes(cmd)) {
