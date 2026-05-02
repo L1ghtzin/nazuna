@@ -5,7 +5,7 @@ export default {
   description: "Gerenciamento de aluguel de grupos",
   commands: ["addaluguel", "adddiasaluguel", "aluguelist", "cancelaraluguel", "dayfree", "deletaraluguel", "detalhesaluguel", "estenderaluguel", "extenderrental", "gerarcod", "gerarcodigobr", "geraraluguel", "infoaluguel", "limparaluguel", "listaaluguel", "listaluguel", "listaralugueis", "listaraluguel", "listrentals", "modoaluguel", "removeraluguel", "statusaluguel", "veralugueis"],
   handle: async ({ 
-    nazu, from, info, command, args, reply, q, isOwner, isGroup, prefix,
+    nazu, from, info, command, args, reply, q, isOwner, isGroup, prefix, isOwnerOrSub,
     loadRentalData, saveRentalData, setGroupRental, extendGroupRental,
     setRentalMode, isRentalModeActive, getGroupRentalStatus,
     generateActivationCode, validateActivationCode, useActivationCode,
