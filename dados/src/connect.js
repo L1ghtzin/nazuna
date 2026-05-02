@@ -451,16 +451,7 @@ async function createBotSocket(authDir) {
         console.error('❌ Erro ao processar mensagem de inicialização:', msgError.message);
     }
 
-    // Inicializa sub-bots automaticamente
-    try {
-        const subBotManagerModule = await import('./utils/subBotManager.js');
-        const subBotManager = subBotManagerModule.default ?? subBotManagerModule;
-        setTimeout(async () => {
-        await subBotManager.initializeAllSubBots();
-        }, 5000);
-    } catch (error) {
-        console.error('❌ Erro ao inicializar sub-bots:', error.message);
-    }
+
     
     console.log(`✅ Bot ${nomebot} iniciado com sucesso! Prefixo: ${prefixo} | Dono: ${nomedono}`);
     }
@@ -628,15 +619,7 @@ async function gracefulShutdown(signal) {
     }, 15000);
     
     try {
-    // Desconecta sub-bots
-    try {
-    const subBotManagerModule = await import('./utils/subBotManager.js');
-    const subBotManager = subBotManagerModule.default ?? subBotManagerModule;
-    await subBotManager.disconnectAllSubBots();
-    console.log('✅ Sub-bots desconectados');
-    } catch (error) {
-    console.error('❌ Erro ao desconectar sub-bots:', error.message);
-    }
+
     
     // Limpa recursos
     if (cacheCleanupInterval) {

@@ -13,7 +13,7 @@ async function menuDono(prefix, botName = "MeuBot", userName = "Usuário", {
     commandLimitingMenuTitle = "🚫 LIMITAÇÃO DE COMANDOS",
     userManagementMenuTitle = "👥 GERENCIAMENTO DE USUÁRIOS",
     rentalSystemMenuTitle = "💰 SISTEMA DE ALUGUEL",
-    subBotsMenuTitle = "🤖 GERENCIAMENTO DE SUB-BOTS",
+
     vipSystemMenuTitle = "💎 SISTEMA VIP/PREMIUM",
     botControlMenuTitle = "⚡ CONTROLE & MANUTENÇÃO",
     monitoringMenuTitle = "📊 MONITORAMENTO & ANÁLISE",
@@ -133,16 +133,6 @@ ${middleBorder}${menuItemIcon}${prefix}limparaluguel
 ${middleBorder}${menuItemIcon}${prefix}dayfree
 ${middleBorder}${menuItemIcon}${prefix}setdiv
 ${middleBorder}${menuItemIcon}${prefix}divulgar
-${bottomBorder}
-
-${menuTopBorder}${separatorIcon} *${subBotsMenuTitle}*
-${middleBorder}
-${middleBorder}${menuItemIcon}${prefix}addsubbot
-${middleBorder}${menuItemIcon}${prefix}removesubbot
-${middleBorder}${menuItemIcon}${prefix}listarsubbots
-${middleBorder}${menuItemIcon}${prefix}conectarsubbot
-${middleBorder}
-${middleBorder}🔑 Sub-bot use: ${prefix}gerarcodigo
 ${bottomBorder}
 
 ${menuTopBorder}${separatorIcon} *${vipSystemMenuTitle}*

@@ -1,7 +1,7 @@
 export default {
   name: "system_management",
-  description: "Gerenciamento avançado do sistema, sub-bots, subdonos e limites",
-  commands: ["addblackglobal", "addsubbot", "addsubdono", "atualizar", "atualizarbot", "cmddeslimitar", "cmdlimit", "cmdlimitar", "cmdlimites", "cmdlimits", "cmdremovelimit", "codigosubbot", "conectarsubbot", "delsubbot", "delsubdono", "gerarcod", "gerarcodigo", "gerarcodigobr", "limitarcmd", "limparaluguel", "listarsubbots", "listasubdonos", "listblackglobal", "listcmdlimites", "listsubbots", "listsubdonos", "modoaluguel", "pairingcode", "reconnectsubbot", "removesubbot", "remsubdono", "rmblackglobal", "rmcmdlimit", "rmsubbot", "rmsubdono", "subbots", "update", "updates", "viewmsg"],
+  description: "Gerenciamento avançado do sistema, subdonos e limites",
+  commands: ["addblackglobal", "addsubdono", "atualizar", "atualizarbot", "cmddeslimitar", "cmdlimit", "cmdlimitar", "cmdlimites", "cmdlimits", "cmdremovelimit", "delsubdono", "limitarcmd", "limparaluguel", "listasubdonos", "listblackglobal", "listcmdlimites", "listsubdonos", "modoaluguel", "remsubdono", "rmblackglobal", "rmcmdlimit", "rmsubdono", "update", "updates", "viewmsg"],
   handle: async ({ 
     nazu, from, info, command, reply, q, args, isOwner, isSubOwner, isOwnerOrSub, prefix, sender, numerodono, config,
     addSubdono, removeSubdono, getSubdonos, addGlobalBlacklist, removeGlobalBlacklist, getGlobalBlacklist,
@@ -78,23 +78,6 @@ export default {
       }
     }
 
-    // --- SUBBOTS ---
-    if (cmd.includes('subbot') || ['pairingcode', 'gerarcodigo', 'gerarcod'].includes(cmd)) {
-      const subBotManager = await import('../../utils/subBotManager.js');
-      if (cmd === 'addsubbot') {
-        const phone = q.trim().replace(/\D/g, '');
-        const res = await subBotManager.addSubBot(phone, numerodono, phone + '@s.whatsapp.net');
-        return reply(res.message);
-      }
-      if (cmd.includes('list') || cmd === 'subbots') {
-        const res = subBotManager.listSubBots();
-        return reply(`🤖 *Sub-Bots:*\n\n` + res.subbots.map(b => `📱 ${b.phoneNumber} (${b.status})`).join('\n'));
-      }
-      if (cmd === 'gerarcodigo' || cmd === 'pairingcode' || cmd === 'gerarcod') {
-        const res = await subBotManager.generatePairingCodeForSubBot(sender);
-        return reply(res.message);
-      }
-    }
 
     // --- CMD LIMIT ---
     if (cmd.includes('cmdlimit')) {
