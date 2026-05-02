@@ -9,7 +9,7 @@ export const MESSAGES = {
     noText: "Cadê o texto? 💔"
   },
   permission: {
-    ownerOnly: "🚫 Este comando é exclusivo para o meu dono!",
+    ownerOnly: "🚫 Este comando é exclusivo do dono!",
     adminOnly: "Comando restrito a Administradores ou Moderadores com permissão. 💔",
     botAdminOnly: "Eu preciso ser adm 💔",
     userAdminOnly: "Você precisa ser adm 💔",

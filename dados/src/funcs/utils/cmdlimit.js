@@ -7,7 +7,7 @@ import {
 } from '../../utils/database.js';
 
 async function cmdLimitAdd(nazu, from, q, reply, prefix, isOwnerOrSub) {
-  if (!isOwnerOrSub) return reply("🚫 Apenas o Dono e Subdonos podem limitar comandos!");
+  if (!isOwnerOrSub) return reply("🚫 Apenas o Dono pode limitar comandos!");
   
   const args = q.split(' ');
   if (args.length < 3) {
@@ -23,7 +23,7 @@ async function cmdLimitAdd(nazu, from, q, reply, prefix, isOwnerOrSub) {
 }
 
 async function cmdLimitRemove(nazu, from, q, reply, prefix, isOwnerOrSub) {
-  if (!isOwnerOrSub) return reply("🚫 Apenas o Dono e Subdonos podem remover limites de comandos!");
+  if (!isOwnerOrSub) return reply("🚫 Apenas o Dono pode remover limites de comandos!");
   
   if (!q) {
     return reply(`❌ Especifique o comando!\n\nUse: ${prefix}cmddeslimitar <comando>\n\nExemplo: ${prefix}cmddeslimitar sticker`);
@@ -34,7 +34,7 @@ async function cmdLimitRemove(nazu, from, q, reply, prefix, isOwnerOrSub) {
 }
 
 async function cmdLimitList(nazu, from, q, reply, prefix, isOwnerOrSub) {
-  if (!isOwnerOrSub) return reply("🚫 Apenas o Dono e Subdonos podem ver os limites!");
+  if (!isOwnerOrSub) return reply("🚫 Apenas o Dono pode ver os limites!");
   
   const limits = getCommandLimits();
   const commandNames = Object.keys(limits);

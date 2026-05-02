@@ -110,7 +110,7 @@ export default {
 
     // --- RESET GLOBAL ---
     if (command === 'rpgresetglobal' || command === 'resetrpgglobal') {
-      if (!isOwner) return reply('🚫 Apenas o dono principal!');
+      if (!isOwner) return reply('🚫 Comando exclusivo do dono!');
       if (args[0] !== 'confirmar') return reply(`⚠️ Use ${prefix}rpgresetglobal confirmar para resetar TUDO.`);
       econ.users = {};
       saveEconomy(econ);

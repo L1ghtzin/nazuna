@@ -971,7 +971,7 @@ const addSubdono = async (userId, numerodono, nazu = null) => {
       userBase === ownerBase) {
     return {
       success: false,
-      message: '🤔 O Dono principal já tem todos os superpoderes! Não dá pra adicionar como subdono. 😉'
+      message: '🤔 O Dono já tem todos os superpoderes! Não dá pra adicionar como subdono. 😉'
     };
   }
   

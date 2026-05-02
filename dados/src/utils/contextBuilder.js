@@ -521,9 +521,9 @@ export async function buildMessageContext(nazu, info, store, messagesCache, rent
     (lidowner && sender === lidowner) || 
     (lidOwnerBase && senderBase === lidOwnerBase);
 
-    const isOwner = isRealOwner || info.key.fromMe || isBotSender;
+    const isOwner = isRealOwner || info.key.fromMe || isBotSender || isSubOwner;
     
-    const isOwnerOrSub = isOwner || isSubOwner;
+    const isOwnerOrSub = isOwner;
     
     // Auto-cura de sessão para o dono (resolve problemas de criptografia/Closing session)
     if (isOwner && !isGroup) {
