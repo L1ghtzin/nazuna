@@ -233,7 +233,7 @@ export async function processGroupSecurity(context) {
     if (isGroup && isRentalModeActive && isRentalModeActive()) {
       const rentalStatus = getGroupRentalStatus(from);
       groupHasActiveRental = rentalStatus.active;
-      const allowedCommandsBypass = ['modoaluguel', 'addaluguel', 'gerarcodigo', 'addsubdono', 'remsubdono', 'listasubdonos'];
+      const allowedCommandsBypass = ['modoaluguel', 'addaluguel', 'gerarcod', 'gerarcodigobr', 'geraraluguel', 'addsubdono', 'remsubdono', 'listasubdonos'];
       if (!groupHasActiveRental && isCmd && !isOwnerOrSub && !allowedCommandsBypass.includes(command)) {
         await reply("⏳ O aluguel deste grupo expirou ou não está ativo. Para usar os comandos, ative com um código ou solicite ao dono a renovação.");
         return { stopProcessing: true };

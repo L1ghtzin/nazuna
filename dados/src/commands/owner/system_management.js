@@ -1,7 +1,7 @@
 export default {
   name: "system_management",
   description: "Gerenciamento avançado do sistema, subdonos e limites",
-  commands: ["addblackglobal", "addsubdono", "atualizar", "atualizarbot", "cmddeslimitar", "cmdlimit", "cmdlimitar", "cmdlimites", "cmdlimits", "cmdremovelimit", "delsubdono", "limitarcmd", "limparaluguel", "listasubdonos", "listblackglobal", "listcmdlimites", "listsubdonos", "modoaluguel", "remsubdono", "rmblackglobal", "rmcmdlimit", "rmsubdono", "update", "updates", "viewmsg"],
+  commands: ["addblackglobal", "addsubdono", "atualizar", "atualizarbot", "cmddeslimitar", "cmdlimit", "cmdlimitar", "cmdlimites", "cmdlimits", "cmdremovelimit", "delsubdono", "limitarcmd", "listasubdonos", "listblackglobal", "listcmdlimites", "listsubdonos", "remsubdono", "rmblackglobal", "rmcmdlimit", "rmsubdono", "update", "updates", "viewmsg"],
   handle: async ({ 
     nazu, from, info, command, reply, q, args, isOwner, isSubOwner, isOwnerOrSub, prefix, sender, numerodono, config,
     addSubdono, removeSubdono, getSubdonos, addGlobalBlacklist, removeGlobalBlacklist, getGlobalBlacklist,
@@ -10,8 +10,8 @@ export default {
   }) => {
     const cmd = command.toLowerCase();
 
-    if (!isOwner && !['listasubdonos', 'listsubdonos', 'cmdlimites', 'cmdlimits', 'listcmdlimites'].includes(cmd)) {
-       if (!isOwnerOrSub) return reply('🚫 Apenas o dono pode usar este comando.');
+    if (!isOwnerOrSub) {
+       return reply('🚫 Apenas o dono ou subdonos podem usar este comando.');
     }
 
     // --- UPDATES ---

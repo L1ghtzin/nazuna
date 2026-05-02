@@ -100,8 +100,8 @@ export async function execDynamicCommand(commandName, paramsHandler) {
     const { isOwner, isGroupAdmin, isBotAdmin, reply, isGroup } = paramsHandler;
     
     // Verificações de permissão com base na pasta (tipo) do comando
-    if (type === 'owner' && !isOwner) {
-        await reply("🚫 Este comando é apenas para o dono do bot!");
+    if (type === 'owner' && !isOwner && !paramsHandler.isOwnerOrSub) {
+        await reply("🚫 Este comando é apenas para o dono ou subdonos!");
         return true; // Retorna true para indicar que já processou
     }
     

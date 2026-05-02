@@ -3,41 +3,81 @@ import { PREFIX } from "../../config.js";
 export default {
   name: "rental_system",
   description: "Gerenciamento de aluguel de grupos",
-  commands: ["addaluguel", "adddiasaluguel", "aluguelist", "cancelaraluguel", "dayfree", "deletaraluguel", "detalhesaluguel", "estenderaluguel", "extenderrental", "infoaluguel", "listaaluguel", "listaluguel", "listaralugueis", "listaraluguel", "listrentals", "removeraluguel", "statusaluguel", "veralugueis"],
+  commands: ["addaluguel", "adddiasaluguel", "aluguelist", "cancelaraluguel", "dayfree", "deletaraluguel", "detalhesaluguel", "estenderaluguel", "extenderrental", "gerarcod", "gerarcodigobr", "geraraluguel", "infoaluguel", "limparaluguel", "listaaluguel", "listaluguel", "listaralugueis", "listaraluguel", "listrentals", "modoaluguel", "removeraluguel", "statusaluguel", "veralugueis"],
   handle: async ({ 
     nazu, from, info, command, args, reply, q, isOwner, isGroup, prefix,
     loadRentalData, saveRentalData, setGroupRental, extendGroupRental,
+    setRentalMode, isRentalModeActive, getGroupRentalStatus,
+    generateActivationCode, validateActivationCode, useActivationCode,
     getCachedGroupMetadata, OWNER_ONLY_MESSAGE, optimizer,
-    MESSAGES
+    MESSAGES, deleteChatByLastMessage
   }) => {
-    if (!isOwner) return reply(OWNER_ONLY_MESSAGE);
+    if (!isOwnerOrSub) return reply("🚫 Apenas o dono ou subdonos podem gerenciar o sistema de aluguel!");
 
     const cmd = command.toLowerCase();
 
     // 📊 LISTAGEM
     if (['listaralugueis', 'aluguelist', 'listaluguel', 'listaaluguel', 'listaraluguel', 'veralugueis', 'listrentals', 'listarentals', 'aluguel.lista', 'aluguel.ver'].includes(cmd)) {
       const data = loadRentalData();
-      const groups = Object.entries(data.groups || {});
-      if (!groups.length) return reply("📪 Sem aluguéis registrados.");
+      const groupIds = Object.keys(data.groups || {});
+      if (!groupIds.length) return reply("📪 Sem aluguéis registrados.");
 
       let text = `╭━━━━⊱ 📋 *LISTA DE ALUGUÉIS* ⊱━━━━╮\n`;
       text += `│\n`;
-      
-      for (let i = 0; i < groups.length; i++) {
-        const [id, info] = groups[i];
-        const meta = await getCachedGroupMetadata(id).catch(() => ({ subject: 'Grupo Desconhecido' }));
-        const status = (info.expiresAt === 'permanent' || new Date(info.expiresAt) > new Date()) ? '✅' : '❌';
-        const exp = info.expiresAt === 'permanent' ? '∞ Permanente' : new Date(info.expiresAt).toLocaleDateString('pt-BR');
-        
-        text += `│ ${i + 1}. ${status} *${meta.subject}*\n`;
-        text += `│    🆔 ${id}\n`;
-        text += `│    ⏳ Expira: ${exp}\n`;
-        if (i < groups.length - 1) text += `│\n`;
-      }
-      
+      text += `│ 📊 Total de grupos: ${groupIds.length}\n`;
       text += `│\n`;
       text += `╰━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╯\n\n`;
-      text += `💡 Total de ${groups.length} grupos registrados.`;
+
+      const now = Date.now();
+      let activeCount = 0;
+      let expiredCount = 0;
+      let permanentCount = 0;
+
+      for (const id of groupIds) {
+        const info = data.groups[id];
+        const meta = await getCachedGroupMetadata(id).catch(() => ({ subject: 'Grupo Desconhecido' }));
+        const isPermanent = info.expiresAt === 'permanent';
+        const isExpired = !isPermanent && new Date(info.expiresAt) < now;
+
+        if (isPermanent) permanentCount++;
+        else if (isExpired) expiredCount++;
+        else activeCount++;
+
+        let statusIcon = isPermanent ? '♾️' : (isExpired ? '❌' : '✅');
+        let statusText = isPermanent ? 'PERMANENTE' : (isExpired ? 'EXPIRADO' : 'ATIVO');
+
+        text += `${statusIcon} *${meta.subject}*\n`;
+        text += `┌─────────────────\n`;
+        text += `│ 📱 ID: ${id}\n`;
+        text += `│ 📅 Status: ${statusText}\n`;
+
+        if (!isPermanent) {
+          const expDate = new Date(info.expiresAt);
+          const daysLeft = Math.ceil((expDate - now) / (1000 * 60 * 60 * 24));
+          text += `│ ⏰ Expira em: ${expDate.toLocaleDateString('pt-BR')}\n`;
+          text += `│ ⏳ Dias restantes: ${daysLeft > 0 ? daysLeft : 0}\n`;
+        }
+
+        if (info.addedAt) {
+          text += `│ 📆 Adicionado em: ${new Date(info.addedAt).toLocaleDateString('pt-BR')}\n`;
+        }
+
+        text += `└─────────────────\n\n`;
+      }
+
+      text += `╭━━━━⊱ 📊 *ESTATÍSTICAS* ⊱━━━━╮\n`;
+      text += `│\n`;
+      text += `│ ✅ Ativos: ${activeCount}\n`;
+      text += `│ ♾️ Permanentes: ${permanentCount}\n`;
+      text += `│ ❌ Expirados: ${expiredCount}\n`;
+      text += `│ 📦 Total: ${groupIds.length}\n`;
+      text += `│\n`;
+      text += `╰━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╯\n\n`;
+      text += `💡 *Comandos disponíveis:*\n`;
+      text += `• ${prefix}removeraluguel <id>\n`;
+      text += `• ${prefix}estenderaluguel <id> <dias>\n`;
+      text += `• ${prefix}infoaluguel <id>`;
+
       return reply(text);
     }
 
@@ -156,8 +196,9 @@ export default {
       return reply(result.message);
     }
 
-    // 🎁 DAYFREE (Adicionar dias para TODOS os grupos)
-    if (cmd === 'dayfree') {
+    // 🎁 DAYFREE / ADDDIASALUGUEL (Adicionar dias para TODOS os grupos)
+    if (['dayfree', 'adddiasaluguel'].includes(cmd)) {
+      if (!q) return reply(`💡 *Uso:* ${prefix}${cmd} <dias> [motivo opcional]\nEx: ${prefix}${cmd} 7 Manutenção compensatória`);
       const parts = q.trim().split(' ');
       const extraDays = parseInt(parts[0]);
       if (isNaN(extraDays) || extraDays <= 0) return reply('O argumento deve ser um número positivo de dias.');
@@ -170,35 +211,50 @@ export default {
       await reply(`🔄 Processando bônus de ${extraDays} dias para ${groupIds.length} grupos...`);
 
       let successCount = 0;
+      let failCount = 0;
+      let summary = `📊 *RESUMO DA EXTENSÃO DE ALUGUEL*\n\n`;
+
       for (const groupId of groupIds) {
         const res = extendGroupRental(groupId, extraDays);
         if (res.success) {
           successCount++;
           const meta = await getCachedGroupMetadata(groupId).catch(() => ({ subject: 'Grupo' }));
-          const msg = `🎉 *BÔNUS DE ALUGUEL!* 🎉\n\nOlá, *${meta.subject}*!\nForam adicionados *${extraDays} dias* extras de aluguel para este grupo.\n\n📝 *Motivo:* ${motivo}\n✨ Aproveitem!`;
+          summary += `✅ ${meta.subject}: +${extraDays} dias\n`;
+          
+          const msg = `🎉 *BÔNUS DE ALUGUEL!* 🎉\n\nOlá, *${meta.subject}*!\nForam adicionados *${extraDays} dias* extras de aluguel para este grupo.\n\n📅 *Nova Expiração:* ${new Date(res.expiresAt).toLocaleDateString('pt-BR')}\n📝 *Motivo:* ${motivo}\n✨ Aproveitem!`;
           nazu.sendMessage(groupId, { text: msg }).catch(() => {});
+        } else {
+          failCount++;
+          summary += `❌ ${groupId}: ${res.message}\n`;
         }
       }
-      return reply(`✅ Sucesso! Foram adicionados ${extraDays} dias em ${successCount} grupos.`);
+      summary += `\nTotal: ${successCount} sucessos | ${failCount} falhas`;
+      return reply(summary);
     }
 
     // 🔘 MODO ALUGUEL (Toggle Global)
     if (cmd === 'modoaluguel') {
       const action = q?.trim().toLowerCase();
       if (action === 'on' || action === 'ativar') {
-        setRentalMode(true);
-        return reply("✅ *MODO ALUGUEL ATIVADO!*\nO bot agora só responderá em grupos com aluguel ativo.");
+        if (setRentalMode(true)) {
+            return reply("✅ *MODO ALUGUEL ATIVADO!*\nO bot agora só responderá em grupos com aluguel ativo.");
+        } else {
+            return reply("❌ Erro ao ativar o modo de aluguel.");
+        }
       } else if (action === 'off' || action === 'desativar') {
-        setRentalMode(false);
-        return reply("✅ *MODO ALUGUEL DESATIVADO!*\nO bot responderá em todos os grupos permitidos.");
+        if (setRentalMode(false)) {
+            return reply("✅ *MODO ALUGUEL DESATIVADO!*\nO bot responderá em todos os grupos permitidos.");
+        } else {
+            return reply("❌ Erro ao desativar o modo de aluguel.");
+        }
       } else {
         const current = isRentalModeActive() ? 'ATIVADO' : 'DESATIVADO';
-        return reply(`💡 *Status atual:* ${current}\n\nUso: ${prefix}${cmd} on|off`);
+        return reply(`🤔 *Uso:* ${prefix}${cmd} on|off\nStatus atual: *${current}*`);
       }
     }
 
-    // 🔑 GERAR CÓDIGO
-    if (['gerarcodigo', 'gerarcod', 'gerarcodigobr', 'geraraluguel'].includes(cmd)) {
+    // 🔑 GERAR CÓDIGO (ALUGUEL)
+    if (['gerarcod', 'gerarcodigobr', 'geraraluguel'].includes(cmd)) {
       const parts = q.trim().split(' ');
       const durationArg = parts[0]?.toLowerCase();
       const targetGroupArg = parts[1];
