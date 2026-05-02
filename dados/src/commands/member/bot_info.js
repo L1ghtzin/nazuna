@@ -72,7 +72,8 @@ export default {
   commands: ["infobot", "statusbot", "botinfo", "infoserver", "meustatus", "topcmd", "topcmds", "comandosmaisusados", "cmdinfo", "comandoinfo", "statusgp", "dadosgp", "horariomundial"],
   handle: async ({ 
     nazu, from, reply, formatUptime, getTotalCommands, pushname, nomebot, botVersion,
-    isGroup, groupMetadata, sender, command, isOwner, info, MESSAGES
+    isGroup, groupMetadata, sender, command, isOwner, info, MESSAGES,
+    botState, isRentalModeActive, premiumListaZinha, globalBlocks, nomedono
   }) => {
     const cmd = command.toLowerCase();
 

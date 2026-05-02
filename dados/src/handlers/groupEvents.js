@@ -16,8 +16,12 @@ async function loadGroupSettings(groupId) {
     const groupFilePath = path.join(DATABASE_DIR, 'grupos', `${groupId}.json`);
     try {
         return await performanceOptimizer.getCachedFile(groupFilePath, 30000, async (filePath) => {
-            const data = await fs.readFile(filePath, 'utf-8');
-            return JSON.parse(data);
+            try {
+                const data = await fs.readFile(filePath, 'utf-8');
+                return JSON.parse(data);
+            } catch (err) {
+                return {};
+            }
         });
     } catch (e) {
         console.error(`❌ Erro ao ler configurações do grupo ${groupId}: ${e.message}`);
@@ -28,8 +32,12 @@ async function loadGroupSettings(groupId) {
 async function loadGlobalBlacklist() {
     try {
         return await performanceOptimizer.getCachedFile(GLOBAL_BLACKLIST_PATH, 30000, async (filePath) => {
-            const data = await fs.readFile(filePath, 'utf-8');
-            return JSON.parse(data).users || {};
+            try {
+                const data = await fs.readFile(filePath, 'utf-8');
+                return JSON.parse(data).users || {};
+            } catch (err) {
+                return {};
+            }
         });
     } catch (e) {
         console.error(`❌ Erro ao ler blacklist global: ${e.message}`);

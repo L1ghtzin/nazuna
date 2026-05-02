@@ -8,7 +8,7 @@ export default {
     nazu, from, info, command, args, reply, prefix, pushname, sender, q,
     isGroup, isGroupAdmin, isBotAdmin, isOwner, AllgroupMembers, groupData, groupFile,
     getUserName, optimizer, GRUPOS_DIR, DATABASE_DIR, buildGroupFilePath,
-    downloadContentBuffer, isQuotedMsg, isQuotedImage, isQuotedVideo, isQuotedAudio, 
+    getFileBuffer, isQuotedMsg, isQuotedImage, isQuotedVideo, isQuotedAudio, 
     isQuotedDocument, isQuotedDocW, isQuotedSticker, checkMassMentionLimit,
     registerMassMentionUse, MASS_MENTION_THRESHOLD, loadMassMentionConfig,
     fs, pathz, generateWAMessageFromContent, menc_os2
@@ -68,19 +68,47 @@ export default {
         const mentions = AllgroupMembers.filter(m => !['0', 'games'].includes(data.mark?.[m]));
 
         let messageToSend = {};
-        const quoted = info.message?.extendedTextMessage?.contextInfo;
+        const quoted = info.message?.extendedTextMessage?.contextInfo?.quotedMessage;
 
-        if (isQuotedMsg && quoted?.quotedMessage) {
-          const type = Object.keys(quoted.quotedMessage)[0];
-          messageToSend = JSON.parse(JSON.stringify(quoted.quotedMessage));
-          // Simplificando o envio de mídia hidetag
-          const content = messageToSend[type];
-          if (content) {
-            content.mentions = mentions;
-            if (q) {
-              if (type === 'imageMessage' || type === 'videoMessage') content.caption = q;
-              else if (type === 'conversation' || type === 'extendedTextMessage') messageToSend.text = q;
-            }
+        if (quoted) {
+          if (quoted.imageMessage) {
+            messageToSend = {
+              image: await getFileBuffer(quoted.imageMessage, 'image'),
+              caption: q || quoted.imageMessage.caption || '',
+              mentions
+            };
+          } else if (quoted.videoMessage) {
+            messageToSend = {
+              video: await getFileBuffer(quoted.videoMessage, 'video'),
+              caption: q || quoted.videoMessage.caption || '',
+              mentions
+            };
+          } else if (quoted.documentMessage) {
+            messageToSend = {
+              document: await getFileBuffer(quoted.documentMessage, 'document'),
+              mimetype: quoted.documentMessage.mimetype,
+              fileName: quoted.documentMessage.fileName,
+              caption: q || quoted.documentMessage.caption || '',
+              mentions
+            };
+          } else if (quoted.audioMessage) {
+            messageToSend = {
+              audio: await getFileBuffer(quoted.audioMessage, 'audio'),
+              mimetype: quoted.audioMessage.mimetype,
+              ptt: quoted.audioMessage.ptt,
+              mentions
+            };
+          } else if (quoted.stickerMessage) {
+            messageToSend = {
+              sticker: await getFileBuffer(quoted.stickerMessage, 'sticker'),
+              mentions
+            };
+          } else if (quoted.extendedTextMessage) {
+            messageToSend = { text: q || quoted.extendedTextMessage.text, mentions };
+          } else if (quoted.conversation) {
+            messageToSend = { text: q || quoted.conversation, mentions };
+          } else {
+            messageToSend = { text: q || 'Mencionando todos...', mentions };
           }
         } else {
           messageToSend = { text: q || 'Mencionando todos...', mentions };
@@ -90,7 +118,7 @@ export default {
         registerMassMentionUse(from);
       } catch (e) {
         console.error(e);
-        return reply("❌ Erro no hidetag.");
+        return reply("❌ Erro no hidetag/cita.");
       }
       return;
     }
@@ -221,7 +249,7 @@ export default {
 
       try {
         const media = isQuotedImage ? info.message.extendedTextMessage.contextInfo.quotedMessage.imageMessage : info.message.imageMessage;
-        const buffer = await downloadContentBuffer(media, 'image');
+        const buffer = await getFileBuffer(media, 'image');
         await nazu.updateProfilePicture(from, buffer);
         return reply("✅ Foto alterada.");
       } catch (e) { return reply("❌ Erro ao alterar foto."); }

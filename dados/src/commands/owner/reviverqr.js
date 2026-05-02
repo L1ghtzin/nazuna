@@ -25,7 +25,7 @@ export default {
         return reply('❌ Pasta de autenticação não encontrada.');
       }
 
-      await reply(`🧹 *INICIANDO LIMPEZA DE SESSÃO (PADRÃO TOKYO)...*\n\nRemovendo arquivos temporários para resolver erros de 'Bad MAC' mantendo o login ativo.\n\n⏳ Aguarde...`);
+      await reply(`🧹 *INICIANDO LIMPEZA DE SESSÃO...*\n\nRemovendo arquivos temporários para resolver erros de 'Bad MAC' mantendo o login ativo.\n\n⏳ Aguarde...`);
 
       const files = fs.readdirSync(authDir);
       for (const file of files) {
