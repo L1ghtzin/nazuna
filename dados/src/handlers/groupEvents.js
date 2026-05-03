@@ -3,14 +3,16 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import CaptchaIndex, { loadCaptchaJson } from '../utils/captchaIndex.js';
 import { getPerformanceOptimizer } from '../utils/performanceOptimizer.js';
+import { resolveParticipant } from '../utils/resolveParticipant.js';
+import { checkAntifake, logAntifakeAction } from '../utils/antifakeGuard.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const DATABASE_DIR = path.join(__dirname, '..', '..', 'database');
 const GLOBAL_BLACKLIST_PATH = path.join(DATABASE_DIR, 'blacklist.json');
-
 const DEBUG_MODE = process.env.DEBUG_MODE === 'true';
 const performanceOptimizer = getPerformanceOptimizer();
+const joinRequestCache = new Map();
 
 async function loadGroupSettings(groupId) {
     const groupFilePath = path.join(DATABASE_DIR, 'grupos', `${groupId}.json`);
@@ -56,7 +58,6 @@ function formatMessageText(template, replacements) {
 async function createGroupMessage(NazunaSock, groupMetadata, participants, settings, isWelcome = true) {
     const jsonGp = await loadGroupSettings(groupMetadata.id);
     const mentions = participants.map(p => p);
-    const bannerName = participants.length === 1 ? participants[0].split('@')[0] : `${participants.length} Membros`;
     const replacements = {
         '#numerodele#': participants.map(p => `@${p.split('@')[0]}`).join(', '),
         '#nomedogp#': groupMetadata.subject,
@@ -151,18 +152,22 @@ export async function handleGroupParticipantsUpdate(NazunaSock, inf) {
                         continue;
                     }
 
+                    const resolved = await resolveParticipant(participant, NazunaSock);
+                    const participantNumber = resolved.number;
                     const participantStripped = participant.replace(/@.*/, '');
-                    let participantNumber = participantStripped;
-                    let isLid = false;
+                    const isLid = resolved.isLid;
 
-                    if (participant.endsWith('@lid')) {
-                        isLid = true;
-                        try {
-                            const resolved = await NazunaSock.onWhatsApp(participant);
-                            if (resolved?.[0]?.jid) {
-                                participantNumber = resolved[0].jid.replace(/@.*/, '');
-                            }
-                        } catch { }
+                    const antifakeResult = await checkAntifake(participant, groupSettings, NazunaSock);
+                    if (!antifakeResult.allowed) {
+                        membersToRemove.push(participant);
+                        removalReasons.push(`@${antifakeResult.number} (número estrangeiro / antifake)`);
+                        await logAntifakeAction(from, {
+                            number: antifakeResult.number,
+                            action: 'ban',
+                            reason: antifakeResult.reason,
+                            resolvedFrom: participant
+                        });
+                        continue;
                     }
 
                     const hasCaptchaJson = Object.values(captchaData || {}).find(c => {
@@ -212,7 +217,6 @@ export async function handleGroupParticipantsUpdate(NazunaSock, inf) {
                     }
 
                     if (groupSettings.bemvindo) {
-                        console.log(`✅ Enviando welcome para ${participantNumber}`);
                         membersToWelcome.push(participant);
                     }
                 }
@@ -284,6 +288,17 @@ export async function handleGroupJoinRequest(NazunaSock, inf) {
 
         if (!from || !participantJid) return;
 
+        // Deduplicação — Baileys dispara eventos duplicados
+        const cacheKey = `${from}_${typeof participantJid === 'string' ? participantJid : JSON.stringify(participantJid)}`;
+        const now = Date.now();
+        if (joinRequestCache.has(cacheKey) && (now - joinRequestCache.get(cacheKey)) < 10000) return;
+        joinRequestCache.set(cacheKey, now);
+        if (joinRequestCache.size > 500) {
+            for (const [key, ts] of joinRequestCache) {
+                if (ts < now - 10000) joinRequestCache.delete(key);
+            }
+        }
+
         if (typeof participantJid === "object") {
             Object.assign(typeIds, {
                 id: participantJid?.pn?.endsWith("s.whatsapp.net") ? participantJid?.pn : '',
@@ -304,6 +319,23 @@ export async function handleGroupJoinRequest(NazunaSock, inf) {
         }
 
         const groupSettings = await loadGroupSettings(from);
+
+        const antifakeResult = await checkAntifake(participantJid, groupSettings, NazunaSock);
+        if (!antifakeResult.allowed) {
+            console.log(`🛡️ [AntiFake] Rejeitando: ${participantJid} (${antifakeResult.number})`);
+            try {
+                await NazunaSock.groupRequestParticipantsUpdate(from, [participantJid], 'reject');
+            } catch (err) {
+                console.error(`❌ [AntiFake] Erro ao rejeitar ${participantJid}:`, err.message);
+            }
+            await logAntifakeAction(from, {
+                number: antifakeResult.number,
+                action: 'reject',
+                reason: antifakeResult.reason,
+                resolvedFrom: participantJid
+            });
+            return;
+        }
 
         if (groupSettings.autoAcceptRequests) {
             if (DEBUG_MODE) console.log(`[Auto-Accept] Aceitando ${participantJid} no grupo ${from}`);
@@ -335,3 +367,4 @@ export async function handleGroupJoinRequest(NazunaSock, inf) {
         console.error(`❌ Erro em handleGroupJoinRequest: ${error.message}`);
     }
 }
+

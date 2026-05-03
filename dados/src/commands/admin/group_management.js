@@ -3,7 +3,7 @@ import { PREFIX } from "../../config.js";
 export default {
   name: "group_management",
   description: "Gerenciamento avançado de grupos",
-  commands: ["abrirgp", "aceitar", "aceitarconvite", "aceitarrpg", "alterardesc", "alterarfoto", "alterarnome", "antibotao", "antibtn", "antidelete", "antidoc", "antiflood", "antilinkhard", "antiloc", "approve", "aprovar", "autoacceptr", "autoaceitarsolic", "autoaprovar", "autodl", "autodown", "captcha", "captcharequests", "captchasolic", "cita", "closegp", "dellimitmessage", "descgrupo", "descricao", "expulsar", "familia", "family", "fechargp", "fotogp", "fotogrupo", "gamemode", "gp", "group", "grupo", "hidetag", "kickcla", "limitmessage", "modobn", "modobrincadeira", "modobrincadeiras", "mudardesc", "mudarfoto", "mudarnome", "nomegp", "onlyadm", "opengp", "pendentes", "recusar", "recusarconvite", "recusarsolic", "recusarsolicitacao", "reject", "renomeargrupo", "requests", "setdesc", "setfoto", "setname", "setprefix", "soadm", "soadmin", "solicitacoes", "sorteio", "sorteionome", "totag"],
+  commands: ["abrirgp", "aceitar", "aceitarconvite", "aceitarrpg", "alterardesc", "alterarfoto", "alterarnome", "antibotao", "antibtn", "antidelete", "antidoc", "antifake", "antiflood", "antilinkhard", "antiloc", "approve", "aprovar", "autoacceptr", "autoaceitarsolic", "autoaprovar", "autodl", "autodown", "captcha", "captcharequests", "captchasolic", "cita", "closegp", "dellimitmessage", "descgrupo", "descricao", "expulsar", "familia", "family", "fechargp", "fotogp", "fotogrupo", "gamemode", "gp", "group", "grupo", "hidetag", "kickcla", "limitmessage", "modobn", "modobrincadeira", "modobrincadeiras", "mudardesc", "mudarfoto", "mudarnome", "nomegp", "onlyadm", "opengp", "pendentes", "recusar", "recusarconvite", "recusarsolic", "recusarsolicitacao", "reject", "renomeargrupo", "requests", "setdesc", "setfoto", "setname", "setprefix", "soadm", "soadmin", "solicitacoes", "sorteio", "sorteionome", "totag"],
   handle: async ({ 
     nazu, from, info, command, args, reply, prefix, pushname, sender, q,
     isGroup, isGroupAdmin, isBotAdmin, isOwner, AllgroupMembers, groupData, groupFile,
@@ -160,6 +160,132 @@ export default {
       groupData[feature] = !groupData[feature];
       await optimizer.saveJsonWithCache(groupFile, groupData);
       return reply(`✅ *${feature}* ${groupData[feature] ? 'ativado' : 'desativado'}!`);
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // 🛡️ ANTIFAKE (Bloquear números estrangeiros)
+    // ═══════════════════════════════════════════════════════════════
+    if (cmd === 'antifake') {
+      if (!isGroup) return reply(MESSAGES.permission.groupOnly);
+      if (!isGroupAdmin) return reply(MESSAGES.permission.adminOnly);
+      if (!isBotAdmin) return reply(MESSAGES.permission.botAdminOnly);
+
+      const subArg = (q || '').trim();
+      const subArgLower = subArg.toLowerCase();
+
+      // --- Subcomando: DDI ---
+      if (subArgLower.startsWith('ddi')) {
+        const ddiValue = subArg.replace(/^ddi\s*/i, '').trim();
+        if (!ddiValue) {
+          const currentDDI = groupData.antifakeDDI || '55';
+          return reply(
+            `🌐 *Configuração de DDI Permitido*\n\n` +
+            `DDI atual: *${currentDDI}*\n\n` +
+            `💡 *Como usar:*\n` +
+            `• ${prefix}antifake ddi 55 — Apenas Brasil\n` +
+            `• ${prefix}antifake ddi 55,351 — Brasil + Portugal\n` +
+            `• ${prefix}antifake ddi 55,54,598 — Brasil + Argentina + Uruguai`
+          );
+        }
+        const ddis = ddiValue.split(',').map(d => d.trim()).filter(d => /^\d{1,4}$/.test(d));
+        if (ddis.length === 0) {
+          return reply(`❌ DDI inválido! Use números separados por vírgula.\nExemplo: ${prefix}antifake ddi 55,351`);
+        }
+        groupData.antifakeDDI = ddis.join(',');
+        await optimizer.saveJsonWithCache(groupFile, groupData);
+        return reply(
+          `✅ *DDI atualizado!*\n\n` +
+          `🌐 DDIs permitidos: *${ddis.join(', ')}*\n\n` +
+          `Números que não começarem com esses DDIs serão banidos automaticamente ao entrar.`
+        );
+      }
+
+      // --- Subcomando: WHITELIST ---
+      if (subArgLower.startsWith('wl')) {
+        const wlParts = subArg.replace(/^wl\s*/i, '').trim().split(/\s+/);
+        const wlAction = (wlParts[0] || '').toLowerCase();
+        const wlNumber = (wlParts[1] || '').replace(/\D/g, '');
+
+        if (wlAction === 'add') {
+          if (!wlNumber) return reply(`❌ Informe o número.\nExemplo: ${prefix}antifake wl add 1234567890`);
+          if (!groupData.antifakeWhitelist) groupData.antifakeWhitelist = [];
+          if (groupData.antifakeWhitelist.includes(wlNumber)) {
+            return reply(`ℹ️ O número *${wlNumber}* já está na whitelist.`);
+          }
+          groupData.antifakeWhitelist.push(wlNumber);
+          await optimizer.saveJsonWithCache(groupFile, groupData);
+          return reply(`✅ *${wlNumber}* adicionado à whitelist do antifake.\n\nEsse número poderá entrar no grupo mesmo sendo estrangeiro.`);
+        }
+
+        if (wlAction === 'remove' || wlAction === 'rem' || wlAction === 'del') {
+          if (!wlNumber) return reply(`❌ Informe o número.\nExemplo: ${prefix}antifake wl remove 1234567890`);
+          if (!groupData.antifakeWhitelist) groupData.antifakeWhitelist = [];
+          const idx = groupData.antifakeWhitelist.indexOf(wlNumber);
+          if (idx === -1) return reply(`❌ O número *${wlNumber}* não está na whitelist.`);
+          groupData.antifakeWhitelist.splice(idx, 1);
+          await optimizer.saveJsonWithCache(groupFile, groupData);
+          return reply(`✅ *${wlNumber}* removido da whitelist do antifake.`);
+        }
+
+        if (wlAction === 'lista' || wlAction === 'list' || !wlAction) {
+          const wl = groupData.antifakeWhitelist || [];
+          if (wl.length === 0) return reply(`📭 Nenhum número na whitelist do antifake.\n\n💡 Use: ${prefix}antifake wl add <número>`);
+          return reply(`📋 *Whitelist Anti-Fake* (${wl.length})\n\n` + wl.map((n, i) => `${i + 1}. ${n}`).join('\n'));
+        }
+
+        return reply(
+          `🛡️ *Whitelist Anti-Fake*\n\n` +
+          `💡 *Comandos:*\n` +
+          `• ${prefix}antifake wl add <número>\n` +
+          `• ${prefix}antifake wl remove <número>\n` +
+          `• ${prefix}antifake wl lista`
+        );
+      }
+
+      // --- Subcomando: LOG ---
+      if (subArgLower === 'log' || subArgLower === 'logs') {
+        try {
+          const { getAntifakeLogs } = await import('../../utils/antifakeGuard.js');
+          const logs = await getAntifakeLogs(from, 10);
+          if (logs.length === 0) return reply(`📭 Nenhum registro de antifake para este grupo.`);
+          let msg = `📋 *Log Anti-Fake* (últimos ${logs.length})\n\n`;
+          logs.forEach((log, i) => {
+            const date = new Date(log.timestamp).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+            const actionEmoji = log.action === 'ban' ? '🚫' : '❌';
+            msg += `${actionEmoji} *${log.number}*\n   ${log.action.toUpperCase()} — ${date}\n   ${log.reason}\n\n`;
+          });
+          return reply(msg.trim());
+        } catch (e) {
+          console.error('Erro ao carregar logs antifake:', e);
+          return reply('❌ Erro ao carregar logs.');
+        }
+      }
+
+      // --- Toggle on/off ---
+      groupData.antifake = !groupData.antifake;
+      await optimizer.saveJsonWithCache(groupFile, groupData);
+
+      const currentDDI = groupData.antifakeDDI || '55';
+      const wlCount = (groupData.antifakeWhitelist || []).length;
+
+      if (groupData.antifake) {
+        return reply(
+          `🛡️ *ANTIFAKE ATIVADO!*\n\n` +
+          `Números estrangeiros serão banidos automaticamente ao entrar no grupo.\n\n` +
+          `🌐 DDIs permitidos: *${currentDDI}*\n` +
+          `📋 Whitelist: *${wlCount} número(s)*\n\n` +
+          `💡 *Configurações:*\n` +
+          `• ${prefix}antifake ddi 55,351 — DDIs permitidos\n` +
+          `• ${prefix}antifake wl add <nº> — Whitelist\n` +
+          `• ${prefix}antifake log — Ver histórico\n` +
+          `• ${prefix}antifake — Desativar`
+        );
+      } else {
+        return reply(
+          `⚠️ *ANTIFAKE DESATIVADO*\n\n` +
+          `Números estrangeiros não serão mais bloqueados. Use ${prefix}antifake para reativar.`
+        );
+      }
     }
 
     // ═══════════════════════════════════════════════════════════════
