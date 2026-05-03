@@ -109,11 +109,22 @@ export default {
       if (cmd.startsWith('add')) {
         let target = menc_os2 || q.trim();
         if (!target) return reply('Marque ou digite o número.');
+        
+        if (target && !target.includes('@')) {
+          target = buildUserId(target, config);
+        }
+        
         const res = await addSubdono(target, numerodono, nazu);
         return reply(res.message);
       }
       if (cmd.startsWith('rem') || cmd.startsWith('rm') || cmd.startsWith('del')) {
         let target = menc_os2 || q.trim();
+        if (!target) return reply('Marque ou digite o número.');
+
+        if (target && !target.includes('@')) {
+          target = buildUserId(target, config);
+        }
+
         const res = await removeSubdono(target, nazu);
         return reply(res.message);
       }
@@ -152,6 +163,10 @@ export default {
         }
 
         if (!target) return reply("⚠️ Marque, responda a mensagem ou digite o número do usuário.");
+
+        if (target && !target.includes('@')) {
+          target = buildUserId(target, config);
+        }
         
         const res = await addGlobalBlacklist(target, reason || 'Não especificado', pushname, nazu);
         return reply(res.message, { mentions: [target] });
@@ -160,6 +175,10 @@ export default {
         let target = menc_os2;
         if (!target && q) target = q.split(' ')[0];
         if (!target) return reply("⚠️ Marque, responda a mensagem ou digite o número do usuário.");
+
+        if (target && !target.includes('@')) {
+          target = buildUserId(target, config);
+        }
         
         const res = await removeGlobalBlacklist(target, nazu);
         return reply(res.message, { mentions: [target] });
