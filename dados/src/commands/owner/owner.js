@@ -9,8 +9,8 @@ export default {
     nazu, from, info, command, q, reply, prefix, sender, pushname,
     botState, globalBlocks, transmissao,
     isOwner, DATABASE_DIR, optimizer, getUserName, getFileBuffer,
-    isImage, isVideo, isQuotedImage, isQuotedVideo, menc_os2, isGroup
-  , MESSAGES }) => {
+    isImage, isVideo, isQuotedImage, isQuotedVideo, menc_os2, isGroup,
+    MESSAGES, AllgroupMembers, idsMatch }) => {
     const cmd = command.toLowerCase();
 
     // ═══════════════════════════════════════════════════════════════
@@ -111,6 +111,7 @@ export default {
         await nazu.groupParticipantsUpdate(from, [targetId], action);
         return reply(`✅ O dono agora é ${cmd === 'seradm' ? 'Administrador' : 'Membro comum'}.`);
       } catch (e) {
+        console.error("Erro no seradm/sermembro:", e);
         return reply(`❌ Erro. Verifique se o bot é administrador do grupo.`);
       }
     }
