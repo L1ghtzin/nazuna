@@ -1,321 +1,703 @@
-import { PREFIX } from "../../config.js";
-
-export default {
+﻿export default {
   name: "rental_system",
   description: "Gerenciamento de aluguel de grupos",
-  commands: ["addaluguel", "adddiasaluguel", "aluguelist", "cancelaraluguel", "dayfree", "deletaraluguel", "detalhesaluguel", "estenderaluguel", "extenderrental", "gerarcod", "gerarcodigobr", "geraraluguel", "infoaluguel", "limparaluguel", "listaaluguel", "listaluguel", "listaralugueis", "listaraluguel", "listrentals", "modoaluguel", "removeraluguel", "statusaluguel", "veralugueis"],
-  handle: async ({ 
-    nazu, from, info, command, args, reply, q, isOwner, isGroup, prefix, isOwnerOrSub,
-    loadRentalData, saveRentalData, setGroupRental, extendGroupRental,
-    setRentalMode, isRentalModeActive, getGroupRentalStatus,
-    generateActivationCode, validateActivationCode, useActivationCode,
-    getCachedGroupMetadata, OWNER_ONLY_MESSAGE, optimizer,
-    MESSAGES, deleteChatByLastMessage
+  commands: [
+    "addaluguel",
+    "adddiasaluguel",
+    "aluguelist",
+    "cancelaraluguel",
+    "dayfree",
+    "deletaraluguel",
+    "detalhesaluguel",
+    "estenderaluguel",
+    "extenderrental",
+    "gerarcod",
+    "gerarcodigo",
+    "gerarcodigobr",
+    "geraraluguel",
+    "infoaluguel",
+    "limparaluguel",
+    "listaaluguel",
+    "listaluguel",
+    "listaraluguéis",
+    "listaraluguel",
+    "listrentals",
+    "modoaluguel",
+    "removeraluguel",
+    "statusaluguel",
+    "veraluguéis"
+  ],
+  handle: async ({
+    nazu,
+    from,
+    info,
+    command,
+    args,
+    reply,
+    q,
+    isGroup,
+    isRealOwner,
+    prefix,
+    loadRentalData,
+    saveRentalData,
+    setGroupRental,
+    extendGroupRental,
+    setRentalMode,
+    isRentalModeActive,
+    getGroupRentalStatus,
+    generateActivationCode,
+    getCachedGroupMetadata,
+    deleteChatByLastMessage,
+    clearChatHistorySafe
   }) => {
-    if (!isOwnerOrSub) return reply("🚫 Apenas o dono ou subdonos podem gerenciar o sistema de aluguel!");
+    const cmd = (command || "").toLowerCase();
+    const query = (q || "").trim();
+    const rentalMsg = {
+      ownerOnly: "🚫 Apenas o Dono principal pode gerenciar o sistema de aluguel!",
+      modeOwnerOnly: "🚫 Apenas o Dono principal pode gerenciar o modo de aluguel!",
+      codeOwnerOnly: "🚫 Apenas o Dono principal pode gerar códigos!",
+      listOwnerOnly: "🚫 Apenas o Dono principal pode ver a lista de aluguéis!",
+      removeOwnerOnly: "🚫 Apenas o Dono principal pode remover aluguéis!",
+      extendOwnerOnly: "🚫 Apenas o Dono principal pode estender aluguéis!",
+      infoOwnerOnly: "🚫 Apenas o Dono principal pode ver informações de aluguel!",
+      cleanupOwnerOnly: "🚫 Apenas o Dono principal pode limpar aluguéis!",
+      noRentals: "📭 Nenhum grupo com aluguel ativo no momento.",
+      cleanupStart: "🔄 Iniciando limpeza completa de aluguéis...",
+      cleanupError: "Ocorreu um erro ao limpar aluguéis."
+    };
 
-    const cmd = command.toLowerCase();
+    const ensureOwner = (fallback = rentalMsg.ownerOnly) => {
+      if (!isRealOwner) {
+        reply(fallback);
+        return false;
+      }
+      return true;
+    };
 
-    // 📊 LISTAGEM
-    if (['listaralugueis', 'aluguelist', 'listaluguel', 'listaaluguel', 'listaraluguel', 'veralugueis', 'listrentals', 'listarentals', 'aluguel.lista', 'aluguel.ver'].includes(cmd)) {
-      const data = loadRentalData();
-      const groupIds = Object.keys(data.groups || {});
-      if (!groupIds.length) return reply("📪 Sem aluguéis registrados.");
+    const normalizeGroupId = value => {
+      if (!value) return null;
+      const raw = String(value).trim();
+      if (!raw) return null;
+      return raw.includes("@g.us") ? raw : `${raw}@g.us`;
+    };
 
-      let text = `╭━━━━⊱ 📋 *LISTA DE ALUGUÉIS* ⊱━━━━╮\n`;
-      text += `│\n`;
-      text += `│ 📊 Total de grupos: ${groupIds.length}\n`;
-      text += `│\n`;
-      text += `╰━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╯\n\n`;
-
-      const now = Date.now();
-      let activeCount = 0;
-      let expiredCount = 0;
-      let permanentCount = 0;
-
-      for (const id of groupIds) {
-        const info = data.groups[id];
-        const meta = await getCachedGroupMetadata(id).catch(() => ({ subject: 'Grupo Desconhecido' }));
-        const isPermanent = info.expiresAt === 'permanent';
-        const isExpired = !isPermanent && new Date(info.expiresAt) < now;
-
-        if (isPermanent) permanentCount++;
-        else if (isExpired) expiredCount++;
-        else activeCount++;
-
-        let statusIcon = isPermanent ? '♾️' : (isExpired ? '❌' : '✅');
-        let statusText = isPermanent ? 'PERMANENTE' : (isExpired ? 'EXPIRADO' : 'ATIVO');
-
-        text += `${statusIcon} *${meta.subject}*\n`;
-        text += `┌─────────────────\n`;
-        text += `│ 📱 ID: ${id}\n`;
-        text += `│ 📅 Status: ${statusText}\n`;
-
-        if (!isPermanent) {
-          const expDate = new Date(info.expiresAt);
-          const daysLeft = Math.ceil((expDate - now) / (1000 * 60 * 60 * 24));
-          text += `│ ⏰ Expira em: ${expDate.toLocaleDateString('pt-BR')}\n`;
-          text += `│ ⏳ Dias restantes: ${daysLeft > 0 ? daysLeft : 0}\n`;
+    if (["modoaluguel"].includes(cmd)) {
+      if (!ensureOwner(rentalMsg.modeOwnerOnly || rentalMsg.ownerOnly)) return;
+      try {
+        const action = query.toLowerCase();
+        if (action === "on" || action === "ativar") {
+          return reply(setRentalMode(true)
+            ? "✅ Modo de aluguel global ATIVADO! O bot agora só responderá em grupos com aluguel ativo."
+            : "❌ Erro ao ativar o modo de aluguel global.");
         }
 
-        if (info.addedAt) {
-          text += `│ 📆 Adicionado em: ${new Date(info.addedAt).toLocaleDateString('pt-BR')}\n`;
+        if (action === "off" || action === "desativar") {
+          return reply(setRentalMode(false)
+            ? "✅ Modo de aluguel global DESATIVADO! O bot responderá em todos os grupos permitidos."
+            : "❌ Erro ao desativar o modo de aluguel global.");
         }
 
-        text += `└─────────────────\n\n`;
+        const currentStatus = isRentalModeActive() ? "ATIVADO" : "DESATIVADO";
+        return reply(`🤔 Uso: ${prefix}modoaluguel on|off\nStatus atual: ${currentStatus}`);
+      } catch (error) {
+        console.error("Erro no comando modoaluguel:", error);
+        return reply("❌ Ocorreu um erro inesperado.");
       }
-
-      text += `╭━━━━⊱ 📊 *ESTATÍSTICAS* ⊱━━━━╮\n`;
-      text += `│\n`;
-      text += `│ ✅ Ativos: ${activeCount}\n`;
-      text += `│ ♾️ Permanentes: ${permanentCount}\n`;
-      text += `│ ❌ Expirados: ${expiredCount}\n`;
-      text += `│ 📦 Total: ${groupIds.length}\n`;
-      text += `│\n`;
-      text += `╰━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╯\n\n`;
-      text += `💡 *Comandos disponíveis:*\n`;
-      text += `• ${prefix}removeraluguel <id>\n`;
-      text += `• ${prefix}estenderaluguel <id> <dias>\n`;
-      text += `• ${prefix}infoaluguel <id>`;
-
-      return reply(text);
     }
 
-    // ➕ ADICIONAR
-    if (cmd === 'addaluguel') {
-      const parts = q?.trim().split(' ') || [];
-      let targetGroupId, durationArg;
+    if (["listaraluguel", "listaraluguéis", "aluguelist", "listaluguel", "listaaluguel", "veraluguéis", "listrentals"].includes(cmd)) {
+      if (!ensureOwner(rentalMsg.listOwnerOnly || rentalMsg.ownerOnly)) return;
+      try {
+        const rentalData = loadRentalData();
+        const groupIds = Object.keys(rentalData.groups || {});
 
-      if (isGroup && parts.length === 1) {
-        targetGroupId = from;
-        durationArg = parts[0];
-      } else if (parts.length >= 2) {
-        targetGroupId = parts[1].includes('@g.us') ? parts[1] : parts[1] + '@g.us';
-        durationArg = parts[0];
-      } else {
-        return reply(`💡 *Uso:* ${prefix}${cmd} <dias|permanent> (no grupo) ou ${prefix}${cmd} <dias|permanent> <id_grupo>`);
-      }
-
-      const duration = durationArg === 'permanent' ? 'permanent' : parseInt(durationArg);
-      if (duration !== 'permanent' && (isNaN(duration) || duration <= 0)) {
-        return reply("❌ Duração inválida. Use um número de dias ou 'permanent'.");
-      }
-
-      const res = setGroupRental(targetGroupId, duration, prefix);
-      return reply(res.message);
-    }
-
-    // 🗑️ REMOVER
-    if (['removeraluguel', 'deletaraluguel', 'cancelaraluguel', 'delaluguel', 'aluguel.remover'].includes(cmd)) {
-      const target = q?.trim() || (isGroup ? from : null);
-      if (!target) return reply("Informe o ID!");
-      const data = loadRentalData();
-      const targetJid = target.includes('@g.us') ? target : target + '@g.us';
-      if (!data.groups[targetJid]) return reply("❌ Este grupo não possui aluguel.");
-      delete data.groups[targetJid];
-      saveRentalData(data);
-      return reply("✅ Registro de aluguel removido com sucesso.");
-    }
-
-    // ℹ️ INFO / STATUS
-    if (['infoaluguel', 'statusaluguel', 'detalhesaluguel'].includes(cmd)) {
-      let targetGroupId = q.trim();
-      if (!targetGroupId) {
-        if (!isGroup) return reply(`💡 *Uso:* ${prefix}${cmd} <id_do_grupo>`);
-        targetGroupId = from;
-      } else if (!targetGroupId.includes('@g.us')) {
-        targetGroupId += '@g.us';
-      }
-
-      const rentalData = loadRentalData();
-      const rental = rentalData.groups?.[targetGroupId];
-      if (!rental) return reply(`❌ Este grupo não possui aluguel ativo.\n\n💡 Use ${prefix}addaluguel para adicionar.`);
-
-      const meta = await getCachedGroupMetadata(targetGroupId).catch(() => ({ subject: targetGroupId, participants: [] }));
-      const groupName = meta.subject || targetGroupId;
-      const memberCount = meta.participants?.length || 0;
-      const now = Date.now();
-      const isPermanent = rental.expiresAt === 'permanent';
-
-      let message = `╭━━━⊱ 📋 *DETALHES DO ALUGUEL* ⊱━━━╮\n`;
-      message += `│\n`;
-      message += `│ 📱 *GRUPO:* ${groupName}\n`;
-      message += `│ 🆔 *ID:* ${targetGroupId}\n`;
-      message += `│ 👥 *Membros:* ${memberCount}\n`;
-      message += `│\n`;
-      message += `╰━━━━━━━━━━━━━━━━━━━━━━━━━━╯\n\n`;
-
-      if (isPermanent) {
-        message += `♾️ *STATUS:* PERMANENTE\n\n`;
-        message += `✨ Este grupo tem aluguel permanente!\n`;
-        message += `⏰ Não há data de expiração.`;
-      } else {
-        const expiresAt = typeof rental.expiresAt === 'string' ? parseInt(rental.expiresAt) : rental.expiresAt;
-        const isExpired = expiresAt < now;
-        const diffMs = Math.abs(expiresAt - now);
-        
-        const daysLeft = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-        const hoursLeft = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-        const minutesLeft = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
-
-        message += `📅 *STATUS:* ${isExpired ? '❌ EXPIRADO' : '✅ ATIVO'}\n\n`;
-        message += `⏰ *Expiração:* ${new Date(expiresAt).toLocaleString('pt-BR')}\n`;
-        message += `⏳ *${isExpired ? 'Expirado há' : 'Restante'}:* ${daysLeft}d ${hoursLeft}h ${minutesLeft}m\n`;
-        
-        // Barra de progresso (opcional, mas premium)
-        if (!isExpired) {
-            const addedAt = rental.addedAt || (expiresAt - (30 * 24 * 60 * 60 * 1000)); // fallback 30 dias
-            const total = expiresAt - addedAt;
-            const elapsed = now - addedAt;
-            const percentage = Math.min(100, Math.max(0, (elapsed / total) * 100));
-            const progress = Math.floor(percentage / 10);
-            const progressBar = '▓'.repeat(progress) + '░'.repeat(10 - progress);
-            message += `\n📊 *Progresso:* [${progressBar}] ${Math.floor(percentage)}%`;
+        if (!groupIds.length) {
+          return reply(rentalMsg.noRentals || "📭 Nenhum grupo com aluguel ativo no momento.");
         }
-      }
-      return reply(message);
-    }
 
-    // ⏳ ESTENDER / ADICIONAR DIAS
-    if (['adddiasaluguel', 'estenderaluguel', 'extenderrental'].includes(cmd)) {
-      const parts = q?.trim().split(' ') || [];
-      let targetGroupId, daysToAdd;
+        let message = "╭━━━⊱ 📋 *LISTA DE ALUGUEIS* ⊰━━━╮\n";
+        message += "│\n";
+        message += `│ 📊 Total de grupos: ${groupIds.length}\n`;
+        message += "│\n";
+        message += "╰━━━━━━━━━━━━━━━━━━━━━━━━━━╯\n\n";
 
-      if (isGroup && parts.length === 1) {
-        targetGroupId = from;
-        daysToAdd = parseInt(parts[0]);
-      } else if (parts.length >= 2) {
-        targetGroupId = parts[0].includes('@g.us') ? parts[0] : parts[0] + '@g.us';
-        daysToAdd = parseInt(parts[1]);
-      } else {
-        return reply(`💡 *Uso:* ${prefix}${cmd} <dias> (no grupo) ou ${prefix}${cmd} <id> <dias>`);
-      }
+        const now = Date.now();
+        let activeCount = 0;
+        let expiredCount = 0;
+        let permanentCount = 0;
 
-      if (isNaN(daysToAdd) || daysToAdd <= 0) return reply("❌ Dias inválidos.");
-      const result = extendGroupRental(targetGroupId, daysToAdd);
-      return reply(result.message);
-    }
+        for (const groupId of groupIds) {
+          const rental = rentalData.groups[groupId];
 
-    // 🎁 DAYFREE / ADDDIASALUGUEL (Adicionar dias para TODOS os grupos)
-    if (['dayfree', 'adddiasaluguel'].includes(cmd)) {
-      if (!q) return reply(`💡 *Uso:* ${prefix}${cmd} <dias> [motivo opcional]\nEx: ${prefix}${cmd} 7 Manutenção compensatória`);
-      const parts = q.trim().split(' ');
-      const extraDays = parseInt(parts[0]);
-      if (isNaN(extraDays) || extraDays <= 0) return reply('O argumento deve ser um número positivo de dias.');
-      
-      const motivo = parts.slice(1).join(' ') || 'Não especificado';
-      const rentalData = loadRentalData();
-      const groupIds = Object.keys(rentalData.groups || {});
-      if (!groupIds.length) return reply('Não há grupos com aluguel configurado.');
-
-      await reply(`🔄 Processando bônus de ${extraDays} dias para ${groupIds.length} grupos...`);
-
-      let successCount = 0;
-      let failCount = 0;
-      let summary = `📊 *RESUMO DA EXTENSÃO DE ALUGUEL*\n\n`;
-
-      for (const groupId of groupIds) {
-        const res = extendGroupRental(groupId, extraDays);
-        if (res.success) {
-          successCount++;
-          const meta = await getCachedGroupMetadata(groupId).catch(() => ({ subject: 'Grupo' }));
-          summary += `✅ ${meta.subject}: +${extraDays} dias\n`;
-          
-          const msg = `🎉 *BÔNUS DE ALUGUEL!* 🎉\n\nOlá, *${meta.subject}*!\nForam adicionados *${extraDays} dias* extras de aluguel para este grupo.\n\n📅 *Nova Expiração:* ${new Date(res.expiresAt).toLocaleDateString('pt-BR')}\n📝 *Motivo:* ${motivo}\n✨ Aproveitem!`;
-          nazu.sendMessage(groupId, { text: msg }).catch(() => {});
-        } else {
-          failCount++;
-          summary += `❌ ${groupId}: ${res.message}\n`;
-        }
-      }
-      summary += `\nTotal: ${successCount} sucessos | ${failCount} falhas`;
-      return reply(summary);
-    }
-
-    // 🔘 MODO ALUGUEL (Toggle Global)
-    if (cmd === 'modoaluguel') {
-      const action = q?.trim().toLowerCase();
-      if (action === 'on' || action === 'ativar') {
-        if (setRentalMode(true)) {
-            return reply("✅ *MODO ALUGUEL ATIVADO!*\nO bot agora só responderá em grupos com aluguel ativo.");
-        } else {
-            return reply("❌ Erro ao ativar o modo de aluguel.");
-        }
-      } else if (action === 'off' || action === 'desativar') {
-        if (setRentalMode(false)) {
-            return reply("✅ *MODO ALUGUEL DESATIVADO!*\nO bot responderá em todos os grupos permitidos.");
-        } else {
-            return reply("❌ Erro ao desativar o modo de aluguel.");
-        }
-      } else {
-        const current = isRentalModeActive() ? 'ATIVADO' : 'DESATIVADO';
-        return reply(`🤔 *Uso:* ${prefix}${cmd} on|off\nStatus atual: *${current}*`);
-      }
-    }
-
-    // 🔑 GERAR CÓDIGO (ALUGUEL)
-    if (['gerarcod', 'gerarcodigobr', 'geraraluguel'].includes(cmd)) {
-      const parts = q.trim().split(' ');
-      const durationArg = parts[0]?.toLowerCase();
-      const targetGroupArg = parts[1];
-
-      if (!durationArg) {
-        return reply(`💡 *Uso:* ${prefix}${cmd} <dias|permanente> [id_grupo_opcional]`);
-      }
-
-      let duration = durationArg === 'permanente' ? 'permanent' : parseInt(durationArg);
-      if (duration !== 'permanent' && (isNaN(duration) || duration <= 0)) {
-        return reply("❌ Duração inválida. Use um número de dias ou 'permanente'.");
-      }
-
-      let targetGroupId = null;
-      if (targetGroupArg) {
-        targetGroupId = targetGroupArg.includes('@g.us') ? targetGroupArg : targetGroupArg + '@g.us';
-      }
-
-      const res = generateActivationCode(duration, targetGroupId);
-      return reply(res.message);
-    }
-
-    // 🧹 LIMPAR ALUGUEL (Remover expirados e sair)
-    if (cmd === 'limparaluguel') {
-      await reply("🔄 Iniciando faxina nos aluguéis... Isso pode levar um momento.");
-      
-      const rentalData = loadRentalData();
-      const rentalGroupIds = Object.keys(rentalData.groups || {});
-      const currentGroups = await nazu.groupFetchAllParticipating().catch(() => ({}));
-      const currentGroupIds = Object.keys(currentGroups);
-
-      let cleaned = 0;
-      let expiredLeft = 0;
-
-      // 1. Limpar registros de grupos onde o bot não está mais
-      for (const gid of rentalGroupIds) {
-        if (!currentGroupIds.includes(gid)) {
-          delete rentalData.groups[gid];
-          cleaned++;
-        }
-      }
-      saveRentalData(rentalData);
-
-      // 2. Sair de grupos expirados
-      for (const gid of currentGroupIds) {
-        const status = getGroupRentalStatus(gid);
-        if (!status.active && !status.permanent) {
           try {
-            const meta = await getCachedGroupMetadata(gid).catch(() => ({ subject: 'Grupo' }));
-            await nazu.sendMessage(gid, { text: "⏰ *Aluguel Expirado!* \n\nO tempo de uso deste bot expirou. Estou saindo agora. Para renovar, contate o dono." });
-            await nazu.groupLeave(gid);
-            await deleteChatByLastMessage(gid).catch(() => {});
-            expiredLeft++;
-            await new Promise(r => setTimeout(r, 1000)); // Delay preventivo
-          } catch (e) {
-            console.error(`Erro ao sair do grupo ${gid}:`, e);
+            const groupMeta = await getCachedGroupMetadata(groupId);
+            const groupName = groupMeta?.subject || groupId;
+            const isPermanent = rental?.duration === "permanent" || rental?.expiresAt === "permanent";
+            const expiresAtMs = typeof rental?.expiresAt === "string" ? Date.parse(rental.expiresAt) : Number(rental?.expiresAt);
+            const isExpired = !isPermanent && Number.isFinite(expiresAtMs) && expiresAtMs < now;
+
+            if (isPermanent) permanentCount++;
+            else if (isExpired) expiredCount++;
+            else activeCount++;
+
+            let statusIcon = "✅";
+            let statusText = "ATIVO";
+            if (isPermanent) {
+              statusIcon = "♾️";
+              statusText = "PERMANENTE";
+            } else if (isExpired) {
+              statusIcon = "❌";
+              statusText = "EXPIRADO";
+            }
+
+            message += `${statusIcon} *${groupName}*\n`;
+            message += "┌─────────────────\n";
+            message += `│ 📱 ID: ${groupId}\n`;
+            message += `│ 📅 Status: ${statusText}\n`;
+
+            if (!isPermanent && Number.isFinite(expiresAtMs)) {
+              const daysLeft = Math.ceil((expiresAtMs - now) / (1000 * 60 * 60 * 24));
+              message += `│ ⏰ Expira em: ${new Date(expiresAtMs).toLocaleDateString("pt-BR")}\n`;
+              message += `│ ⏳ Dias restantes: ${daysLeft > 0 ? daysLeft : 0}\n`;
+            }
+
+            if (rental?.addedAt) {
+              message += `│ 📆 Adicionado em: ${new Date(rental.addedAt).toLocaleDateString("pt-BR")}\n`;
+            }
+
+            message += "└─────────────────\n\n";
+          } catch {
+            message += "⚠️ Grupo não encontrado\n";
+            message += "┌─────────────────\n";
+            message += `│ 📱 ID: ${groupId}\n`;
+            message += "│ ❌ Erro ao buscar dados\n";
+            message += "└─────────────────\n\n";
           }
         }
-      }
 
-      return reply(`✅ *FAXINA CONCLUÍDA!*\n\n🗑️ Registros órfãos limpos: ${cleaned}\n🚪 Grupos expirados abandonados: ${expiredLeft}`);
+        message += "╭━━━⊱ 📊 *ESTATÍSTICAS* ⊰━━━╮\n";
+        message += "│\n";
+        message += `│ ✅ Ativos: ${activeCount}\n`;
+        message += `│ ♾️ Permanentes: ${permanentCount}\n`;
+        message += `│ ❌ Expirados: ${expiredCount}\n`;
+        message += `│ 📦 Total: ${groupIds.length}\n`;
+        message += "│\n";
+        message += "╰━━━━━━━━━━━━━━━━━━━━━━━━━━╯\n\n";
+        message += "💡 *Comandos disponíveis:*\n";
+        message += `• ${prefix}removeraluguel <id>\n`;
+        message += `• ${prefix}estenderaluguel <id> <dias>\n`;
+        message += `• ${prefix}infoaluguel <id>`;
+
+        return reply(message);
+      } catch (error) {
+        console.error("Erro no comando listaraluguel:", error);
+        return reply("❌ Ocorreu um erro ao listar os aluguéis.");
+      }
+    }
+
+    if (["addaluguel"].includes(cmd)) {
+      if (!ensureOwner(rentalMsg.ownerOnly)) return;
+      if (!isGroup) return reply("Este comando só pode ser usado em grupos.");
+
+      try {
+        const durationArg = query.toLowerCase().split(" ")[0];
+        if (!durationArg) {
+          return reply(`🤔 Duração inválida. Use um número de dias (ex: 30) ou a palavra \"permanente\".\nExemplo: ${prefix}addaluguel 30`);
+        }
+
+        let durationDays = null;
+        if (durationArg === "permanente") {
+          durationDays = "permanent";
+        } else if (!Number.isNaN(parseInt(durationArg, 10)) && parseInt(durationArg, 10) > 0) {
+          durationDays = parseInt(durationArg, 10);
+        } else {
+          return reply(`🤔 Duração inválida. Use um número de dias (ex: 30) ou a palavra \"permanente\".\nExemplo: ${prefix}addaluguel 30`);
+        }
+
+        const result = setGroupRental(from, durationDays, prefix);
+        return reply(result.message);
+      } catch (error) {
+        console.error("Erro no comando addaluguel:", error);
+        return reply("❌ Ocorreu um erro inesperado ao adicionar o aluguel.");
+      }
+    }
+
+    if (["removeraluguel", "deletaraluguel", "cancelaraluguel"].includes(cmd)) {
+      if (!ensureOwner(rentalMsg.removeOwnerOnly || rentalMsg.ownerOnly)) return;
+      try {
+        let targetGroupId = query || (isGroup ? from : "");
+
+        if (!targetGroupId) {
+          return reply(`💡 *Uso:* ${prefix}removeraluguel [id_do_grupo]\n\n📝 Use dentro de um grupo ou informe o ID.\n💡 Use ${prefix}listaraluguel para ver os IDs.`);
+        }
+
+        targetGroupId = normalizeGroupId(targetGroupId);
+        const rentalData = loadRentalData();
+
+        if (!rentalData.groups || !rentalData.groups[targetGroupId]) {
+          return reply(`❌ Este grupo não possui aluguel ativo.\n\n💡 Use ${prefix}listaraluguel para ver os grupos com aluguel.`);
+        }
+
+        let groupName = targetGroupId;
+        try {
+          const groupMeta = await getCachedGroupMetadata(targetGroupId);
+          groupName = groupMeta?.subject || targetGroupId;
+        } catch {
+        }
+
+        delete rentalData.groups[targetGroupId];
+        saveRentalData(rentalData);
+
+        let message = "╭━━━⊱ ✅ *ALUGUEL REMOVIDO* ⊰━━━╮\n";
+        message += "│\n";
+        message += "│ 🗑️ O aluguel do grupo foi\n";
+        message += "│    removido com sucesso!\n";
+        message += "│\n";
+        message += `│ 📱 Grupo: ${groupName}\n`;
+        message += `│ 🆔 ID: ${targetGroupId}\n`;
+        message += "│\n";
+        message += "╰━━━━━━━━━━━━━━━━━━━━━━━━━━╯\n\n";
+        message += "⚠️ O bot não funcionará mais neste grupo ate que um novo aluguel seja adicionado.";
+
+        await reply(message);
+
+        try {
+          await nazu.sendMessage(targetGroupId, {
+            text: "⚠️ *AVISO IMPORTANTE*\n\nO aluguel deste grupo foi removido pelo proprietário do bot.\n\n❌ O bot não funcionará mais neste grupo.\n\nPara mais informações, entre em contato com o dono."
+          });
+        } catch (error) {
+          console.log("Não foi possível notificar o grupo:", error.message);
+        }
+      } catch (error) {
+        console.error("Erro no comando removeraluguel:", error);
+        return reply("❌ Ocorreu um erro ao remover o aluguel.");
+      }
+      return;
+    }
+
+    if (["estenderaluguel", "adddiasaluguel", "extenderrental"].includes(cmd)) {
+      if (!ensureOwner(rentalMsg.extendOwnerOnly || rentalMsg.ownerOnly)) return;
+      try {
+        const parts = query ? query.split(" ") : [];
+        let targetGroupId;
+        let daysToAdd;
+
+        if (isGroup && parts.length === 1) {
+          targetGroupId = from;
+          daysToAdd = parseInt(parts[0], 10);
+        } else if (parts.length >= 2) {
+          targetGroupId = parts[0];
+          daysToAdd = parseInt(parts[1], 10);
+        } else {
+          return reply(`💡 *Uso:* ${prefix}estenderaluguel <dias> (no grupo)\nou\n${prefix}estenderaluguel <id_do_grupo> <dias>\n\n📝 *Exemplo:*\n${prefix}estenderaluguel 7 (no grupo)\n${prefix}estenderaluguel 5511999999999 7\n\n💡 Use ${prefix}listaraluguel para ver os IDs.`);
+        }
+
+        if (Number.isNaN(daysToAdd) || daysToAdd <= 0) {
+          return reply("❌ O número de dias deve ser um valor positivo!");
+        }
+
+        targetGroupId = normalizeGroupId(targetGroupId);
+
+        const result = extendGroupRental(targetGroupId, daysToAdd);
+        if (!result.success) {
+          return reply(`❌ ${result.message}`);
+        }
+
+        let groupName = targetGroupId;
+        try {
+          const groupMeta = await getCachedGroupMetadata(targetGroupId);
+          groupName = groupMeta?.subject || targetGroupId;
+        } catch {
+        }
+
+        const rentalData = loadRentalData();
+        const rental = rentalData.groups[targetGroupId];
+        const expiresAtMs = typeof rental?.expiresAt === "string" ? Date.parse(rental.expiresAt) : Number(rental?.expiresAt);
+        const newExpirationDate = Number.isFinite(expiresAtMs)
+          ? new Date(expiresAtMs).toLocaleDateString("pt-BR")
+          : "N/A";
+        const daysLeft = Number.isFinite(expiresAtMs)
+          ? Math.max(0, Math.ceil((expiresAtMs - Date.now()) / (1000 * 60 * 60 * 24)))
+          : 0;
+
+        let message = "╭━━━⊱ ✅ *ALUGUEL ESTENDIDO* ⊰━━━╮\n";
+        message += "│\n";
+        message += `│ 📱 Grupo: ${groupName}\n`;
+        message += `│ ➕ Dias adicionados: ${daysToAdd}\n`;
+        message += `│ 📅 Nova expiração: ${newExpirationDate}\n`;
+        message += `│ ⏳ Dias restantes: ${daysLeft}\n`;
+        message += "│\n";
+        message += "╰━━━━━━━━━━━━━━━━━━━━━━━━━━╯";
+
+        await reply(message);
+
+        try {
+          await nazu.sendMessage(targetGroupId, {
+            text: `🎉 *BOA NOTÍCIA!*\n\nSeu aluguel foi estendido!\n\n➕ Dias adicionados: *${daysToAdd}*\n📅 Nova data de expiração: *${newExpirationDate}*\n⏳ Dias restantes: *${daysLeft}*\n\n✨ Continue aproveitando o bot!`
+          });
+        } catch (error) {
+          console.log("Não foi possível notificar o grupo:", error.message);
+        }
+      } catch (error) {
+        console.error("Erro no comando estenderaluguel:", error);
+        return reply("❌ Ocorreu um erro ao estender o aluguel.");
+      }
+      return;
+    }
+
+    if (["dayfree"].includes(cmd)) {
+      if (!ensureOwner(rentalMsg.extendOwnerOnly || rentalMsg.ownerOnly)) return;
+      try {
+        if (!query) {
+          return reply(`Uso: ${prefix}${command} <dias> [motivo opcional]\nEx: ${prefix}adddiasaluguel 7 Manutencao compensatoria`);
+        }
+
+        const parts = query.split(" ");
+        const extraDays = parseInt(parts[0], 10);
+        if (Number.isNaN(extraDays) || extraDays <= 0) {
+          return reply("O primeiro argumento deve ser um número positivo de dias.");
+        }
+
+        const motivo = parts.slice(1).join(" ") || "Não especificado";
+        const rentalData = loadRentalData();
+        const groupIds = Object.keys(rentalData.groups || {});
+        if (!groupIds.length) return reply("Não há grupos com aluguel configurado.");
+
+        let successCount = 0;
+        let failCount = 0;
+        let summary = "📊 Resumo da extensão de aluguel:\n\n";
+
+        for (const groupId of groupIds) {
+          const extendResult = extendGroupRental(groupId, extraDays);
+          if (extendResult.success) {
+            successCount++;
+            summary += `✅ ${groupId}: ${extendResult.message}\n`;
+            try {
+              const groupMeta = await getCachedGroupMetadata(groupId);
+              const freshData = loadRentalData();
+              const expiresAtMs = typeof freshData?.groups?.[groupId]?.expiresAt === "string"
+                ? Date.parse(freshData.groups[groupId].expiresAt)
+                : Number(freshData?.groups?.[groupId]?.expiresAt);
+              const formattedDate = Number.isFinite(expiresAtMs)
+                ? new Date(expiresAtMs).toLocaleDateString("pt-BR")
+                : "N/A";
+
+              const msg = `🎉 Aténcao, ${groupMeta?.subject || "grupo"}! Adicionados ${extraDays} dias extras de aluguel.\nNova expiração: ${formattedDate}.\nMotivo: ${motivo}`;
+              await nazu.sendMessage(groupId, { text: msg });
+            } catch (error) {
+              console.error(`Erro ao enviar mensagem para ${groupId}:`, error);
+              summary += "   ⚠️ Falha ao avisar no grupo.\n";
+            }
+          } else {
+            failCount++;
+            summary += `❌ ${groupId}: ${extendResult.message}\n`;
+          }
+        }
+
+        summary += `\nTotal: ${successCount} sucessos | ${failCount} falhas`;
+        return reply(summary);
+      } catch (error) {
+        console.error("Erro no comando dayfree:", error);
+        return reply("Ocorreu um erro ao estender aluguel em todos os grupos.");
+      }
+    }
+
+    if (["infoaluguel", "statusaluguel", "detalhesaluguel"].includes(cmd)) {
+      if (!ensureOwner(rentalMsg.infoOwnerOnly || rentalMsg.ownerOnly)) return;
+      try {
+        let targetGroupId = query;
+
+        if (!targetGroupId) {
+          if (!isGroup) {
+            return reply(`💡 *Uso:* ${prefix}infoaluguel <id_do_grupo>\n\n📝 Ou use este comando dentro do grupo para ver o status dele.`);
+          }
+          targetGroupId = from;
+        }
+
+        targetGroupId = normalizeGroupId(targetGroupId);
+
+        const rentalData = loadRentalData();
+        const rental = rentalData.groups?.[targetGroupId];
+
+        if (!rental) {
+          return reply(`❌ Este grupo não possui aluguel ativo.\n\n💡 Use ${prefix}addaluguel para adicionar.`);
+        }
+
+        let groupName = targetGroupId;
+        let memberCount = 0;
+        try {
+          const groupMeta = await getCachedGroupMetadata(targetGroupId);
+          groupName = groupMeta?.subject || targetGroupId;
+          memberCount = groupMeta?.participants?.length || 0;
+        } catch {
+        }
+
+        const isPermanent = rental.duration === "permanent" || rental.expiresAt === "permanent";
+        const now = Date.now();
+
+        let message = "╭━━━⊱ 📋 *DETALHES DO ALUGUEL* ⊰━━━╮\n";
+        message += "│\n";
+        message += `│ 📱 *GRUPO:* ${groupName}\n`;
+        message += `│ 🆔 *ID:* ${targetGroupId}\n`;
+        message += `│ 👥 *Membros:* ${memberCount}\n`;
+        message += "│\n";
+        message += "╰━━━━━━━━━━━━━━━━━━━━━━━━━━╯\n\n";
+
+        if (isPermanent) {
+          message += "♾️ *STATUS:* PERMANENTE\n\n";
+          message += "✨ Este grupo tem aluguel permanente!\n";
+          message += "⏰ Não há data de expiração.";
+        } else {
+          const expiresAtMs = typeof rental.expiresAt === "string" ? Date.parse(rental.expiresAt) : Number(rental.expiresAt);
+          const isExpired = Number.isFinite(expiresAtMs) ? expiresAtMs < now : false;
+          const daysLeft = Number.isFinite(expiresAtMs)
+            ? Math.ceil((expiresAtMs - now) / (1000 * 60 * 60 * 24))
+            : 0;
+          const expirationDate = Number.isFinite(expiresAtMs)
+            ? new Date(expiresAtMs).toLocaleDateString("pt-BR")
+            : "N/A";
+          const expirationTime = Number.isFinite(expiresAtMs)
+            ? new Date(expiresAtMs).toLocaleTimeString("pt-BR")
+            : "N/A";
+
+          message += `📅 *STATUS:* ${isExpired ? "❌ EXPIRADO" : "✅ ATIVO"}\n\n`;
+          message += "⏰ *Data de expiração:*\n";
+          message += `   ${expirationDate} as ${expirationTime}\n\n`;
+
+          if (!isExpired) {
+            message += `⏳ *Tempo restante:* ${daysLeft} dia${daysLeft !== 1 ? "s" : ""}\n\n`;
+            if (daysLeft <= 3) {
+              message += "⚠️ *ATENÇÃO:* O aluguel está próximo de expirar!\n\n";
+            }
+          } else {
+            const daysExpired = Math.abs(daysLeft);
+            message += `⏳ *Expirado há:* ${daysExpired} dia${daysExpired !== 1 ? "s" : ""}\n\n`;
+          }
+        }
+
+        if (rental.addedAt) {
+          message += `\n📆 *Aluguel adicionado em:* ${new Date(rental.addedAt).toLocaleDateString("pt-BR")}`;
+        }
+
+        message += "\n\n💡 *Comandos disponíveis:*\n";
+        message += `• ${prefix}estenderaluguel ${targetGroupId} <dias>\n`;
+        message += `• ${prefix}removeraluguel ${targetGroupId}`;
+
+        return reply(message);
+      } catch (error) {
+        console.error("Erro no comando infoaluguel:", error);
+        return reply("❌ Ocorreu um erro ao buscar informações do aluguel.");
+      }
+    }
+
+    if (["gerarcodigo", "gerarcodigobr", "gerarcod", "geraraluguel"].includes(cmd)) {
+      if (!ensureOwner(rentalMsg.codeOwnerOnly || rentalMsg.ownerOnly)) return;
+      try {
+        const parts = query ? query.split(" ") : [];
+        const durationArg = parts[0]?.toLowerCase();
+        const targetGroupArg = parts[1];
+
+        if (!durationArg) {
+          return reply(`🤔 Uso: ${prefix}gerarcodigobr <dias|permanente> [id_do_grupo_opcional]`);
+        }
+
+        let durationDays = null;
+        if (durationArg === "permanente") {
+          durationDays = "permanent";
+        } else if (!Number.isNaN(parseInt(durationArg, 10)) && parseInt(durationArg, 10) > 0) {
+          durationDays = parseInt(durationArg, 10);
+        } else {
+          return reply("🤔 Duração inválida. Use um número de dias (ex: 7) ou a palavra \"permanente\".");
+        }
+
+        let targetGroupId = null;
+        if (targetGroupArg) {
+          if (targetGroupArg.includes("@g.us")) {
+            targetGroupId = targetGroupArg;
+          } else if (/^\d+$/.test(targetGroupArg)) {
+            targetGroupId = `${targetGroupArg}@g.us`;
+          } else {
+            const mentionedJid = info?.message?.extendedTextMessage?.contextInfo?.mentionedJid?.[0];
+            if (mentionedJid && mentionedJid.endsWith("@g.us")) {
+              targetGroupId = mentionedJid;
+            } else {
+              return reply("🤔 ID do grupo alvo inválido. Forneça o ID completo (número@g.us) ou deixe em branco para um código genérico.");
+            }
+          }
+        }
+
+        const result = generateActivationCode(durationDays, targetGroupId);
+        return reply(result.message);
+      } catch (error) {
+        console.error("Erro no comando gerarcodigo:", error);
+        return reply("❌ Ocorreu um erro inesperado ao gerar o código.");
+      }
+    }
+
+    if (["limparaluguel"].includes(cmd)) {
+      if (!ensureOwner(rentalMsg.cleanupOwnerOnly || rentalMsg.ownerOnly)) return;
+      try {
+        await reply(rentalMsg.cleanupStart || "🔄 Iniciando limpeza completa de aluguéis...");
+
+        const rentalData = loadRentalData();
+        let groupsCleaned = 0;
+        let groupsExpired = 0;
+        let groupsWithoutRental = 0;
+        const groupsLeft = [];
+        let chatsDeleted = 0;
+        let groupConversationsCleared = 0;
+        let adminsNotified = 0;
+        const symbols = ["✨", "🌟", "⚡", "🔥", "🌈", "🍀", "💫", "🎉"];
+
+        const currentGroups = await nazu.groupFetchAllParticipating().catch(() => ({}));
+        const currentGroupIds = Object.keys(currentGroups);
+        const rentalGroupIds = Object.keys(rentalData.groups || {});
+
+        for (const groupId of Object.keys(rentalData.groups || {})) {
+          if (!currentGroupIds.includes(groupId)) {
+            delete rentalData.groups[groupId];
+            groupsCleaned++;
+          }
+        }
+
+        for (const groupId of Object.keys(rentalData.groups || {})) {
+          const rentalStatus = getGroupRentalStatus(groupId);
+          if (rentalStatus.active || rentalStatus.permanent) continue;
+
+          const groupMetadata = await getCachedGroupMetadata(groupId).catch(() => null);
+          if (!groupMetadata) {
+            delete rentalData.groups[groupId];
+            groupsCleaned++;
+            continue;
+          }
+
+          groupsExpired++;
+          groupsLeft.push(groupId);
+
+          try {
+            await nazu.sendMessage(groupId, {
+              text: `⏰ O aluguel deste grupo (${groupMetadata.subject}) expirou. Estou saindo, mas vocês podem renovar o aluguel entrando em contato com o dono! Até mais! 😊${symbols[Math.floor(Math.random() * symbols.length)]}`
+            });
+
+            const admins = (groupMetadata.participants || []).filter(p => p.admin).map(p => p.id);
+            for (const admin of admins) {
+              const delay = Math.floor(Math.random() * (500 - 100 + 1)) + 100;
+              await new Promise(resolve => setTimeout(resolve, delay));
+              try {
+                await nazu.sendMessage(admin, {
+                  text: `⚠️ Olá, admin do grupo *${groupMetadata.subject}*! O aluguel do grupo expirou, e por isso saí. Para renovar, entre em contato com o dono. Obrigado! ${symbols[Math.floor(Math.random() * symbols.length)]}`
+                });
+                adminsNotified++;
+              } catch (error) {
+                console.error(`Erro ao notificar admin ${admin}:`, error.message);
+              }
+            }
+
+            await nazu.groupLeave(groupId);
+
+            if (nazu.chatModify && typeof deleteChatByLastMessage === "function") {
+              try {
+                await deleteChatByLastMessage(groupId);
+                chatsDeleted++;
+              } catch (error) {
+                console.error(`Erro ao deletar chat ${groupId}:`, error.message);
+              }
+            }
+
+            if (nazu.chatModify && typeof clearChatHistorySafe === "function") {
+              try {
+                await clearChatHistorySafe(groupId);
+                groupConversationsCleared++;
+              } catch (error) {
+                console.error(`Erro ao limpar conversa ${groupId}:`, error.message);
+              }
+            }
+
+            await new Promise(resolve => setTimeout(resolve, 1000));
+          } catch (error) {
+            console.error(`Erro ao processar grupo ${groupId}:`, error.message);
+          }
+        }
+
+        for (const groupId of currentGroupIds) {
+          if (rentalGroupIds.includes(groupId)) continue;
+
+          groupsWithoutRental++;
+          groupsLeft.push(groupId);
+
+          try {
+            await nazu.sendMessage(groupId, {
+              text: `👋 Este grupo não possui aluguel registrado. Estou saindo. Até mais! ${symbols[Math.floor(Math.random() * symbols.length)]}`
+            });
+
+            await nazu.groupLeave(groupId);
+
+            if (nazu.chatModify && typeof deleteChatByLastMessage === "function") {
+              try {
+                await deleteChatByLastMessage(groupId);
+                chatsDeleted++;
+              } catch (error) {
+                console.error(`Erro ao deletar chat ${groupId}:`, error.message);
+              }
+            }
+
+            if (nazu.chatModify && typeof clearChatHistorySafe === "function") {
+              try {
+                await clearChatHistorySafe(groupId);
+                groupConversationsCleared++;
+              } catch (error) {
+                console.error(`Erro ao limpar conversa ${groupId}:`, error.message);
+              }
+            }
+
+            await new Promise(resolve => setTimeout(resolve, 1000));
+          } catch (error) {
+            console.error(`Erro ao processar grupo sem aluguel ${groupId}:`, error.message);
+          }
+        }
+
+        if (nazu.chatModify && typeof clearChatHistorySafe === "function") {
+          try {
+            const remainingGroups = await nazu.groupFetchAllParticipating().catch(() => ({}));
+            for (const groupId of Object.keys(remainingGroups)) {
+              try {
+                await clearChatHistorySafe(groupId);
+                groupConversationsCleared++;
+                await new Promise(resolve => setTimeout(resolve, 500));
+              } catch (error) {
+                console.error(`Erro ao limpar conversa do grupo ${groupId}:`, error.message);
+              }
+            }
+          } catch (error) {
+            console.error("Erro ao limpar conversas de grupos:", error.message);
+          }
+        }
+
+        saveRentalData(rentalData);
+
+        let summary = "🧹 *Resumo da Limpeza Completa de Alugueis* 🧹\n\n";
+        summary += `✅ Grupos removidos dos registros: *${groupsCleaned}*\n`;
+        summary += `⏰ Grupos vencidos processados: *${groupsExpired}*\n`;
+        summary += `🚫 Grupos sem aluguel processados: *${groupsWithoutRental}*\n`;
+        summary += `📩 Administradores notificados: *${adminsNotified}*\n`;
+        summary += `🗑️ Chats excluídos: *${chatsDeleted}*\n`;
+        summary += `🧽 Conversas de grupos limpas: *${groupConversationsCleared}*\n`;
+        summary += `📋 Total de grupos dos quais sai: *${groupsLeft.length}*\n`;
+
+        if (groupsLeft.length > 0) {
+          summary += `\n📋 *Grupos processados:*\n${groupsLeft.slice(0, 10).map(id => `- ${id.split("@")[0]}`).join("\n")}`;
+          if (groupsLeft.length > 10) {
+            summary += `\n... e mais ${groupsLeft.length - 10} grupos`;
+          }
+        }
+
+        summary += "\n\n✨ Limpeza concluída com sucesso!";
+        return reply(summary);
+      } catch (error) {
+        console.error("Erro no comando limparaluguel:", error);
+        return reply(rentalMsg.cleanupError || "Ocorreu um erro ao limpar aluguéis.");
+      }
     }
   }
 };
+

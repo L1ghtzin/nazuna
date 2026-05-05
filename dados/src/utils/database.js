@@ -1,6 +1,7 @@
 import fs from 'fs';
 import pathz from 'path';
 import crypto from 'crypto';
+import { PREFIX } from '../config.js';
 
 import { ensureDirectoryExists, ensureJsonFileExists, loadJsonFile, normalizar, getUserName, isGroupId, isUserId, isValidLid, isValidJid, buildUserId, getLidFromJidCached, idsMatch, loadJsonFileSafe, saveJsonFileSafe, validateLevelingUser, validateEconomyUser, validateGroupData, createBackup, normalizeParam, compareParams, findKeyIgnoringAccents, findInArrayIgnoringAccents, resolveParamAlias, matchParam, PARAM_ALIASES } from './helpers.js';
 import { recalcEquipmentBonuses } from './equipment.js';
@@ -1120,7 +1121,7 @@ const getGroupRentalStatus = groupId => {
   };
 };
 
-const setGroupRental = (groupId, durationDays, prefix) => {
+const setGroupRental = (groupId, durationDays, prefix = PREFIX) => {
   if (!groupId || typeof groupId !== 'string' || !isGroupId(groupId)) {
     return {
       success: false,
