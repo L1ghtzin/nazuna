@@ -1,4 +1,5 @@
-import { PREFIX } from "../../config.js";
+import { normalizeScheduleTime, validateTimeFormat } from "../../utils/timeHelpers.js";
+import { scheduleGroupJob, unscheduleGroupJob } from "../../workers/index.js";
 
 export default {
   name: "group_management",
@@ -339,14 +340,14 @@ export default {
     // ═══════════════════════════════════════════════════════════════
     // 🚪 GRUPO STATUS (ABRIR/FECHAR)
     // ═══════════════════════════════════════════════════════════════
-    if (['grupo', 'gp', 'group', 'opengp', 'closegp', 'abrirgp', 'fechargp'].includes(cmd)) {
+    if (['grupo', 'gp', 'group'].includes(cmd)) {
       if (!isGroup) return reply(MESSAGES.permission.groupOnly);
       if (!isGroupAdmin) return reply(MESSAGES.permission.adminOnly);
       if (!isBotAdmin) return reply(MESSAGES.permission.botAdminOnly);
       
       const param = (q || '').toLowerCase();
-      const shouldOpen = ['a', 'o', 'open', 'abrir'].includes(param) || cmd === 'opengp' || cmd === 'abrirgp';
-      const shouldClose = ['f', 'c', 'close', 'fechar'].includes(param) || cmd === 'closegp' || cmd === 'fechargp';
+      const shouldOpen = ['a', 'o', 'open', 'abrir'].includes(param);
+      const shouldClose = ['f', 'c', 'close', 'fechar'].includes(param);
 
       if (shouldOpen) {
         await nazu.groupSettingUpdate(from, 'not_announcement');
@@ -362,6 +363,108 @@ export default {
         return reply('✅ Grupo fechado.');
       }
       return reply(`💡 Uso: ${prefix}${cmd} <abrir|fechar>`);
+    }
+
+    if (cmd === 'opengp' || cmd === 'abrirgp') {
+      if (!isGroup) return reply(MESSAGES.permission.groupOnly);
+      if (!isGroupAdmin) return reply(MESSAGES.permission.adminOnly);
+      if (!q) {
+        return reply(`Uso: ${prefix}${cmd} HH:MM (24h)\nExemplos: ${prefix}${cmd} 07:00 | ${prefix}${cmd} off`);
+      }
+
+      const rawArg = q.trim();
+      const argLower = rawArg.toLowerCase();
+
+      groupData.schedule = groupData.schedule || {};
+
+      if (argLower === 'off' || argLower === 'desativar' || argLower === 'remove' || argLower === 'rm') {
+        delete groupData.schedule.openTime;
+        if (groupData.schedule?.lastRun) {
+          delete groupData.schedule.lastRun.open;
+          if (Object.keys(groupData.schedule.lastRun).length === 0) {
+            delete groupData.schedule.lastRun;
+          }
+        }
+        await optimizer.saveJsonWithCache(groupFile, groupData);
+        try { unscheduleGroupJob(from, 'open'); } catch (e) {}
+        return reply('✅ Agendamento diário para ABRIR o grupo foi removido.');
+      }
+
+      const timeValidation = validateTimeFormat(rawArg);
+      if (!timeValidation.valid) {
+        return reply(`⏰ ${timeValidation.error}\nExemplo: ${prefix}opengp 07:30`);
+      }
+
+      const normalizedTime = normalizeScheduleTime(rawArg);
+      if (!normalizedTime) {
+        return reply(`⏰ Não consegui entender o horário informado. Use o formato HH:MM, por exemplo ${prefix}opengp 07:30`);
+      }
+
+      groupData.schedule.openTime = normalizedTime;
+      if (groupData.schedule.lastRun && typeof groupData.schedule.lastRun === 'object') {
+        delete groupData.schedule.lastRun.open;
+        if (Object.keys(groupData.schedule.lastRun).length === 0) {
+          delete groupData.schedule.lastRun;
+        }
+      }
+
+      await optimizer.saveJsonWithCache(groupFile, groupData);
+      try { scheduleGroupJob(from, 'open', normalizedTime, nazu); } catch (e) { console.error('Erro ao agendar open cron:', e); }
+
+      let msg = `✅ Agendamento salvo! O grupo será ABERTO todos os dias às ${normalizedTime} (horário de São Paulo).`;
+      if (!isBotAdmin) msg += '\n⚠️ Observação: Eu preciso ser administrador para efetivar a abertura no horário.';
+      return reply(msg);
+    }
+
+    if (cmd === 'closegp' || cmd === 'fechargp') {
+      if (!isGroup) return reply(MESSAGES.permission.groupOnly);
+      if (!isGroupAdmin) return reply(MESSAGES.permission.adminOnly);
+      if (!q) {
+        return reply(`Uso: ${prefix}${cmd} HH:MM (24h)\nExemplos: ${prefix}${cmd} 22:30 | ${prefix}${cmd} off`);
+      }
+
+      const rawArg = q.trim();
+      const argLower = rawArg.toLowerCase();
+
+      groupData.schedule = groupData.schedule || {};
+
+      if (argLower === 'off' || argLower === 'desativar' || argLower === 'remove' || argLower === 'rm') {
+        delete groupData.schedule.closeTime;
+        if (groupData.schedule?.lastRun) {
+          delete groupData.schedule.lastRun.close;
+          if (Object.keys(groupData.schedule.lastRun).length === 0) {
+            delete groupData.schedule.lastRun;
+          }
+        }
+        await optimizer.saveJsonWithCache(groupFile, groupData);
+        try { unscheduleGroupJob(from, 'close'); } catch (e) {}
+        return reply('✅ Agendamento diário para FECHAR o grupo foi removido.');
+      }
+
+      const timeValidation = validateTimeFormat(rawArg);
+      if (!timeValidation.valid) {
+        return reply(`⏰ ${timeValidation.error}\nExemplo: ${prefix}closegp 22:30`);
+      }
+
+      const normalizedTime = normalizeScheduleTime(rawArg);
+      if (!normalizedTime) {
+        return reply(`⏰ Não consegui entender o horário informado. Use o formato HH:MM, por exemplo ${prefix}closegp 22:30`);
+      }
+
+      groupData.schedule.closeTime = normalizedTime;
+      if (groupData.schedule.lastRun && typeof groupData.schedule.lastRun === 'object') {
+        delete groupData.schedule.lastRun.close;
+        if (Object.keys(groupData.schedule.lastRun).length === 0) {
+          delete groupData.schedule.lastRun;
+        }
+      }
+
+      await optimizer.saveJsonWithCache(groupFile, groupData);
+      try { scheduleGroupJob(from, 'close', normalizedTime, nazu); } catch (e) { console.error('Erro ao agendar close cron:', e); }
+
+      let msg = `✅ Agendamento salvo! O grupo será FECHADO todos os dias às ${normalizedTime} (horário de São Paulo).`;
+      if (!isBotAdmin) msg += '\n⚠️ Observação: Eu preciso ser administrador para efetivar o fechamento no horário.';
+      return reply(msg);
     }
 
     // ═══════════════════════════════════════════════════════════════

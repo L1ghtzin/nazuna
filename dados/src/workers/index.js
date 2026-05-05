@@ -71,7 +71,7 @@ const startRemindersWorker = (nazuInstance) => {
   }
 };
 
-const unscheduleGroupJob = (groupId, type) => {
+export const unscheduleGroupJob = (groupId, type) => {
   const key = `${groupId}:${type}`;
   const j = gpCronJobs[key];
   if (j && typeof j.stop === 'function') {
@@ -80,7 +80,7 @@ const unscheduleGroupJob = (groupId, type) => {
   delete gpCronJobs[key];
 };
 
-const scheduleGroupJob = (groupId, type, timeStr, nazuInstance) => {
+export const scheduleGroupJob = (groupId, type, timeStr, nazuInstance) => {
   if (!groupId || !timeStr) return;
   const normalized = normalizeScheduleTime(timeStr);
   if (!normalized) return;
