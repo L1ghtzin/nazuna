@@ -27,12 +27,19 @@ export default {
     if (['brat', 'bratvid'].includes(cmd)) {
       if (!q) return reply(MESSAGES.error.noText);
       const isAnimated = cmd === 'bratvid';
-      const url = `https://api.siputzx.my.id/api/m/brat?text=${encodeURIComponent(q)}&isAnimated=${isAnimated}`;
+      const delay = 500;
+      const apiUrl = `https://api.siputzx.my.id/api/m/brat?text=${encodeURIComponent(q)}&isAnimated=${isAnimated}&delay=${delay}`;
+      
       await reply(MESSAGES.general.wait);
       try {
-        const buffer = await axios.get(url, { responseType: 'arraybuffer' }).then(res => Buffer.from(res.data));
-        return await sendSticker(nazu, from, { sticker: buffer, packname: nomebot, author: pushname });
+        return await sendSticker(nazu, from, { 
+          sticker: { url: apiUrl }, 
+          packname: nomebot, 
+          author: pushname,
+          type: isAnimated ? 'video' : 'image'
+        });
       } catch (e) {
+        console.error('Erro no comando brat:', e);
         return reply(MESSAGES.error.general);
       }
     }
