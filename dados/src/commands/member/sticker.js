@@ -31,7 +31,7 @@ export default {
       await reply(MESSAGES.general.wait);
       try {
         const buffer = await axios.get(url, { responseType: 'arraybuffer' }).then(res => Buffer.from(res.data));
-        return await sendSticker(nazu, from, { sticker: buffer, pack: nomebot, author: pushname });
+        return await sendSticker(nazu, from, { sticker: buffer, packname: nomebot, author: pushname });
       } catch (e) {
         return reply(MESSAGES.error.general);
       }
@@ -45,7 +45,7 @@ export default {
       const url = `https://api.siputzx.my.id/api/m/emojimix?emo=${encodeURIComponent(q)}`;
       try {
         const buffer = await axios.get(url, { responseType: 'arraybuffer' }).then(res => Buffer.from(res.data));
-        return await sendSticker(nazu, from, { sticker: buffer, pack: nomebot, author: pushname });
+        return await sendSticker(nazu, from, { sticker: buffer, packname: nomebot, author: pushname });
       } catch (e) {
         return reply(MESSAGES.error.general);
       }
@@ -56,11 +56,49 @@ export default {
     // ═══════════════════════════════════════════════════════════════
     if (cmd === 'qc') {
       if (!q) return reply("Cade o texto? 💔");
-      const url = `https://api.siputzx.my.id/api/m/quotely?text=${encodeURIComponent(q)}&name=${encodeURIComponent(pushname)}`;
+      await reply(MESSAGES.general.wait);
       try {
-        const buffer = await axios.get(url, { responseType: 'arraybuffer' }).then(res => Buffer.from(res.data));
-        return await sendSticker(nazu, from, { sticker: buffer, pack: nomebot, author: pushname });
+        let ppimg;
+        try {
+          ppimg = await nazu.profilePictureUrl(sender, 'image');
+        } catch {
+          ppimg = 'https://telegra.ph/file/b5427ea4b8701bc47e751.jpg';
+        }
+
+        const json = {
+          "type": "quote",
+          "format": "png",
+          "backgroundColor": "#1b1b1b",
+          "width": 512,
+          "height": 768,
+          "scale": 2,
+          "messages": [{
+            "entities": [],
+            "avatar": true,
+            "from": {
+              "id": 1,
+              "name": pushname,
+              "photo": {
+                "url": ppimg
+              }
+            },
+            "text": q,
+            "replyMessage": {}
+          }]
+        };
+
+        const res = await axios.post('https://cognima-quote.onrender.com/generate', json, {
+          headers: { 'Content-Type': 'application/json' }
+        });
+
+        const buffer = Buffer.from(res.data.result.image, 'base64');
+        return await sendSticker(nazu, from, { 
+          sticker: buffer, 
+          packname: nomebot, 
+          author: pushname 
+        });
       } catch (e) {
+        console.error("Erro no QC:", e);
         return reply(MESSAGES.error.general);
       }
     }
@@ -134,8 +172,8 @@ export default {
         const encmediats = await getFileBuffer(info.message.extendedTextMessage.contextInfo.quotedMessage.stickerMessage, 'sticker');
         await sendSticker(nazu, from, {
           sticker: `data:image/jpeg;base64,${encmediats.toString('base64')}`,
-          author: packname,
-          packname: author,
+          author: author,
+          packname: packname,
           rename: true
         }, { quoted: info });
       } catch (e) {
@@ -191,8 +229,8 @@ export default {
         
         await sendSticker(nazu, from, {
           sticker: `data:image/jpeg;base64,${encmediats.toString('base64')}`,
-          author: pack,
-          packname: author,
+          author: author,
+          packname: pack,
           rename: true
         }, { quoted: info });
       } catch (e) {
