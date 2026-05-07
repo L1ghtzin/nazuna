@@ -4,12 +4,6 @@ export default {
   commands: ["addalias", "addauto", "addautoadm", "addautoadmidia", "addautoadmin", "addautoadmmidia", "addautomedia", "addautomidia", "addautoresponse", "addcmd", "addcmdmedia", "addcmdmidia", "addnopref", "addnoprefix", "adicionarcmd", "autoresponses", "autorespostas", "comandospersonalizados", "delalias", "delauto", "delautoadm", "delautoadmin", "delautoresponse", "delcmd", "delnopref", "delnoprefix", "edcmd", "edcmdmidia", "editcmd", "editcmdmidia", "listalias", "listarcmd", "listauto", "listautoadm", "listautoadmin", "listautoresponses", "listcmd", "listnopref", "listnoprefix", "removercmd", "testarcmd", "testcmd"],
   handle: async ({ 
     nazu, from, info, command, args, reply, q, isGroup, isGroupAdmin, isBotAdmin, isOwner,
-    pushname, sender, menc_os2, groupData, groupFile, optimizer,
-    isQuotedImage, isQuotedVideo, isQuotedSticker, isImage, isVideo, isSticker, getFileBuffer, upload,
-    loadCustomCommands, saveCustomCommands, loadAutoResponses, saveAutoResponses
-  , MESSAGES }) => {
-  handle: async ({ 
-    nazu, from, info, command, args, reply, q, isGroup, isGroupAdmin, isBotAdmin, isOwner,
     pushname, sender, menc_os2, groupData, groupFile, optimizer, prefix, groupPrefix,
     isQuotedImage, isQuotedVideo, isQuotedSticker, isImage, isVideo, isSticker, getFileBuffer, upload,
     loadCustomCommands, saveCustomCommands, loadGroupAutoResponses, saveGroupAutoResponses,
