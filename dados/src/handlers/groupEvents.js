@@ -160,10 +160,22 @@ export async function handleGroupParticipantsUpdate(NazunaSock, inf) {
                     const antifakeResult = await checkAntifake(participant, groupSettings, NazunaSock);
                     if (!antifakeResult.allowed) {
                         membersToRemove.push(participant);
-                        removalReasons.push(`@${antifakeResult.number} (número estrangeiro / antifake)`);
+                        
+                        // Se o grupo não tem modo de aprovação, envia uma mensagem direta
+                        if (!groupMetadata.approveNewParticipants && !groupMetadata.joinApprovalMode) {
+                            const msgAntiFake = `🚫 O usuário @${antifakeResult.number} foi removido pelo AntiFake.\nMotivo: Utilizando número estrangeiro (${antifakeResult.reason}).`;
+                            await NazunaSock.sendMessage(from, { 
+                                text: msgAntiFake, 
+                                mentions: [participant] 
+                            }).catch(() => {});
+                        } else {
+                            // Se tiver modo de aprovação (e entraram por outro meio), acumula no aviso coletivo
+                            removalReasons.push(`@${antifakeResult.number} (número estrangeiro / antifake)`);
+                        }
+
                         await logAntifakeAction(from, {
                             number: antifakeResult.number,
-                            action: 'ban',
+                            action: 'remove',
                             reason: antifakeResult.reason,
                             resolvedFrom: participant
                         });
@@ -222,11 +234,14 @@ export async function handleGroupParticipantsUpdate(NazunaSock, inf) {
                 }
 
                 if (membersToRemove.length) {
-                    await NazunaSock.groupParticipantsUpdate(from, membersToRemove, 'remove');
-                    await NazunaSock.sendMessage(from, {
-                        text: `🚫 Removidos:\n- ${removalReasons.join('\n- ')}`,
-                        mentions: membersToRemove
-                    });
+                    await NazunaSock.groupParticipantsUpdate(from, membersToRemove, 'remove').catch(() => {});
+                    
+                    if (removalReasons.length) {
+                        await NazunaSock.sendMessage(from, {
+                            text: `🚫 Removidos:\n- ${removalReasons.join('\n- ')}`,
+                            mentions: membersToRemove
+                        }).catch(() => {});
+                    }
                 }
 
                 if (membersToWelcome.length) {
