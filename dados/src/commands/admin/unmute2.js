@@ -8,10 +8,10 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 export default {
-  name: "unmute",
-  description: "Desmuta um usuário no grupo",
-  commands: ["desmutar", "desmute", "unmute"],
-  usage: `${global.prefixo}unmute @usuario`,
+  name: "unmute2",
+  description: "Desmuta um usuário no grupo (sistema mute2)",
+  commands: ["unmute2", "desmute2", "desmutar2"],
+  usage: `${global.prefixo}unmute2 @usuario`,
   handle: async ({ 
     nazu,
     from,
@@ -31,13 +31,13 @@ export default {
       if (!menc_os2) return reply(MESSAGES.permission.mentionRequired);
       
       const groupFilePath = buildGroupFilePath(from);
-      let groupData = await optimizer.loadJsonWithCache(groupFilePath, { mutedUsers: {} });
+      let groupData = await optimizer.loadJsonWithCache(groupFilePath, { mutedUsers2: {} });
       
-      groupData.mutedUsers = groupData.mutedUsers || {};
+      groupData.mutedUsers2 = groupData.mutedUsers2 || {};
       const targetId = await normalizeUserId(nazu, menc_os2);
       
-      const removed = removeUserFromMap(groupData.mutedUsers, targetId) || 
-                      removeUserFromMap(groupData.mutedUsers, menc_os2);
+      const removed = removeUserFromMap(groupData.mutedUsers2, targetId) || 
+                      removeUserFromMap(groupData.mutedUsers2, menc_os2);
       
       if (removed) {
         writeJsonFile(groupFilePath, groupData);
@@ -48,7 +48,7 @@ export default {
           quoted: info
         });
       } else {
-        reply('❌ Este usuário não está mutado.');
+        reply('❌ Este usuário não está mutado no sistema mute2.');
       }
       
     } catch (e) {

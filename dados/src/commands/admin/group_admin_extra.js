@@ -4,7 +4,6 @@ export default {
   name: "group_admin_extra",
   description: "Comandos extras de administração de grupo",
   commands: [
-    "mute2", "mutar2", "desmute2", "desmutar2", "unmute2",
     "legendabv", "textbv", "welcomemsg", "autosticker", "autorepo", "autoresposta"
   ],
   handle: async ({ 
@@ -37,19 +36,6 @@ export default {
       groupData.textbv = q;
       await optimizer.saveJsonWithCache(groupFilePath, groupData);
       return reply(`✅ *Mensagem de boas-vindas configurada com sucesso!*\n\n📌 Nova mensagem:\n"${groupData.textbv}"`);
-    }
-
-    // --- MUTE2 ---
-    if (['mute2', 'mutar2'].includes(cmd)) {
-      groupData.mute = true;
-      await optimizer.saveJsonWithCache(groupFilePath, groupData);
-      return reply("🔇 Grupo mutado (Mute2)!");
-    }
-
-    if (['unmute2', 'desmute2', 'desmutar2'].includes(cmd)) {
-      groupData.mute = false;
-      await optimizer.saveJsonWithCache(groupFilePath, groupData);
-      return reply("🔊 Grupo desmutado!");
     }
 
     return reply(`✅ Configuração ${cmd} atualizada.`);
