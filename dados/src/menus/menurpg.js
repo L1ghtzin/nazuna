@@ -27,6 +27,7 @@ export default async function menurpg(prefix, botName = "MeuBot", userName = "Us
 } = {}) {
 
   let formattedHeader = header
+    .replace(/#nome#/g, userName)
     .replace(/#user#/g, userName)
     .replace(/#prefix#/g, prefix);
     

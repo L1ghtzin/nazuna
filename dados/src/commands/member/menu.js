@@ -4,7 +4,7 @@ import pathz from 'path';
 export default {
   name: "menu",
   description: "Menus e guias do bot",
-  commands: ["admmenu", "alteradores", "changers", "changersmenu", "comandos", "commands", "downloadmenu", "downmenu", "ferramentas", "gamemenu", "help", "membermenu", "membmenu", "menu", "menuadm", "menuadmin", "menuadmins", "menualterador", "menualteradores", "menubn", "menubrincadeira", "menubrincadeiras", "menudono", "menudown", "menudownload", "menudownloads", "menuferramenta", "menuferramentas", "menufig", "menugeral", "menulogo", "menulogos", "menumemb", "menumembros", "menusticker", "ownermenu", "stickermenu", "tools", "toolsmenu"],
+  commands: ["admmenu", "alteradores", "changers", "changersmenu", "comandos", "commands", "downloadmenu", "downmenu", "ferramentas", "gamemenu", "help", "membermenu", "membmenu", "menu", "menuadm", "menuadmin", "menuadmins", "menualterador", "menualteradores", "menubn", "menubrincadeira", "menubrincadeiras", "menudono", "menudown", "menudownload", "menudownloads", "menuferramenta", "menuferramentas", "menufig", "menugeral", "menulogo", "menulogos", "menumemb", "menumembros", "menurpg", "menusticker", "menuvip", "ownermenu", "stickermenu", "tools", "toolsmenu"],
   handle: async ({ 
     nazu, from, info, command, reply, prefix, pushname, isGroup,
     nomebot, menus, getGroupCustomization, isGroupCustomizationEnabled,
@@ -92,6 +92,12 @@ export default {
       }
       else if (['stickermenu', 'menusticker', 'menufig'].includes(cmd)) {
         await sendMenuWithMedia('stickers', menus.menuSticker);
+      }
+      else if (cmd === 'menurpg') {
+        await sendMenuWithMedia('rpg', menus.menuRPG);
+      }
+      else if (cmd === 'menuvip') {
+        await sendMenuWithMedia('vip', menus.menuVIP);
       }
     } catch (e) {
       console.error('Erro ao enviar menu:', e);
