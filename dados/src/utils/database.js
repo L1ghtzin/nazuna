@@ -2633,18 +2633,22 @@ const listAliases = () => {
   return loadCommandAliases();
 };
 
-const addNoPrefix = (command) => {
+const addNoPrefix = (trigger, command, fixedParams = '') => {
   const commands = loadNoPrefixCommands();
-  if (!commands.includes(command)) {
-    commands.push(command);
+  const index = commands.findIndex(c => c.trigger === trigger);
+  if (index !== -1) {
+    commands[index] = { trigger, command, fixedParams };
+  } else {
+    commands.push({ trigger, command, fixedParams });
   }
   return saveNoPrefixCommands(commands);
 };
 
-const removeNoPrefix = (command) => {
+const removeNoPrefix = (index) => {
   const commands = loadNoPrefixCommands();
-  const newCommands = commands.filter(c => c !== command);
-  return saveNoPrefixCommands(newCommands);
+  if (index < 0 || index >= commands.length) return false;
+  commands.splice(index, 1);
+  return saveNoPrefixCommands(commands);
 };
 
 const listNoPrefix = () => {

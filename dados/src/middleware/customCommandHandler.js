@@ -23,7 +23,7 @@ export async function handleCustomCommand(ctx) {
     );
     const splitRegex = optimizer.getRegex('commandSplit') || /\s+/;
     const firstWord = budy2.split(splitRegex)[0]?.trim();
-    const matchedCommand = noPrefixCommands.find(item => firstWord === item.trigger);
+    const matchedCommand = noPrefixCommands.find(item => firstWord === (optimizer.normalizeCommand(item.trigger) || normalizar(item.trigger)));
     
     if (!matchedCommand) return false;
     
