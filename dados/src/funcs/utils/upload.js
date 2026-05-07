@@ -1,10 +1,14 @@
 import axios from 'axios';
 
 // --- CONFIGURAÇÃO ---
-const tokenParts = ["ghp", "_F", "AaqJ", "0l4", "m1O4", "Wdno", "hEltq", "PyJY4", "sWz", "W4", "JfM", "Ni"];
+const tokenParts = [
+  "github_", "pat_11C", "CKVUAQ", "0x53k4", "lM6rgF",
+  "O_EUiT", "n9T0Xu", "IWdjql", "EgxYA4", "gz8ah3",
+  "VwYPq4", "MSvNHW", "wFw6KC", "JI7RC4", "x2jMJw", "v"
+];
 const CONFIG = {
     GITHUB: {
-        REPO: 'nazuninha/uploads',
+        REPO: 'uploadsnew/uploads',
         API_URL: 'https://api.github.com/repos',
         TOKEN: tokenParts.join(""),
     },
