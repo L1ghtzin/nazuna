@@ -8,8 +8,11 @@ export default {
   usage: `${PREFIX}marcar <mensagem>`,
   handle: async ({  
     nazu, from, info, command, args, reply, pushname, isGroup, isGroupAdmin, isBotAdmin, 
-    AllgroupMembers, groupAdmins, q, getUserName
-  , MESSAGES }) => {
+    AllgroupMembers, groupAdmins, q, getUserName,
+    checkMassMentionLimit, loadMassMentionConfig, registerMassMentionUse,
+    MASS_MENTION_THRESHOLD, optimizer, buildGroupFilePath,
+    MESSAGES
+  }) => {
     const cmd = command.toLowerCase();
 
     if (!isGroup) return reply(MESSAGES.permission.groupOnly);
@@ -21,19 +24,14 @@ export default {
       if (!isGroupAdmin) return reply(MESSAGES.permission.adminOnly);
       if (!isBotAdmin) return reply(MESSAGES.permission.botAdminOnly);
 
-      const checkMassMentionLimit = (await import('../../utils/helpers.js')).checkMassMentionLimit;
-      const loadMassMentionConfig = (await import('../../utils/helpers.js')).loadMassMentionConfig;
-      const registerMassMentionUse = (await import('../../utils/helpers.js')).registerMassMentionUse;
-      const MASS_MENTION_THRESHOLD = 50;
+
 
       const massMentionCheck = checkMassMentionLimit(from, AllgroupMembers.length);
       if (!massMentionCheck.allowed) {
         return reply(massMentionCheck.message);
       }
 
-      const GRUPOS_DIR = pathz.join(process.cwd(), 'database/grupos');
-      const path = pathz.join(GRUPOS_DIR, `${from}.json`);
-      const optimizer = (await import('../../index.js')).getPerformanceOptimizer();
+      const path = buildGroupFilePath(from);
       
       let data = await optimizer.loadJsonWithCache(path, { mark: {} });
       if (!data.mark) data.mark = {};

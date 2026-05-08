@@ -1,6 +1,3 @@
-import modules from "../../funcs/exports.js";
-const { upload } = modules;
-
 export default {
   name: "upload",
   description: "Faz upload de mídia (imagem, vídeo, áudio, documento) e retorna o link temporário",
@@ -15,8 +12,10 @@ export default {
     isQuotedVideo, 
     isQuotedDocument, 
     isQuotedAudio,
-    getFileBuffer
-  , MESSAGES }) => {
+    getFileBuffer,
+    upload,
+    MESSAGES
+  }) => {
     try {
       if (!isQuotedImage && !isQuotedVideo && !isQuotedDocument && !isQuotedAudio) {
         return reply(`Marque um video, uma foto, um audio ou um documento`);
