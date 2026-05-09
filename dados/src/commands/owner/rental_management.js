@@ -1,4 +1,4 @@
-﻿export default {
+export default {
   name: "rental_management",
   description: "Gerenciamento do sistema de aluguel de grupos",
   commands: [
@@ -12,11 +12,11 @@
     "autocleanup",
     "rentalclean"
   ],
-  handle: async ({ reply, command, isRealOwner, rentalExpirationManager }) => {
+  handle: async ({ reply, command, isOwner, rentalExpirationManager }) => {
     const cmd = (command || "").toLowerCase();
-    const ownerOnlyMessage = "🚫 Apenas o Dono principal pode gerenciar o sistema de aluguel!";
+    const ownerOnlyMessage = "🚫 Apenas o Dono e subdonos podem gerenciar o sistema de aluguel!";
 
-    if (!isRealOwner) {
+    if (!isOwner) {
       return reply(ownerOnlyMessage);
     }
 

@@ -198,26 +198,33 @@ class RentalExpirationManager {
       const ownerInfo = await this.getOwnerInfo();
       const message = this.buildExpirationMessage(type, daysUntilExpiry, groupMetadata, ownerInfo);
 
-      // Send to group
-      await this.nazu.sendMessage(groupId, {
-        text: message
-      }).catch(error => {
-        console.error(`❌ Failed to send message to group ${groupId}:`, error);
-      });
+      const rentalData = await this.loadRentalData();
+      const target = rentalData.notificationTarget || 'ambos';
 
-      // Also send to group admins
-      const participants = groupMetadata.participants || [];
-      const admins = participants.filter(p => p.admin === 'admin' || p.admin === 'superadmin');
-      
-      for (const admin of admins) {
-        await this.nazu.sendMessage(admin.id, {
+      // Send to group
+      if (target === 'grupo' || target === 'ambos') {
+        await this.nazu.sendMessage(groupId, {
           text: message
         }).catch(error => {
-          console.error(`❌ Failed to send message to admin ${admin.id}:`, error);
+          console.error(`❌ Failed to send message to group ${groupId}:`, error);
         });
       }
 
-      await this.log(`Sent ${type} notification to group: ${groupMetadata.subject} (${groupId})`);
+      // Also send to group admins
+      if (target === 'pv' || target === 'ambos') {
+        const participants = groupMetadata.participants || [];
+        const admins = participants.filter(p => p.admin === 'admin' || p.admin === 'superadmin');
+        
+        for (const admin of admins) {
+          await this.nazu.sendMessage(admin.id, {
+            text: message
+          }).catch(error => {
+            console.error(`❌ Failed to send message to admin ${admin.id}:`, error);
+          });
+        }
+      }
+
+      await this.log(`Sent ${type} notification to group: ${groupMetadata.subject} (${groupId}) target: ${target}`);
     } catch (error) {
       console.error(`❌ Error sending ${type} notification to group ${groupId}:`, error);
       await this.log(`Error sending ${type} notification to group ${groupId}: ${error.message}`);

@@ -1,9 +1,10 @@
-﻿export default {
+export default {
   name: "rental_system",
   description: "Gerenciamento de aluguel de grupos",
   commands: [
     "addaluguel",
     "adddiasaluguel",
+    "aluguelaviso",
     "aluguelist",
     "cancelaraluguel",
     "dayfree",
@@ -36,7 +37,7 @@
     reply,
     q,
     isGroup,
-    isRealOwner,
+    isOwner,
     prefix,
     loadRentalData,
     saveRentalData,
@@ -53,21 +54,21 @@
     const cmd = (command || "").toLowerCase();
     const query = (q || "").trim();
     const rentalMsg = {
-      ownerOnly: "🚫 Apenas o Dono principal pode gerenciar o sistema de aluguel!",
-      modeOwnerOnly: "🚫 Apenas o Dono principal pode gerenciar o modo de aluguel!",
-      codeOwnerOnly: "🚫 Apenas o Dono principal pode gerar códigos!",
-      listOwnerOnly: "🚫 Apenas o Dono principal pode ver a lista de aluguéis!",
-      removeOwnerOnly: "🚫 Apenas o Dono principal pode remover aluguéis!",
-      extendOwnerOnly: "🚫 Apenas o Dono principal pode estender aluguéis!",
-      infoOwnerOnly: "🚫 Apenas o Dono principal pode ver informações de aluguel!",
-      cleanupOwnerOnly: "🚫 Apenas o Dono principal pode limpar aluguéis!",
+      ownerOnly: "🚫 Apenas o Dono e subdonos podem gerenciar o sistema de aluguel!",
+      modeOwnerOnly: "🚫 Apenas o Dono e subdonos podem gerenciar o modo de aluguel!",
+      codeOwnerOnly: "🚫 Apenas o Dono e subdonos podem gerar códigos!",
+      listOwnerOnly: "🚫 Apenas o Dono e subdonos podem ver a lista de aluguéis!",
+      removeOwnerOnly: "🚫 Apenas o Dono e subdonos podem remover aluguéis!",
+      extendOwnerOnly: "🚫 Apenas o Dono e subdonos podem estender aluguéis!",
+      infoOwnerOnly: "🚫 Apenas o Dono e subdonos podem ver informações de aluguel!",
+      cleanupOwnerOnly: "🚫 Apenas o Dono e subdonos podem limpar aluguéis!",
       noRentals: "📭 Nenhum grupo com aluguel ativo no momento.",
       cleanupStart: "🔄 Iniciando limpeza completa de aluguéis...",
       cleanupError: "Ocorreu um erro ao limpar aluguéis."
     };
 
     const ensureOwner = (fallback = rentalMsg.ownerOnly) => {
-      if (!isRealOwner) {
+      if (!isOwner) {
         reply(fallback);
         return false;
       }
@@ -102,6 +103,25 @@
       } catch (error) {
         console.error("Erro no comando modoaluguel:", error);
         return reply("❌ Ocorreu um erro inesperado.");
+      }
+    }
+
+    if (["aluguelaviso"].includes(cmd)) {
+      if (!ensureOwner(rentalMsg.ownerOnly)) return;
+      try {
+        const action = query.toLowerCase();
+        if (["grupo", "pv", "ambos"].includes(action)) {
+          const rentalData = loadRentalData();
+          rentalData.notificationTarget = action;
+          saveRentalData(rentalData);
+          return reply(`✅ O destino dos avisos de aluguel foi configurado para: *${action.toUpperCase()}*`);
+        }
+        
+        const currentTarget = loadRentalData().notificationTarget || "ambos";
+        return reply(`🤔 Uso: ${prefix}aluguelaviso <grupo|pv|ambos>\n\nStatus atual: *${currentTarget.toUpperCase()}*`);
+      } catch (error) {
+        console.error("Erro no comando aluguelaviso:", error);
+        return reply("❌ Ocorreu um erro ao configurar os avisos.");
       }
     }
 
@@ -575,21 +595,27 @@
           groupsLeft.push(groupId);
 
           try {
-            await nazu.sendMessage(groupId, {
-              text: `⏰ O aluguel deste grupo (${groupMetadata.subject}) expirou. Estou saindo, mas vocês podem renovar o aluguel entrando em contato com o dono! Até mais! 😊${symbols[Math.floor(Math.random() * symbols.length)]}`
-            });
+            const currentTarget = rentalData.notificationTarget || 'ambos';
+            
+            if (currentTarget === 'grupo' || currentTarget === 'ambos') {
+              await nazu.sendMessage(groupId, {
+                text: `⏰ O aluguel deste grupo (${groupMetadata.subject}) expirou. Estou saindo, mas vocês podem renovar o aluguel entrando em contato com o dono! Até mais! 😊${symbols[Math.floor(Math.random() * symbols.length)]}`
+              });
+            }
 
-            const admins = (groupMetadata.participants || []).filter(p => p.admin).map(p => p.id);
-            for (const admin of admins) {
-              const delay = Math.floor(Math.random() * (500 - 100 + 1)) + 100;
-              await new Promise(resolve => setTimeout(resolve, delay));
-              try {
-                await nazu.sendMessage(admin, {
-                  text: `⚠️ Olá, admin do grupo *${groupMetadata.subject}*! O aluguel do grupo expirou, e por isso saí. Para renovar, entre em contato com o dono. Obrigado! ${symbols[Math.floor(Math.random() * symbols.length)]}`
-                });
-                adminsNotified++;
-              } catch (error) {
-                console.error(`Erro ao notificar admin ${admin}:`, error.message);
+            if (currentTarget === 'pv' || currentTarget === 'ambos') {
+              const admins = (groupMetadata.participants || []).filter(p => p.admin).map(p => p.id);
+              for (const admin of admins) {
+                const delay = Math.floor(Math.random() * (500 - 100 + 1)) + 100;
+                await new Promise(resolve => setTimeout(resolve, delay));
+                try {
+                  await nazu.sendMessage(admin, {
+                    text: `⚠️ Olá, admin do grupo *${groupMetadata.subject}*! O aluguel do grupo expirou, e por isso saí. Para renovar, entre em contato com o dono. Obrigado! ${symbols[Math.floor(Math.random() * symbols.length)]}`
+                  });
+                  adminsNotified++;
+                } catch (error) {
+                  console.error(`Erro ao notificar admin ${admin}:`, error.message);
+                }
               }
             }
 
