@@ -1,4 +1,4 @@
-﻿const soadmBypassCommands = ['suporte', 'ticketsuporte', 'suporteticket', 'ticket'];
+const soadmBypassCommands = ['suporte', 'ticketsuporte', 'suporteticket', 'ticket'];
 
 export async function processGroupSecurity(context) {
     const { 
@@ -203,7 +203,7 @@ export async function processGroupSecurity(context) {
     // 9. Muted Users (1 & 2)
     if (isGroup && isMuted && !isGroupAdmin && !isOwner) {
       try {
-        await nazu.sendMessage(from, { text: `ðŸ¤« *UsuÃ¡rio mutado detectado*\n\n@${getUserName(sender)}, vocÃª estÃ¡ tentando falar enquanto estÃ¡ mutado neste grupo. VocÃª serÃ¡ removido conforme as regras.`, mentions: [sender] }, { quoted: info });
+        await nazu.sendMessage(from, { text: `🤫 *Usuário mutado detectado*\n\n@${getUserName(sender)}, você está tentando falar enquanto está mutado neste grupo. Você será removido conforme as regras.`, mentions: [sender] }, { quoted: info });
         await nazu.sendMessage(from, { delete: { remoteJid: from, fromMe: false, id: info.key.id, participant: sender } });
         if (isBotAdmin) {
           await nazu.groupParticipantsUpdate(from, [sender], 'remove');

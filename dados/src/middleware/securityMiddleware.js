@@ -11,25 +11,31 @@ export async function processSecurity({
   isGroupAdmin,
   isBotAdmin,
   antitoxic,
-  antipalavra
+  antipalavra,
+  groupData,
+  groupFile,
+  optimizer
 }) {
   // AntiToxic
-  if (antitoxic && antitoxic.isEnabled && antitoxic.isEnabled(from) && body) {
-    antitoxic.analyzeMessage(body).then(toxicResult => {
-      if (toxicResult.isToxic) {
-        const action = antitoxic.getGroupAction ? antitoxic.getGroupAction(from) : 'avisar';
-        if (action === 'apagar') {
-          nazu.sendMessage(from, { delete: info.key }).then(() => {
-            nazu.sendMessage(from, {
-              text: `⚠️ @${sender.split('@')[0]}, sua mensagem foi removida por conteúdo tóxico.\n\n_Detecção baseada em palavras-chave._`,
-              mentions: [sender]
-            });
-          });
-        } else if (action === 'avisar') {
-          nazu.sendMessage(from, {
-            text: `⚠️ @${sender.split('@')[0]}, evite mensagens tóxicas!\n\n_Detecção baseada em palavras-chave._`,
-            mentions: [sender]
-          });
+  if (isGroup && !isGroupAdmin && antitoxic && antitoxic.isEnabled && antitoxic.isEnabled(from) && body) {
+    antitoxic.processMessage(from, sender, body).then(toxicResult => {
+      if (toxicResult && toxicResult.action !== 'none') {
+        const warningData = antitoxic.generateWarningMessage(sender, toxicResult);
+        if (warningData) {
+          if (toxicResult.action === 'apagar') {
+            nazu.sendMessage(from, { delete: info.key }).then(() => {
+              nazu.sendMessage(from, warningData).catch(() => {});
+            }).catch(() => {});
+          } else if (toxicResult.action === 'avisar') {
+            nazu.sendMessage(from, warningData).catch(() => {});
+          } else if (toxicResult.action === 'mute') {
+            if (groupData && optimizer && groupFile) {
+              groupData.mutedUsers = groupData.mutedUsers || {};
+              groupData.mutedUsers[sender] = true;
+              optimizer.saveJsonWithCache(groupFile, groupData).catch(() => {});
+            }
+            nazu.sendMessage(from, warningData).catch(() => {});
+          }
         }
       }
     }).catch(toxicErr => {

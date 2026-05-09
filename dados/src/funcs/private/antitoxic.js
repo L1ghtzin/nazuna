@@ -17,15 +17,29 @@ const CONFIG = {
     DEFAULT_ACTION: 'avisar'
 };
 
-// Palavras-chave para detecção rápida (fallback se IA falhar)
+// Palavras-chave de detecção de toxicidade e seus pesos (score 1-100)
 const TOXIC_KEYWORDS = [
-    // Ofensas gerais
-    'idiota', 'burro', 'imbecil', 'retardado', 'otário', 'babaca',
-    'estúpido', 'cretino', 'mongol', 'débil', 'lixo', 'merda',
-    // Termos mais graves (censurados parcialmente)
-    'f*der', 'p*ta', 'v*ado', 'c*ralho', 'arr*mbado',
-    // Ameaças
-    'vou te matar', 'vou te pegar', 'vai morrer'
+    // Ofensas leves e gerais (Score baixo: ~30-50)
+    { word: 'idiota', score: 30 }, { word: 'burro', score: 30 }, { word: 'burra', score: 30 }, { word: 'imbecil', score: 40 },
+    { word: 'retardado', score: 40 }, { word: 'retardada', score: 40 }, { word: 'otário', score: 30 }, { word: 'otária', score: 30 },
+    { word: 'babaca', score: 30 }, { word: 'estúpido', score: 30 }, { word: 'estúpida', score: 30 }, { word: 'cretino', score: 30 },
+    { word: 'cretina', score: 30 }, { word: 'mongol', score: 50 }, { word: 'débil', score: 50 }, { word: 'lixo', score: 30 },
+    { word: 'merda', score: 40 }, { word: 'trouxa', score: 30 }, { word: 'inútil', score: 30 }, { word: 'verme', score: 40 },
+    { word: 'bosta', score: 40 }, { word: 'escroto', score: 50 }, { word: 'escrota', score: 50 }, { word: 'corno', score: 40 },
+    { word: 'corna', score: 40 }, { word: 'chifrudo', score: 40 },
+    // Termos mais graves (xingamentos diretos) (Score alto: ~70-90)
+    { word: 'foder', score: 80 }, { word: 'f*der', score: 80 }, { word: 'puta', score: 90 }, { word: 'p*ta', score: 90 },
+    { word: 'viado', score: 90 }, { word: 'v*ado', score: 90 }, { word: 'caralho', score: 80 }, { word: 'c*ralho', score: 80 },
+    { word: 'arrombado', score: 90 }, { word: 'arr*mbado', score: 90 }, { word: 'fdp', score: 90 }, { word: 'filho da puta', score: 100 },
+    { word: 'filha da puta', score: 100 }, { word: 'cuzão', score: 90 }, { word: 'cuzona', score: 90 }, { word: 'c*zão', score: 90 },
+    { word: 'pau no cu', score: 100 }, { word: 'pau no c*', score: 100 }, { word: 'vagabundo', score: 70 }, { word: 'vagabunda', score: 70 },
+    { word: 'desgraçado', score: 70 }, { word: 'desgraçada', score: 70 }, { word: 'miserável', score: 60 }, { word: 'puta que pariu', score: 80 },
+    { word: 'pqp', score: 80 }, { word: 'macaco', score: 100 }, { word: 'macaca', score: 100 }, { word: 'preto safado', score: 100 },
+    { word: 'preta safada', score: 100 }, { word: 'viadinho', score: 90 }, { word: 'sapatão', score: 90 }, { word: 'bicha', score: 90 },
+    { word: 'vadia', score: 90 }, { word: 'piranha', score: 90 }, { word: 'prostituta', score: 80 }, { word: 'cadela', score: 90 },
+    // Ameaças (Score máximo: 100)
+    { word: 'vou te matar', score: 100 }, { word: 'vou te pegar', score: 80 }, { word: 'vai morrer', score: 100 },
+    { word: 'vou te bater', score: 90 }, { word: 'te quebro', score: 90 }, { word: 'te arrebento', score: 90 }
 ];
 
 // Helper para nome de usuário
@@ -79,9 +93,7 @@ const enableAntitoxic = (groupId, action = CONFIG.DEFAULT_ACTION) => {
     return {
         success: true,
         message: `🛡️ *ANTITOXIC ATIVADO*\n\n` +
-                 `⚠️ *AVISO IMPORTANTE:*\n` +
-                 `Este sistema usa IA para detectar mensagens tóxicas e *pode cometer erros*. ` +
-                 `Nem toda mensagem marcada é realmente ofensiva, e algumas ofensas podem passar despercebidas.\n\n` +
+                 `O sistema monitorará ativamente as conversas em busca de palavras ofensivas.\n\n` +
                  `📌 *Configuração:*\n` +
                  `• Ação: ${action}\n` +
                  `• Sensibilidade: ${CONFIG.THRESHOLD}%\n\n` +
@@ -175,61 +187,32 @@ const getAntitoxicStatus = (groupId) => {
 
 // --- DETECÇÃO ---
 
-// Detecção rápida por palavras-chave (fallback)
-const quickCheck = (message) => {
+// Analisar mensagem buscando palavras-chave tóxicas
+const analyzeMessage = async (message) => {
     const lower = message.toLowerCase();
-    for (const keyword of TOXIC_KEYWORDS) {
-        if (lower.includes(keyword)) {
-            return { isToxic: true, score: 80, keyword };
+    let highestToxicity = null;
+
+    for (const item of TOXIC_KEYWORDS) {
+        if (lower.includes(item.word)) {
+            if (!highestToxicity || item.score > highestToxicity.score) {
+                highestToxicity = item;
+            }
         }
     }
+
+    if (highestToxicity) {
+        return { 
+            isToxic: true, 
+            score: highestToxicity.score, 
+            reason: `Uso da palavra proibida: ${highestToxicity.word}` 
+        };
+    }
+    
     return { isToxic: false, score: 0 };
 };
 
-// Analisar mensagem (para ser chamada com IA)
-const analyzeMessage = async (message, aiFunction = null) => {
-    // Se não tiver função de IA, usar detecção por palavras-chave
-    if (!aiFunction) {
-        return quickCheck(message);
-    }
-    
-    try {
-        const prompt = `Analise a seguinte mensagem e determine se ela é tóxica, ofensiva ou contém discurso de ódio.
-Responda APENAS com um JSON no formato: {"score": <0-100>, "reason": "<motivo curto>"}
-
-Onde score é:
-- 0-30: Mensagem normal/aceitável
-- 31-60: Levemente inadequada
-- 61-80: Ofensiva
-- 81-100: Muito tóxica/discurso de ódio
-
-Mensagem para analisar: "${message.slice(0, 500)}"
-
-Responda apenas o JSON, sem explicações adicionais.`;
-
-        const response = await aiFunction(prompt);
-        
-        // Tentar extrair JSON da resposta
-        const jsonMatch = response.match(/\{[\s\S]*\}/);
-        if (jsonMatch) {
-            const result = JSON.parse(jsonMatch[0]);
-            return {
-                isToxic: result.score >= CONFIG.THRESHOLD,
-                score: result.score,
-                reason: result.reason,
-                byAI: true
-            };
-        }
-    } catch (err) {
-        console.error('[ANTITOXIC] Erro na IA:', err.message);
-    }
-    
-    // Fallback para detecção por palavras-chave
-    return quickCheck(message);
-};
-
 // Processar mensagem (retorna ação a ser tomada)
-const processMessage = async (groupId, userId, message, aiFunction = null) => {
+const processMessage = async (groupId, userId, message) => {
     const data = loadAntitoxic();
     const group = data.groups[groupId];
     
@@ -239,7 +222,7 @@ const processMessage = async (groupId, userId, message, aiFunction = null) => {
     }
     
     // Verificar cooldown
-    const userKey = `${groupId}:${odIUserId}`;
+    const userKey = `${groupId}:${userId}`;
     if (data.userWarnings[userKey]) {
         const lastWarning = data.userWarnings[userKey].lastWarning;
         if (Date.now() - lastWarning < CONFIG.COOLDOWN_MS) {
@@ -248,9 +231,11 @@ const processMessage = async (groupId, userId, message, aiFunction = null) => {
     }
     
     // Analisar mensagem
-    const analysis = await analyzeMessage(message, aiFunction);
+    const analysis = await analyzeMessage(message);
     
-    if (!analysis.isToxic) {
+    // Verifica se a mensagem possui toxicidade
+    // E se o score da ofensa é MAIOR OU IGUAL ao threshold (sensibilidade) configurado pelo grupo
+    if (!analysis.isToxic || analysis.score < group.threshold) {
         return { action: 'none' };
     }
     
@@ -288,47 +273,39 @@ const processMessage = async (groupId, userId, message, aiFunction = null) => {
     return {
         action,
         score: analysis.score,
-        reason: analysis.reason || 'Conteúdo potencialmente ofensivo',
+        reason: analysis.reason || 'Uso de vocabulário ofensivo',
         warningCount: userWarning.count,
-        maxWarnings: CONFIG.MAX_WARNINGS,
-        byAI: analysis.byAI || false
+        maxWarnings: CONFIG.MAX_WARNINGS
     };
 };
 
 // Gerar mensagem de aviso
 const generateWarningMessage = (userId, result) => {
-    const aiDisclaimer = result.byAI 
-        ? '\n\n_⚠️ Esta análise foi feita por IA e pode conter erros._'
-        : '';
-    
     if (result.action === 'avisar') {
         return {
-            message: `🛡️ *ANTITOXIC*\n\n` +
-                     `⚠️ @${getUserName(userId)}, sua mensagem foi identificada como potencialmente ofensiva.\n\n` +
-                     `📊 Score: ${result.score}/100\n` +
-                     `📌 Motivo: ${result.reason}\n` +
-                     `⚡ Avisos: ${result.warningCount}/${result.maxWarnings}` +
-                     aiDisclaimer,
+            text: `🛡️ *ANTITOXIC*\n\n` +
+                     `⚠️ @${getUserName(userId)}, evite usar palavras ofensivas no grupo.\n\n` +
+                     `📌 ${result.reason}\n` +
+                     `⚡ Avisos: ${result.warningCount}/${result.maxWarnings}`,
             mentions: [userId]
         };
     }
     
     if (result.action === 'apagar') {
         return {
-            message: `🛡️ *ANTITOXIC*\n\n` +
+            text: `🛡️ *ANTITOXIC*\n\n` +
                      `🗑️ Mensagem de @${getUserName(userId)} foi removida.\n\n` +
-                     `📌 Motivo: ${result.reason}` +
-                     aiDisclaimer,
+                     `📌 ${result.reason}`,
             mentions: [userId]
         };
     }
     
     if (result.action === 'mute') {
         return {
-            message: `🛡️ *ANTITOXIC*\n\n` +
-                     `🔇 @${getUserName(userId)} foi silenciado temporariamente.\n\n` +
-                     `📌 Motivo: ${result.reason}` +
-                     aiDisclaimer,
+            text: `🛡️ *ANTITOXIC*\n\n` +
+                     `🔇 O usuário @${getUserName(userId)} foi mutado por quebrar as regras de convivência.\n\n` +
+                     `📌 ${result.reason}\n\n` +
+                     `⚠️ _Atenção: Enquanto estiver mutado, qualquer tentativa de enviar mensagem resultará em banimento._`,
             mentions: [userId]
         };
     }
@@ -347,6 +324,51 @@ const getGroupAction = (groupId) => {
     return data.groups[groupId]?.action || CONFIG.DEFAULT_ACTION;
 };
 
+// --- COMANDO (Handler) ---
+
+const handleCommand = async (nazu, from, args, groupData, { reply, prefix }) => {
+    const arg = args[0] ? args[0].toLowerCase() : '';
+    const val = args[1] ? args[1].toLowerCase() : '';
+
+    if (!arg || arg === 'status') {
+        const status = getAntitoxicStatus(from);
+        return reply(status.message);
+    }
+
+    if (arg === 'on' || arg === 'ativar') {
+        const result = enableAntitoxic(from);
+        return reply(result.message);
+    }
+
+    if (arg === 'off' || arg === 'desativar') {
+        const result = disableAntitoxic(from);
+        return reply(result.message);
+    }
+
+    if (arg === 'acao' || arg === 'ação' || arg === 'action') {
+        if (!val) {
+            return reply(`❓ Informe a ação.\nAções: ${CONFIG.ACTIONS.join(', ')}\nEx: ${prefix}antitoxic acao apagar`);
+        }
+        const result = setAntitoxicAction(from, val);
+        return reply(result.message);
+    }
+
+    if (arg === 'sensibilidade' || arg === 'nivel' || arg === 'threshold') {
+        if (!val) {
+            return reply(`❓ Informe o valor (1-100).\nEx: ${prefix}antitoxic sensibilidade 70`);
+        }
+        const result = setAntitoxicThreshold(from, val);
+        return reply(result.message);
+    }
+
+    return reply(`❓ Subcomando inválido.\nUse:\n` +
+                 `• ${prefix}antitoxic on\n` +
+                 `• ${prefix}antitoxic off\n` +
+                 `• ${prefix}antitoxic status\n` +
+                 `• ${prefix}antitoxic acao [avisar/apagar/mute]\n` +
+                 `• ${prefix}antitoxic sensibilidade [1-100]`);
+};
+
 export {
     enableAntitoxic,
     disableAntitoxic,
@@ -358,6 +380,7 @@ export {
     processMessage,
     generateWarningMessage,
     isEnabled,
+    handleCommand,
     CONFIG as ANTITOXIC_CONFIG
 };
 
@@ -371,5 +394,6 @@ export default {
     analyzeMessage,
     processMessage,
     generateWarningMessage,
-    isEnabled
+    isEnabled,
+    handleCommand
 };
