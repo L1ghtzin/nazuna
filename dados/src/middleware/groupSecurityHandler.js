@@ -29,12 +29,12 @@ export async function processGroupSecurity(context) {
           if (groupData.minMessage.action === 'ban') {
             if (isBotAdmin) {
               await nazu.groupParticipantsUpdate(from, [sender], 'remove');
-              await reply(`ðŸš« UsuÃ¡rio removido por enviar mÃ­dia sem legenda suficiente (mÃ­nimo: ${groupData.minMessage.minDigits} caracteres).`);
+              await reply(`🚫 Usuário removido por enviar mídia sem legenda suficiente (mínimo: ${groupData.minMessage.minDigits} caracteres).`);
             } else {
-              await reply(`âš ï¸ MÃ­dia sem legenda suficiente detectada, mas nÃ£o sou admin para remover o usuÃ¡rio.`);
+              await reply(`⚠️ Mídia sem legenda suficiente detectada, mas não sou admin para remover o usuário.`);
             }
           } else { // adv
-            await reply(`âš ï¸ AdvertÃªncia: Envie mÃ­dias com pelo menos ${groupData.minMessage.minDigits} caracteres na legenda para evitar remoÃ§Ã£o.`);
+            await reply(`⚠️ Advertência: Envie mídias com pelo menos ${groupData.minMessage.minDigits} caracteres na legenda para evitar remoção.`);
           }
         } catch (error) {
           console.error('Erro ao processar minMessage:', error);
@@ -48,10 +48,10 @@ export async function processGroupSecurity(context) {
         if (isBotAdmin) {
           await nazu.groupParticipantsUpdate(from, [sender], 'remove');
           await nazu.sendMessage(from, { delete: info.key });
-          await reply(`ðŸš« @${getUserName(sender)}, status nÃ£o sÃ£o permitidos neste grupo. VocÃª foi removido.`, { mentions: [sender] });
+          await reply(`🚫 @${getUserName(sender)}, Status não são permitidos neste grupo. Você foi removido.`, { mentions: [sender] });
         } else {
           await nazu.sendMessage(from, { delete: info.key });
-          await reply(`ðŸš« AténÃ§Ã£o, @${getUserName(sender)}! Status nÃ£o sÃ£o permitidos neste grupo. NÃ£o consigo remover vocÃª, mas evite compartilhar status aqui.`, { mentions: [sender] });
+          await reply(`🚫 Atenção, @${getUserName(sender)}! Status não são permitidos neste grupo. Não consigo remover você, mas evite compartilhar status aqui.`, { mentions: [sender] });
         }
       }
     }
@@ -62,10 +62,10 @@ export async function processGroupSecurity(context) {
         if (isBotAdmin) {
           await nazu.groupParticipantsUpdate(from, [sender], 'remove');
           await nazu.sendMessage(from, { delete: { remoteJid: from, fromMe: false, id: info.key.id, participant: sender } });
-          await reply(`âš ï¸ @${getUserName(sender)}, mensagens com botÃµes nÃ£o sÃ£o permitidas neste grupo. VocÃª foi removido.`, { mentions: [sender] });
+          await reply(`⚠️ @${getUserName(sender)}, Mensagens com botões não são permitidas neste grupo. Você foi removido.`, { mentions: [sender] });
         } else {
           await nazu.sendMessage(from, { delete: { remoteJid: from, fromMe: false, id: info.key.id, participant: sender } });
-          await reply(`âš ï¸ AténÃ§Ã£o, @${getUserName(sender)}! Mensagens com botÃµes nÃ£o sÃ£o permitidas. NÃ£o consigo remover vocÃª, mas evite usar esse tipo de mensagem.`, { mentions: [sender] });
+          await reply(`⚠️ Atenção, @${getUserName(sender)}! Mensagens com botões não são permitidas. Não consigo remover você, mas evite usar esse tipo de mensagem.`, { mentions: [sender] });
         }
       }
     }
@@ -99,7 +99,7 @@ export async function processGroupSecurity(context) {
         const fromGroup = cachedInfo.key.remoteJid; 
         
         if (participant) {
-          let userName = 'UsuÃ¡rio Desconhecido';
+          let userName = 'Usuário Desconhecido';
           let profilePic = 'https://telegra.ph/file/b5427ea4b8701bc47e751.jpg';
           const pushNameFromMsg = cachedInfo?.pushName || ''; 
           
@@ -108,11 +108,11 @@ export async function processGroupSecurity(context) {
           } else {
             try {
               const fetchedName = await nazu.getName(fromGroup, participant); 
-              const númeroLimpoFallback = participant.split('@')[0];
-              if (fetchedName && fetchedName !== númeroLimpoFallback) {
+              const numeroLimpoFallback = participant.split('@')[0];
+              if (fetchedName && fetchedName !== numeroLimpoFallback) {
                 userName = fetchedName;
               } else {
-                userName = númeroLimpoFallback;
+                userName = numeroLimpoFallback;
               }
             } catch (e) {
               userName = participant.split('@')[0];
@@ -128,7 +128,7 @@ export async function processGroupSecurity(context) {
             mentionedJid: [participant],
             externalAdReply: {
               title: `MENSAGEM APAGADA POR: ${userName}`,      
-              body: `NÃºmero: ${participant.split("@")[0]}`, 
+              body: `Número: ${participant.split("@")[0]}`, 
               thumbnailUrl: profilePic,
               sourceUrl: '',
               mediaType: 1,
@@ -139,7 +139,7 @@ export async function processGroupSecurity(context) {
           try {
             await nazu.sendMessage(fromGroup, clone);
           } catch (err) {
-            console.error('ERRO CRÃTICO AO REENVIAR MENSAGEM:', err);
+            console.error('ERRO CRÍTICO AO REENVIAR MENSAGEM:', err);
           }
         }
       }
@@ -147,7 +147,7 @@ export async function processGroupSecurity(context) {
 
     // 6. Blocked Commands
     if (isGroup && isCmd && !isGroupAdmin && groupData.blockedCommands && groupData.blockedCommands[command]) {
-      await reply('â›” Este comando foi bloqueado pelos administradores do grupo.');
+      await reply('⛔ Este comando foi bloqueado pelos administradores do grupo.');
       return { stopProcessing: true };
     }
 
@@ -163,7 +163,7 @@ export async function processGroupSecurity(context) {
           const msLeft = blockInfo.until - now;
           const secs = Math.ceil(msLeft / 1000);
           const m = Math.floor(secs / 60), s = secs % 60;
-          await reply(`ðŸš« VocÃª estÃ¡ temporariamente bloqueado de usar comandos por anti-spam.\nâ³ Aguarde ${m > 0 ? `${m}m ${s}s` : `${secs}s`}.`);
+          await reply(`🚫 Você está temporariamente bloqueado de usar comandos por anti-spam.\n⏳ Aguarde ${m > 0 ? `${m}m ${s}s` : `${secs}s`}.`);
           return { stopProcessing: true };
         } else if (blockInfo && blockInfo.until && now >= blockInfo.until) {
           delete cfg.blocks[sender];
@@ -177,7 +177,7 @@ export async function processGroupSecurity(context) {
           const blockMs = Math.max(1, parseInt(cfg.blockTime || 600)) * 1000;
           cfg.blocks[sender] = { until: now + blockMs, at: new Date().toISOString(), count: arr.length };
           if (writeJsonFile && DATABASE_DIR) writeJsonFile(DATABASE_DIR + '/antispam.json', cfg);
-          await reply(`ðŸš« Anti-spam: vocÃª excedeu o limite de ${limit} comandos em ${cfg.interval}s.\nðŸ”’ Bloqueado por ${Math.floor(blockMs/60000)} min.`);
+          await reply(`🚫 Anti-spam: você excedeu o limite de ${limit} comandos em ${cfg.interval}s.\n🔒 Bloqueado por ${Math.floor(blockMs/60000)} min.`);
           return { stopProcessing: true };
         }
         if (writeJsonFile && DATABASE_DIR) writeJsonFile(DATABASE_DIR + '/antispam.json', cfg);
@@ -193,10 +193,10 @@ export async function processGroupSecurity(context) {
         const afkSince = new Date(groupData.afkUsers[sender].since || Date.now()).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });
         delete groupData.afkUsers[sender];
         if (writeJsonFile && groupFile) writeJsonFile(groupFile, groupData);
-        if (isGroup && optimizer) optimizer.inválidateGroup(from);
-        await reply(`ðŸ‘‹ *Bem-vindo(a) de volta!*\nSeu status AFK foi removido.\nVocÃª estava ausente desde: ${afkSince}`);
+        if (isGroup && optimizer) optimizer.invalidateGroup(from);
+        await reply(`👋 *Bem-vindo(a) de volta!*\nSeu status AFK foi removido.\nVocê estava ausente desde: ${afkSince}`);
       } catch (error) {
-        console.error("Erro ao processar remoÃ§Ã£o de AFK:", error);
+        console.error("Erro ao processar remoção de AFK:", error);
       }
     }
 
@@ -208,14 +208,14 @@ export async function processGroupSecurity(context) {
         if (isBotAdmin) {
           await nazu.groupParticipantsUpdate(from, [sender], 'remove');
         } else {
-          await reply("âš ï¸ NÃ£o posso remover o usuÃ¡rio porque nÃ£o sou administrador.");
+          await reply("⚠️ Não posso remover o usuário porque não sou administrador.");
         }
         delete groupData.mutedUsers[sender];
         if (writeJsonFile && groupFile) writeJsonFile(groupFile, groupData);
-        if (isGroup && optimizer) optimizer.inválidateGroup(from);
+        if (isGroup && optimizer) optimizer.invalidateGroup(from);
         return { stopProcessing: true };
       } catch (error) {
-        console.error("Erro ao processar usuÃ¡rio mutado:", error);
+        console.error("Erro ao processar usuário mutado:", error);
       }
     }
 
@@ -223,7 +223,7 @@ export async function processGroupSecurity(context) {
       try {
         await nazu.sendMessage(from, { delete: { remoteJid: from, fromMe: false, id: info.key.id, participant: sender } });
       } catch (error) {
-        console.error("Erro ao deletar mensagem de usuÃ¡rio mutado2:", error);
+        console.error("Erro ao deletar mensagem de usuário mutado 2:", error);
       }
       return { stopProcessing: true };
     }
@@ -254,7 +254,7 @@ export async function processGroupSecurity(context) {
             return { stopProcessing: true };
           }
         } catch (e) {
-          console.error(`Erro ao tentar usar cÃ³digo de ativaÃ§Ã£o ${potentialCode} no grupo ${from}:`, e);
+          console.error(`Erro ao tentar usar código de ativação ${potentialCode} no grupo ${from}:`, e);
         }
       }
       }
@@ -262,7 +262,3 @@ export async function processGroupSecurity(context) {
 
     return { stopProcessing: false };
 }
-
-
-
-

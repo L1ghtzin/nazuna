@@ -21,7 +21,7 @@ async function menuDono(prefix, botName = "MeuBot", userName = "Usuário", {
 } = {}) {
 
     let formattedHeader = header
-    .replace(/#user#/g, userName)
+    .replace(/#nome#/g, userName)
     .replace(/#prefix#/g, prefix);
     
     return `${formattedHeader}

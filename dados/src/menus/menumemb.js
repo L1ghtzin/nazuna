@@ -14,7 +14,7 @@ export default async function menuMembros(prefix, botName = "MeuBot", userName =
 } = {}) {
 
     let formattedHeader = header
-    .replace(/#user#/g, userName)
+    .replace(/#nome#/g, userName)
     .replace(/#prefix#/g, prefix);
     
  return `${formattedHeader}
@@ -64,9 +64,9 @@ ${bottomBorder}
 ${menuTopBorder}${separatorIcon} * CONQUISTAS & PRESENTES*
 ${middleBorder}
 ${middleBorder}${menuItemIcon}${prefix}conquistas
-${middleBorder}${menuItemIcon}${prefix}caixa diaria
+${middleBorder}${menuItemIcon}${prefix}caixa diária
 ${middleBorder}${menuItemIcon}${prefix}caixa rara
-${middleBorder}${menuItemIcon}${prefix}caixa lendaria
+${middleBorder}${menuItemIcon}${prefix}caixa lendária
 ${middleBorder}${menuItemIcon}${prefix}presente @user <tipo>
 ${middleBorder}${menuItemIcon}${prefix}inv
 ${bottomBorder}

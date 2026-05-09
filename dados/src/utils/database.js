@@ -191,7 +191,7 @@ ensureJsonFileExists(ECONOMY_FILE, {
     "pet_ring": { name: "Anel do Pet", price: 700, type: "pet_equipment", slot: "accessory", attackBonus: 5, defenseBonus: 5, durability: 25 },
     // Novos itens de vantagem
     "dragonslayer": { name: "Mata-Dragões", price: 3000, type: "pet_equipment", slot: "weapon", attackBonus: 20, advantage: "dragao", durability: 40 },
-    "wolfbane": { name: "Maldiç ão Lobisomem", price: 2500, type: "pet_equipment", slot: "weapon", attackBonus: 18, advantage: "lobo", durability: 35 },
+    "wolfbane": { name: "Maldição Lobisomem", price: 2500, type: "pet_equipment", slot: "weapon", attackBonus: 18, advantage: "lobo", durability: 35 },
     "phoenix_feather": { name: "Pena de Fênix", price: 2800, type: "pet_equipment", slot: "accessory", hpBonus: 30, advantage: "fenix", durability: 30 },
     "tiger_talisman": { name: "Talismã do Tigre", price: 2200, type: "pet_equipment", slot: "accessory", attackBonus: 12, advantage: "tigre", durability: 25 },
     "eagle_eye": { name: "Olho de Águia", price: 2400, type: "pet_equipment", slot: "accessory", critBonus: 15, advantage: "aguia", durability: 30 },
@@ -301,7 +301,7 @@ ensureJsonFileExists(LEVELING_FILE, {
     name: "Divindade",
     minLevel: 100
   }, {
-    name: "Cosmico",
+    name: "Cósmico",
     minLevel: 120
   }, {
     name: "Eterno",

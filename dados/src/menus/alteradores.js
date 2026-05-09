@@ -11,7 +11,7 @@ export default async function menuAlterador(prefix, botName = "MeuBot", userName
     imageMenuTitle = "🖼️ ALTERAR IMAGEM"
 } = {}) {
     let formattedHeader = header
-    .replace(/#user#/g, userName)
+    .replace(/#nome#/g, userName)
     .replace(/#prefix#/g, prefix);
    
 return `${formattedHeader}

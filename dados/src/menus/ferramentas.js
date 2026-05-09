@@ -15,7 +15,7 @@ export default async function menuFerramentas(prefix, botName = "MeuBot", userNa
     reminderMenuTitle = "⏰ LEMBRETES & LISTAS"
 } = {}) {
     let formattedHeader = header
-    .replace(/#user#/g, userName)
+    .replace(/#nome#/g, userName)
     .replace(/#prefix#/g, prefix);
 
 return `${formattedHeader}

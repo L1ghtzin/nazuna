@@ -11,7 +11,7 @@ async function menuTopCmd(prefix, botName = "MeuBot", userName = "Usuário", top
 } = {}) {
 
     let formattedHeader = header
-    .replace(/#user#/g, userName)
+    .replace(/#nome#/g, userName)
     .replace(/#prefix#/g, prefix);
     
     

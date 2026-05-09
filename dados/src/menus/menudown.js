@@ -15,7 +15,7 @@ export default async function menudown(prefix, botName = "MeuBot", userName = "U
 } = {}) {
 
     let formattedHeader = header
-    .replace(/#user#/g, userName)
+    .replace(/#nome#/g, userName)
     .replace(/#prefix#/g, prefix);
     
   return `${formattedHeader}

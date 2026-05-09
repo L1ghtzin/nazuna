@@ -11,7 +11,7 @@ export default async function menuLogos(prefix, botName = "MeuBot", userName = "
 } = {}) {
 
     let formattedHeader = header
-    .replace(/#user#/g, userName)
+    .replace(/#nome#/g, userName)
     .replace(/#prefix#/g, prefix);
     
  return `${formattedHeader}

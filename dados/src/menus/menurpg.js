@@ -95,7 +95,7 @@ ${bottomBorder}
 
 ${menuTopBorder}${separatorIcon} *${activitiesMenuTitle}*
 ${middleBorder}
-${middleBorder}${menuItemIcon}${prefix}diario
+${middleBorder}${menuItemIcon}${prefix}diário
 ${middleBorder}${menuItemIcon}${prefix}work
 ${middleBorder}${menuItemIcon}${prefix}mine
 ${middleBorder}${menuItemIcon}${prefix}fish
@@ -104,7 +104,7 @@ ${middleBorder}${menuItemIcon}${prefix}colher
 ${middleBorder}${menuItemIcon}${prefix}caçar
 ${middleBorder}${menuItemIcon}${prefix}plantar <planta>
 ${middleBorder}${menuItemIcon}${prefix}cultivar <planta>
-${middleBorder}${menuItemIcon}${prefix}plantacao
+${middleBorder}${menuItemIcon}${prefix}plantação
 ${middleBorder}${menuItemIcon}${prefix}cook <receita>
 ${middleBorder}${menuItemIcon}${prefix}receitas
 ${middleBorder}${menuItemIcon}${prefix}ingredientes
@@ -178,7 +178,7 @@ ${middleBorder}${menuItemIcon}${prefix}enchant
 ${middleBorder}${menuItemIcon}${prefix}dismantle <item>
 ${middleBorder}${menuItemIcon}${prefix}reparar <item>
 ${middleBorder}${menuItemIcon}${prefix}materiais
-${middleBorder}${menuItemIcon}${prefix}precos
+${middleBorder}${menuItemIcon}${prefix}preços
 ${bottomBorder}
 
 ${menuTopBorder}${separatorIcon} *${socialMenuTitle}*
@@ -200,7 +200,7 @@ ${middleBorder}
 ${middleBorder}${menuItemIcon}${prefix}familia
 ${middleBorder}${menuItemIcon}${prefix}adotaruser @user
 ${middleBorder}${menuItemIcon}${prefix}deserdar @user
-${middleBorder}${menuItemIcon}${prefix}arvore
+${middleBorder}${menuItemIcon}${prefix}árvore
 ${bottomBorder}
 
 ${menuTopBorder}${separatorIcon} *${guildMenuTitle}*
@@ -217,7 +217,7 @@ ${bottomBorder}
 
 ${menuTopBorder}${separatorIcon} *${questMenuTitle}*
 ${middleBorder}
-${middleBorder}${menuItemIcon}${prefix}missoes
+${middleBorder}${menuItemIcon}${prefix}missões
 ${middleBorder}${menuItemIcon}${prefix}conquistas
 ${bottomBorder}
 
@@ -264,7 +264,7 @@ ${menuTopBorder}${separatorIcon} *${adminMenuTitle}*
 ${middleBorder}
 ${middleBorder}${menuItemIcon}${prefix}rpgadd @user <valor>
 ${middleBorder}${menuItemIcon}${prefix}rpgremove @user <valor>
-${middleBorder}${menuItemIcon}${prefix}rpgsetlevel @user <nivel>
+${middleBorder}${menuItemIcon}${prefix}rpgsetlevel @user <nível>
 ${middleBorder}${menuItemIcon}${prefix}rpgadditem @user <item> <qtd>
 ${middleBorder}${menuItemIcon}${prefix}rpgremoveitem @user <item> <qtd>
 ${middleBorder}${menuItemIcon}${prefix}rpgresetplayer @user

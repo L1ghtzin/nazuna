@@ -117,7 +117,7 @@ async function listVIPCommands(prefix, botName = "MeuBot", userName = "Usuário"
 
 ${prefix}addcmdvip <cmd> | <desc> | <cat>
 
-Categorias: download, diversao, utilidade, ia, editor, info, outros`;
+Categorias: download, diversão, utilidade, ia, editor, info, outros`;
   }
   
   let list = `${formattedHeader}

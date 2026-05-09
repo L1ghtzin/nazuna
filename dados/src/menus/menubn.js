@@ -18,7 +18,7 @@ export default async function menubn(prefix, botName = "MeuBot", userName = "Usu
 } = {}) {
 
     let formattedHeader = header
-    .replace(/#user#/g, userName)
+    .replace(/#nome#/g, userName)
     .replace(/#prefix#/g, prefix);
     
     let menuContent = `${formattedHeader}
