@@ -56,8 +56,9 @@ export async function processGroupSecurity(context) {
       }
     }
 
-    // 3. AntiBtn
-    if (isGroup && isButtonMessage && groupData.antibtn && !isGroupAdmin) {
+    // 3. AntiBtn & AntiPayload (Proteção contra requestPaymentMessage, orderMessage, etc)
+    const isSpecialPayload = ['requestPaymentMessage', 'orderMessage', 'paymentConfirmMessage'].includes(type);
+    if (isGroup && (isButtonMessage || isSpecialPayload) && groupData.antibtn && !isGroupAdmin) {
       if (!isUserWhitelisted(sender, 'antibtn')) {
         if (isBotAdmin) {
           await nazu.groupParticipantsUpdate(from, [sender], 'remove');
