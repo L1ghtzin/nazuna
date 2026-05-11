@@ -2,7 +2,7 @@ import fs from 'fs';
 
 export default {
   name: "moderadores",
-  description: "Gerencia moderadores do grupo e suas permissões",
+  description: "Gerencia moderadores do grupo e suas permissões globais",
   commands: ["addmod", "addmodcmd", "delmod", "delmodcmd", "grantmodcmd", "listmodcmds", "listmods", "modlist", "revokemodcmd"],
   usage: `${global.prefix}addmod @usuario\n${global.prefix}grantmodcmd ban`,
   handle: async ({  reply, isGroup, isGroupAdmin, command, menc_os2, q, prefix, groupData, groupFile, getUserName, groupName, optimizer , MESSAGES }) => {
@@ -10,52 +10,79 @@ export default {
     if (!isGroupAdmin) return reply(MESSAGES.permission.adminOnly);
 
     const cmd = command.toLowerCase();
-    groupData.moderators = groupData.moderators || {};
+    groupData.moderators = groupData.moderators || [];
+    groupData.allowedModCommands = groupData.allowedModCommands || [];
 
     if (['addmod'].includes(cmd)) {
-      if (!menc_os2) return reply("Marque o usuário!");
-      groupData.moderators[menc_os2] = groupData.moderators[menc_os2] || { commands: [] };
+      if (!menc_os2) return reply(`Marque o usuário que deseja promover a moderador. Ex: ${prefix}addmod @usuario`);
+      const modToAdd = menc_os2;
+      
+      if (groupData.moderators.includes(modToAdd)) {
+        return reply(`@${getUserName(modToAdd)} já é um moderador.`, { mentions: [modToAdd] });
+      }
+      groupData.moderators.push(modToAdd);
       await optimizer.saveJsonWithCache(groupFile, groupData);
-      return reply(`✅ @${getUserName(menc_os2)} agora é moderador!`, { mentions: [menc_os2] });
+      return reply(`✅ @${getUserName(modToAdd)} foi promovido a moderador do grupo!`, { mentions: [modToAdd] });
     }
 
     if (['delmod', 'rmmod'].includes(cmd)) {
-      if (!menc_os2) return reply("Marque o usuário!");
-      delete groupData.moderators[menc_os2];
+      if (!menc_os2) return reply(`Marque o usuário que deseja remover de moderador. Ex: ${prefix}delmod @usuario`);
+      const modToRemove = menc_os2;
+      const modIndex = groupData.moderators.indexOf(modToRemove);
+      if (modIndex === -1) {
+        return reply(`@${getUserName(modToRemove)} não é um moderador.`, { mentions: [modToRemove] });
+      }
+      groupData.moderators.splice(modIndex, 1);
       await optimizer.saveJsonWithCache(groupFile, groupData);
-      return reply("✅ Moderador removido.");
+      return reply(`✅ @${getUserName(modToRemove)} não é mais um moderador do grupo.`, { mentions: [modToRemove] });
     }
 
     if (['listmods', 'modlist', 'listmod'].includes(cmd)) {
-      const mods = Object.keys(groupData.moderators);
-      if (!mods.length) return reply("Vazio.");
-      return reply("📋 MODERADORES:\n" + mods.map(m => `@${getUserName(m)}`).join('\n'), { mentions: mods });
+      if (groupData.moderators.length === 0) {
+        return reply("🛡️ Não há moderadores definidos para este grupo.");
+      }
+      let modsMessage = `🛡️ *Moderadores do Grupo ${groupName}* 🛡️\n\n`;
+      const mentionedUsers = [];
+      groupData.moderators.forEach(modJid => {
+        modsMessage += `➥ @${getUserName(modJid)}\n`;
+        mentionedUsers.push(modJid);
+      });
+      return reply(modsMessage, { mentions: mentionedUsers });
     }
 
     if (['grantmodcmd', 'addmodcmd', 'grantmodcmds'].includes(cmd)) {
-      const [user, ...cmds] = q.split(' ');
-      if (!menc_os2 || !cmds.length) return reply("Uso: addmodcmd @user ban kick");
-      if (!groupData.moderators[menc_os2]) return reply("Usuário não é moderador.");
-      groupData.moderators[menc_os2].commands.push(...cmds.map(c => c.toLowerCase()));
-      groupData.moderators[menc_os2].commands = [...new Set(groupData.moderators[menc_os2].commands)];
+      if (!q) return reply(`Por favor, especifique o comando para permitir aos moderadores. Ex: ${prefix}grantmodcmd ban`);
+      const cmdToAllow = q.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, "").replaceAll(prefix, "");
+      
+      if (groupData.allowedModCommands.includes(cmdToAllow)) {
+        return reply(`Comando "${cmdToAllow}" já está permitido para moderadores.`);
+      }
+      groupData.allowedModCommands.push(cmdToAllow);
       await optimizer.saveJsonWithCache(groupFile, groupData);
-      return reply("✅ Permissões adicionadas.");
+      return reply(`✅ Moderadores agora podem usar o comando: ${prefix}${cmdToAllow}`);
     }
 
     if (['revokemodcmd', 'delmodcmd', 'rmmodcmd', 'revokemodcmds'].includes(cmd)) {
-      const [user, ...cmds] = q.split(' ');
-      if (!menc_os2 || !cmds.length) return reply("Uso: delmodcmd @user ban");
-      if (!groupData.moderators[menc_os2]) return reply("Não é moderador.");
-      groupData.moderators[menc_os2].commands = groupData.moderators[menc_os2].commands.filter(c => !cmds.includes(c.toLowerCase()));
+      if (!q) return reply(`Por favor, especifique o comando para proibir aos moderadores. Ex: ${prefix}revokemodcmd ban`);
+      const cmdToDeny = q.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, "").replaceAll(prefix, "");
+      const cmdIndex = groupData.allowedModCommands.indexOf(cmdToDeny);
+      if (cmdIndex === -1) {
+        return reply(`Comando "${cmdToDeny}" não estava permitido para moderadores.`);
+      }
+      groupData.allowedModCommands.splice(cmdIndex, 1);
       await optimizer.saveJsonWithCache(groupFile, groupData);
-      return reply("✅ Permissões removidas.");
+      return reply(`✅ Moderadores não podem mais usar o comando: ${prefix}${cmdToDeny}`);
     }
 
     if (['listmodcmds', 'listmodcmd'].includes(cmd)) {
-      if (!menc_os2) return reply("Marque o moderador!");
-      const mod = groupData.moderators[menc_os2];
-      if (!mod) return reply("Não é moderador.");
-      return reply(`📋 Permissões de @${getUserName(menc_os2)}:\n${mod.commands.join(', ')}`, { mentions: [menc_os2] });
+      if (groupData.allowedModCommands.length === 0) {
+        return reply("🔧 Nenhum comando específico permitido para moderadores neste grupo.");
+      }
+      let cmdsMessage = `🔧 *Comandos Permitidos para Moderadores em ${groupName}* 🔧\n\n`;
+      groupData.allowedModCommands.forEach(c => {
+        cmdsMessage += `➥ ${prefix}${c}\n`;
+      });
+      return reply(cmdsMessage);
     }
   }
 };
