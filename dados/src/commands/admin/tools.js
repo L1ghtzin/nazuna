@@ -18,8 +18,12 @@ export default {
     q, 
     sender, 
     AllgroupMembers,
-    quotedMessageContent
-  , MESSAGES }) => {
+    quotedMessageContent,
+    optimizer,
+    buildGroupFilePath,
+    menc_os2,
+    MESSAGES
+  }) => {
     if (!isGroup) return reply("❌ Este comando só pode ser usado em grupos!");
     // command já vem desestruturado
 
@@ -37,9 +41,11 @@ export default {
       
       const opt = q.toLowerCase();
       if (options[opt] !== undefined) {
+        const path = buildGroupFilePath(from);
+        let groupData = await optimizer.loadJsonWithCache(path, { mark: {} });
         groupData.mark = groupData.mark || {};
         groupData.mark[sender] = opt;
-        await optimizer.saveJsonWithCache(buildGroupFilePath(from), groupData);
+        await optimizer.saveJsonWithCache(path, groupData);
         return reply(`*${options[opt]}*`);
       }
       return reply(`❌ Opção inválida! Use *${PREFIX}mention* para ver as opções.`);
