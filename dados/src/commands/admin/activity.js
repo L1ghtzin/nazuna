@@ -53,10 +53,15 @@ export default {
       let msg = `*🏆 Rank dos ${limit} mais ${order === 'desc' ? 'ativos' : 'inativos'} do grupo:*\n`;
       const mentions = [];
 
+      // Respeitar preferência de mention (igual ao Tokyo)
+      if (!groupData.mark) groupData.mark = {};
+
       for (let i = 0; i < limit; i++) {
         const u = sorted[i];
         msg += `\n*🏅 ${i + 1}º Lugar:* @${getUserName(u.id)}\n- Mensagens: *${u.msg || 0}*\n- Comandos: *${u.cmd || 0}*\n- Figurinhas: *${u.figu || 0}*\n`;
-        mentions.push(u.id);
+        if (!['0', 'marca'].includes(groupData.mark[u.id])) {
+          mentions.push(u.id);
+        }
       }
 
       return nazu.sendMessage(from, { text: msg, mentions }, { quoted: info });
@@ -82,9 +87,12 @@ export default {
 
       let msg = `📊 *Atividade do Grupo*\n👥 *Total:* ${sorted.length}\n\n`;
       const mentions = [];
+      if (!groupData.mark) groupData.mark = {};
       sorted.slice(0, 30).forEach((u, i) => { // Limitado a 30 para evitar mensagem gigante
         msg += `${i + 1}. @${getUserName(u.id)} | 💬 ${u.msg || 0} | ⚒️ ${u.cmd || 0} | 📈 ${(u.msg || 0) + (u.cmd || 0) + (u.figu || 0)}\n`;
-        mentions.push(u.id);
+        if (!['0', 'marca'].includes(groupData.mark[u.id])) {
+          mentions.push(u.id);
+        }
       });
 
       return nazu.sendMessage(from, { text: msg, mentions }, { quoted: info });
