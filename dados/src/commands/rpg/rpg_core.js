@@ -304,6 +304,104 @@ export default {
             return reply(text);
         }
 
+        if (sub === 'vagas') {
+            let jobs = econ.jobCatalog || {};
+            if (!jobs || Object.keys(jobs).length === 0) {
+              jobs = {
+                "estagiario": { name: "Estagiário", min: 80, max: 140 },
+                "designer": { name: "Designer", min: 150, max: 250 },
+                "programador": { name: "Programador", min: 200, max: 350 },
+                "gerente": { name: "Gerente", min: 260, max: 420 }
+              };
+            }
+
+            let txt = '╭━━━⊱ 💼 *VAGAS DE EMPREGO* 💼 ⊱━━━╮\n│\n';
+            Object.entries(jobs).forEach(([k, j]) => {
+              txt += `│ 🔹 *${k}*\n│   ${j.name}\n│   💰 ${fmt(j.min)}-${fmt(j.max)}\n│\n`;
+            });
+            txt += `╰━━━━━━━━━━━━━━━━━━━━━━━━━━━╯\n\n💡 Use: ${prefix}emprego <vaga>`;
+            return reply(txt);
+        }
+
+        if (sub === 'emprego') {
+            const rawKey = (args[0] || '');
+            if (!rawKey) return reply(`╭━━━⊱ 💼 *EMPREGO* 💼 ⊱━━━╮\n│\n│ ❌ Informe a vaga desejada\n│\n│ 📋 Ver vagas: ${prefix}vagas\n│\n│ 💡 Exemplo:\n│ ${prefix}emprego vendedor\n│\n╰━━━━━━━━━━━━━━━━━━━━━╯`);
+
+            const defaultJobs = {
+              "estagiario": { name: "Estagiário", min: 80, max: 140 },
+              "designer": { name: "Designer", min: 150, max: 250 },
+              "programador": { name: "Programador", min: 200, max: 350 },
+              "gerente": { name: "Gerente", min: 260, max: 420 }
+            };
+
+            const jobCatalog = (econ.jobCatalog && Object.keys(econ.jobCatalog).length) ? econ.jobCatalog : defaultJobs;
+            const key = findKeyIgnoringAccents(jobCatalog, rawKey) || normalizeParam(rawKey);
+            const job = jobCatalog[key];
+            if (!job) return reply('❌ Vaga inexistente. Use ' + prefix + 'vagas para ver disponíveis.');
+
+            if (!econ.jobCatalog || Object.keys(econ.jobCatalog).length === 0) {
+              econ.jobCatalog = jobCatalog;
+            }
+
+            me.job = key;
+            saveEconomy(econ);
+            return reply(`╭━━━⊱ ✅ *CONTRATADO!* ✅ ⊱━━━╮\n│\n│ 💼 Emprego: ${job.name}\n│ 💰 Ganhos: ${fmt(job.min)}-${fmt(job.max)}\n│\n│ 🏢 Use ${prefix}trabalhar\n│    para receber seu salário!\n│\n╰━━━━━━━━━━━━━━━━━━━━━━━╯`);
+        }
+
+        if (sub === 'demitir') {
+            me.job = null;
+            saveEconomy(econ);
+            return reply(`╭━━━⊱ 👋 *DEMISSÃO* 👋 ⊱━━━╮\n│\n│ ✅ Você pediu demissão\n│\n│ 💼 Veja novas vagas: ${prefix}vagas\n│\n╰━━━━━━━━━━━━━━━━━━━━━━╯`);
+        }
+
+        if (sub === 'pescar' || sub === 'fish') {
+            const cd = me.cooldowns?.fish || 0;
+            if (Date.now() < cd) return reply(`⏳ Aguarde ${timeLeft(cd)} para pescar novamente.`);
+            const base = 80 + Math.floor(Math.random() * 121);
+            const skillB = getSkillBonus(me, 'fishing');
+            const bonus = Math.floor(base * ((fishBonus || 0) + skillB));
+            const total = base + bonus;
+            me.wallet += total;
+            me.cooldowns.fish = Date.now() + 12 * 60 * 1000;
+            addSkillXP(me, 'fishing', 1);
+            updateChallenge(me, 'fish', 1, true);
+            updatePeriodChallenge(me, 'fish', 1, true);
+            saveEconomy(econ);
+            return reply(`🎣 Você pescou e ganhou ${fmt(total)}!`);
+        }
+
+        if (sub === 'explorar' || sub === 'explore') {
+            const cd = me.cooldowns?.explore || 0;
+            if (Date.now() < cd) return reply(`⏳ Aguarde ${timeLeft(cd)} para explorar novamente.`);
+            const base = 100 + Math.floor(Math.random() * 151);
+            const skillB = getSkillBonus(me, 'exploring');
+            const bonus = Math.floor(base * ((exploreBonus || 0) + skillB));
+            const total = base + bonus;
+            me.wallet += total;
+            me.cooldowns.explore = Date.now() + 15 * 60 * 1000;
+            addSkillXP(me, 'exploring', 1);
+            updateChallenge(me, 'explore', 1, true);
+            updatePeriodChallenge(me, 'explore', 1, true);
+            saveEconomy(econ);
+            return reply(`🧭 Você explorou e encontrou ${fmt(total)}!`);
+        }
+
+        if (sub === 'cacar' || sub === 'caçar' || sub === 'hunt') {
+            const cd = me.cooldowns?.hunt || 0;
+            if (Date.now() < cd) return reply(`⏳ Aguarde ${timeLeft(cd)} para caçar novamente.`);
+            const base = 120 + Math.floor(Math.random() * 181);
+            const skillB = getSkillBonus(me, 'hunting');
+            const bonus = Math.floor(base * ((huntBonus || 0) + skillB));
+            const total = base + bonus;
+            me.wallet += total;
+            me.cooldowns.hunt = Date.now() + 18 * 60 * 1000;
+            addSkillXP(me, 'hunting', 1);
+            updateChallenge(me, 'hunt', 1, true);
+            updatePeriodChallenge(me, 'hunt', 1, true);
+            saveEconomy(econ);
+            return reply(`🏹 Você caçou e obteve ${fmt(total)}!`);
+        }
+
         if (sub === 'resetrpg' && isOwner) {
             const target = menc_jid2?.[0];
             if (!target) return reply(`💔 Marque alguém.`);
