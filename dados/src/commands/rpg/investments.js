@@ -3,7 +3,7 @@ import { PREFIX } from "../../config.js";
 export default {
   name: "investir",
   description: "Sistema de investimentos e mercado financeiro",
-  commands: ["invest", "investir", "sell", "vender"],
+  commands: ["invest", "investir"],
   usage: `${PREFIX}investir`,
   handle: async ({ 
     reply, 
@@ -137,7 +137,7 @@ export default {
     }
 
     text += `💡 Use ${prefix}investir comprar <ação> <qtd>\n`;
-    text += `💡 Use ${prefix}vender <ação> <qtd>`;
+    text += `💡 Use ${prefix}investir vender <ação> <qtd>`;
 
     saveEconomy(econ);
     return reply(text);
