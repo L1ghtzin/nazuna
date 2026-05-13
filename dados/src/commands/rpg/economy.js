@@ -3,7 +3,7 @@ import { PREFIX } from "../../config.js";
 export default {
   name: "economy",
   description: "Comandos básicos de economia (trabalhar, minerar, roubar)",
-  commands: ["assaltar", "banco", "cacar", "carteira", "crime", "depositar", "emprego", "explorar", "explore", "fish", "hunt", "mine", "minerar", "pescar", "roubar", "sacar", "trabalhar", "transferir", "vagas", "work"],
+  commands: ["banco", "cacar", "carteira", "depositar", "emprego", "explorar", "explore", "fish", "hunt", "mine", "minerar", "pescar", "sacar", "trabalhar", "transferir", "vagas", "work"],
   usage: `${PREFIX}trabalhar`,
   handle: async ({ 
     reply, 
@@ -71,10 +71,6 @@ export default {
       return reply(`🏹 Você caçou e recebeu ${reward.toLocaleString()} moedas!`);
     }
 
-    // --- CRIME ---
-    if (command === 'crime' || command === 'assaltar' || command === 'roubar' || command === 'rob') {
-      return reply('🦹 Em breve: Sistema de crimes e assaltos!');
-    }
 
     // --- SALDO ---
     if (command === 'saldo' || command === 'carteira' || command === 'wallet') {

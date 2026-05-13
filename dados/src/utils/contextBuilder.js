@@ -884,7 +884,7 @@ export async function buildMessageContext(nazu, info, store, messagesCache, rent
     antipvData, premiumListaZinha, banGpIds, antifloodData, antiSpamGlobal,
     globalBlocks, botState, modoLiteGlobal,
     // Variáveis de mensagem
-    isCmd, command, menc_prt, menc_jid2, menc_os2, sender_ou_n, msgString,
+    isCmd, command, menc_prt, menc_jid2, menc_os2, mentioned: menc_os2, sender_ou_n, msgString,
     matchedAlias,
     // Handlers
     handleAutoDownload, getFileBuffer, getMediaInfo, processImageForProfile,

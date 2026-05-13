@@ -17,11 +17,13 @@ export default {
     description: "Sistema de crimes e assaltos do RPG",
     commands: ["assaltar", "roubar", "crime"],
     handle: async ({ 
-    reply, isGroup, groupData, sender, prefix, command, args, mentioned, nazu,
+    reply, isGroup, groupData, sender, prefix, command, args, menc_os2, nazu,
     MESSAGES
   }) => {
-        if (!isGroup || !groupData.modorpg) return;
+        if (!isGroup) return reply('⚔️ Este comando funciona apenas em grupos com Modo RPG ativo.');
+        if (!groupData.modorpg) return reply(`⚔️ Modo RPG desativado! Use ${prefix}modorpg para ativar.`);
 
+        const mentioned = menc_os2;
         const econ = loadEconomy();
         ensureEconomyDefaults(econ);
         const me = getEcoUser(econ, sender);

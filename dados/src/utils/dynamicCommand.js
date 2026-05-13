@@ -48,11 +48,11 @@ export async function readCommandImports() {
   commandLookupMap = new Map();
 
   await Promise.all(
-    subdirectories.map(async (subdir) => {
+    subdirectories.sort().map(async (subdir) => {
       const subdirectoryPath = path.join(COMMANDS_DIR, subdir);
 
       const files = await Promise.all(
-        readDirectoryRecursive(subdirectoryPath).map(async (filePath) => {
+        readDirectoryRecursive(subdirectoryPath).sort().map(async (filePath) => {
           try {
             const module = await import(pathToFileURL(filePath).href);
             const cmd = module.default ?? module;
