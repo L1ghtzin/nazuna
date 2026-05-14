@@ -8,7 +8,7 @@ const __dirname = path.dirname(__filename);
 export default {
   name: "interacao",
   description: "Comandos de interação (brincadeiras) entre os membros",
-  commands: ["chute", "chutar", "tapa", "soco", "socar", "beijo", "beijar", "beijob", "beijarb", "abraco", "abracar", "mata", "matar", "tapar", "goza", "gozar", "mamar", "mamada", "cafune", "morder", "mordida", "lamber", "lambida", "explodir", "sexo", "tomate"],
+  commands: ["chute", "chutar", "tapa", "soco", "socar", "beijo", "beijar", "beijob", "beijarb", "abraco", "abracar", "mata", "matar", "tapar", "goza", "gozar", "mamar", "mamada", "cafune", "morder", "mordida", "lamber", "lambida", "explodir", "sexo", "tomate", "fonfon"],
   usage: `${global.prefix}chute @usuario`,
   handle: async ({  nazu, reply, isGroup, command, menc_os2, prefix, info, getUserName, from, isModoLite, isModoBn , MESSAGES }) => {
     try {
@@ -34,7 +34,12 @@ export default {
         ? JSON.parse(fs.readFileSync(markgamePath)) 
         : {};
         
-      let responseText = GamezinData[command]?.replaceAll('#nome#', `@${getUserName(menc_os2)}`) 
+      let gameResponse = GamezinData[command];
+      if (Array.isArray(gameResponse)) {
+        gameResponse = gameResponse[Math.floor(Math.random() * gameResponse.length)];
+      }
+
+      let responseText = gameResponse?.replaceAll('#nome#', `@${getUserName(menc_os2)}`) 
         || `Voce acabou de dar um(a) ${command} no(a) @${getUserName(menc_os2)}`;
         
       let media = gamesData.games2?.[command];
