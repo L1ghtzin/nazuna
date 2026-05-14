@@ -8,7 +8,7 @@ const __dirname = path.dirname(__filename);
 export default {
   name: "interacao",
   description: "Comandos de interação (brincadeiras) entre os membros",
-  commands: ["chute", "chutar", "tapa", "soco", "socar", "beijo", "beijar", "beijob", "beijarb", "abraco", "abracar", "mata", "matar", "tapar", "goza", "gozar", "mamar", "mamada", "cafune", "morder", "mordida", "lamber", "lambida", "explodir", "sexo", "tomate", "fonfon", "piupiu", "pegarpau"],
+  commands: ["chute", "chutar", "tapa", "soco", "socar", "beijo", "beijar", "beijob", "beijarb", "abraco", "abracar", "mata", "matar", "tapar", "goza", "gozar", "mamar", "mamada", "cafune", "morder", "mordida", "lamber", "lambida", "explodir", "sexo", "tomate", "fonfon", "piupiu", "pegarpau", "apalpar"],
   usage: `${global.prefix}chute @usuario`,
   handle: async ({  nazu, reply, isGroup, command, menc_os2, prefix, info, getUserName, from, isModoLite, isModoBn , MESSAGES }) => {
     try {
