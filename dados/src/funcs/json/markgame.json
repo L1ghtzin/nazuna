@@ -1,15 +1,81 @@
 {
-    "chute": "Puff! 💥 Você acabou de dar um chute poderoso em #nome#! 😱",
-    "chutar": "Com toda a força! ⚡ Você chutou #nome# como um verdadeiro campeão! 💪",
-    "tapa": "Páh! Você deu um tapa sonoro em #nome#! Não deu nem tempo de reagir! 👋",
-    "soco": "BOOM! Você socou #nome# com toda a energia! 💥👊",
-    "socar": "Com raiva! Você socou #nome# e foi imbatível! 🥊",
-    "beijo": "Awwww 😍 Você deu um beijo carinhoso na bochecha de #nome#! Que fofura! 💋",
-    "beijar": "Que momento romântico! 💖 Você deu um beijo apaixonado na bocheca de #nome#! 😘",
-    "beijob": "Uau! Você deu um super beijo na boca de #nome# e deixou todo mundo com inveja! 😘🔥",
-    "beijarb": "Um beijo bem apaixonado na boca de #nome#... Agora foi sério! 💋💘",
-    "abraco": "Abraço caloroso! 🤗 Você envolveu #nome# em um abraço super apertado e aconchegante! 💕",
-    "abracar": "Que gesto lindo! Você abraçou #nome# e fez ele(a) se sentir especial! 💖",
+    "chute": [
+        "Puff! 💥 Você acabou de dar um chute poderoso em #nome#! 😱",
+        "🦵 #nome# levou um chutão e foi parar em outro servidor",
+        "💨 Você meteu um chute voador em #nome#!",
+        "😵 #nome# tomou um bicão inesperado",
+        "⚽ Você chutou #nome# igual bola de campeonato"
+    ],
+    "chutar": [
+        "Puff! 💥 Você acabou de dar um chute poderoso em #nome#! 😱",
+        "🦵 #nome# levou um chutão e foi parar em outro servidor",
+        "💨 Você meteu um chute voador em #nome#!",
+        "😵 #nome# tomou um bicão inesperado",
+        "⚽ Você chutou #nome# igual bola de campeonato"
+    ],
+    "tapa": [
+        "Páh! Você deu um tapa sonoro em #nome#! 👋",
+        "💥 O tapa em #nome# ecoou pelo grupo inteiro",
+        "😵 #nome# ficou até sem direção depois desse tapa",
+        "🫲 Você acertou um tapão cinematográfico em #nome#",
+        "👋 TAPAAA! #nome# sentiu até a alma vibrar"
+    ],
+    "soco": [
+        "BOOM! Você socou #nome# com toda a energia! 👊",
+        "🥊 #nome# levou um socão digno de anime",
+        "💥 Você acertou um combo absurdo em #nome#",
+        "😵 #nome# tomou um murro e resetou o cérebro",
+        "👊 Direto na cara! #nome# nem viu chegando"
+    ],
+    "socar": [
+        "BOOM! Você socou #nome# com toda a energia! 👊",
+        "🥊 #nome# levou um socão digno de anime",
+        "💥 Você acertou um combo absurdo em #nome#",
+        "😵 #nome# tomou um murro e resetou o cérebro",
+        "👊 Direto na cara! #nome# nem viu chegando"
+    ],
+    "beijo": [
+        "Awwww 😍 Você deu um beijo carinhoso em #nome#! 💋",
+        "😘 #nome# recebeu um beijinho inesperado",
+        "💖 Clima romântico entre você e #nome#",
+        "🥰 Você deu um beijo fofo em #nome#",
+        "💋 #nome# ficou todo(a) bobo(a) com esse beijo"
+    ],
+    "beijar": [
+        "Awwww 😍 Você deu um beijo carinhoso em #nome#! 💋",
+        "😘 #nome# recebeu um beijinho inesperado",
+        "💖 Clima romântico entre você e #nome#",
+        "🥰 Você deu um beijo fofo em #nome#",
+        "💋 #nome# ficou todo(a) bobo(a) com esse beijo"
+    ],
+    "beijob": [
+        "😳 Você deu um beijão na boca de #nome#!",
+        "💋 O clima esquentou entre você e #nome#",
+        "🔥 Beijo intenso ativado com #nome#",
+        "😘 Você roubou um beijo apaixonado de #nome#",
+        "🫣 #nome# ficou sem reação depois desse beijo"
+    ],
+    "beijarb": [
+        "😳 Você deu um beijão na boca de #nome#!",
+        "💋 O clima esquentou entre você e #nome#",
+        "🔥 Beijo intenso ativado com #nome#",
+        "😘 Você roubou um beijo apaixonado de #nome#",
+        "🫣 #nome# ficou sem reação depois desse beijo"
+    ],
+    "abraco": [
+        "🤗 Você deu um abraço aconchegante em #nome#!",
+        "💖 #nome# foi esmagado(a) por um abraço carinhoso",
+        "🥰 Abraço quentinho ativado com sucesso",
+        "🫂 Você abraçou #nome# e trouxe paz ao mundo",
+        "💕 #nome# se sentiu protegido(a) no seu abraço"
+    ],
+    "abracar": [
+        "🤗 Você deu um abraço aconchegante em #nome#!",
+        "💖 #nome# foi esmagado(a) por um abraço carinhoso",
+        "🥰 Abraço quentinho ativado com sucesso",
+        "🫂 Você abraçou #nome# e trouxe paz ao mundo",
+        "💕 #nome# se sentiu protegido(a) no seu abraço"
+    ],
     "mata": "Com um golpe certeiro, você finalizou #nome#! Que atitude! 🥷💥",
     "matar": "Você deu o golpe final em #nome#... Foi rápido e certeiro! ⚔️",
     "tapar": "Eita! Você deu um tapa na raba de #nome# que ecoou pelo universo! 🍑💥",
@@ -17,15 +83,57 @@
     "gozar": "Você gozou bem na boquinha da #nome# e deixou ela querendo mais! 😘💋",
     "mamar": "Você mandou ver e fez #nome# mamar com estilo! 😏🍑",
     "mamada": "Não teve jeito! #nome# se entregou à sua habilidade de mamar! 🤭🍑",
-    "cafune": "Que delícia de cafuné! 🥰 Você fez #nome# relaxar com seus dedos mágicos! 💆\u200d♀️",
-    "morder": "Você deu uma mordida deliciosa em #nome#! Que saboroso! 😋",
-    "mordida": "Com os dentes afiados, você deu uma mordida irresistível em #nome#!! 🦷",
-    "lamber": "Você deu uma lambida sensacional em #nome#, que delícia! 👅💖",
-    "lambida": "Com a língua afiada, você deu uma lambida gostosa em #nome#! 😜👅",
-    "explodir": "BOOM! 💥 Você fez #nome# explodir de emoção com sua ação épica! 😱🎉",
+    "cafune": [
+        "🥰 Você fez cafuné em #nome# até ele(a) dormir",
+        "💆 #nome# relaxou completamente com seu cafuné",
+        "😌 Cafuné crítico aplicado em #nome#",
+        "🫳 Você passou a mão no cabelo de #nome# com carinho",
+        "💖 #nome# ficou todo(a) bobinho(a) com o cafuné"
+    ],
+    "morder": [
+        "😋 Você deu uma mordidinha em #nome#!",
+        "🦷 #nome# foi mordido(a) sem aviso prévio",
+        "😈 Você atacou #nome# com uma mordida suspeita",
+        "🤭 #nome# sentiu seus dentes chegando",
+        "💥 Mordida crítica em #nome#"
+    ],
+    "mordida": [
+        "😋 Você deu uma mordidinha em #nome#!",
+        "🦷 #nome# foi mordido(a) sem aviso prévio",
+        "😈 Você atacou #nome# com uma mordida suspeita",
+        "🤭 #nome# sentiu seus dentes chegando",
+        "💥 Mordida crítica em #nome#"
+    ],
+    "lamber": [
+        "👅 Você deu uma lambida em #nome#",
+        "😳 #nome# ficou confuso(a) depois dessa lambida",
+        "🤨 Você realmente resolveu lamber #nome#?",
+        "💀 Lambida inesperada aplicada em #nome#",
+        "👅 Ataque de língua super efetivo em #nome#"
+    ],
+    "lambida": [
+        "👅 Você deu uma lambida em #nome#",
+        "😳 #nome# ficou confuso(a) depois dessa lambida",
+        "🤨 Você realmente resolveu lamber #nome#?",
+        "💀 Lambida inesperada aplicada em #nome#",
+        "👅 Ataque de língua super efetivo em #nome#"
+    ],
+    "explodir": [
+        "💥 BOOOOM! #nome# explodiu em mil pedaços",
+        "🔥 Você causou uma explosão absurda em #nome#",
+        "☢️ #nome# virou poeira depois dessa explosão",
+        "😱 Kabum! #nome# não resistiu",
+        "💣 Você explodiu #nome# cinematograficamente"
+    ],
     "chupao": "Aquele chupão no pescoço de #nome# que fez todo mundo parar para olhar! 😈💋",
     "sexo": "Você e #nome# passaram horas fazendo amor! 😈💋", 
-    "tomate": "Você acabou de jogar um tomate em #nome#! 🍅",
+    "tomate": [
+        "🍅 Você jogou um tomate em #nome#!",
+        "🤣 #nome# tomou um tomate na cara",
+        "🍅 Ataque de tomate super efetivo",
+        "😵 #nome# foi atingido por um tomate voador",
+        "🎯 Você acertou #nome# com precisão tomateira"
+    ],
     "fonfon": [
         "Fon fon! 🎺 Você apertou o peitinho de #nome# 🤭",
         "😳 #nome# deixou apertarem o peitin fonfon",
