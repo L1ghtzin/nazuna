@@ -16,11 +16,7 @@ export default {
 
     // --- UPDATES ---
     if (['updates', 'atualizar', 'update', 'atualizarbot'].includes(cmd)) {
-      if (!isOwner || isSubOwner) return reply("🚫 Apenas o Dono principal pode atualizar o bot!");
-      
-      if (global.isUpdating) {
-        return reply("⚠️ Já existe uma atualização em andamento! Por favor, aguarde a conclusão ou reinicie o bot se houver travamento.");
-      }
+      if (!isOwner) return reply("🚫 Apenas o Dono principal pode atualizar o bot!");
 
       if (!q || q.toLowerCase() !== 'sim') {
         const avisoMsg = `⚠️ *ATENÇÃO - ATUALIZAÇÃO DO BOT* ⚠️\n\n` +
@@ -54,20 +50,7 @@ export default {
           return reply("❌ Script de atualização não encontrado!\n\n📂 Caminho esperado: dados/src/.scripts/update.js");
         }
 
-        await reply("🚀 *INICIANDO ATUALIZAÇÃO...*\n\n⏸️ Pausando processamento de mensagens...");
-        
-        // Pausa a fila de mensagens para evitar conflitos durante o update
-        try {
-          const { messageQueue } = await import('../../connect.js');
-          if (messageQueue && typeof messageQueue.pause === 'function') {
-            messageQueue.pause();
-            await reply("✅ Processamento de mensagens pausado.");
-          }
-        } catch (e) {
-          console.error("Erro ao pausar fila:", e);
-        }
-
-        global.isUpdating = true;
+        await reply("🚀 *INICIANDO ATUALIZAÇÃO...*\n\n🔄 Iniciando script de atualização e monitorando progresso...");
 
         const updateProcess = spawn('node', [updateScriptPath], {
           cwd: process.cwd(),
@@ -107,22 +90,8 @@ export default {
 
         updateProcess.on('close', (code) => {
           if (code === 0) {
-            setTimeout(() => {
-              console.log('🔄 Reiniciando bot após atualização...');
-              process.kill(process.pid, 'SIGINT');
-            }, 3000);
+            setTimeout(() => process.exit(0), 3000);
           } else {
-            global.isUpdating = false;
-            
-            // Retoma a fila de mensagens em caso de erro
-            try {
-              import('../../connect.js').then(({ messageQueue }) => {
-                if (messageQueue && typeof messageQueue.resume === 'function') {
-                  messageQueue.resume();
-                }
-              });
-            } catch (e) {}
-
             reply(`❌ O processo de atualização terminou com erro (Código: ${code}). Verifique o console para mais detalhes.`);
           }
         });
