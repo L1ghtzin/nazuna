@@ -87,6 +87,7 @@ const GLOBAL_BLACKLIST_PATH = path.join(__dirname, '..', 'database', 'dono', 'gl
 
 let msgRetryCounterCache;
 let messagesCache;
+let sock = null;
 
 async function initializeOptimizedCaches(NazunaSock) {
     try {
@@ -229,6 +230,8 @@ async function createBotSocket(authDir) {
     signalRepository,
     logger
     });
+
+    sock = NazunaSock;
 
     if (codeMode && !NazunaSock.authState.creds.registered) {
     console.log('📱 Insira o número de telefone (com código de país, ex: 551199999999): ');
@@ -619,8 +622,13 @@ async function gracefulShutdown(signal) {
     }, 15000);
     
     try {
+        // Fecha conexão do socket graciosamente
+        if (sock) {
+            console.log('🔌 Fechando conexão com o WhatsApp...');
+            sock.end(undefined);
+            sock = null;
+        }
 
-    
     // Limpa recursos
     if (cacheCleanupInterval) {
     clearInterval(cacheCleanupInterval);
