@@ -241,8 +241,6 @@ const saveRanking = (data) => {
 const addToRanking = (userId, attempts, timeTaken) => {
     const data = loadRanking();
     data.rankings.push({
-        odIUserId,
-        odIUserId: odIUserId,
         userId,
         attempts,
         timeTaken,
@@ -388,10 +386,10 @@ class MemoryManager {
             const minutes = Math.floor(r.timeTaken / 60);
             const seconds = r.timeTaken % 60;
             const timeStr = minutes > 0 ? `${minutes}m${seconds}s` : `${seconds}s`;
-            message += `${medal} @${getUserName(r.odIUserId)} - ${r.attempts} tentativas (${timeStr})\n`;
+            message += `${medal} @${getUserName(r.userId)} - ${r.attempts} tentativas (${timeStr})\n`;
         });
         
-        return this._formatResponse(true, message, { mentions: rankings.map(r => r.odIUserId) });
+        return this._formatResponse(true, message, { mentions: rankings.map(r => r.userId) });
     }
 
     hasActiveGame = (groupId) => this.activeGames.has(groupId);
