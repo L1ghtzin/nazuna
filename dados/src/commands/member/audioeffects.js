@@ -27,8 +27,10 @@ export default {
     isMedia, 
     isQuotedAudio, 
     getFileBuffer, 
-    command 
-  , MESSAGES }) => {
+    command,
+    TMP_DIR,
+    MESSAGES 
+  }) => {
     try {
       if (isMedia && !info.message.imageMessage && !info.message.videoMessage || isQuotedAudio) {
         const audioEffects = {
@@ -76,19 +78,19 @@ export default {
         const muk = isQuotedAudio ? info.message.extendedTextMessage.contextInfo.quotedMessage.audioMessage : info.message.audioMessage;
         await reply('🎵 Processando áudio... Por favor, aguarde alguns segundos.');
         
-        const rane = path.join(__dirname, `../../database/tmp/${Math.random()}.mp3`);
+        const rane = path.join(TMP_DIR, `${Math.random()}.mp3`);
         const buffimg = await getFileBuffer(muk, 'audio');
         fs.writeFileSync(rane, buffimg);
         
         const gem = rane;
-        const ran = path.join(__dirname, `../../database/tmp/${Math.random()}.mp3`);
+        const ran = path.join(TMP_DIR, `${Math.random()}.mp3`);
         const effect = audioEffects[command];
 
         exec(`ffmpeg -i "${gem}" -filter:a "${effect}" "${ran}"`, async (err) => {
           if (fs.existsSync(gem)) fs.unlinkSync(gem);
           if (err) {
             console.error(`FFMPEG Error (Audio Effect ${command}):`, err);
-            return reply(MESSAGES.error.general);
+            return reply("❌ Erro ao processar o áudio. Verifique se o FFmpeg está instalado corretamente no seu sistema.");
           }
           
           if (fs.existsSync(ran)) {
@@ -107,7 +109,7 @@ export default {
       }
     } catch (e) {
       console.error(e);
-      await reply(MESSAGES.error.internal);
+      await reply("❌ Ocorreu um erro interno. O caminho do diretório de temporários existe?");
     }
   },
 };
