@@ -105,8 +105,30 @@ export default {
     if (['memoria', 'memory'].includes(cmd)) {
       if (!memoria) return reply("Sistema de Memória indisponível.");
       const subCmd = args[0]?.toLowerCase();
-      if (subCmd === 'ranking' || subCmd === 'rank') return reply(memoria.getRanking(10));
-      const res = await memoria.handleCommand(from, sender, pushname, subCmd, args.slice(1));
+
+      if (subCmd === 'ranking' || subCmd === 'rank') {
+        const ranking = memoria.getRanking();
+        return reply(ranking.message, ranking.mentions ? { mentions: ranking.mentions } : undefined);
+      }
+
+      if (memoria.hasActiveGame(from)) {
+        if (!isNaN(subCmd)) {
+          const pos = parseInt(subCmd);
+          const res = memoria.makeMove(from, sender, pos);
+          return reply(res.message, res.mentions ? { mentions: res.mentions } : undefined);
+        }
+        if (subCmd === 'sair' || subCmd === 'parar') {
+          const res = memoria.endGame(from, sender, isGroupAdmin);
+          return reply(res.message, res.mentions ? { mentions: res.mentions } : undefined);
+        }
+        return reply(`🎮 Jogo em andamento! Use um número de 1-16 para revelar uma carta.\nOu ${prefix}memoria sair para desistir.`);
+      }
+
+      if (subCmd === 'sair' || subCmd === 'parar') {
+        return reply("❌ Nenhum jogo em andamento!");
+      }
+
+      const res = memoria.startGame(from, sender);
       return reply(res.message, res.mentions ? { mentions: res.mentions } : undefined);
     }
   }
