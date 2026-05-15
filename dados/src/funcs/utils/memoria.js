@@ -184,7 +184,6 @@ class MemoryGame {
 
     renderBoardWithNumbers() {
         let board = '';
-        let position = 1;
         
         for (let r = 0; r < this.gridSize; r++) {
             for (let c = 0; c < this.gridSize; c++) {
@@ -194,7 +193,7 @@ class MemoryGame {
                     board += ` ${this.board[r][c]} `;
                 } else {
                     const pos = coordsToPos(r, c);
-                    board += pos < 10 ? ` ${pos}️⃣ ` : `${pos} `;
+                    board += pos < 10 ? ` 0${pos} ` : ` ${pos} `;
                 }
             }
             board += '\n';
