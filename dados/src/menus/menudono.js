@@ -172,8 +172,6 @@ ${middleBorder}${menuItemIcon}${prefix}antipv4
 ${middleBorder}${menuItemIcon}${prefix}antipvmsg
 ${middleBorder}${menuItemIcon}${prefix}antispamcmd
 ${middleBorder}${menuItemIcon}${prefix}viewmsg
-${middleBorder}${menuItemIcon}${prefix}cases
-${middleBorder}${menuItemIcon}${prefix}getcase
 ${middleBorder}${menuItemIcon}${prefix}modoliteglobal
 ${middleBorder}${menuItemIcon}${prefix}iaclear
 ${middleBorder}${menuItemIcon}${prefix}limpardb

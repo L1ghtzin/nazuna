@@ -4,7 +4,7 @@ import pathz from 'path';
 export default {
   name: "owner",
   description: "Comandos exclusivos do dono do bot",
-  commands: ["blockcmdg", "blockuserg", "botoff", "boton", "cases", "getcase", "listblocks", "reviverqr", "seradm", "sermembro", "tm", "unblockcmdg", "unblockuserg"],
+  commands: ["blockcmdg", "blockuserg", "botoff", "boton", "listblocks", "reviverqr", "seradm", "sermembro", "tm", "unblockcmdg", "unblockuserg"],
   handle: async ({ 
     nazu, from, info, command, q, reply, prefix, sender, pushname,
     botState, globalBlocks, transmissao,
@@ -65,18 +65,7 @@ export default {
       return reply(`✅ Bot ${cmd === 'boton' ? 'ativado' : 'desativado'}!`);
     }
 
-    // ═══════════════════════════════════════════════════════════════
-    // 📜 CASES & DEBUG
-    // ═══════════════════════════════════════════════════════════════
-    if (cmd === 'cases') {
-      let count = 1580; // Total mapeado na refatoração
-      try {
-        if (optimizer && optimizer.commandRegistry) {
-          count = optimizer.commandRegistry.size || Object.keys(optimizer.commandRegistry).length || 1580;
-        }
-      } catch(e) {}
-      return reply(`📜 *Comandos Disponíveis*: ${count} comandos carregados na memória.`);
-    }
+
 
     if (cmd === 'reviverqr') {
       const qrcodeDir = pathz.join(DATABASE_DIR, 'qr-code');
@@ -145,25 +134,6 @@ export default {
       return reply(`✅ Usuário @${target.split('@')[0]} desbloqueado globalmente!`, { mentions: [target] });
     }
 
-    if (cmd === 'getcase') {
-      if (!q) return reply('❌ Digite o nome do comando (ex: ' + prefix + 'getcase menu).');
-      const cmdName = q.trim().toLowerCase();
-      try {
-        if (optimizer && optimizer.commandRegistry && optimizer.commandRegistry[cmdName]) {
-          const modPath = optimizer.commandRegistry[cmdName].filePath;
-          const code = fs.readFileSync(modPath, 'utf-8');
-          await nazu.sendMessage(from, { 
-            document: Buffer.from(code, 'utf-8'), 
-            mimetype: 'text/javascript', 
-            fileName: `${cmdName}_module.js` 
-          }, { quoted: info });
-        } else {
-          return reply(`❌ Comando "${cmdName}" não encontrado na nova arquitetura modular.`);
-        }
-      } catch (e) {
-        console.error(e);
-        return reply('❌ Erro ao ler o arquivo do módulo.');
-      }
-    }
+
   }
 };
