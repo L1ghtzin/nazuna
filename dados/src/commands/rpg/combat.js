@@ -19,6 +19,7 @@ export default {
     loadEconomy, 
     saveEconomy, 
     getEcoUser,
+    updateQuestProgress,
     MESSAGES
   }) => {
     if (!isGroup) return reply('⚔️ Este comando funciona apenas em grupos com Modo RPG ativo.');
@@ -52,11 +53,27 @@ export default {
       }
       
       me.lastDuel = now;
+      updateQuestProgress(me, 'duel', 1);
+
       if (myHp > oppHp) {
         const reward = Math.floor((opponent.wallet || 0) * 0.05);
         me.wallet += reward;
         opponent.wallet = Math.max(0, opponent.wallet - reward);
         me.exp = (me.exp || 0) + 150;
+        
+        let leveledUp = false;
+        let expRequired = 100 * Math.pow(1.5, (me.level || 1) - 1);
+        while (me.exp >= expRequired) {
+          me.exp -= expRequired;
+          me.level = (me.level || 1) + 1;
+          expRequired = 100 * Math.pow(1.5, (me.level || 1) - 1);
+          leveledUp = true;
+        }
+        
+        if (leveledUp) {
+          reply(`🌟 *LEVEL UP!* Você agora é nível ${me.level}!`);
+        }
+
         saveEconomy(econ);
         return reply(`🏆 *VITÓRIA!* Você venceu o duelo contra @${target.split('@')[0]}!\n💰 Ganhou: +${reward.toLocaleString()} | ✨ +150 XP`, { mentions: [target] });
       } else {
@@ -101,6 +118,20 @@ export default {
         const reward = Math.floor(Math.random() * (arena.reward[1] - arena.reward[0])) + arena.reward[0];
         me.wallet += reward;
         me.exp = (me.exp || 0) + (arena.enemies * 50);
+        
+        let leveledUp = false;
+        let expRequired = 100 * Math.pow(1.5, (me.level || 1) - 1);
+        while (me.exp >= expRequired) {
+          me.exp -= expRequired;
+          me.level = (me.level || 1) + 1;
+          expRequired = 100 * Math.pow(1.5, (me.level || 1) - 1);
+          leveledUp = true;
+        }
+        
+        if (leveledUp) {
+          reply(`🌟 *LEVEL UP!* Você agora é nível ${me.level}!`);
+        }
+
         saveEconomy(econ);
         return reply(`🏆 *VITÓRIA NA ARENA!* Derrotou ${wins}/${arena.enemies} inimigos!\n💰 Prêmio: +${reward.toLocaleString()} moedas`);
       } else {

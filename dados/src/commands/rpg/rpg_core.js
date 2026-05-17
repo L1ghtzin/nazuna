@@ -20,7 +20,8 @@ import {
     updatePeriodChallenge,
     isChallengeCompleted,
     findKeyIgnoringAccents,
-    normalizeParam
+    normalizeParam,
+    updateQuestProgress
 } from "../../utils/database.js";
 
 export default {
@@ -256,6 +257,7 @@ export default {
             const total = Math.floor(base * (1 + (mineBonus || 0) + skillB));
             me.wallet += total; me.cooldowns.mine = Date.now() + 15 * 60 * 1000; pk.dur--;
             addSkillXP(me, 'mining', 1);
+            updateQuestProgress(me, 'gather', 1);
             saveEconomy(econ);
             return reply(`╭━━━⊱ ⛏️ *MINERAÇÃO* ⛏️ ⊱━━━╮\n│\n│ ✅ Minerado com sucesso!\n│\n│ 💎 Minérios: ${fmt(total)}\n│ 🛠️ Picareta: ${pk.dur}/${pk.max}\n│\n╰━━━━━━━━━━━━━━━━━━━━━━━╯`);
         }
@@ -373,6 +375,7 @@ export default {
             addSkillXP(me, 'fishing', 1);
             updateChallenge(me, 'fish', 1, true);
             updatePeriodChallenge(me, 'fish', 1, true);
+            updateQuestProgress(me, 'gather', 1);
             saveEconomy(econ);
             return reply(`╭━━━⊱ 🎣 *PESCARIA* 🎣 ⊱━━━╮\n│\n│ ✅ Peixe fisgado!\n│\n│ 🐟 Lucro: ${fmt(total)}\n│\n╰━━━━━━━━━━━━━━━━━━━━━╯`);
         }
@@ -389,6 +392,7 @@ export default {
             addSkillXP(me, 'exploring', 1);
             updateChallenge(me, 'explore', 1, true);
             updatePeriodChallenge(me, 'explore', 1, true);
+            updateQuestProgress(me, 'gather', 1);
             saveEconomy(econ);
             return reply(`╭━━━⊱ 🧭 *EXPLORAÇÃO* 🧭 ⊱━━━╮\n│\n│ ✅ Expedição concluída!\n│\n│ 🗺️ Tesouros: ${fmt(total)}\n│\n╰━━━━━━━━━━━━━━━━━━━━━━━╯`);
         }
@@ -405,6 +409,7 @@ export default {
             addSkillXP(me, 'hunting', 1);
             updateChallenge(me, 'hunt', 1, true);
             updatePeriodChallenge(me, 'hunt', 1, true);
+            updateQuestProgress(me, 'gather', 1);
             saveEconomy(econ);
             return reply(`╭━━━⊱ 🏹 *CAÇADA* 🏹 ⊱━━━╮\n│\n│ ✅ Abate bem-sucedido!\n│\n│ 🍖 Loot obtido: ${fmt(total)}\n│\n╰━━━━━━━━━━━━━━━━━━━━━╯`);
         }
