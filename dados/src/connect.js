@@ -459,7 +459,7 @@ async function createBotSocket(authDir) {
     console.log(`✅ Bot ${nomebot} iniciado com sucesso! Prefixo: ${prefixo} | Dono: ${nomedono}`);
     }
     if (connection === 'close') {
-    const reason = new Boom(lastDisconnect?.error)?.output?.statusCode;
+    const reason = lastDisconnect?.error ? new Boom(lastDisconnect.error)?.output?.statusCode : undefined;
     const reasonMessage = {
         [DisconnectReason.loggedOut]: 'Deslogado do WhatsApp',
         401: 'Sessão expirada',
