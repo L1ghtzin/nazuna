@@ -23,7 +23,7 @@ export default {
         const now = Date.now();
 
         const cd = me.cooldowns?.daily || 0;
-        if (now < cd) return reply(`⏳ Você já coletou hoje!\n\n🕐 Volte em: ${timeLeft(cd)}`);
+        if (now < cd) return reply(`╭━━━⊱ ⏳ *COOLDOWN* ⏳ ⊱━━━╮\n│\n│ ⚠️ Você já coletou hoje!\n│ 🕐 Volte em: ${timeLeft(cd)}\n│\n╰━━━━━━━━━━━━━━━━━━━━━╯`);
 
         // Sistema de Streak
         if (!me.streak) me.streak = { count: 0, lastClaim: 0, record: 0 };

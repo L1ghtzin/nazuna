@@ -16,7 +16,7 @@ export default {
       
       const tipoBox = args[0]?.toLowerCase();
       if (!tipoBox) {
-        return reply(`🎁 *Sistema de Caixas*\n\n${prefix}caixa diaria\n${prefix}caixa rara (500 gold)\n${prefix}caixa lendaria (2000 gold)`);
+        return reply(`╭━━━⊱ 🎁 *SISTEMA DE CAIXAS* 🎁 ⊱━━━╮\n│\n│ 🔹 ${prefix}caixa diaria\n│ 🔹 ${prefix}caixa rara (500 gold)\n│ 🔹 ${prefix}caixa lendaria (2000 gold)\n│\n╰━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╯`);
       }
       
       const userEco = getEcoUser(sender);
@@ -65,7 +65,9 @@ export default {
     // ═══════════════════════════════════════════════════════════════
     if (['inventario', 'inventory'].includes(cmd)) {
       if (!gifts) return reply("Sistema de presentes indisponível.");
-      return reply(gifts.getInventory(sender));
+      const invStr = gifts.getInventory(sender);
+      if (!invStr || invStr.trim() === '') return reply(`╭━━━⊱ 🎒 *INVENTÁRIO* 🎒 ⊱━━━╮\n│\n│ 📭 Inventário vazio\n│\n╰━━━━━━━━━━━━━━━━━━━━━━━╯`);
+      return reply(`╭━━━⊱ 🎒 *INVENTÁRIO* 🎒 ⊱━━━╮\n│\n${invStr.split('\\n').map(l => '│ ' + l).join('\\n')}\n│\n╰━━━━━━━━━━━━━━━━━━━━━━━╯`);
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -80,7 +82,7 @@ export default {
         const rep = reputation.getReputation(target);
         const name = menc_os2 ? `@${menc_os2.split('@')[0]}` : pushname;
         return nazu.sendMessage(from, {
-          text: `⭐ *Reputação de ${name}*\n\n${rep}`,
+          text: `╭━━━⊱ ⭐ *REPUTAÇÃO* ⭐ ⊱━━━╮\n│\n│ 👤 Usuário: ${name}\n│\n│ ${rep.split('\\n').join('\\n│ ')}\n│\n╰━━━━━━━━━━━━━━━━━━━━━━━╯`,
           mentions: menc_os2 ? [menc_os2] : []
         });
       }

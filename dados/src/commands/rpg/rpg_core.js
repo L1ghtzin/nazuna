@@ -209,18 +209,18 @@ export default {
             return reply(text, mentions.length > 0 ? { mentions } : undefined);
         }
 
-        if (sub === 'carteira') return reply(`💰 *Sua carteira:* ${fmt(me.wallet)}`);
-        if (sub === 'banco') return reply(`🏦 *Seu banco:* ${fmt(me.bank)} / ${fmt(bankCapacity)}`);
+        if (sub === 'carteira') return reply(`╭━━━⊱ 💰 *CARTEIRA* 💰 ⊱━━━╮\n│\n│ 💵 Saldo: ${fmt(me.wallet)}\n│\n╰━━━━━━━━━━━━━━━━━━━━━━╯`);
+        if (sub === 'banco') return reply(`╭━━━⊱ 🏦 *BANCO* 🏦 ⊱━━━╮\n│\n│ 💳 Saldo: ${fmt(me.bank)}\n│ 📊 Limite: ${fmt(bankCapacity)}\n│\n╰━━━━━━━━━━━━━━━━━━━━╯`);
 
         if (sub === 'depositar' || sub === 'dep') {
             const amount = parseAmount(args[0], me.wallet);
             if (!amount || amount <= 0) return reply(`💔 Informe um valor.`);
             const space = bankCapacity - me.bank;
             const toDep = Math.min(amount, space);
-            if (toDep <= 0) return reply('⚠️ Banco cheio!');
+            if (toDep <= 0) return reply(`╭━━━⊱ ⚠️ *BANCO CHEIO* ⚠️ ⊱━━━╮\n│\n│ Seu limite bancário foi atingido.\n│ Compre mais espaço ou melhore\n│ sua conta!\n│\n╰━━━━━━━━━━━━━━━━━━━━━━━╯`);
             me.wallet -= toDep; me.bank += toDep;
             saveEconomy(econ);
-            return reply(`✅ Depositado ${fmt(toDep)}.`);
+            return reply(`╭━━━⊱ 🏦 *DEPÓSITO* 🏦 ⊱━━━╮\n│\n│ ✅ Sucesso!\n│\n│ 💵 Valor: ${fmt(toDep)}\n│ 💰 Saldo no banco: ${fmt(me.bank)}\n│\n╰━━━━━━━━━━━━━━━━━━━━━╯`);
         }
 
         if (sub === 'sacar' || sub === 'saque') {
@@ -229,7 +229,7 @@ export default {
             const taxa = Math.floor(amount * 0.05);
             me.bank -= amount; me.wallet += (amount - taxa);
             saveEconomy(econ);
-            return reply(`✅ Sacado ${fmt(amount - taxa)} (Taxa: ${fmt(taxa)}).`);
+            return reply(`╭━━━⊱ 🏧 *SAQUE* 🏧 ⊱━━━╮\n│\n│ ✅ Sucesso!\n│\n│ 💵 Valor sacado: ${fmt(amount)}\n│ 📉 Taxa (5%): ${fmt(taxa)}\n│ 💰 Recebido: ${fmt(amount - taxa)}\n│\n╰━━━━━━━━━━━━━━━━━━━╯`);
         }
 
         if (sub === 'transferir' || sub === 'pix') {
@@ -242,14 +242,14 @@ export default {
             const other = getEcoUser(econ, mentioned);
             me.wallet -= (amount + taxa); other.wallet += amount;
             saveEconomy(econ);
-            return reply(`✅ Enviado ${fmt(amount)} para @${mentioned.split('@')[0]}.`, { mentions: [mentioned] });
+            return reply(`╭━━━⊱ 💸 *TRANSFERÊNCIA* 💸 ⊱━━━╮\n│\n│ ✅ Pix enviado!\n│\n│ 👤 Para: @${mentioned.split('@')[0]}\n│ 💵 Valor: ${fmt(amount)}\n│ 📉 Taxa (15%): ${fmt(taxa)}\n│\n╰━━━━━━━━━━━━━━━━━━━━━━━━━╯`, { mentions: [mentioned] });
         }
 
         if (sub === 'minerar' || sub === 'mine') {
             const pk = me.tools?.pickaxe;
-            if (!pk || pk.dur <= 0) return reply(`💔 Sua picareta quebrou!`);
+            if (!pk || pk.dur <= 0) return reply(`╭━━━⊱ 💔 *ERRO* 💔 ⊱━━━╮\n│\n│ ⚠️ Você não tem uma picareta\n│ ou ela quebrou!\n│\n│ 💡 Compre uma na loja.\n│\n╰━━━━━━━━━━━━━━━━━━╯`);
             const cd = me.cooldowns?.mine || 0;
-            if (Date.now() < cd) return reply(`⏳ Aguarde ${timeLeft(cd)}.`);
+            if (Date.now() < cd) return reply(`╭━━━⊱ ⏳ *COOLDOWN* ⏳ ⊱━━━╮\n│\n│ ⚠️ Você está cansado!\n│ ⏰ Aguarde: ${timeLeft(cd)}\n│\n╰━━━━━━━━━━━━━━━━━━━━━╯`);
             
             const base = 150 + Math.floor(Math.random() * 201);
             const skillB = getSkillBonus(me, 'mining');
@@ -257,26 +257,27 @@ export default {
             me.wallet += total; me.cooldowns.mine = Date.now() + 15 * 60 * 1000; pk.dur--;
             addSkillXP(me, 'mining', 1);
             saveEconomy(econ);
-            return reply(`⛏️ Você minerou ${fmt(total)}! Picareta: ${pk.dur}/${pk.max}`);
+            return reply(`╭━━━⊱ ⛏️ *MINERAÇÃO* ⛏️ ⊱━━━╮\n│\n│ ✅ Minerado com sucesso!\n│\n│ 💎 Minérios: ${fmt(total)}\n│ 🛠️ Picareta: ${pk.dur}/${pk.max}\n│\n╰━━━━━━━━━━━━━━━━━━━━━━━╯`);
         }
 
         if (sub === 'trabalhar' || sub === 'work') {
             const cd = me.cooldowns?.work || 0;
-            if (Date.now() < cd) return reply(`⏳ Aguarde ${timeLeft(cd)}.`);
+            if (Date.now() < cd) return reply(`╭━━━⊱ ⏳ *COOLDOWN* ⏳ ⊱━━━╮\n│\n│ ⚠️ Você está de folga!\n│ ⏰ Retorne em: ${timeLeft(cd)}\n│\n╰━━━━━━━━━━━━━━━━━━━━━╯`);
             const job = econ.jobCatalog?.[me.job] || { min: 50, max: 100 };
             const gain = job.min + Math.floor(Math.random() * (job.max - job.min + 1));
             const bonus = Math.floor(gain * (workBonus || 0));
             me.wallet += (gain + bonus);
             me.cooldowns.work = Date.now() + 20 * 60 * 1000;
             saveEconomy(econ);
-            return reply(`💼 Você trabalhou e recebeu ${fmt(gain + bonus)}!`);
+            return reply(`╭━━━⊱ 💼 *TRABALHO* 💼 ⊱━━━╮\n│\n│ ✅ Turno finalizado!\n│\n│ 💰 Salário: ${fmt(gain)}\n│ 📈 Bônus: ${fmt(bonus)}\n│ 💵 Total: ${fmt(gain + bonus)}\n│\n╰━━━━━━━━━━━━━━━━━━━━━╯`);
         }
 
         if (sub === 'loja' || sub === 'lojarps') {
-            let text = '🛒 *LOJA*\n\n';
+            let text = '╭━━━⊱ 🛒 *LOJA RPG* 🛒 ⊱━━━╮\n│\n';
             for (const [k, it] of Object.entries(econ.shop || {})) {
-                text += `• ${k} — ${fmt(it.price)} (${it.name})\n`;
+                text += `│ 🔹 *${k}*\n│   ${it.name}\n│   💰 ${fmt(it.price)}\n│\n`;
             }
+            text += `╰━━━━━━━━━━━━━━━━━━━━━━━╯\n\n💡 Use: ${prefix}comprar <item>`;
             return reply(text);
         }
 
@@ -297,10 +298,16 @@ export default {
         }
 
         if (sub === 'inventario' || sub === 'inv') {
-            let text = '🎒 *INVENTÁRIO*\n\n';
+            let text = '╭━━━⊱ 🎒 *INVENTÁRIO* 🎒 ⊱━━━╮\n│\n';
+            let count = 0;
             for (const [k, q] of Object.entries(me.inventory || {})) {
-                if (q > 0) text += `• ${k}: ${q}\n`;
+                if (q > 0) {
+                    text += `│ 🔹 *${k}*: ${q}\n`;
+                    count++;
+                }
             }
+            if (count === 0) text += '│ 📭 Inventário vazio\n';
+            text += `│\n╰━━━━━━━━━━━━━━━━━━━━━━━╯`;
             return reply(text);
         }
 
@@ -356,7 +363,7 @@ export default {
 
         if (sub === 'pescar' || sub === 'fish') {
             const cd = me.cooldowns?.fish || 0;
-            if (Date.now() < cd) return reply(`⏳ Aguarde ${timeLeft(cd)} para pescar novamente.`);
+            if (Date.now() < cd) return reply(`╭━━━⊱ ⏳ *COOLDOWN* ⏳ ⊱━━━╮\n│\n│ ⚠️ Sem peixes por perto!\n│ ⏰ Aguarde: ${timeLeft(cd)}\n│\n╰━━━━━━━━━━━━━━━━━━━━━╯`);
             const base = 80 + Math.floor(Math.random() * 121);
             const skillB = getSkillBonus(me, 'fishing');
             const bonus = Math.floor(base * ((fishBonus || 0) + skillB));
@@ -367,12 +374,12 @@ export default {
             updateChallenge(me, 'fish', 1, true);
             updatePeriodChallenge(me, 'fish', 1, true);
             saveEconomy(econ);
-            return reply(`🎣 Você pescou e ganhou ${fmt(total)}!`);
+            return reply(`╭━━━⊱ 🎣 *PESCARIA* 🎣 ⊱━━━╮\n│\n│ ✅ Peixe fisgado!\n│\n│ 🐟 Lucro: ${fmt(total)}\n│\n╰━━━━━━━━━━━━━━━━━━━━━╯`);
         }
 
         if (sub === 'explorar' || sub === 'explore') {
             const cd = me.cooldowns?.explore || 0;
-            if (Date.now() < cd) return reply(`⏳ Aguarde ${timeLeft(cd)} para explorar novamente.`);
+            if (Date.now() < cd) return reply(`╭━━━⊱ ⏳ *COOLDOWN* ⏳ ⊱━━━╮\n│\n│ ⚠️ Você está exausto!\n│ ⏰ Aguarde: ${timeLeft(cd)}\n│\n╰━━━━━━━━━━━━━━━━━━━━━╯`);
             const base = 100 + Math.floor(Math.random() * 151);
             const skillB = getSkillBonus(me, 'exploring');
             const bonus = Math.floor(base * ((exploreBonus || 0) + skillB));
@@ -383,12 +390,12 @@ export default {
             updateChallenge(me, 'explore', 1, true);
             updatePeriodChallenge(me, 'explore', 1, true);
             saveEconomy(econ);
-            return reply(`🧭 Você explorou e encontrou ${fmt(total)}!`);
+            return reply(`╭━━━⊱ 🧭 *EXPLORAÇÃO* 🧭 ⊱━━━╮\n│\n│ ✅ Expedição concluída!\n│\n│ 🗺️ Tesouros: ${fmt(total)}\n│\n╰━━━━━━━━━━━━━━━━━━━━━━━╯`);
         }
 
         if (sub === 'cacar' || sub === 'caçar' || sub === 'hunt') {
             const cd = me.cooldowns?.hunt || 0;
-            if (Date.now() < cd) return reply(`⏳ Aguarde ${timeLeft(cd)} para caçar novamente.`);
+            if (Date.now() < cd) return reply(`╭━━━⊱ ⏳ *COOLDOWN* ⏳ ⊱━━━╮\n│\n│ ⚠️ A floresta está vazia!\n│ ⏰ Aguarde: ${timeLeft(cd)}\n│\n╰━━━━━━━━━━━━━━━━━━━━━╯`);
             const base = 120 + Math.floor(Math.random() * 181);
             const skillB = getSkillBonus(me, 'hunting');
             const bonus = Math.floor(base * ((huntBonus || 0) + skillB));
@@ -399,7 +406,7 @@ export default {
             updateChallenge(me, 'hunt', 1, true);
             updatePeriodChallenge(me, 'hunt', 1, true);
             saveEconomy(econ);
-            return reply(`🏹 Você caçou e obteve ${fmt(total)}!`);
+            return reply(`╭━━━⊱ 🏹 *CAÇADA* 🏹 ⊱━━━╮\n│\n│ ✅ Abate bem-sucedido!\n│\n│ 🍖 Loot obtido: ${fmt(total)}\n│\n╰━━━━━━━━━━━━━━━━━━━━━╯`);
         }
 
         if (sub === 'resetrpg' && isOwner) {

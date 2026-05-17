@@ -34,7 +34,7 @@ export default {
             if (mentioned === sender) return reply(`💔 Você não pode assaltar a si mesmo.`);
 
             const cd = me.cooldowns?.rob || 0;
-            if (Date.now() < cd) return reply(`⏳ Aguarde ${timeLeft(cd)} para tentar novamente.`);
+            if (Date.now() < cd) return reply(`╭━━━⊱ ⏳ *COOLDOWN* ⏳ ⊱━━━╮\n│\n│ ⚠️ Você está se escondendo!\n│ ⏰ Aguarde: ${timeLeft(cd)}\n│\n╰━━━━━━━━━━━━━━━━━━━━━╯`);
 
             const target = getEcoUser(econ, mentioned);
             const maxSteal = Math.min(target.wallet, 300);
@@ -42,7 +42,7 @@ export default {
             if (maxSteal <= 0) {
                 me.cooldowns.rob = Date.now() + 10 * 60 * 1000;
                 saveEconomy(econ);
-                return reply('📭 A vítima está sem dinheiro na carteira. Roubo falhou.');
+                return reply(`╭━━━⊱ 📭 *FRACASSO* 📭 ⊱━━━╮\n│\n│ A vítima não tem dinheiro\n│ na carteira.\n│\n╰━━━━━━━━━━━━━━━━━━━━━╯`);
             }
 
             const chance = Math.random();
@@ -52,7 +52,7 @@ export default {
                 me.wallet += amt;
                 me.cooldowns.rob = Date.now() + 10 * 60 * 1000;
                 saveEconomy(econ);
-                return reply(`🦹 Sucesso! Você roubou ${fmt(amt)} de @${mentioned.split('@')[0]}.`, { mentions: [mentioned] });
+                return reply(`╭━━━⊱ 🦹 *ASSALTO* 🦹 ⊱━━━╮\n│\n│ ✅ Sucesso no roubo!\n│\n│ 👤 Vítima: @${mentioned.split('@')[0]}\n│ 💰 Roubado: ${fmt(amt)}\n│\n╰━━━━━━━━━━━━━━━━━━━━━╯`, { mentions: [mentioned] });
             } else {
                 const multa = 80 + Math.floor(Math.random() * 121);
                 const pay = Math.min(me.wallet, multa);
@@ -60,7 +60,7 @@ export default {
                 target.wallet += pay;
                 me.cooldowns.rob = Date.now() + 10 * 60 * 1000;
                 saveEconomy(econ);
-                return reply(`🚨 Você foi pego! Pagou ${fmt(pay)} de multa para @${mentioned.split('@')[0]}.`, { mentions: [mentioned] });
+                return reply(`╭━━━⊱ 🚨 *PRESO!* 🚨 ⊱━━━╮\n│\n│ ❌ Você foi pego tentando\n│ roubar @${mentioned.split('@')[0]}!\n│\n│ 💸 Multa: ${fmt(pay)}\n│\n╰━━━━━━━━━━━━━━━━━━━━━╯`, { mentions: [mentioned] });
             }
         }
 

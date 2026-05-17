@@ -55,10 +55,18 @@ export default {
 
     // --- VENDER (pode ser comando direto ou subcomando de investir) ---
     if (command === 'sell' || command === 'vender' || (args[0]?.toLowerCase() === 'vender' || args[0]?.toLowerCase() === 'sell')) {
-      const stockType = (args[0] === 'vender' || args[0] === 'sell') ? args[1]?.toLowerCase() : args[0]?.toLowerCase();
+      const rawStockType = (args[0] === 'vender' || args[0] === 'sell') ? args[1]?.toLowerCase() : args[0]?.toLowerCase();
       const amount = parseInt((args[0] === 'vender' || args[0] === 'sell') ? args[2] : args[1]) || 1;
 
-      if (!me.investments.stocks[stockType] || me.investments.stocks[stockType] < amount) {
+      const aliases = {
+        'tecnologia': 'tech', 'tech': 'tech',
+        'ouro': 'gold', 'gold': 'gold',
+        'cripto': 'crypto', 'crypto': 'crypto', 'bitcoin': 'crypto', 'btc': 'crypto',
+        'energia': 'energy', 'energy': 'energy'
+      };
+      const stockType = aliases[rawStockType];
+
+      if (!stockType || !me.investments.stocks[stockType] || me.investments.stocks[stockType] < amount) {
         return reply('❌ Você não tem ações suficientes!');
       }
 
@@ -69,25 +77,34 @@ export default {
       me.wallet += totalValue;
       me.investments.totalProfit += totalValue;
 
-      let text = `╭━━━⊱ 💵 *VENDA DE AÇÕES* ⊱━━━╮\n`;
-      text += `╰━━━━━━━━━━━━━━━━━━━━╯\n\n`;
-      text += `✅ Ações vendidas!\n\n`;
-      text += `📊 Ação: ${stockType.toUpperCase()}\n`;
-      text += `📈 Quantidade: ${amount}\n`;
-      text += `💰 Recebido: ${totalValue.toLocaleString()}\n`;
-      text += `💼 Lucro acumulado: ${me.investments.totalProfit.toLocaleString()}`;
+      let text = `╭━━━⊱ 💵 *VENDA DE AÇÕES* 💵 ⊱━━━╮\n`;
+      text += `│\n`;
+      text += `│ ✅ Ações vendidas!\n│\n`;
+      text += `│ 📊 Ação: ${stockType.toUpperCase()}\n`;
+      text += `│ 📈 Quantidade: ${amount}\n`;
+      text += `│ 💰 Recebido: ${totalValue.toLocaleString()}\n`;
+      text += `│ 💼 Lucro acumulado: ${me.investments.totalProfit.toLocaleString()}\n`;
+      text += `│\n╰━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╯`;
 
       saveEconomy(econ);
       return reply(text);
     }
 
     // --- COMPRAR (subcomando ou padrão de investir) ---
-    if (args[0] === 'comprar' || (econ.stockMarket.prices[args[0]?.toLowerCase()] && args[1])) {
-      const stockType = (args[0] === 'comprar') ? args[1]?.toLowerCase() : args[0]?.toLowerCase();
+    const aliasesForBuy = {
+      'tecnologia': 'tech', 'tech': 'tech',
+      'ouro': 'gold', 'gold': 'gold',
+      'cripto': 'crypto', 'crypto': 'crypto', 'bitcoin': 'crypto', 'btc': 'crypto',
+      'energia': 'energy', 'energy': 'energy'
+    };
+    
+    if (args[0] === 'comprar' || (args[0] && aliasesForBuy[args[0]?.toLowerCase()])) {
+      const rawStockType = (args[0] === 'comprar') ? args[1]?.toLowerCase() : args[0]?.toLowerCase();
       const amount = parseInt((args[0] === 'comprar') ? args[2] : args[1]) || 1;
+      const stockType = aliasesForBuy[rawStockType];
 
-      if (!econ.stockMarket.prices[stockType]) {
-        return reply('❌ Ação inválida! Escolha: tech, gold, crypto, energy');
+      if (!stockType || !econ.stockMarket.prices[stockType]) {
+        return reply('❌ Ação inválida! Escolha: tecnologia, ouro, bitcoin, energia');
       }
 
       const price = Math.floor(econ.stockMarket.prices[stockType]);
@@ -101,43 +118,44 @@ export default {
       me.investments.stocks[stockType] = (me.investments.stocks[stockType] || 0) + amount;
       me.investments.totalInvested += totalCost;
 
-      let text = `╭━━━⊱ 💼 *INVESTIMENTO* ⊱━━━╮\n`;
-      text += `╰━━━━━━━━━━━━━━━━━━━━╯\n\n`;
-      text += `✅ Investimento realizado!\n\n`;
-      text += `📊 Ação: ${stockType.toUpperCase()}\n`;
-      text += `📈 Quantidade: ${amount}\n`;
-      text += `💰 Valor: ${totalCost.toLocaleString()}\n`;
-      text += `💼 Total investido: ${me.investments.totalInvested.toLocaleString()}`;
+      let text = `╭━━━⊱ 💼 *INVESTIMENTO* 💼 ⊱━━━╮\n`;
+      text += `│\n`;
+      text += `│ ✅ Investimento realizado!\n│\n`;
+      text += `│ 📊 Ação: ${stockType.toUpperCase()}\n`;
+      text += `│ 📈 Quantidade: ${amount}\n`;
+      text += `│ 💰 Valor: ${totalCost.toLocaleString()}\n`;
+      text += `│ 💼 Total investido: ${me.investments.totalInvested.toLocaleString()}\n`;
+      text += `│\n╰━━━━━━━━━━━━━━━━━━━━━━━━━━━╯`;
 
       saveEconomy(econ);
       return reply(text);
     }
 
     // --- VER MERCADO (Padrão) ---
-    let text = `╭━━━⊱ 📈 *MERCADO DE AÇÕES* ⊱━━━╮\n`;
-    text += `│ Investidor: ${pushname}\n`;
-    text += `╰━━━━━━━━━━━━━━━━━━━━╯\n\n`;
-    text += `💼 *AÇÕES DISPONÍVEIS:*\n\n`;
+    let text = `╭━━━⊱ 📈 *MERCADO DE AÇÕES* 📈 ⊱━━━╮\n`;
+    text += `│\n`;
+    text += `│ 👤 Investidor: ${pushname}\n`;
+    text += `│\n`;
+    text += `│ 💼 *AÇÕES DISPONÍVEIS:*\n│\n`;
 
     const stocks = {
-      tech: { name: '💻 Tecnologia', emoji: '💻' },
-      gold: { name: '🪙 Ouro', emoji: '🪙' },
-      crypto: { name: '₿ Cripto', emoji: '₿' },
-      energy: { name: '⚡ Energia', emoji: '⚡' }
+      tech: { name: 'Tecnologia', emoji: '💻' },
+      gold: { name: 'Ouro', emoji: '🪙' },
+      crypto: { name: 'Bitcoin', emoji: '₿' },
+      energy: { name: 'Energia', emoji: '⚡' }
     };
 
     for (const [key, stock] of Object.entries(stocks)) {
       const price = Math.floor(econ.stockMarket.prices[key]);
       const owned = me.investments.stocks[key] || 0;
-      text += `${stock.emoji} *${stock.name}*\n`;
-      text += `┌─────────────────\n`;
+      text += `│ ${stock.emoji} *${stock.name}*\n`;
       text += `│ 💰 Preço: ${price.toLocaleString()}\n`;
-      text += `│ 📊 Você tem: ${owned}\n`;
-      text += `└─────────────────\n\n`;
+      text += `│ 📊 Você tem: ${owned}\n│\n`;
     }
 
-    text += `💡 Use ${prefix}investir comprar <ação> <qtd>\n`;
-    text += `💡 Use ${prefix}investir vender <ação> <qtd>`;
+    text += `╰━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╯\n\n`;
+    text += `💡 Use ${prefix}investir comprar <nome> <qtd>\n`;
+    text += `💡 Exemplo: ${prefix}investir comprar bitcoin 5`;
 
     saveEconomy(econ);
     return reply(text);

@@ -31,11 +31,11 @@ export default {
                 const prize = amt * 2;
                 me.wallet += amt; // ganha o que apostou (fica com o dobro)
                 saveEconomy(econ);
-                return reply(`🎉 Você ganhou! Recebeu ${fmt(prize)}.`);
+                return reply(`╭━━━⊱ 🎉 *VITÓRIA!* 🎉 ⊱━━━╮\n│\n│ ✅ Aposta ganha!\n│\n│ 💰 Prêmio: ${fmt(prize)}\n│\n╰━━━━━━━━━━━━━━━━━━━━━╯`);
             } else {
                 me.wallet -= amt;
                 saveEconomy(econ);
-                return reply(`💸 Você perdeu ${fmt(amt)}.`);
+                return reply(`╭━━━⊱ 💸 *DERROTA!* 💸 ⊱━━━╮\n│\n│ ❌ Você perdeu a aposta.\n│\n│ 📉 Prejuízo: ${fmt(amt)}\n│\n╰━━━━━━━━━━━━━━━━━━━━━╯`);
             }
         }
 
@@ -59,7 +59,7 @@ export default {
             if (win > 0) me.wallet += win;
             saveEconomy(econ);
             
-            return reply(`🎰 [ ${r1} | ${r2} | ${r3} ] 🎰\n\n${win > 0 ? `🎉 GANHOU! +${fmt(win)}` : `💸 PERDEU! -${fmt(amt)}`}`);
+            return reply(`╭━━━⊱ 🎰 *CAÇA-NÍQUEL* 🎰 ⊱━━━╮\n│\n│ [ ${r1} | ${r2} | ${r3} ]\n│\n│ ${win > 0 ? `🎉 GANHOU! +${fmt(win)}` : `💸 PERDEU! -${fmt(amt)}`}\n│\n╰━━━━━━━━━━━━━━━━━━━━━━━━━╯`);
         }
 
         if (sub === 'roulette' || sub === 'roleta') {
@@ -83,7 +83,7 @@ export default {
             if (won) me.wallet += (amt * multiplier);
             saveEconomy(econ);
 
-            return reply(`🎡 A roleta parou em: *${landing.toUpperCase()}*!\n\n${won ? `🎉 PARABÉNS! Você ganhou ${fmt(amt * multiplier)}!` : `💸 Não foi dessa vez. Perdeu ${fmt(amt)}.`}`);
+            return reply(`╭━━━⊱ 🎡 *ROLETA* 🎡 ⊱━━━╮\n│\n│ 🎲 Parou no: *${landing.toUpperCase()}*\n│\n│ ${won ? `🎉 PARABÉNS! Você ganhou ${fmt(amt * multiplier)}!` : `💸 QUE PENA! Você perdeu ${fmt(amt)}.`}\n│\n╰━━━━━━━━━━━━━━━━━━━━━╯`);
         }
     }
 };
