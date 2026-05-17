@@ -54,7 +54,7 @@ export default {
     if (!isGroupAdmin && !isOwner) return reply("❌ Apenas administradores podem usar este comando!");
 
     // --- DELETAR (Apagar mensagem do bot ou de outros se for admin) ---
-    if (['deletar', 'del'].includes(command)) {
+    if (['deletar', 'del', 'd', 'delete'].includes(command)) {
       if (!info.message.extendedTextMessage?.contextInfo?.quotedMessage) return reply("❌ Responda à mensagem que deseja deletar.");
       
       const key = {
