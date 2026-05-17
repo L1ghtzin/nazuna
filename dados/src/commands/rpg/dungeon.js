@@ -1,4 +1,5 @@
 import { PREFIX } from "../../config.js";
+import { updateQuestProgress } from "../../utils/database.js";
 
 export default {
   name: "dungeon",
@@ -18,7 +19,6 @@ export default {
     loadEconomy, 
     saveEconomy, 
     getEcoUser,
-    updateQuestProgress,
     MESSAGES
   }) => {
     if (!isGroup) return reply('⚔️ Este comando funciona apenas em grupos com Modo RPG ativo.');
