@@ -148,5 +148,71 @@ export default {
             saveEconomy(econ);
             return reply(`✏️ ${pet.emoji} *${oldName}* agora se chama *${pet.name}*!`);
         }
+
+        if (sub === 'evoluirpet' || sub === 'evolve') {
+            const index = parseInt(q) - 1;
+            if (isNaN(index) || index < 0 || index >= (me.pets?.length || 0)) return reply(`💔 Pet inválido! Escolha o número do pet em ${prefix}pets.`);
+            
+            const pet = me.pets[index];
+            const maxEvolutions = 3;
+            if (pet.evolutions >= maxEvolutions) return reply(`✨ ${pet.emoji} *${pet.name}* já está na evolução máxima!`);
+
+            const requiredLevel = (pet.evolutions + 1) * 10;
+            if (pet.level < requiredLevel) return reply(`🎓 ${pet.emoji} *${pet.name}* precisa chegar ao nível ${requiredLevel} para evoluir!`);
+
+            const evolveCost = (pet.evolutions + 1) * 10000;
+            if (me.wallet < evolveCost) return reply(`💰 Você precisa de ${fmt(evolveCost)} para evoluir este pet!`);
+
+            me.wallet -= evolveCost;
+            pet.evolutions = (pet.evolutions || 0) + 1;
+            pet.attack += 15 * pet.evolutions;
+            pet.defense += 10 * pet.evolutions;
+            pet.maxHp += 50 * pet.evolutions;
+            pet.hp = pet.maxHp;
+            
+            saveEconomy(econ);
+            return reply(`🌟 *EVOLUÇÃO!* 🌟\n${pet.emoji} *${pet.name}* alcançou a evolução ⭐${pet.evolutions}!\nSuas habilidades aumentaram muito!`);
+        }
+
+        if (sub === 'batalhapet' || sub === 'petbattle') {
+            if (!menc_jid2) return reply(`⚔️ Mencione um adversário para batalhar!\nEx: ${prefix}batalhapet 1 @user`);
+            const argsList = q.split(' ');
+            const index = parseInt(argsList[0]) - 1;
+            if (isNaN(index) || index < 0 || index >= (me.pets?.length || 0)) return reply(`💔 Seu pet é inválido!`);
+            
+            const enemy = getEcoUser(econ, menc_jid2);
+            if (!enemy.pets || enemy.pets.length === 0) return reply(`😢 O adversário não tem pets!`);
+
+            const myPet = me.pets[index];
+            if (myPet.hp < myPet.maxHp * 0.2) return reply(`⚠️ ${myPet.emoji} *${myPet.name}* está muito fraco para batalhar! Alimente-o e espere recuperar vida!`);
+            
+            const enemyPet = enemy.pets[Math.floor(Math.random() * enemy.pets.length)];
+            
+            let text = `⚔️ *BATALHA DE PETS* ⚔️\n\n${myPet.emoji} *${myPet.name}* (Lvl ${myPet.level})\nVS\n${enemyPet.emoji} *${enemyPet.name}* (Lvl ${enemyPet.level})\n\n`;
+
+            const myPower = myPet.attack + myPet.defense + (myPet.level * 2) + Math.floor(Math.random() * 20);
+            const enemyPower = enemyPet.attack + enemyPet.defense + (enemyPet.level * 2) + Math.floor(Math.random() * 20);
+
+            if (myPower > enemyPower) {
+                myPet.wins = (myPet.wins || 0) + 1;
+                myPet.exp += 150;
+                enemyPet.losses = (enemyPet.losses || 0) + 1;
+                text += `🏆 *${myPet.name}* venceu a batalha!\n✨ +150 EXP para o pet!`;
+            } else if (enemyPower > myPower) {
+                enemyPet.wins = (enemyPet.wins || 0) + 1;
+                enemyPet.exp += 150;
+                myPet.losses = (myPet.losses || 0) + 1;
+                text += `💀 *${myPet.name}* perdeu a batalha!\nO adversário foi muito forte!`;
+            } else {
+                text += `🤝 *EMPATE!* Ambos pets lutaram bravamente.`;
+            }
+
+            myPet.hunger = Math.max(0, myPet.hunger - 20);
+            myPet.hp = Math.max(1, Math.floor(myPet.hp - myPet.maxHp * 0.3));
+            enemyPet.hp = Math.max(1, Math.floor(enemyPet.hp - enemyPet.maxHp * 0.3));
+
+            saveEconomy(econ);
+            return reply(text);
+        }
     }
 };
