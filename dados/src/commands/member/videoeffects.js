@@ -2,7 +2,7 @@ import { exec } from 'child_process';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { PREFIX } from "../../config.js";
+
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -11,7 +11,7 @@ export default {
   name: "videoeffects",
   description: "Aplica efeitos em vídeos",
   commands: ["espelhar", "fastvid", "glitch", "mirror", "pretoebranco", "reversevid", "rotacionar", "rotate", "sepia", "slowvid", "tomp3", "videobw", "videolento", "videoloop", "videomudo", "videorapido", "videoreverso", "videoslow"],
-  usage: `${PREFIX}videorapido (responda a um vídeo)`,
+  usage: "{prefix}videorapido (responda a um vídeo)",
   handle: async ({  
     nazu, 
     from, 

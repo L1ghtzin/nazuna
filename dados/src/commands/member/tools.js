@@ -1,11 +1,11 @@
 import axios from 'axios';
-import { PREFIX } from "../../config.js";
+
 
 export default {
   name: "tools",
   description: "Ferramentas úteis",
   commands: ["checklink", "checkurl", "dicionario", "dictionary", "estatisticas", "fusohorario", "groupstats", "horamundial", "horoscopo", "linkseguro", "ping", "rmbg", "sbg", "scanlink", "sfundo", "signo", "signos", "statsgrupo", "toimg", "totalcmd", "totalcomando", "upscale", "urlsafe", "urlscan", "verificar", "verificarurl", "worldtime"],
-  usage: `${PREFIX}verificarurl <link>`,
+  usage: "{prefix}verificarurl <link>",
   handle: async ({
     nazu, from, info, reply, args, q, normalizarTexto, prefix, command, isGroup, getCachedGroupMetadata,
     formatUptime, getFileBuffer, upload, removeBg, upscale, sendSticker, pushname, nomebot,

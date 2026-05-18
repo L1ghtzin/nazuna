@@ -42,7 +42,7 @@ export default {
           await nazu.sendMessage(group.id, baseMessage);
           enviados++;
           await new Promise(r => setTimeout(r, 1500));
-        } catch (e) {}
+        } catch (e) { console.error('Error fetching broadcast PP:', e); }
       }
       return reply(`✅ Transmissão enviada para ${enviados} grupos!`);
     }

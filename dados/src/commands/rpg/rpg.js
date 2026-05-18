@@ -1,10 +1,11 @@
 export default {
   name: "rpg",
   description: "Comandos de RPG e Economia",
-  commands: ["achievementsbn", "box", "caixa", "conquistasbn", "denunciar", "denuncias", "gerarqrbn", "giftbn", "inventario", "inventory", "lerqr", "medalhasbn", "nota", "notas", "note", "notes", "presente", "presentebn", "qrcode", "qrcodebn", "rankrep", "readqr", "rep", "repbn", "report", "reports", "reputacaobn", "scanqr", "toprep"],
+  commands: ["achievementsbn", "box", "caixa", "conquistasbn", "denunciar", "denuncias", "gerarqrbn", "giftbn", "inventory", "lerqr", "medalhasbn", "nota", "notas", "note", "notes", "presentebn", "qrcode", "qrcodebn", "rankrep", "readqr", "repbn", "report", "reports", "reputacaobn", "scanqr", "toprep"],
   handle: async ({ 
     nazu, from, info, command, args, reply, prefix, pushname, sender, menc_os2,
-    gifts, reputation, getEcoUser, saveEconomy, isGroupAdmin, isOwnerOrSub
+    gifts, reputation, qrcode, achievements, notes,
+    getEcoUser, loadEconomy, saveEconomy, isGroupAdmin, isOwnerOrSub
   , MESSAGES }) => {
     const cmd = command.toLowerCase();
 
@@ -19,7 +20,8 @@ export default {
         return reply(`╭━━━⊱ 🎁 *SISTEMA DE CAIXAS* 🎁 ⊱━━━╮\n│\n│ 🔹 ${prefix}caixa diaria\n│ 🔹 ${prefix}caixa rara (500 gold)\n│ 🔹 ${prefix}caixa lendaria (2000 gold)\n│\n╰━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╯`);
       }
       
-      const userEco = getEcoUser(sender);
+      const econ = loadEconomy();
+      const userEco = getEcoUser(econ, sender);
       let result;
 
       if (['diaria', 'daily'].includes(tipoBox)) {
@@ -27,11 +29,11 @@ export default {
       } else if (['rara', 'rare'].includes(tipoBox)) {
         if (userEco.gold < 500) return reply(`💔 Você precisa de 500 gold.`);
         result = gifts.openBox(sender, 'rara');
-        if (result.success) { userEco.gold -= 500; saveEconomy(); }
+        if (result.success) { userEco.gold -= 500; saveEconomy(econ); }
       } else if (['lendaria', 'legendary'].includes(tipoBox)) {
         if (userEco.gold < 2000) return reply(`💔 Você precisa de 2000 gold.`);
         result = gifts.openBox(sender, 'lendaria');
-        if (result.success) { userEco.gold -= 2000; saveEconomy(); }
+        if (result.success) { userEco.gold -= 2000; saveEconomy(econ); }
       } else {
         return reply(`💔 Tipo inválido!`);
       }
@@ -67,7 +69,7 @@ export default {
       if (!gifts) return reply("Sistema de presentes indisponível.");
       const invStr = gifts.getInventory(sender);
       if (!invStr || invStr.trim() === '') return reply(`╭━━━⊱ 🎒 *INVENTÁRIO* 🎒 ⊱━━━╮\n│\n│ 📭 Inventário vazio\n│\n╰━━━━━━━━━━━━━━━━━━━━━━━╯`);
-      return reply(`╭━━━⊱ 🎒 *INVENTÁRIO* 🎒 ⊱━━━╮\n│\n${invStr.split('\\n').map(l => '│ ' + l).join('\\n')}\n│\n╰━━━━━━━━━━━━━━━━━━━━━━━╯`);
+      return reply(`╭━━━⊱ 🎒 *INVENTÁRIO* 🎒 ⊱━━━╮\n│\n${invStr.split('\n').map(l => '│ ' + l).join('\n')}\n│\n╰━━━━━━━━━━━━━━━━━━━━━━━╯`);
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -142,7 +144,7 @@ export default {
       if (!media) return reply(`💔 Marque um QR Code!`);
       
       try {
-        const { downloadContentFromMessage } = await import('@whiskeysockets/baileys');
+        const { downloadContentFromMessage } = await import('baileys');
         const stream = await downloadContentFromMessage(media, 'image');
         let buffer = Buffer.from([]);
         for await (const chunk of stream) buffer = Buffer.concat([buffer, chunk]);

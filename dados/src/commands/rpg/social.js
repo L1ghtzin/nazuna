@@ -1,10 +1,9 @@
-import { PREFIX } from "../../config.js";
 
 export default {
   name: "socialrpg",
   description: "Interações sociais e reputação no RPG",
-  commands: ["abracarrpg", "baterrpg", "beijarrpg", "hugrpg", "kissrpg", "meustats", "mystats", "protect", "proteger", "rep", "reputacao", "reputation", "slaprpg", "statsrpg", "taparpg", "votar", "vote"],
-  usage: `${PREFIX}abracarrpg @user`,
+  commands: ["abracarrpg", "baterrpg", "beijarrpg", "hugrpg", "kissrpg", "meustats", "mystats", "protect", "proteger", "rep", "reputacao", "reputation", "slaprpg", "taparpg", "votar", "vote"],
+  usage: "{prefix}abracarrpg @user",
   handle: async ({ 
     reply, 
     isGroup, 

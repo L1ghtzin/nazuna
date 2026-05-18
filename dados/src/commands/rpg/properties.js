@@ -1,11 +1,10 @@
-import { PREFIX } from "../../config.js";
 import { giveMaterial } from "../../utils/database.js";
 
 export default {
   name: "properties",
   description: "Sistema de propriedades e negócios",
   commands: ["coletarpropriedades", "comprarpropriedade", "propriedades"],
-  usage: `${PREFIX}propriedades`,
+  usage: "{prefix}propriedades",
   handle: async ({ 
     reply, 
     isGroup, 

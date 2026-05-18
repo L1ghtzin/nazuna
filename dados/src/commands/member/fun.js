@@ -1,10 +1,10 @@
-import { PREFIX } from "../../config.js";
+
 
 export default {
   name: "fun",
   description: "Comandos de diversão e sorte",
   commands: ["aniversario", "birthday", "chance", "chaveamento", "niver", "quando", "sn", "sorte", "sorteionum"],
-  usage: `${PREFIX}chance chover pizza`,
+  usage: "{prefix}chance chover pizza",
   handle: async ({ 
     reply, 
     isGroup, 
@@ -17,6 +17,7 @@ export default {
     getUserName, 
     q,
     from,
+    prefix,
     GRUPOS_DIR,
     MESSAGES
   }) => {
@@ -25,7 +26,7 @@ export default {
     // --- CHAVEAMENTO ---
     if (command === 'chaveamento') {
       let participantes = [];
-      if (!q) return reply(`💔 Forneça exatamente 16 nomes! Exemplo: ${PREFIX}${command} nome1,nome2,...,nome16`);
+      if (!q) return reply(`💔 Forneça exatamente 16 nomes! Exemplo: ${prefix}${command} nome1,nome2,...,nome16`);
       
       participantes = q.split(',').map(n => n.trim()).filter(n => n);
       if (participantes.length !== 16) return reply(`💔 Forneça exatamente 16 nomes! Você forneceu ${participantes.length}.`);
@@ -44,7 +45,7 @@ export default {
 
     // --- SORTEIO NUMERO ---
     if (command === 'sorteionum' || command === 'gerarnumero') {
-      if (!q) return reply(`💡 Uso: ${PREFIX}${command} 1-50`);
+      if (!q) return reply(`💡 Uso: ${prefix}${command} 1-50`);
       const [min, max] = q.split('-').map(n => parseInt(n.trim()));
       if (isNaN(min) || isNaN(max) || min >= max) return reply(`💔 Intervalo inválido!`);
       const num = Math.floor(Math.random() * (max - min + 1)) + min;
@@ -65,8 +66,8 @@ export default {
 
       if (!q) {
         let msg = `🎂 *Sistema de Aniversários*\n\n`;
-        msg += `📅 Use: ${PREFIX}${command} DD/MM\n`;
-        msg += `👥 Use: ${PREFIX}${command} lista\n`;
+        msg += `📅 Use: ${prefix}${command} DD/MM\n`;
+        msg += `👥 Use: ${prefix}${command} lista\n`;
         msg += `✨ O bot parabeniza automaticamente os aniversariantes do dia!`;
         return reply(msg);
       }
@@ -96,7 +97,7 @@ export default {
 
     // --- CHANCE ---
     if (command === 'chance') {
-      if (!q) return reply(`🎲 Me conta algo para eu calcular as chances! 📊\n\n📝 *Exemplo:* ${PREFIX}chance chover pizza hoje`);
+      if (!q) return reply(`🎲 Me conta algo para eu calcular as chances! 📊\n\n📝 *Exemplo:* ${prefix}chance chover pizza hoje`);
       const chance = Math.floor(Math.random() * 101);
       const comments = [
         'As estrelas sussurraram...', 'Minha bola de cristal revelou...', 'Calculei usando matemática quântica...', 
@@ -108,7 +109,7 @@ export default {
 
     // --- QUANDO ---
     if (command === 'quando') {
-      if (!q) return reply(`🔮 Me conta o que você quer que eu preveja! 🌠\n\n📝 *Exemplo:* ${PREFIX}quando vou ficar rico`);
+      if (!q) return reply(`🔮 Me conta o que você quer que eu preveja! 🌠\n\n📝 *Exemplo:* ${prefix}quando vou ficar rico`);
       const times = [
         'hoje à noite 🌙', 'amanhã de manhã 🌅', 'na próxima semana 📅', 'no próximo mês 🌕', 
         'no próximo ano 🎆', 'em 2025 🚀', 'quando você menos esperar ✨', 'em uma terça-feira chuvosa 🌧️',
@@ -120,7 +121,7 @@ export default {
 
     // --- SN (Sim ou Não) ---
     if (command === 'sn') {
-      if (!q) return reply(`🎱 Faça uma pergunta para o oráculo! 🔮\n\n📝 *Exemplo:* ${PREFIX}sn Vou ganhar na loteria?`);
+      if (!q) return reply(`🎱 Faça uma pergunta para o oráculo! 🔮\n\n📝 *Exemplo:* ${prefix}sn Vou ganhar na loteria?`);
       const pos = ['Sim! 🎉', 'Claro que sim! 😎', 'Com certeza! ✨', 'Pode apostar! 🎯', 'Sem dúvida! 👍', 'Obviamente! 😌', 'É isso aí! 🚀', 'Vai dar certo! 🍀'];
       const neg = ['Não! 😅', 'Nem pensar! 😂', 'Esquece! 🤭', 'Nada a ver! 🙄', 'De jeito nenhum! 😑', 'Que nada! 😒', 'Não rola! 😶', 'Melhor não! 😬'];
       const isPos = Math.random() > 0.5;

@@ -106,7 +106,7 @@ export async function handleCustomCommand(ctx) {
           const nm = settings.params[i].name;
           const val = argsList[i] || '';
           if (val) {
-            try { processedResponse = processedResponse.replace(new RegExp('\\{' + escapeRegExp(nm) + '\\}', 'gi'), val); } catch (e) {}
+            try { processedResponse = processedResponse.replace(new RegExp('\\{' + escapeRegExp(nm) + '\\}', 'gi'), val); } catch (e) { console.error('Error replacing param in custom cmd:', e); }
           }
         }
       }

@@ -1,4 +1,4 @@
-import { PREFIX } from "../../config.js";
+
 
 export default {
   name: "logos",
@@ -7,11 +7,12 @@ export default {
     "darkgreen", "glitch", "write", "advanced", "typography", "pixel", "neon", "flag", "americanflag", "deleting",
     "pornhub", "avengers", "graffiti", "captainamerica", "stone3d", "neon2", "thor", "amongus", "deadpool", "blackpink"
   ],
-  usage: `${PREFIX}avengers Nazuna/Bot`,
+  usage: "{prefix}avengers Nazuna/Bot",
   handle: async ({ 
     reply, 
     command, 
     q, 
+    prefix,
     Logos, 
     Logos2, 
     nazu, 
@@ -28,7 +29,7 @@ export default {
     const doubleTextLogos = ["pornhub", "avengers", "graffiti", "captainamerica", "stone3d", "neon2", "thor", "amongus", "deadpool", "blackpink"];
 
     if (singleTextLogos.includes(cmd)) {
-      if (!q) return reply(`💔 Cadê o texto?\nExemplo: ${PREFIX}${cmd} Olá Mundo`);
+      if (!q) return reply(`💔 Cadê o texto?\nExemplo: ${prefix}${cmd} Olá Mundo`);
       
       const modelo = cmd;
       await reply(`⏳ Gerando logotipo *${modelo.charAt(0).toUpperCase() + modelo.slice(1)}*... aguarde!`);
@@ -55,7 +56,7 @@ export default {
 
     if (doubleTextLogos.includes(cmd)) {
       const [texto1, texto2] = q.split('/').map(i => i.trim());
-      if (!texto1 || !texto2) return reply(`💔 Cadê os textos?\nExemplo: ${PREFIX}${cmd} Nazuna/Bot`);
+      if (!texto1 || !texto2) return reply(`💔 Cadê os textos?\nExemplo: ${prefix}${cmd} Nazuna/Bot`);
 
       const modelo = cmd;
       await reply(`⏳ Gerando logotipo *${modelo.charAt(0).toUpperCase() + modelo.slice(1)}*... aguarde!`);

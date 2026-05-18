@@ -42,7 +42,7 @@ export const writeJsonFileAsync = async (filePath, data) => {
       JSON.parse(writtenContent);
     } catch (verifyError) {
       console.error(`❌ writeJsonFileAsync: Verificação falhou para ${filePath}`);
-      try { await fsPromises.unlink(tempPath); } catch (e) {}
+      try { await fsPromises.unlink(tempPath); } catch (e) { console.error('Error cleaning up temp file:', e); }
       return false;
     }
     
@@ -54,7 +54,7 @@ export const writeJsonFileAsync = async (filePath, data) => {
     try {
       const tempPath = filePath + '.tmp';
       await fsPromises.unlink(tempPath).catch(() => {});
-    } catch (e) {}
+    } catch (e) { console.error('Error checking file existance:', e); }
     return false;
   }
 };

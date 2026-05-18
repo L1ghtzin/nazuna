@@ -75,7 +75,7 @@ export const unscheduleGroupJob = (groupId, type) => {
   const key = `${groupId}:${type}`;
   const j = gpCronJobs[key];
   if (j && typeof j.stop === 'function') {
-    try { j.stop(); } catch (e) {}
+    try { j.stop(); } catch (e) { console.error('Error stopping task:', e); }
   }
   delete gpCronJobs[key];
 };
@@ -309,7 +309,7 @@ const unscheduleAutoMessage = (groupId, msgId) => {
   const key = `${groupId}:${msgId}`;
   const j = autoMsgCronJobs[key];
   if (j && typeof j.stop === 'function') {
-    try { j.stop(); } catch (e) {}
+    try { j.stop(); } catch (e) { console.error('Error stopping cleanup task:', e); }
   }
   delete autoMsgCronJobs[key];
 };
@@ -458,7 +458,7 @@ const startAutoMensagensWorker = (nazuInstance) => {
 
 const unscheduleDonoDivulgacaoJob = () => {
   if (donoDivulgacaoCronJob && typeof donoDivulgacaoCronJob.stop === 'function') {
-    try { donoDivulgacaoCronJob.stop(); } catch (e) {}
+    try { donoDivulgacaoCronJob.stop(); } catch (e) { console.error('Error stopping donoDivulgacaoCronJob:', e); }
   }
   donoDivulgacaoCronJob = null;
 };

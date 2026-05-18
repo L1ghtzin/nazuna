@@ -1,11 +1,10 @@
-import { PREFIX } from "../../config.js";
 import { updateQuestProgress } from "../../utils/database.js";
 
 export default {
   name: "dungeon",
   description: "Exploração de masmorras e chefões",
   commands: ["bossfight", "bossrpg", "cheferpg", "dg", "dungeon", "dungeonsolo", "eventos", "events", "masmorra", "masmorrasolo"],
-  usage: `${PREFIX}masmorrasolo`,
+  usage: "{prefix}masmorrasolo",
   handle: async ({ 
     reply, 
     isGroup, 
@@ -19,6 +18,7 @@ export default {
     loadEconomy, 
     saveEconomy, 
     getEcoUser,
+    checkEcoLevelUp,
     MESSAGES
   }) => {
     if (!isGroup) return reply('⚔️ Este comando funciona apenas em grupos com Modo RPG ativo.');
@@ -120,17 +120,9 @@ export default {
         me.wallet += boss.reward;
         me.exp = (me.exp || 0) + boss.xp;
         
-        let leveledUp = false;
-        let expRequired = 100 * Math.pow(1.5, (me.level || 1) - 1);
-        while (me.exp >= expRequired) {
-          me.exp -= expRequired;
-          me.level = (me.level || 1) + 1;
-          expRequired = 100 * Math.pow(1.5, (me.level || 1) - 1);
-          leveledUp = true;
-        }
-        
-        if (leveledUp) {
-          reply(`🌟 *LEVEL UP!* Você agora é nível ${me.level}!`);
+        const levelUpRes = checkEcoLevelUp(me);
+        if (levelUpRes.leveledUp) {
+          reply(`🌟 *LEVEL UP!* Você agora é nível ${levelUpRes.newLevel}!`);
         }
 
         saveEconomy(econ);

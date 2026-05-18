@@ -1,7 +1,7 @@
 export default {
   name: "games",
   description: "Comandos de Jogos",
-  commands: ["achievements", "apostar", "assaltar", "banco", "bet", "buy", "c4", "cacar", "cancel", "cancelar", "cartas", "carteira", "caçar", "checktimeout", "cmerc", "coletar", "coletarpropriedades", "colher", "comer", "comprar", "comprarmercado", "comprarpropriedade", "connect4", "conquistas", "cook", "cozinhar", "cprop", "cprops", "create", "criar", "crime", "cultivar", "daily", "demitir", "dep", "depositar", "desafio", "desafiomensal", "desafiosemanal", "diario", "draw", "eat", "emprego", "entrar", "equip", "equipamentos", "explorar", "explore", "farm", "fish", "forge", "forjar", "gear", "habilidades", "hand", "harvest", "horta", "hunt", "ingredientes", "iniciar", "inv", "inventario", "jogodavelha", "join", "leave", "levels", "ligue4", "listar", "loja", "lojarps", "mao", "materiais", "medalhas", "memoria", "memory", "mercado", "meusan", "meusanuncios", "meuspets", "mine", "minerar", "parar", "perfilrpg", "pescar", "pets", "pix", "plant", "plantacao", "plantar", "plantação", "precos", "preços", "propriedades", "rankinglevel", "ranklevel", "ranklvl", "receitas", "reparar", "resetrpg", "roubar", "sacar", "sair", "saque", "sementes", "slots", "start", "status", "tictactoe", "toplevels", "toprpg", "trabalhar", "transferir", "ttt", "uno", "vagas", "vender", "vendercomida", "work"],
+  commands: ["c4", "connect4", "jogodavelha", "ligue4", "memoria", "memory", "tictactoe", "ttt", "uno"],
   handle: async ({ 
     nazu, from, info, command, args, reply, prefix, pushname, sender, menc_os2,
     isGroup, isGroupAdmin, tictactoe, connect4, uno, memoria, normalizeCommand,
@@ -67,7 +67,7 @@ export default {
         if (res.success) {
           await nazu.sendMessage(from, { text: res.message, mentions: res.mentions || [] });
           const hand = uno.getPlayerHand(from, sender);
-          if (hand) try { await nazu.sendMessage(sender, { text: `🎴 *Sua mão:*\n${hand}` }); } catch (e) {}
+          if (hand) try { await nazu.sendMessage(sender, { text: `🎴 *Sua mão:*\n${hand}` }); } catch (e) { console.error('Error sending hand to player:', e); }
         } else reply(res.message);
         return;
       }
@@ -87,12 +87,12 @@ export default {
         if (subCmd === 'iniciar' && res.success) {
           await reply(res.message, res.mentions ? { mentions: res.mentions } : undefined);
           for (const [id, h] of Object.entries(res.hands)) {
-            try { await nazu.sendMessage(id, { text: `🎴 *Sua mão inicial:*\n${h}` }); } catch (e) {}
+            try { await nazu.sendMessage(id, { text: `🎴 *Sua mão inicial:*\n${h}` }); } catch (e) { console.error('Error sending initial hand:', e); }
           }
         } else {
           reply(res.message, res.mentions ? { mentions: res.mentions } : undefined);
           if (subCmd === 'comprar' && res.newHand) {
-            try { await nazu.sendMessage(sender, { text: `🎴 *Sua mão:*\n${res.newHand}` }); } catch (e) {}
+            try { await nazu.sendMessage(sender, { text: `🎴 *Sua mão:*\n${res.newHand}` }); } catch (e) { console.error('Error sending drawn hand:', e); }
           }
         }
       }

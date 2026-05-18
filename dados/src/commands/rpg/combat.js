@@ -1,11 +1,10 @@
-import { PREFIX } from "../../config.js";
 import { updateQuestProgress } from "../../utils/database.js";
 
 export default {
   name: "combat",
   description: "Duelos PvP e Arena de Gladiadores",
-  commands: ["arena", "duelarrpg", "duelorpg", "duelrpg", "eventos", "eventosrpg", "events"],
-  usage: `${PREFIX}duelarrpg @user`,
+  commands: ["arena", "gladiador", "duelarrpg", "duelorpg", "duelrpg", "pvp"],
+  usage: "{prefix}duelarrpg @user",
   handle: async ({ 
     reply, 
     isGroup, 
@@ -20,6 +19,7 @@ export default {
     loadEconomy, 
     saveEconomy, 
     getEcoUser,
+    checkEcoLevelUp,
     MESSAGES
   }) => {
     if (!isGroup) return reply('⚔️ Este comando funciona apenas em grupos com Modo RPG ativo.');
@@ -61,17 +61,9 @@ export default {
         opponent.wallet = Math.max(0, opponent.wallet - reward);
         me.exp = (me.exp || 0) + 150;
         
-        let leveledUp = false;
-        let expRequired = 100 * Math.pow(1.5, (me.level || 1) - 1);
-        while (me.exp >= expRequired) {
-          me.exp -= expRequired;
-          me.level = (me.level || 1) + 1;
-          expRequired = 100 * Math.pow(1.5, (me.level || 1) - 1);
-          leveledUp = true;
-        }
-        
-        if (leveledUp) {
-          reply(`🌟 *LEVEL UP!* Você agora é nível ${me.level}!`);
+        const levelUpRes = checkEcoLevelUp(me);
+        if (levelUpRes.leveledUp) {
+          reply(`🌟 *LEVEL UP!* Você agora é nível ${levelUpRes.newLevel}!`);
         }
 
         saveEconomy(econ);
@@ -119,17 +111,9 @@ export default {
         me.wallet += reward;
         me.exp = (me.exp || 0) + (arena.enemies * 50);
         
-        let leveledUp = false;
-        let expRequired = 100 * Math.pow(1.5, (me.level || 1) - 1);
-        while (me.exp >= expRequired) {
-          me.exp -= expRequired;
-          me.level = (me.level || 1) + 1;
-          expRequired = 100 * Math.pow(1.5, (me.level || 1) - 1);
-          leveledUp = true;
-        }
-        
-        if (leveledUp) {
-          reply(`🌟 *LEVEL UP!* Você agora é nível ${me.level}!`);
+        const levelUpRes = checkEcoLevelUp(me);
+        if (levelUpRes.leveledUp) {
+          reply(`🌟 *LEVEL UP!* Você agora é nível ${levelUpRes.newLevel}!`);
         }
 
         saveEconomy(econ);

@@ -1,10 +1,9 @@
-import { PREFIX } from "../../config.js";
 
 export default {
   name: "mercadoplayer",
   description: "Mercado de itens entre jogadores",
   commands: ["mercadoplayer", "auction", "leilaoplayer"],
-  usage: `${PREFIX}mercadoplayer [comprar/vender/meus/cancelar]`,
+  usage: "{prefix}mercadoplayer [comprar/vender/meus/cancelar]",
   handle: async ({ 
     reply, 
     isGroup, 

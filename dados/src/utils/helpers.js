@@ -577,7 +577,7 @@ function createBackup(filePath) {
     
     if (allBackups.length > 5) {
       allBackups.slice(5).forEach(oldBackup => {
-        try { fs.unlinkSync(pathz.join(backupDir, oldBackup)); } catch (e) {}
+        try { fs.unlinkSync(pathz.join(backupDir, oldBackup)); } catch (e) { console.error('Error removing old backup:', e); }
       });
     }
     
@@ -838,7 +838,7 @@ function saveJsonFileSafe(filePath, data, createBackupFile = true) {
       if (fs.existsSync(tempPath)) {
         fs.unlinkSync(tempPath);
       }
-    } catch (e) {}
+    } catch (e) { console.error('Error closing ffmpeg pipe:', e); }
     
     return false;
   }

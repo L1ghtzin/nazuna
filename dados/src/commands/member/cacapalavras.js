@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { PREFIX } from "../../config.js";
+
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -10,7 +10,7 @@ export default {
   name: "cacapalavras",
   description: "Encontre palavras escondidas na grade",
   commands: ["cacapalavras", "cacapalavra", "caca"],
-  usage: `${PREFIX}cacapalavras [palavra]`,
+  usage: "{prefix}cacapalavras [palavra]",
   handle: async ({ 
     reply, 
     isGroup, 

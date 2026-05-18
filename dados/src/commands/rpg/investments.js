@@ -1,10 +1,9 @@
-import { PREFIX } from "../../config.js";
 
 export default {
   name: "investir",
   description: "Sistema de investimentos e mercado financeiro",
   commands: ["invest", "investir"],
-  usage: `${PREFIX}investir`,
+  usage: "{prefix}investir",
   handle: async ({ 
     reply, 
     isGroup, 

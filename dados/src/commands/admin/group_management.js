@@ -386,7 +386,7 @@ export default {
           }
         }
         await optimizer.saveJsonWithCache(groupFile, groupData);
-        try { unscheduleGroupJob(from, 'open'); } catch (e) {}
+        try { unscheduleGroupJob(from, 'open'); } catch (e) { console.error('Error unscheduling group open job:', e); }
         return reply('✅ Agendamento diário para ABRIR o grupo foi removido.');
       }
 
@@ -437,7 +437,7 @@ export default {
           }
         }
         await optimizer.saveJsonWithCache(groupFile, groupData);
-        try { unscheduleGroupJob(from, 'close'); } catch (e) {}
+        try { unscheduleGroupJob(from, 'close'); } catch (e) { console.error('Error unscheduling group close job:', e); }
         return reply('✅ Agendamento diário para FECHAR o grupo foi removido.');
       }
 

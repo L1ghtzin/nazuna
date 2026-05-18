@@ -1,11 +1,10 @@
-import { PREFIX } from "../../config.js";
 import { ensureUserSkills, skillXpForNext, SKILL_LIST } from "../../utils/database.js";
 
 export default {
   name: "habilidades",
   description: "Ver seu nível de habilidades e estatísticas RPG",
   commands: ["habilidades", "statsrpg"],
-  usage: `${PREFIX}habilidades\n${PREFIX}statsrpg`,
+  usage: "{prefix}habilidades\n{prefix}statsrpg",
   handle: async ({ 
     reply, 
     isGroup, 

@@ -359,7 +359,7 @@ export default {
           type: 'image'
         }, { quoted: info });
         
-        try { fs.rmSync(tempDir, { recursive: true, force: true }); } catch (cleanupError) {}
+        try { fs.rmSync(tempDir, { recursive: true, force: true }); } catch (cleanupError) { console.error('Error cleaning up sticker temp dir:', cleanupError); }
       } catch (e) {
         console.error(e);
         await reply(MESSAGES.error.general);

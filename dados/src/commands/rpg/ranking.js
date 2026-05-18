@@ -5,7 +5,7 @@ import {
 } from "../../utils/database.js";
 
 export default {
-    name: "rpg_ranking",
+    name: "ranking",
     description: "Rankings do RPG",
     commands: ["maiores", "toprich", "topriqueza", "toprpg"],
     handle: async ({ 

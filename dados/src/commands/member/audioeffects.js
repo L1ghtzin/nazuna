@@ -2,7 +2,7 @@ import { exec } from 'child_process';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { PREFIX } from "../../config.js";
+
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -18,7 +18,7 @@ export default {
     'reverse', 'audioreverso', 'pitch', 'flanger', 'grave', 'vozgrave', 'chorus', 'phaser', 
     'tremolo', 'vibrato', 'lowpass'
   ],
-  usage: `${PREFIX}speedup (responda a um áudio)`,
+  usage: "{prefix}speedup (responda a um áudio)",
   handle: async ({  
     nazu, 
     from, 

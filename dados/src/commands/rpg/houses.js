@@ -1,10 +1,9 @@
-import { PREFIX } from "../../config.js";
 
 export default {
   name: "casa",
   description: "Sistema de moradia e propriedades",
   commands: ["casa", "house"],
-  usage: `${PREFIX}casa`,
+  usage: "{prefix}casa",
   handle: async ({ 
     reply, 
     isGroup, 

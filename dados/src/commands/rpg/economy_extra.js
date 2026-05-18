@@ -1,11 +1,10 @@
-import { PREFIX } from "../../config.js";
 import { timeLeft } from "../../utils/helpers.js";
 
 export default {
   name: "rpg-extra",
   description: "Sistemas extras de economia do RPG",
-  commands: ["boost", "buff", "cavalos", "corrida", "doacao", "doar", "donate", "evolucao", "evoluir", "gift", "impostos", "impulsionar", "leilao", "leilaorpg", "leiloar", "loteria", "lottery", "maiores", "mega", "meustats", "mystats", "presente", "prestige", "statsrpg", "taxes", "toprich", "topriqueza", "tributos"],
-  usage: `${PREFIX}loteria`,
+  commands: ["boost", "buff", "cavalos", "corrida", "doacao", "doar", "donate", "gift", "impostos", "impulsionar", "leilao", "leilaorpg", "leiloar", "loteria", "lottery", "maiores", "mega", "taxes", "toprich", "topriqueza", "tributos"],
+  usage: "{prefix}loteria",
   handle: async ({ 
     reply, 
     isGroup, 

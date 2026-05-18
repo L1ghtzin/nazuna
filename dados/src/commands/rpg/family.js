@@ -1,10 +1,9 @@
-import { PREFIX } from "../../config.js";
 
 export default {
   name: "familia",
   description: "Sistema de família e adoção",
   commands: ["adotarfilho", "adotaruser", "arvore", "deserdar", "desherdar", "familia", "family", "familytree", "removerfilho"],
-  usage: `${PREFIX}familia`,
+  usage: "{prefix}familia",
   handle: async ({ 
     reply, 
     isGroup, 

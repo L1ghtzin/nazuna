@@ -1,10 +1,9 @@
-import { PREFIX } from "../../config.js";
 
 export default {
   name: "crafting",
   description: "Sistema de encantamento e reciclagem de itens",
-  commands: ["desmontar", "dismantle", "encantar", "enchant"],
-  usage: `${PREFIX}encantar`,
+  commands: ["desmontar", "dismantle"],
+  usage: "{prefix}encantar",
   handle: async ({ 
     reply, 
     isGroup, 

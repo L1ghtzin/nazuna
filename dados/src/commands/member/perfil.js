@@ -1,10 +1,10 @@
-import { PREFIX } from "../../config.js";
+
 
 export default {
   name: "perfil",
   description: "Exibe o perfil completo do usuário",
   commands: ["perfil"],
-  usage: `${PREFIX}perfil [@user]`,
+  usage: "{prefix}perfil [@user]",
   handle: async ({ 
     nazu, 
     from, 
@@ -57,7 +57,7 @@ export default {
       let profilePic = 'https://raw.githubusercontent.com/nazuninha/uploads/main/outros/1747053564257_bzswae.bin';
       try {
         profilePic = await nazu.profilePictureUrl(target, 'image');
-      } catch (error) {}
+      } catch (error) { console.error('Error fetching PP URL for sender:', error); }
       
       let bio = 'Sem bio disponível';
       let bioSetAt = '';
@@ -69,7 +69,7 @@ export default {
             dateStyle: 'short', timeStyle: 'short', timeZone: 'America/Sao_Paulo'
           });
         }
-      } catch (error) {}
+      } catch (error) { console.error('Error handling PP URL stream:', error); }
       
       const createProgressBar = (percent, size = 10) => {
         const filled = Math.min(size, Math.max(0, Math.round((percent / 100) * size)));

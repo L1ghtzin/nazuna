@@ -1,10 +1,10 @@
-import { PREFIX } from "../../config.js";
+
 
 export default {
   name: "admintools",
   description: "Ferramentas administrativas adicionais",
   commands: ["add", "blockuser", "buscar", "criar", "d", "del", "deletar", "delete", "fixar", "mention", "nota", "note", "pin", "remover", "search", "unblockuser", "ver", "view"],
-  usage: `${PREFIX}mention Olá grupo!`,
+  usage: "{prefix}mention Olá grupo!",
   handle: async ({  
     nazu, 
     from, 
@@ -16,6 +16,7 @@ export default {
     isOwner, 
     args, 
     q, 
+    prefix,
     sender, 
     AllgroupMembers,
     quotedMessageContent,
@@ -30,7 +31,7 @@ export default {
 
     // --- MENTION (Configuração de Marcações) ---
     if (command === 'mention') {
-      if (!q) return reply(`🔔 *Configuração de Marcações*\n\n🔔 Escolha como deseja ser mencionado:\n\n🔘 *${PREFIX}mention all*   Marcado em tudo (marcações e jogos).\n🔔 *${PREFIX}mention marca*   Apenas em marcações de administradores.\n🎮 *${PREFIX}mention games*   Somente em jogos do bot.\n📴 *${PREFIX}mention 0*   Não será mencionado em nenhuma ocasião.`);
+      if (!q) return reply(`🔔 *Configuração de Marcações*\n\n🔔 Escolha como deseja ser mencionado:\n\n🔘 *${prefix}mention all*   Marcado em tudo (marcações e jogos).\n🔔 *${prefix}mention marca*   Apenas em marcações de administradores.\n🎮 *${prefix}mention games*   Somente em jogos do bot.\n📴 *${prefix}mention 0*   Não será mencionado em nenhuma ocasião.`);
       
       const options = {
         all: '✅ Você agora será mencionado em todas as interações do bot, incluindo marcações de administradores e os jogos!',
@@ -48,7 +49,7 @@ export default {
         await optimizer.saveJsonWithCache(path, groupData);
         return reply(`*${options[opt]}*`);
       }
-      return reply(`❌ Opção inválida! Use *${PREFIX}mention* para ver as opções.`);
+      return reply(`❌ Opção inválida! Use *${prefix}mention* para ver as opções.`);
     }
 
     if (!isGroupAdmin && !isOwner) return reply("❌ Apenas administradores podem usar este comando!");

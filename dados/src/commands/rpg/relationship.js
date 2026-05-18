@@ -1,10 +1,9 @@
-import { PREFIX } from "../../config.js";
 
 export default {
   name: "relationship",
   description: "Sistema de relacionamentos (namoro, casamento, traição)",
   commands: ["brincadeira", "casais", "casamento", "casar", "couples", "divorciar", "divorcio", "historicodetraicao", "historicotraicao", "historicotraicoes", "listacasais", "namorar", "namoro", "relacionamento", "terminar", "terminarelacionamento", "termino", "traicao", "trair"],
-  usage: `${PREFIX}casar @user`,
+  usage: "{prefix}casar @user",
   handle: async ({ 
     nazu, 
     from, 

@@ -91,7 +91,7 @@ async function rebuildIndex() {
                      captchaIndex.set(userId, captchaData);
                   }
                }
-            } catch (err) { }
+            } catch (err) { console.error('Error deleting generic group data:', err); }
          }
       }
       if (existsSync(INDEX_FILE)) {

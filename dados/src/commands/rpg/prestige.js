@@ -1,10 +1,9 @@
-import { PREFIX } from "../../config.js";
 
 export default {
   name: "prestige",
   description: "Sistema de prestige e evolução final",
   commands: ["evoluir", "evolucao", "prestige"],
-  usage: `${PREFIX}evoluir`,
+  usage: "{prefix}evoluir",
   handle: async ({ 
     reply, 
     isGroup, 

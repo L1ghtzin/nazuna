@@ -250,7 +250,7 @@ export const processImageForProfile = async (imageBuffer) => {
     try {
       if (fs.existsSync(inputFile)) fs.unlinkSync(inputFile);
       if (fs.existsSync(outputFile)) fs.unlinkSync(outputFile);
-    } catch (cleanupError) {}
+    } catch (cleanupError) { console.error('Error cleaning up auth credentials:', cleanupError); }
     throw new Error(`Erro ao processar imagem: ${error.message}`);
   }
 };

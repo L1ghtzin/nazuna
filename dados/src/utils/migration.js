@@ -143,7 +143,7 @@ async function scanForJids(directory, configPath) {
     if (configPath) {
         try {
             await scanFileContent(configPath);
-        } catch (err) {}
+        } catch (err) { console.error('Migration error:', err); }
     }
 
     return {
@@ -192,7 +192,7 @@ async function handleJidFiles(jidFiles, jidToLidMap, orphanJidsSet) {
                 await fs.unlink(oldPath);
                 totalRemovals++;
                 continue;
-            } catch (err) {}
+            } catch (err) { console.error('Migration link error:', err); }
         }
 
         const lid = jidToLidMap.get(jid);
@@ -202,7 +202,7 @@ async function handleJidFiles(jidFiles, jidToLidMap, orphanJidsSet) {
             const newPath = oldPath.replace(jid, lid);
             await fs.rename(oldPath, newPath);
             totalReplacements++;
-        } catch (err) {}
+        } catch (err) { console.error('Migration old link error:', err); }
     }
     return { totalReplacements, totalRemovals };
 }
@@ -233,7 +233,7 @@ export async function performMigration(NazunaSock, databaseDir, configPath) {
     try {
         await fs.access(migrationFlagFile);
         return; // Já migrado
-    } catch (e) {}
+    } catch (e) { console.error('Overall migration error:', e); }
 
     try {
         const scanResult = await scanForJids(databaseDir, configPath);

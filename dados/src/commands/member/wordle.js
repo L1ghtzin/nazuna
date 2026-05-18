@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { PREFIX } from "../../config.js";
+
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -10,7 +10,7 @@ export default {
   name: "wordle",
   description: "Jogo de adivinhar a palavra",
   commands: ["wordle", "palavra"],
-  usage: `${PREFIX}wordle`,
+  usage: "{prefix}wordle",
   handle: async ({ 
     reply, 
     isGroup, 

@@ -1,10 +1,9 @@
-import { PREFIX } from "../../config.js";
 
 export default {
   name: "streak",
   description: "Sistema de streak diário e recompensas",
-  commands: ["streak", "serie", "daily"],
-  usage: `${PREFIX}streak`,
+  commands: ["streak", "serie"],
+  usage: "{prefix}streak",
   handle: async ({ 
     reply, 
     isGroup, 

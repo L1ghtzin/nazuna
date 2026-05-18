@@ -119,6 +119,7 @@ import {
   updateChallenge,
   isChallengeCompleted,
   updateQuestProgress,
+  checkEcoLevelUp,
   diagnosticDatabase,
   SKILL_LIST,
   ensureUserSkills,
@@ -457,7 +458,6 @@ export async function buildMessageContext(nazu, info, store, messagesCache, rent
     global.autoStickerMode = 'default';
   }
   try {
-    var r;
     let from = info.key.remoteJid;
     const isGroup = from?.endsWith('@g.us') || false;
     
@@ -653,7 +653,7 @@ export async function buildMessageContext(nazu, info, store, messagesCache, rent
         return null;
       }
     }
-    nazu.reply = reply;
+    // nazu.reply fica apenas no ctx — não mutar o socket para evitar race conditions
 
     const reagir = async (emj, options = {}) => {
       try {
@@ -727,8 +727,8 @@ export async function buildMessageContext(nazu, info, store, messagesCache, rent
     let groupAdmins = [];
     if (isGroup && rawMembers.length > 0) {
       [AllgroupMembers, groupAdmins] = await Promise.all([
-        optimizer.memoize(`lid_members:${from}`, () => convertIdsToLid(nazu, rawMembers), 600000),
-        optimizer.memoize(`lid_admins:${from}`, () => convertIdsToLid(nazu, rawAdmins), 600000)
+        optimizer.memoize(`lid_members:${from}`, () => convertIdsToLid(nazu, rawMembers), 120000),
+        optimizer.memoize(`lid_admins:${from}`, () => convertIdsToLid(nazu, rawAdmins), 120000)
       ]);
     } else {
       [AllgroupMembers, groupAdmins] = await Promise.all([
@@ -894,7 +894,7 @@ export async function buildMessageContext(nazu, info, store, messagesCache, rent
     DATABASE_DIR, GRUPOS_DIR, USERS_DIR, DONO_DIR, PARCERIAS_DIR, TMP_DIR,
     CONFIG_FILE, ECONOMY_FILE, LEVELING_FILE,
     // Database functions
-    loadEconomy, saveEconomy, getEcoUser, parseAmount, fmt, timeLeft,
+    loadEconomy, saveEconomy, getEcoUser, parseAmount, fmt, timeLeft, checkEcoLevelUp, updateQuestProgress,
     loadReminders, saveReminders, formatUptime, getTotalCommands,
     loadRentalData, saveRentalData, setGroupRental, extendGroupRental,
     setRentalMode, generateActivationCode, loadActivationCodes, saveActivationCodes,
@@ -913,7 +913,6 @@ export async function buildMessageContext(nazu, info, store, messagesCache, rent
     getGroupCustomization, isGroupCustomizationEnabled, getMenuDesignWithDefaults, loadMenuDesign, saveMenuDesign,
     getMenuLerMaisText, isMenuAudioEnabled, getMenuAudioPath, formatAIResponse,
     saveParceriasData, isRentalModeActive, getGroupRentalStatus, validateActivationCode, useActivationCode,
-    generateActivationCode, setRentalMode, loadActivationCodes, saveActivationCodes,
     vipCommandsManager, spotifyModule, gdriveGetInfo, mediafireGetInfo, twitterGetInfo,
     removeBg, upscale, search, searchNews,
     setMenuAudio, removeMenuAudio,

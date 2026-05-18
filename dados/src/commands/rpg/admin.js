@@ -1,10 +1,9 @@
-import { PREFIX } from "../../config.js";
 
 export default {
   name: "rpgadmin",
   description: "Comandos administrativos do RPG",
   commands: ["adicionardinheiro", "adicionaritem", "definirnivelrpg", "estatisticasrpg", "globalrank", "rankglobal", "removerdinheiro", "removeritem", "resetarjogador", "resetrpgglobal", "rpgadd", "rpgadditem", "rpgaddmoney", "rpgremove", "rpgremoveitem", "rpgremovemoney", "rpgresetglobal", "rpgresetplayer", "rpgsetlevel", "rpgstatistics", "rpgstats", "setlevel", "topglobal", "toprpgglobal"],
-  usage: `${PREFIX}rankglobal`,
+  usage: "{prefix}rankglobal",
   handle: async ({ 
     reply, 
     sender, 

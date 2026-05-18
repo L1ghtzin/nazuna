@@ -1,11 +1,10 @@
-import { PREFIX } from "../../config.js";
 import { resolveParamAlias, timeLeft } from "../../utils/helpers.js";
 
 export default {
   name: "casino",
   description: "Jogos de azar e cassino do RPG",
   commands: ["bet", "blackjack", "coinflip", "crash", "dados", "dice", "moeda", "roleta", "slots"],
-  usage: `${PREFIX}roleta <cor> <valor>`,
+  usage: "{prefix}roleta <cor> <valor>",
   handle: async ({ 
     reply, 
     isGroup, 
@@ -141,6 +140,47 @@ export default {
       } else {
         me.wallet -= bet;
         msg += `💀 Você perdeu ${bet.toLocaleString()}.`;
+      }
+      saveEconomy(econ);
+      return reply(msg);
+    }
+    // --- BLACKJACK ---
+    if (command === 'blackjack' || command === 'bj') {
+      const bet = parseInt(args[0]) || 0;
+      if (bet < 100) return reply(`💡 Use ${prefix}blackjack <valor>`);
+      if (me.wallet < bet) return reply('💰 Saldo insuficiente!');
+
+      const drawCard = () => Math.floor(Math.random() * 10) + 2;
+      let pCards = [drawCard(), drawCard()];
+      let bCards = [drawCard(), drawCard()];
+      let pSum = pCards[0] + pCards[1];
+      let bSum = bCards[0] + bCards[1];
+
+      let msg = `🃏 *BLACKJACK*\n\n`;
+      msg += `Sua mão: ${pCards.join(' + ')} = *${pSum}*\n`;
+      msg += `Mesa: ${bCards[0]} + ?\n\n`;
+
+      if (pSum === 21) {
+        const win = Math.floor(bet * 1.5);
+        me.wallet += win;
+        msg += `🎉 *BLACKJACK!* Você ganhou ${win.toLocaleString()}!`;
+      } else if (pSum > 21) {
+        me.wallet -= bet;
+        msg += `💀 Você estourou e perdeu ${bet.toLocaleString()}.`;
+      } else {
+        while (bSum < 17) {
+          bSum += drawCard();
+        }
+        msg += `Mesa final: ${bSum}\n\n`;
+        if (bSum > 21 || pSum > bSum) {
+          me.wallet += bet;
+          msg += `🎉 Você venceu a mesa e ganhou ${bet.toLocaleString()}!`;
+        } else if (pSum < bSum) {
+          me.wallet -= bet;
+          msg += `💀 Mesa venceu. Você perdeu ${bet.toLocaleString()}.`;
+        } else {
+          msg += `🤝 Empate!`;
+        }
       }
       saveEconomy(econ);
       return reply(msg);

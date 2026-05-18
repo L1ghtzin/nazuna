@@ -1,10 +1,9 @@
-import { PREFIX } from "../../config.js";
 
 export default {
   name: "classe",
   description: "Sistema de classes e profissões",
-  commands: ["casa", "class", "classe", "dungeon", "house", "lar", "masmorra", "profissao", "raid"],
-  usage: `${PREFIX}classe`,
+  commands: ["class", "classe", "lar", "profissao", "raid"],
+  usage: "{prefix}classe",
   handle: async ({ 
     reply, 
     isGroup, 

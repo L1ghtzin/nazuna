@@ -1,10 +1,10 @@
-import { PREFIX } from "../../config.js";
+
 
 export default {
   name: "activity",
   description: "Monitoramento de atividade do grupo",
   commands: ["atividade", "checkativo", "mantercontador", "preservarcontador", "rankativo", "rankativos", "rankinativo", "rankinativos"],
-  usage: `${PREFIX}rankativos`,
+  usage: "{prefix}rankativos",
   handle: async ({ 
     nazu, 
     from, 

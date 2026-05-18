@@ -1,11 +1,11 @@
 import pathz from 'path';
-import { PREFIX } from "../../config.js";
+
 
 export default {
   name: "marcar",
   description: "Menciona membros ou administradores do grupo",
   commands: ["adm", "admin", "admins", "adms", "marcar", "mark"],
-  usage: `${PREFIX}marcar <mensagem>`,
+  usage: "{prefix}marcar <mensagem>",
   handle: async ({  
     nazu, from, info, command, args, reply, pushname, isGroup, isGroupAdmin, isBotAdmin, 
     AllgroupMembers, groupAdmins, q, getUserName,

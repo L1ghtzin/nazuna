@@ -1,4 +1,3 @@
-import { PREFIX } from "../../config.js";
 import { 
     loadEconomy, 
     saveEconomy, 
@@ -21,7 +20,8 @@ import {
     isChallengeCompleted,
     findKeyIgnoringAccents,
     normalizeParam,
-    updateQuestProgress
+    updateQuestProgress,
+    checkEcoLevelUp
 } from "../../utils/database.js";
 
 export default {
@@ -256,10 +256,14 @@ export default {
             const skillB = getSkillBonus(me, 'mining');
             const total = Math.floor(base * (1 + (mineBonus || 0) + skillB));
             me.wallet += total; me.cooldowns.mine = Date.now() + 15 * 60 * 1000; pk.dur--;
+            me.exp = (me.exp || 0) + 30;
             addSkillXP(me, 'mining', 1);
             updateQuestProgress(me, 'gather', 1);
+            const levelUpRes = checkEcoLevelUp(me);
             saveEconomy(econ);
-            return reply(`╭━━━⊱ ⛏️ *MINERAÇÃO* ⛏️ ⊱━━━╮\n│\n│ ✅ Minerado com sucesso!\n│\n│ 💎 Minérios: ${fmt(total)}\n│ 🛠️ Picareta: ${pk.dur}/${pk.max}\n│\n╰━━━━━━━━━━━━━━━━━━━━━━━╯`);
+            let msg = `╭━━━⊱ ⛏️ *MINERAÇÃO* ⛏️ ⊱━━━╮\n│\n│ ✅ Minerado com sucesso!\n│\n│ 💎 Minérios: ${fmt(total)}\n│ 🛠️ Picareta: ${pk.dur}/${pk.max}\n│ ✨ +30 XP\n│\n╰━━━━━━━━━━━━━━━━━━━━━━━╯`;
+            if (levelUpRes.leveledUp) msg += `\n\n🌟 *LEVEL UP!* Você agora é nível ${levelUpRes.newLevel}!`;
+            return reply(msg);
         }
 
         if (sub === 'trabalhar' || sub === 'work') {
@@ -269,9 +273,13 @@ export default {
             const gain = job.min + Math.floor(Math.random() * (job.max - job.min + 1));
             const bonus = Math.floor(gain * (workBonus || 0));
             me.wallet += (gain + bonus);
+            me.exp = (me.exp || 0) + 20;
             me.cooldowns.work = Date.now() + 20 * 60 * 1000;
+            const levelUpRes = checkEcoLevelUp(me);
             saveEconomy(econ);
-            return reply(`╭━━━⊱ 💼 *TRABALHO* 💼 ⊱━━━╮\n│\n│ ✅ Turno finalizado!\n│\n│ 💰 Salário: ${fmt(gain)}\n│ 📈 Bônus: ${fmt(bonus)}\n│ 💵 Total: ${fmt(gain + bonus)}\n│\n╰━━━━━━━━━━━━━━━━━━━━━╯`);
+            let msg = `╭━━━⊱ 💼 *TRABALHO* 💼 ⊱━━━╮\n│\n│ ✅ Turno finalizado!\n│\n│ 💰 Salário: ${fmt(gain)}\n│ 📈 Bônus: ${fmt(bonus)}\n│ 💵 Total: ${fmt(gain + bonus)}\n│ ✨ +20 XP\n│\n╰━━━━━━━━━━━━━━━━━━━━━╯`;
+            if (levelUpRes.leveledUp) msg += `\n\n🌟 *LEVEL UP!* Você agora é nível ${levelUpRes.newLevel}!`;
+            return reply(msg);
         }
 
         if (sub === 'loja' || sub === 'lojarps') {
@@ -371,13 +379,17 @@ export default {
             const bonus = Math.floor(base * ((fishBonus || 0) + skillB));
             const total = base + bonus;
             me.wallet += total;
+            me.exp = (me.exp || 0) + 25;
             me.cooldowns.fish = Date.now() + 12 * 60 * 1000;
             addSkillXP(me, 'fishing', 1);
             updateChallenge(me, 'fish', 1, true);
             updatePeriodChallenge(me, 'fish', 1, true);
             updateQuestProgress(me, 'gather', 1);
+            const levelUpRes = checkEcoLevelUp(me);
             saveEconomy(econ);
-            return reply(`╭━━━⊱ 🎣 *PESCARIA* 🎣 ⊱━━━╮\n│\n│ ✅ Peixe fisgado!\n│\n│ 🐟 Lucro: ${fmt(total)}\n│\n╰━━━━━━━━━━━━━━━━━━━━━╯`);
+            let msg = `╭━━━⊱ 🎣 *PESCARIA* 🎣 ⊱━━━╮\n│\n│ ✅ Peixe fisgado!\n│\n│ 🐟 Lucro: ${fmt(total)}\n│ ✨ +25 XP\n│\n╰━━━━━━━━━━━━━━━━━━━━━╯`;
+            if (levelUpRes.leveledUp) msg += `\n\n🌟 *LEVEL UP!* Você agora é nível ${levelUpRes.newLevel}!`;
+            return reply(msg);
         }
 
         if (sub === 'explorar' || sub === 'explore') {
@@ -388,13 +400,17 @@ export default {
             const bonus = Math.floor(base * ((exploreBonus || 0) + skillB));
             const total = base + bonus;
             me.wallet += total;
+            me.exp = (me.exp || 0) + 35;
             me.cooldowns.explore = Date.now() + 15 * 60 * 1000;
             addSkillXP(me, 'exploring', 1);
             updateChallenge(me, 'explore', 1, true);
             updatePeriodChallenge(me, 'explore', 1, true);
             updateQuestProgress(me, 'gather', 1);
+            const levelUpRes = checkEcoLevelUp(me);
             saveEconomy(econ);
-            return reply(`╭━━━⊱ 🧭 *EXPLORAÇÃO* 🧭 ⊱━━━╮\n│\n│ ✅ Expedição concluída!\n│\n│ 🗺️ Tesouros: ${fmt(total)}\n│\n╰━━━━━━━━━━━━━━━━━━━━━━━╯`);
+            let msg = `╭━━━⊱ 🧭 *EXPLORAÇÃO* 🧭 ⊱━━━╮\n│\n│ ✅ Expedição concluída!\n│\n│ 🗺️ Tesouros: ${fmt(total)}\n│ ✨ +35 XP\n│\n╰━━━━━━━━━━━━━━━━━━━━━━━╯`;
+            if (levelUpRes.leveledUp) msg += `\n\n🌟 *LEVEL UP!* Você agora é nível ${levelUpRes.newLevel}!`;
+            return reply(msg);
         }
 
         if (sub === 'cacar' || sub === 'caçar' || sub === 'hunt') {
@@ -405,13 +421,17 @@ export default {
             const bonus = Math.floor(base * ((huntBonus || 0) + skillB));
             const total = base + bonus;
             me.wallet += total;
+            me.exp = (me.exp || 0) + 40;
             me.cooldowns.hunt = Date.now() + 18 * 60 * 1000;
             addSkillXP(me, 'hunting', 1);
             updateChallenge(me, 'hunt', 1, true);
             updatePeriodChallenge(me, 'hunt', 1, true);
             updateQuestProgress(me, 'gather', 1);
+            const levelUpRes = checkEcoLevelUp(me);
             saveEconomy(econ);
-            return reply(`╭━━━⊱ 🏹 *CAÇADA* 🏹 ⊱━━━╮\n│\n│ ✅ Abate bem-sucedido!\n│\n│ 🍖 Loot obtido: ${fmt(total)}\n│\n╰━━━━━━━━━━━━━━━━━━━━━╯`);
+            let msg = `╭━━━⊱ 🏹 *CAÇADA* 🏹 ⊱━━━╮\n│\n│ ✅ Abate bem-sucedido!\n│\n│ 🍖 Loot obtido: ${fmt(total)}\n│ ✨ +40 XP\n│\n╰━━━━━━━━━━━━━━━━━━━━━╯`;
+            if (levelUpRes.leveledUp) msg += `\n\n🌟 *LEVEL UP!* Você agora é nível ${levelUpRes.newLevel}!`;
+            return reply(msg);
         }
 
         if (sub === 'resetrpg' && isOwner) {

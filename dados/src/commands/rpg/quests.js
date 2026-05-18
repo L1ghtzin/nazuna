@@ -1,10 +1,9 @@
-import { PREFIX } from "../../config.js";
 
 export default {
   name: "missoes",
   description: "Sistema de missões diárias",
   commands: ["claim", "missao", "missoes", "quests", "reivindicar"],
-  usage: `${PREFIX}missoes`,
+  usage: "{prefix}missoes",
   handle: async ({ 
     reply, 
     isGroup, 

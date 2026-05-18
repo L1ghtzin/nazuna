@@ -1,11 +1,10 @@
-import { PREFIX } from "../../config.js";
 import { findKeyIgnoringAccents, normalizeParam } from "../../utils/helpers.js";
 
 export default {
   name: "lojapremium",
   description: "Loja de itens exclusivos",
   commands: ["buypremium", "comprarpremium", "lojadeluxo", "lojapremium", "premiumshop"],
-  usage: `${PREFIX}lojapremium`,
+  usage: "{prefix}lojapremium",
   handle: async ({ 
     reply, 
     isGroup, 

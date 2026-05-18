@@ -1,10 +1,9 @@
-import { PREFIX } from "../../config.js";
 
 export default {
   name: "achievements",
   description: "Sistema de conquistas e medalhas",
   commands: ["conquistas", "achievements", "medalhas"],
-  usage: `${PREFIX}conquistas`,
+  usage: "{prefix}conquistas",
   handle: async ({ 
     reply, 
     isGroup, 

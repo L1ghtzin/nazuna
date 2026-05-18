@@ -1,4 +1,3 @@
-import { PREFIX } from "../../config.js";
 
 // Utility for equipment bonuses
 const recalcEquipmentBonuses = (me, shop) => {
@@ -25,7 +24,7 @@ export default {
   name: "equipment",
   description: "Gerenciamento de equipamentos e bônus",
   commands: ["desequipar", "desequiparpet", "encantar", "enchant", "equip", "equipamentos", "equipar", "equiparpet", "equippet", "gear", "unequip", "unequippet"],
-  usage: `${PREFIX}equipamentos`,
+  usage: "{prefix}equipamentos",
   handle: async ({ 
     reply, 
     isGroup, 

@@ -122,7 +122,7 @@ export async function processGroupSecurity(context) {
           
           try {
             profilePic = await nazu.profilePictureUrl(participant, 'image');
-          } catch (e) {}
+          } catch (e) { console.error('Error deleting anti-word message:', e); }
           
           clone.contextInfo = {
             isForwarded: false,

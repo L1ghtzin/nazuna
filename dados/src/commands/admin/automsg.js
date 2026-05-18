@@ -1,12 +1,12 @@
 import pathz from 'path';
 import fs from 'fs';
-import { PREFIX } from "../../config.js";
+
 
 export default {
   name: "automsg",
   description: "Gerencia o envio automático de mensagens agendadas",
   commands: ["add", "automsg"],
-  usage: `${PREFIX}automsg help`,
+  usage: "{prefix}automsg help",
   handle: async ({ 
     nazu, 
     from, 

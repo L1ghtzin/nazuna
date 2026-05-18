@@ -17,7 +17,7 @@ export default {
       if (fs.existsSync(filePath)) {
         data = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
       }
-    } catch (e) {}
+    } catch (e) { console.error('Error generating random indication:', e); }
 
     // --- ADICIONAR INDICAÇÃO ---
     if (cmd.startsWith('add')) {

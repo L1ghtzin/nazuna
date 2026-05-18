@@ -64,7 +64,7 @@ const ensureDatabaseIntegrity = ({ log = false, force = false } = {}) => {
 ensureDatabaseIntegrity();
 
 let packageJson = {};
-try { packageJson = JSON.parse(fs.readFileSync(PACKAGE_JSON_PATH, 'utf-8')); } catch (e) { }
+try { packageJson = JSON.parse(fs.readFileSync(PACKAGE_JSON_PATH, 'utf-8')); } catch (e) { console.error('Error loading package.json:', e); }
 const botVersion = packageJson.version;
 
 initJidLidCache(JID_LID_CACHE_FILE);
@@ -72,7 +72,7 @@ setInterval(() => saveJidLidCache(), 5 * 60 * 1000);
 
 // Deduplicação de mensagens recentes
 const processedMessages = new Set();
-const MAX_PROCESSED_CACHE = 200;
+const MAX_PROCESSED_CACHE = 1500;
 
 // ==================== FUNÇÃO PRINCIPAL ====================
 async function NazuninhaBotExec(nazu, info, store, messagesCache, rentalExpirationManager = null) {

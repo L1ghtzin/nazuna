@@ -1,4 +1,4 @@
-import { PREFIX } from "../../config.js";
+
 
 export default {
   name: "group_security",

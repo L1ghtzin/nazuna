@@ -8,8 +8,23 @@ import { parseHTML } from 'linkedom';
 
 async function getLyrics(topic) {
   try {
+    // Realistic headers to bypass Cloudflare
+    const headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+        'Accept-Language': 'pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7',
+        'Referer': 'https://www.letras.mus.br/',
+        'Sec-Ch-Ua': '"Not_A Brand";v="8", "Chromium";v="120", "Google Chrome";v="120"',
+        'Sec-Ch-Ua-Mobile': '?0',
+        'Sec-Ch-Ua-Platform': '"Windows"',
+        'Sec-Fetch-Dest': 'document',
+        'Sec-Fetch-Mode': 'navigate',
+        'Sec-Fetch-Site': 'same-origin',
+        'Upgrade-Insecure-Requests': '1'
+    };
+
     // Search request
-    const response = await scrapingClient.get(`https://solr.sscdn.co/letras/m1/?q=${encodeURIComponent(topic)}&wt=json&callback=LetrasSug`);
+    const response = await scrapingClient.get(`https://solr.sscdn.co/letras/m1/?q=${encodeURIComponent(topic)}&wt=json&callback=LetrasSug`, { headers });
     
     if (response.status !== 200) {
       throw new Error('Erro ao buscar letra da música');
@@ -30,7 +45,7 @@ async function getLyrics(topic) {
 
     // Fetch lyrics page
     const lyricUrl = `https://www.letras.mus.br/${lyric.dns}/${lyric.url}`;
-    const lyricResponse = await scrapingClient.get(lyricUrl);
+    const lyricResponse = await scrapingClient.get(lyricUrl, { headers });
 
     if (lyricResponse.status !== 200) {
       throw new Error('Sem resposta do servidor');

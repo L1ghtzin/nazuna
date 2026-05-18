@@ -1,10 +1,9 @@
-import { PREFIX } from "../../config.js";
 
 export default {
   name: "torneio",
   description: "Sistema de torneios do RPG",
   commands: ["torneio", "tournament"],
-  usage: `${PREFIX}torneio`,
+  usage: "{prefix}torneio",
   handle: async ({ 
     reply, 
     isGroup, 

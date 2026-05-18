@@ -1,11 +1,10 @@
-import { PREFIX } from "../../config.js";
 import { ensureUserPeriodChallenges, isPeriodCompleted } from "../../utils/database.js";
 
 export default {
   name: "desafios",
   description: "Desafios semanais e mensais do RPG",
   commands: ["desafiomensal", "desafiosemanal"],
-  usage: `${PREFIX}desafiosemanal [coletar]`,
+  usage: "{prefix}desafiosemanal [coletar]",
   handle: async ({ 
     reply, 
     isGroup, 

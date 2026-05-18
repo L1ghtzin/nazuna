@@ -1,11 +1,10 @@
-import { PREFIX } from "../../config.js";
 import { normalizeClanName, normalizeUserId } from "../../utils/helpers.js";
 
 export default {
   name: "clans",
   description: "Sistema de clãs do RPG",
   commands: ["aceitarconvite", "aceitarrpg", "cla", "claninfo", "convidar", "convite", "criarcla", "criarclã", "depositarcla", "depcla", "expulsar", "guerra", "guerracla", "invite", "kickcla", "meucla", "meuclã", "recusar", "recusarconvite", "removerconvite", "rmconvite", "sair", "war", "rankcla", "rankclã"],
-  usage: `${PREFIX}cla`,
+  usage: "{prefix}cla",
   handle: async ({ 
     reply, 
     isGroup, 
@@ -18,7 +17,7 @@ export default {
     command,
     info,
     menc_jid2,
-    isGroupAdmins,
+    isGroupAdmin,
     loadEconomy, 
     saveEconomy, 
     getEcoUser,
@@ -34,19 +33,17 @@ export default {
     // Helper: busca o JID bruto do remetente (para retrocompatibilidade JID/LID)
     const getRawJid = () => info?.key?.participant || info?.message?.participant || sender;
 
-    // Helper: verifica se um ID está em um array (comparação flexível JID/LID)
     const idInList = (id, list) => {
-      if (!Array.isArray(list) || !id) return false;
+      if (!Array.isArray(list) || !id || typeof id !== 'string') return false;
       if (list.includes(id)) return true;
       const base = id.split('@')[0];
-      return list.some(item => item && item.split('@')[0] === base);
+      return list.some(item => typeof item === 'string' && item.split('@')[0] === base);
     };
 
-    // Helper: remove um ID de um array (remove tanto JID quanto LID)
     const removeIdFromList = (id, list) => {
-      if (!Array.isArray(list) || !id) return list || [];
+      if (!Array.isArray(list) || !id || typeof id !== 'string') return list || [];
       const base = id.split('@')[0];
-      return list.filter(item => item && item.split('@')[0] !== base);
+      return list.filter(item => typeof item === 'string' && item.split('@')[0] !== base);
     };
 
     // Helper: guard de clã inexistente
@@ -143,7 +140,7 @@ export default {
 
     // --- DEPOSITAR NO CLÃ ---
     if (command === 'depositarcla' || command === 'depcla') {
-      const clan = getMyClam();
+      const clan = getMyClan();
       if (!clan) return reply(`💔 Você não faz parte de nenhum clã.`);
 
       const amount = parseInt(args[0]);
@@ -159,7 +156,7 @@ export default {
 
     // --- GUERRA ---
     if (command === 'guerra' || command === 'war' || command === 'guerracla') {
-      const clan = getMyClam();
+      const clan = getMyClan();
       if (!clan) return reply('🏰 Você precisa estar em um clã para declarar guerra!');
       if (clan.leader !== sender) return reply('👑 Apenas o líder pode declarar guerra!');
       
@@ -172,7 +169,7 @@ export default {
 
     // --- CONVIDAR ---
     if (command === 'convidar' || command === 'invite' || command === 'convite') {
-      const clan = getMyClam();
+      const clan = getMyClan();
       if (!clan) return reply(`💔 Você não faz parte de nenhum clã.`);
       if (clan.leader !== sender) return reply('👑 Apenas o líder pode convidar membros.');
 
@@ -212,7 +209,7 @@ export default {
         clanObj = econ.clans[qTrim] || Object.values(econ.clans || {}).find(c => (c.id && c.id.toLowerCase() === qLower) || (c.name && c.name.toLowerCase() === qLower));
       }
 
-      if (!clanObj || !Array.isArray(clanObj.pendingInvites) || !idInList(sender, clanObj.pendingInvites)) {
+      if (!clanObj || !Array.isArray(clanObj.pendingInvites) || (!idInList(sender, clanObj.pendingInvites) && !idInList(rawJid, clanObj.pendingInvites))) {
         return reply(`💔 Clã não encontrado ou sem convite pendente.`);
       }
 
@@ -221,6 +218,7 @@ export default {
       clanObj.members = clanObj.members || [];
       if (!clanObj.members.includes(sender)) clanObj.members.push(sender);
       clanObj.pendingInvites = removeIdFromList(sender, clanObj.pendingInvites);
+      clanObj.pendingInvites = removeIdFromList(rawJid, clanObj.pendingInvites);
       me.clan = clanObj.id;
       
       saveEconomy(econ);
@@ -243,18 +241,19 @@ export default {
         clanObj = econ.clans[qTrim] || Object.values(econ.clans || {}).find(c => (c.id && c.id.toLowerCase() === qLower) || (c.name && c.name.toLowerCase() === qLower));
       }
 
-      if (!clanObj || !Array.isArray(clanObj.pendingInvites) || !idInList(sender, clanObj.pendingInvites)) {
+      if (!clanObj || !Array.isArray(clanObj.pendingInvites) || (!idInList(sender, clanObj.pendingInvites) && !idInList(rawJid, clanObj.pendingInvites))) {
         return reply(`💔 Clã não encontrado ou sem convite pendente.`);
       }
 
       clanObj.pendingInvites = removeIdFromList(sender, clanObj.pendingInvites);
+      clanObj.pendingInvites = removeIdFromList(rawJid, clanObj.pendingInvites);
       saveEconomy(econ);
       return reply(`❗ Você recusou o convite do clã *${clanObj.name}*.`);
     }
 
     // --- EXPULSAR ---
     if (command === 'expulsar' || command === 'kickcla') {
-      const clan = getMyClam();
+      const clan = getMyClan();
       if (!clan) return reply(`💔 Você não faz parte de nenhum clã.`);
       if (clan.leader !== sender) return reply('👑 Apenas o líder pode expulsar membros.');
 
@@ -283,7 +282,7 @@ export default {
 
     // --- SAIR DO CLÃ ---
     if (command === 'sair') {
-      const clan = getMyClam();
+      const clan = getMyClan();
       if (!clan) return reply(`💔 Você não faz parte de nenhum clã.`);
       
       const rawJid = getRawJid();
@@ -325,7 +324,7 @@ export default {
 
     // --- REMOVER CONVITE ---
     if (command === 'rmconvite' || command === 'removerconvite') {
-      const clan = getMyClam();
+      const clan = getMyClan();
       if (!clan) return reply(`💔 Você não faz parte de nenhum clã.`);
       if (clan.leader !== sender) return reply('👑 Apenas o líder pode remover convites.');
 

@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { PREFIX } from "../../config.js";
+
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -10,7 +10,7 @@ export default {
   name: "quiz",
   description: "Jogo de perguntas e respostas (individual ou duelo)",
   commands: ["quiz", "trivia", "pergunta", "dueloquiz", "duelo"],
-  usage: `${PREFIX}quiz ou ${PREFIX}dueloquiz @user`,
+  usage: "{prefix}quiz ou {prefix}dueloquiz @user",
   handle: async ({ 
     reply, 
     isGroup, 

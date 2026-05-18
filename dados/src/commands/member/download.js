@@ -1,14 +1,12 @@
-import { PREFIX } from "../../config.js";
-
 export default {
   name: "download",
   description: "Comandos de download de mídia (YouTube, Spotify, etc)",
-  commands: ["bot-zip", "botzip", "download-bot", "downloadbot", "drive", "facebook", "facebookdl", "fb", "fbdl", "gd", "gdrive", "git-bot", "git-hub", "gitbot", "github", "googledrive", "ig", "igdl", "igstory", "instagram", "instavideo", "jogar", "kwai", "letra", "lyrics", "mcplugin", "mcplugins", "mediafire", "mf", "play", "play2", "play3", "playsoundcloud", "playspotify", "playvid", "repo", "repositorio", "soundcloud", "soundclouddl", "source", "source-code", "sourcecode", "spotify", "spotifydl", "tiktok", "tiktokaudio", "tiktoks", "tiktoksearch", "tiktokvideo", "tkk", "ttk", "twitter", "twitterdl", "twt", "x", "xdl", "ytmp3", "ytmp4", "zip-bot", "zipbot"],
-  handle: async ({ 
+  commands: ["bot-zip", "botzip", "download-bot", "downloadbot", "drive", "facebook", "facebookdl", "fb", "fbdl", "gd", "gdrive", "git-bot", "git-hub", "gitbot", "github", "googledrive", "ig", "igdl", "igstory", "instagram", "instavideo", "kwai", "letra", "lyrics", "mcplugin", "mcplugins", "mediafire", "mf", "play", "play2", "play3", "playsoundcloud", "playspotify", "playvid", "repo", "repositorio", "soundcloud", "soundclouddl", "source", "source-code", "sourcecode", "spotify", "spotifydl", "tiktok", "tiktokaudio", "tiktoks", "tiktoksearch", "tiktokvideo", "tkk", "ttk", "twitter", "twitterdl", "twt", "x", "xdl", "ytmp3", "ytmp4", "zip-bot", "zipbot"],
+  handle: async ({
     nazu, from, info, command, q, reply, prefix,
     youtube, spotifyModule, soundcloud, tiktok, igdl, facebook, kwai,
     twitterModule, twitterGetInfo, gdriveGetInfo, mediafireGetInfo,
-    lyrics, mcPlugin,
+    Lyrics: lyrics, mcPlugin,
     nomebot, botVersion,
     MESSAGES
   }) => {
@@ -56,8 +54,8 @@ export default {
           const views = typeof v.views === 'number' ? v.views.toLocaleString('pt-BR') : v.views;
           const caption = `🎵 *Música Encontrada* 🎵\n\n📌 *Título:* ${v.title}\n👤 *Artista/Canal:* ${v.author.name}\n⏱ *Duração:* ${v.timestamp} (${v.seconds} segundos)\n👀 *Visualizações:* ${views}\n🔗 *Link:* ${v.url}\n\n🎧 *Baixando e processando sua música, aguarde...*`;
 
-          nazu.sendMessage(from, { image: { url: v.thumbnail }, caption, footer: `${nomebot} • Versão ${botVersion}` }, { quoted: info }).catch(() => {});
-          
+          nazu.sendMessage(from, { image: { url: v.thumbnail }, caption, footer: `${nomebot} • Versão ${botVersion}` }, { quoted: info }).catch(() => { });
+
           // Download em background
           youtube.mp3(v.url, v).then(sendAudio).catch(e => {
             console.error('Erro play search:', e);
@@ -76,7 +74,7 @@ export default {
     // ═══════════════════════════════════════════════════════════════
     if (cmd === 'playvid' || cmd === 'ytmp4') {
       if (!q) return reply(`🎥 Envie o nome ou link do vídeo do YouTube!\n\nExemplo: ${prefix}${cmd} Linkin Park Numb`);
-      
+
       try {
         let videoUrl = q;
         if (!q.includes('youtube.com') && !q.includes('youtu.be')) {
@@ -87,7 +85,7 @@ export default {
         }
 
         await reply('⏳ Baixando vídeo... Isso pode levar um momento.');
-        
+
         // Download em background para não travar o bot
         youtube.mp4(videoUrl, '360p').then(async (dlRes) => {
           if (!dlRes || !dlRes.ok || !dlRes.buffer) {
@@ -95,10 +93,10 @@ export default {
             return reply('💔 Não foi possível baixar o vídeo. Tente novamente mais tarde.');
           }
 
-          await nazu.sendMessage(from, { 
-            video: dlRes.buffer, 
+          await nazu.sendMessage(from, {
+            video: dlRes.buffer,
             caption: `✨ *${dlRes.title || 'Vídeo baixado'}*\n\n📺 Qualidade: ${dlRes.quality || '360p'}\n🔗 Fonte: ${dlRes.source || 'Auto'}`,
-            mimetype: 'video/mp4' 
+            mimetype: 'video/mp4'
           }, { quoted: info });
         }).catch(e => {
           console.error('Erro fatal no playvid background:', e);
@@ -117,7 +115,7 @@ export default {
     // ═══════════════════════════════════════════════════════════════
     if (cmd === 'spotify' || cmd === 'spotifydl' || cmd === 'play2' || cmd === 'playspotify') {
       if (!q) return reply(`🎵 Envie o nome da música ou link do Spotify!\n\nExemplo: ${prefix}${cmd} Imagine Dragons Believer`);
-      
+
       try {
         await reply('🎵 Processando solicitação do Spotify...');
         const spotifyFn = q.includes('spotify.com') ? spotifyModule.download : spotifyModule.searchDownload;
@@ -268,11 +266,31 @@ export default {
 
     if (cmd === 'lyrics' || cmd === 'letra') {
       if (!q) return reply(`🎵 Qual música?`);
+      if (!lyrics) return reply('💔 Sistema de letras indisponível no momento.');
       try {
         await reply(`🔍 Procurando letra de *${q}*...`);
-        const res = await lyrics.search(q);
+        const res = await lyrics(q);
         if (!res) return reply(`💔 Letra não encontrada.`);
-        await reply(`🎵 *${res.title}* - *${res.artist}*\n\n${res.lyrics}`);
+        await reply(res);
+      } catch (e) { reply(`💔 ${e.message || MESSAGES.error.general}`); }
+      return;
+    }
+
+    if (cmd === 'mcplugin' || cmd === 'mcplugins') {
+      if (!q) return reply('🔍 Cadê o nome do plugin para eu pesquisar? 🤔\n\nExemplo: ' + prefix + cmd + ' WorldEdit');
+      if (!mcPlugin) return reply('💔 Sistema de plugins indisponível no momento.');
+      try {
+        await reply('🔍 Buscando plugin...');
+        mcPlugin(q).then(async (datz) => {
+          if (!datz.ok) return reply(datz.msg);
+          await nazu.sendMessage(from, {
+            image: { url: datz.image },
+            caption: `🔍 Encontrei esse plugin aqui:\n\n*Nome*: _${datz.name}_\n*Publicado por*: _${datz.creator}_\n*Descrição*: _${datz.desc}_\n*Link para download*: _${datz.url}_\n\n> 💖 `
+          }, { quoted: info });
+        }).catch((e) => {
+          console.error('Erro mcplugin:', e);
+          reply(MESSAGES.error.general);
+        });
       } catch (e) { reply(MESSAGES.error.general); }
       return;
     }

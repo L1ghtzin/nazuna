@@ -2071,6 +2071,26 @@ function updateQuestProgress(user, questType, inc = 1) {
   });
 }
 
+/**
+ * Centraliza a lógica de level-up da economia RPG.
+ * Fórmula: expRequired = 100 * 1.5^(level-1)
+ * @param {Object} user - Objeto do usuário da economia
+ * @returns {{ leveledUp: boolean, newLevel: number }} resultado
+ */
+function checkEcoLevelUp(user) {
+  let leveledUp = false;
+  let expRequired = 100 * Math.pow(1.5, (user.level || 1) - 1);
+  let iterations = 0;
+  while (user.exp >= expRequired && iterations < 100) {
+    user.exp -= expRequired;
+    user.level = (user.level || 1) + 1;
+    expRequired = 100 * Math.pow(1.5, (user.level || 1) - 1);
+    leveledUp = true;
+    iterations++;
+  }
+  return { leveledUp, newLevel: user.level || 1 };
+}
+
 // ===== Habilidades (Skills) e Desafios Periódicos =====
 const SKILL_LIST = ['mining','working','fishing','exploring','hunting','forging','crime'];
 
@@ -3296,6 +3316,7 @@ export {
   updateChallenge,
   isChallengeCompleted,
   updateQuestProgress,
+  checkEcoLevelUp,
   SKILL_LIST,
   ensureUserSkills,
   skillXpForNext,
