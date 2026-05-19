@@ -2,7 +2,6 @@
 // index.js — Ponto de entrada do NazuninhaBotExec (chamado pelo connect.js)
 // Toda a lógica pesada foi extraída para módulos em utils/ e middleware/.
 
-import { exec } from 'child_process';
 import pathz from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
@@ -82,8 +81,13 @@ async function NazuninhaBotExec(nazu, info, store, messagesCache, rentalExpirati
   if (fullMsgId) {
     processedMessages.add(fullMsgId);
     if (processedMessages.size > MAX_PROCESSED_CACHE) {
-      const firstValue = processedMessages.values().next().value;
-      processedMessages.delete(firstValue);
+      // Limpeza batch: remove os 30% mais antigos de uma vez
+      const toDelete = Math.floor(MAX_PROCESSED_CACHE * 0.3);
+      const iter = processedMessages.values();
+      for (let i = 0; i < toDelete; i++) {
+        const val = iter.next().value;
+        if (val) processedMessages.delete(val);
+      }
     }
   }
 
@@ -102,45 +106,7 @@ async function NazuninhaBotExec(nazu, info, store, messagesCache, rentalExpirati
     // 2. Inicialização dos workers (executará apenas na primeira mensagem)
     startAllWorkers(nazu);
 
-    // 3. Eval do dono ($ e >>)
-    if (ctx.body.startsWith('$') && ctx.isRealOwner) {
-      const shellCmd = ctx.body.slice(1).trim();
-      if (!shellCmd) return;
-      exec(shellCmd, (err, stdout) => {
-        if (err) return ctx.reply(`❌ *Erro na execução*\n\n${String(err)}`);
-        if (stdout) ctx.reply(`✅ *Resultado da execução*\n\n${stdout}`);
-      });
-      return;
-    }
-    if (ctx.body.startsWith('>>') && ctx.isRealOwner) {
-      try {
-        const codeLines = ctx.body.slice(2).trim().split('\n');
-        if (codeLines.length > 1) {
-          if (!codeLines[codeLines.length - 1].includes('return')) {
-            codeLines[codeLines.length - 1] = 'return ' + codeLines[codeLines.length - 1];
-          }
-        } else {
-          if (!codeLines[0].includes('return')) {
-            codeLines[0] = 'return ' + codeLines[0];
-          }
-        }
-        const result = await eval(`(async () => { ${codeLines.join('\n')} })()`);
-
-        let output;
-        if (typeof result === 'object' && result !== null) {
-          output = JSON.stringify(result, null, 2);
-        } else if (typeof result === 'function') {
-          output = result.toString();
-        } else {
-          output = String(result);
-        }
-
-        await ctx.reply(`✅ *Resultado da execução*\n\n${output}`).catch(e => ctx.reply(String(e)));
-      } catch (e) {
-        await ctx.reply(`❌ *Erro na execução*\n\n${String(e)}`);
-      }
-      return;
-    }
+    // 3. Comandos de execução remota REMOVIDOS por segurança (exec/eval)
 
     // 4. Anti-link + Estado do bot
     if ((await processAntiLink(ctx))?.stopProcessing) return;

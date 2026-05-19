@@ -1,4 +1,4 @@
-import { exec } from 'child_process';
+import { execFile } from 'child_process';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -54,23 +54,23 @@ export default {
         const outputExt = command === 'tomp3' ? '.mp3' : '.mp4';
         const ran = path.join(__dirname, `../../database/tmp/${Math.random()}${outputExt}`);
         
-        let ffmpegCmd;
+        let ffmpegArgs;
         if (command === 'tomp3') {
-          ffmpegCmd = `ffmpeg -i "${media}" -q:a 0 -map a "${ran}"`;
+          ffmpegArgs = ['-i', media, '-q:a', '0', '-map', 'a', ran];
         } else if (command === 'videoloop') {
-          ffmpegCmd = `ffmpeg -stream_loop 2 -i "${media}" -c copy "${ran}"`;
+          ffmpegArgs = ['-stream_loop', '2', '-i', media, '-c', 'copy', ran];
         } else if (command === 'videomudo') {
-          ffmpegCmd = `ffmpeg -i "${media}" -an "${ran}"`;
+          ffmpegArgs = ['-i', media, '-an', ran];
         } else {
           const effect = videoEffects[command];
           if (['sepia', 'espelhar', 'rotacionar', 'zoom', 'glitch', 'videobw', 'pretoebranco'].includes(command)) {
-            ffmpegCmd = `ffmpeg -i "${media}" -vf "${effect}" "${ran}"`;
+            ffmpegArgs = ['-i', media, '-vf', effect, ran];
           } else {
-            ffmpegCmd = `ffmpeg -i "${media}" -filter_complex "${effect}" -map "[v]" -map "[a]" "${ran}"`;
+            ffmpegArgs = ['-i', media, '-filter_complex', effect, '-map', '[v]', '-map', '[a]', ran];
           }
         }
 
-        exec(ffmpegCmd, async (err) => {
+        execFile('ffmpeg', ffmpegArgs, async (err) => {
           if (fs.existsSync(media)) fs.unlinkSync(media);
           if (err) {
             console.error(`FFMPEG Error (Video Effect ${command}):`, err);

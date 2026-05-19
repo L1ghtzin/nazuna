@@ -217,14 +217,11 @@ class AutoRestarter {
             
             for (const tempPattern of tempDirs) {
                 try {
-                    const { exec } = await import('child_process');
-                    exec(`rm -rf ${tempPattern}`, { timeout: 5000 }, (error) => {
-                        if (error && !error.message.includes('No such file')) {
-                            console.warn(`⚠️ Erro na limpeza de ${tempPattern}:`, error.message);
-                        }
-                    });
-                } catch {
-                    // Ignora erros de limpeza
+                    await fs.rm(tempPattern, { recursive: true, force: true });
+                } catch (cleanErr) {
+                    if (cleanErr.code !== 'ENOENT') {
+                        console.warn(`⚠️ Erro na limpeza de ${tempPattern}:`, cleanErr.message);
+                    }
                 }
             }
 

@@ -1,5 +1,24 @@
 const soadmBypassCommands = ['suporte', 'ticketsuporte', 'suporteticket', 'ticket'];
 
+// Debounce para escrita do antispam — evita I/O excessivo em alta carga
+let _antispamWriteTimer = null;
+let _antispamPendingData = null;
+let _antispamPendingPath = null;
+function debouncedAntiSpamWrite(filePath, data, writeJsonFile) {
+    _antispamPendingData = data;
+    _antispamPendingPath = filePath;
+    if (!_antispamWriteTimer) {
+        _antispamWriteTimer = setTimeout(() => {
+            if (_antispamPendingData && _antispamPendingPath && writeJsonFile) {
+                writeJsonFile(_antispamPendingPath, _antispamPendingData);
+            }
+            _antispamWriteTimer = null;
+            _antispamPendingData = null;
+            _antispamPendingPath = null;
+        }, 5000); // Escreve no máximo a cada 5 segundos
+    }
+}
+
 export async function processGroupSecurity(context) {
     const { 
         nazu, info, isGroup, sender, groupData, command, isCmd, isImage, isVideo, 
@@ -122,7 +141,7 @@ export async function processGroupSecurity(context) {
           
           try {
             profilePic = await nazu.profilePictureUrl(participant, 'image');
-          } catch (e) { console.error('Error deleting anti-word message:', e); }
+          } catch (e) { /* Foto de perfil indisponível, usa padrão */ }
           
           clone.contextInfo = {
             isForwarded: false,
@@ -177,11 +196,11 @@ export async function processGroupSecurity(context) {
         if (arr.length > limit) {
           const blockMs = Math.max(1, parseInt(cfg.blockTime || 600)) * 1000;
           cfg.blocks[sender] = { until: now + blockMs, at: new Date().toISOString(), count: arr.length };
-          if (writeJsonFile && DATABASE_DIR) writeJsonFile(DATABASE_DIR + '/antispam.json', cfg);
+          if (writeJsonFile && DATABASE_DIR) writeJsonFile(DATABASE_DIR + '/antispam.json', cfg); // Escrita imediata para bloqueios
           await reply(`🚫 Anti-spam: você excedeu o limite de ${limit} comandos em ${cfg.interval}s.\n🔒 Bloqueado por ${Math.floor(blockMs/60000)} min.`);
           return { stopProcessing: true };
         }
-        if (writeJsonFile && DATABASE_DIR) writeJsonFile(DATABASE_DIR + '/antispam.json', cfg);
+        if (writeJsonFile && DATABASE_DIR) debouncedAntiSpamWrite(DATABASE_DIR + '/antispam.json', cfg, writeJsonFile);
       } catch (e) {
         console.error('Erro no AntiSpam Global:', e);
       }

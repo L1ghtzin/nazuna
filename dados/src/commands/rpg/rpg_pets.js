@@ -17,7 +17,7 @@ export default {
     commands: ["pets", "meuspets", "adotar", "adopt", "alimentar", "feed", "treinar", "train", "evoluirpet", "evolve", "renomearpet", "renamepet", "batalhapet", "petbattle"],
     handle: async ({ 
     reply, isGroup, groupData, sender, prefix, command, args, q, pushname, menc_jid2,
-    MESSAGES
+    MESSAGES, nazu, getLidFromJidCached, isValidJid
   }) => {
         if (!isGroup || !groupData.modorpg) return;
 
@@ -175,12 +175,20 @@ export default {
         }
 
         if (sub === 'batalhapet' || sub === 'petbattle') {
-            if (!menc_jid2) return reply(`⚔️ Mencione um adversário para batalhar!\nEx: ${prefix}batalhapet 1 @user`);
+            if (!menc_jid2 || !menc_jid2[0]) return reply(`⚔️ Mencione um adversário para batalhar!\nEx: ${prefix}batalhapet 1 @user`);
+            
+            let target = menc_jid2[0];
+            if (isValidJid(target)) {
+                target = await getLidFromJidCached(nazu, target) || target;
+            }
+
+            if (target === sender) return reply(`💔 Você não pode batalhar contra seus próprios pets!`);
+
             const argsList = q.split(' ');
             const index = parseInt(argsList[0]) - 1;
             if (isNaN(index) || index < 0 || index >= (me.pets?.length || 0)) return reply(`💔 Seu pet é inválido!`);
             
-            const enemy = getEcoUser(econ, menc_jid2);
+            const enemy = getEcoUser(econ, target);
             if (!enemy.pets || enemy.pets.length === 0) return reply(`😢 O adversário não tem pets!`);
 
             const myPet = me.pets[index];

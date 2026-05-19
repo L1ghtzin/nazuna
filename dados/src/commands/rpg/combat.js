@@ -20,7 +20,8 @@ export default {
     saveEconomy, 
     getEcoUser,
     checkEcoLevelUp,
-    MESSAGES
+    MESSAGES,
+    nazu, getLidFromJidCached, isValidJid
   }) => {
     if (!isGroup) return reply('⚔️ Este comando funciona apenas em grupos com Modo RPG ativo.');
     if (!groupData.modorpg) return reply(`⚔️ Modo RPG desativado! Use ${prefix}modorpg para ativar.`);
@@ -31,8 +32,14 @@ export default {
 
     // --- DUELO PVP ---
     if (command === 'duelarrpg' || command === 'duelorpg' || command === 'duelrpg' || command === 'pvp') {
-      const target = (menc_jid2 && menc_jid2[0]) || null;
-      if (!target || target === sender) return reply(`💔 Marque alguém para duelar!`);
+      let target = (menc_jid2 && menc_jid2[0]) || null;
+      if (!target) return reply(`💔 Marque alguém para duelar!`);
+      
+      if (isValidJid(target)) {
+        target = await getLidFromJidCached(nazu, target) || target;
+      }
+      
+      if (target === sender) return reply(`💔 Você não pode duelar consigo mesmo!`);
       
       if (me.lastDuel && (now - me.lastDuel) < 600000) {
         const remaining = Math.ceil((600000 - (now - me.lastDuel)) / 60000);

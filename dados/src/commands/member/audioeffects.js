@@ -1,4 +1,4 @@
-import { exec } from 'child_process';
+import { execFile } from 'child_process';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -86,7 +86,7 @@ export default {
         const ran = path.join(TMP_DIR, `${Math.random()}.mp3`);
         const effect = audioEffects[command];
 
-        exec(`ffmpeg -i "${gem}" -filter:a "${effect}" "${ran}"`, async (err) => {
+        execFile('ffmpeg', ['-i', gem, '-filter:a', effect, ran], async (err) => {
           if (fs.existsSync(gem)) fs.unlinkSync(gem);
           if (err) {
             console.error(`FFMPEG Error (Audio Effect ${command}):`, err);

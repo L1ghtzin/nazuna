@@ -549,7 +549,7 @@ setInterval(() => {
 // SISTEMA DE SEGURANÇA JSON - Proteção contra corrupção de dados
 // ═══════════════════════════════════════════════════════════════════
 
-const BACKUP_DIR = pathz.join(pathz.dirname(pathz.dirname(pathz.dirname(import.meta.url.replace('file://', '')))), 'database', 'backups');
+const BACKUP_DIR = pathz.join(pathz.dirname(pathz.dirname(pathz.dirname(fileURLToPath(import.meta.url)))), 'database', 'backups');
 
 /**
  * Cria backup de um arquivo antes de modificá-lo
@@ -838,7 +838,7 @@ function saveJsonFileSafe(filePath, data, createBackupFile = true) {
       if (fs.existsSync(tempPath)) {
         fs.unlinkSync(tempPath);
       }
-    } catch (e) { console.error('Error closing ffmpeg pipe:', e); }
+    } catch (e) { console.error('Erro ao limpar arquivo temporário JSON:', e.message); }
     
     return false;
   }

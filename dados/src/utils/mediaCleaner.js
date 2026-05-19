@@ -1,13 +1,14 @@
 import fs from 'fs/promises';
+import fsSync from 'fs';
 import path from 'path';
-import { exec } from 'child_process';
+import { execFile } from 'child_process';
 import { promisify } from 'util';
 import zlib from 'zlib';
 import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const execAsync = promisify(exec);
+const execFileAsync = promisify(execFile);
 
 class MediaCleaner {
     constructor() {
@@ -157,10 +158,15 @@ class MediaCleaner {
         try {
             const fileExt = path.extname(filePath).toLowerCase();
             
-            // Verifica imagens
+            // Verifica imagens/vídeos com ffprobe (sem shell)
             if (['.jpg', '.jpeg', '.png', '.gif', '.webp', '.mp4', '.webm', '.avi', '.mkv'].includes(fileExt)) {
                 try {
-                    await execAsync(`ffprobe -v error -select_streams v:0 -show_entries stream=codec_name -of default=noprint_wrappers=1:nokey=1 "${filePath}"`, { timeout: 10000 });
+                    await execFileAsync('ffprobe', [
+                        '-v', 'error', '-select_streams', 'v:0',
+                        '-show_entries', 'stream=codec_name',
+                        '-of', 'default=noprint_wrappers=1:nokey=1',
+                        filePath
+                    ], { timeout: 10000 });
                     return false;
                 } catch {
                     return true;
@@ -202,35 +208,14 @@ class MediaCleaner {
      */
     async cleanOldDownloads() {
         const downloadPaths = [
-            path.join(process.env.HOME || '/tmp', 'Downloads/nazuna_*'),
-            '/tmp/nazuna_downloads',
             path.join(this.baseDir, 'downloads')
         ];
 
         for (const downloadPath of downloadPaths) {
             try {
-                if (downloadPath.includes('*')) {
-                    // Usa glob pattern
-                    const { stdout } = await execAsync(`find ${path.dirname(downloadPath)} -name "${path.basename(downloadPath)}" -type f 2>/dev/null || true`);
-                    const files = stdout.trim().split('\n').filter(f => f);
-                    
-                    for (const file of files) {
-                        try {
-                            const stats = await fs.stat(file);
-                            const age = Date.now() - stats.mtime.getTime();
-                            
-                            if (age > this.maxMediaAge) {
-                                await fs.unlink(file);
-                            }
-                        } catch (error) {
-                            console.warn(`⚠️ Erro ao processar download ${file}:`, error.message);
-                        }
-                    }
-                } else {
-                    const exists = await fs.access(downloadPath).then(() => true).catch(() => false);
-                    if (exists) {
-                        await this.cleanDirectory(downloadPath);
-                    }
+                const exists = await fs.access(downloadPath).then(() => true).catch(() => false);
+                if (exists) {
+                    await this.cleanDirectory(downloadPath);
                 }
             } catch (error) {
                 console.warn(`⚠️ Erro ao limpar downloads em ${downloadPath}:`, error.message);
@@ -243,8 +228,16 @@ class MediaCleaner {
      */
     async getDirectorySize(dirPath) {
         try {
-            const { stdout } = await execAsync(`du -sb "${dirPath}" 2>/dev/null || echo "0"`);
-            return parseInt(stdout.split('\t')[0]) || 0;
+            const files = await fs.readdir(dirPath);
+            let totalSize = 0;
+            for (const file of files) {
+                try {
+                    const filePath = path.join(dirPath, file);
+                    const stats = await fs.stat(filePath);
+                    if (stats.isFile()) totalSize += stats.size;
+                } catch { /* ignora arquivos inacessíveis */ }
+            }
+            return totalSize;
         } catch {
             return 0;
         }
@@ -381,7 +374,12 @@ class MediaCleaner {
             const fileExt = path.extname(filePath) || '.jpg';
             const tempPath = path.join(path.dirname(filePath), `${path.basename(filePath, fileExt)}.compressed${fileExt}`);
 
-            await execAsync(`ffmpeg -hide_banner -loglevel error -i "${filePath}" -vf "scale=min(1920\\,iw):min(1920\\,ih):force_original_aspect_ratio=decrease" -q:v 8 -map_metadata -1 -y "${tempPath}"`, { timeout: 30000 });
+            await execFileAsync('ffmpeg', [
+                '-hide_banner', '-loglevel', 'error',
+                '-i', filePath,
+                '-vf', 'scale=min(1920\,iw):min(1920\,ih):force_original_aspect_ratio=decrease',
+                '-q:v', '8', '-map_metadata', '-1', '-y', tempPath
+            ], { timeout: 30000 });
 
             const compressedStats = await fs.stat(tempPath);
 
@@ -410,7 +408,12 @@ class MediaCleaner {
             const tempPath = filePath + '.compressed.mp4';
             
             // Comprime vídeo com ffmpeg
-            await execAsync(`ffmpeg -i "${filePath}" -c:v libx264 -preset medium -crf 25 -c:a aac -b:a 128k -movflags +faststart -y "${tempPath}"`, { timeout: 60000 });
+            await execFileAsync('ffmpeg', [
+                '-i', filePath,
+                '-c:v', 'libx264', '-preset', 'medium', '-crf', '25',
+                '-c:a', 'aac', '-b:a', '128k',
+                '-movflags', '+faststart', '-y', tempPath
+            ], { timeout: 60000 });
             
             const compressedStats = await fs.stat(tempPath);
             

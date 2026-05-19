@@ -1,4 +1,4 @@
-import { exec } from 'child_process';
+import { execFile } from 'child_process';
 import pathz from 'path';
 import fs from 'fs';
 import { downloadContentFromMessage } from 'baileys';
@@ -99,10 +99,9 @@ export default {
         const buffimgVideo = await getFileBuffer(encmediaVideo, 'video');
         fs.writeFileSync(raneVideoCut, buffimgVideo);
         
-        // Recodifica o vídeo para garantir cortes perfeitos com ffmpeg
-        const ffmpegCmd = `ffmpeg -y -ss ${inicioVid} -i "${raneVideoCut}" -to ${fimVid} -c:v libx264 -preset fast -crf 23 -c:a aac -b:a 128k "${ranVideoCut}"`;
+        const ffmpegArgs = ['-y', '-ss', inicioVid, '-i', raneVideoCut, '-to', fimVid, '-c:v', 'libx264', '-preset', 'fast', '-crf', '23', '-c:a', 'aac', '-b:a', '128k', ranVideoCut];
         
-        exec(ffmpegCmd, async (err) => {
+        execFile('ffmpeg', ffmpegArgs, async (err) => {
           if (fs.existsSync(raneVideoCut)) fs.unlinkSync(raneVideoCut);
           
           if (err) {
