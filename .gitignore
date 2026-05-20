@@ -8,7 +8,7 @@ dados/database/tmp/
 dados/database/qr-code/
 
 # Configurations
-dados/src/config.json
+dados/config.json
 
 # Logs
 dados/logs/*.log

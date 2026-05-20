@@ -1,0 +1,271 @@
+// ==================== DATABASE INITIALIZATION ====================
+// Side-effects que criam diretórios e arquivos JSON padrão no disco.
+// Este módulo é importado uma vez pelo aggregator (database.js).
+
+import { ensureDirectoryExists, ensureJsonFileExists } from '../helpers.js';
+import {
+  DATABASE_DIR,
+  GRUPOS_DIR,
+  USERS_DIR,
+  DONO_DIR,
+  PARCERIAS_DIR,
+  TMP_DIR,
+  LEVELING_FILE,
+  CUSTOM_AUTORESPONSES_FILE,
+  DIVULGACAO_FILE,
+  DONO_DIVULGACAO_FILE,
+  NO_PREFIX_COMMANDS_FILE,
+  COMMAND_ALIASES_FILE,
+  GLOBAL_BLACKLIST_FILE,
+  MENU_DESIGN_FILE,
+  ECONOMY_FILE,
+  MSGPREFIX_FILE,
+  MSGBOTON_FILE,
+  CUSTOM_REACTS_FILE,
+  REMINDERS_FILE,
+  CMD_NOT_FOUND_FILE,
+  ANTIFLOOD_FILE,
+  ANTIPV_FILE,
+  GLOBAL_BLOCKS_FILE,
+  CMD_LIMIT_FILE,
+  CMD_USER_LIMITS_FILE,
+  ANTISPAM_FILE,
+  BOT_STATE_FILE,
+  MODO_LITE_FILE,
+  SUBDONOS_FILE,
+  ALUGUEIS_FILE,
+  CODIGOS_ALUGUEL_FILE,
+  RELATIONSHIPS_FILE,
+  CUSTOM_COMMANDS_FILE,
+  SUPPORT_TICKETS_FILE
+} from '../paths.js';
+
+// === DIRETÓRIOS ===
+ensureDirectoryExists(GRUPOS_DIR);
+ensureDirectoryExists(USERS_DIR);
+ensureDirectoryExists(DONO_DIR);
+ensureDirectoryExists(PARCERIAS_DIR);
+ensureDirectoryExists(TMP_DIR);
+
+// === ARQUIVOS JSON ===
+ensureJsonFileExists(ANTIFLOOD_FILE);
+ensureJsonFileExists(CMD_LIMIT_FILE, {
+  commands: {},
+  users: {}
+});
+ensureJsonFileExists(CMD_USER_LIMITS_FILE, {
+  commands: {},
+  users: {}
+});
+ensureJsonFileExists(ANTISPAM_FILE, {
+  enabled: false,
+  limit: 5,
+  interval: 10,
+  blockTime: 600,
+  users: {},
+  blocks: {}
+});
+ensureJsonFileExists(ANTIPV_FILE, {
+  mode: 'off',
+  message: '🚫 Este comando só funciona em grupos!'
+});
+ensureJsonFileExists(DONO_DIR + '/premium.json');
+ensureJsonFileExists(DONO_DIR + '/bangp.json');
+ensureJsonFileExists(GLOBAL_BLOCKS_FILE, {
+  commands: {},
+  users: {}
+});
+ensureJsonFileExists(BOT_STATE_FILE, {
+  status: 'on'
+});
+ensureJsonFileExists(MODO_LITE_FILE, {
+  status: false
+});
+ensureJsonFileExists(CUSTOM_AUTORESPONSES_FILE, {
+  responses: []
+});
+ensureJsonFileExists(NO_PREFIX_COMMANDS_FILE, {
+  commands: []
+});
+ensureJsonFileExists(COMMAND_ALIASES_FILE, {
+  aliases: []
+});
+ensureJsonFileExists(CUSTOM_COMMANDS_FILE, {
+  commands: []
+});
+ensureJsonFileExists(GLOBAL_BLACKLIST_FILE, {
+  users: {},
+  groups: {}
+});
+ensureJsonFileExists(DONO_DIVULGACAO_FILE, {
+  groups: [],
+  message: '',
+  schedule: {
+    enabled: false,
+    time: null,
+    lastRun: null
+  },
+  stats: {
+    totalSent: 0,
+    lastManual: null,
+    lastAuto: null
+  },
+  createdAt: new Date().toISOString()
+});
+ensureJsonFileExists(MENU_DESIGN_FILE, {
+  header: `╭┈⊰ 🫟 『 *{botName}* 』\n┊💭 *Usuário:* {userName}\n┊👑 *Prefixo:* {prefix}\n╰─┈┈┈┈┈┈┈┈┈┈◜❁◞┈┈┈┈┈┈┈┈┈┈─╯`,
+  menuTopBorder: "╭┈",
+  bottomBorder: "╰─┈┈┈┈┈┈┈┈┈┈◜❁◞┈┈┈┈┈┈┈┈┈┈─╯",
+  menuTitleIcon: "🍧ฺꕸ▸",
+  menuItemIcon: "•.̇𖥨֗🫟⭟",
+  separatorIcon: "❁",
+  middleBorder: "┊"
+});
+ensureJsonFileExists(ECONOMY_FILE, {
+  users: {},
+  shop: {
+    "pickaxe_bronze": { name: "Picareta de Bronze", price: 500, type: "tool", toolType: "pickaxe", tier: "bronze", durability: 20, effect: { mineBonus: 0.1 } },
+    "pickaxe_ferro": { name: "Picareta de Ferro", price: 1500, type: "tool", toolType: "pickaxe", tier: "ferro", durability: 60, effect: { mineBonus: 0.25 } },
+    "pickaxe_diamante": { name: "Picareta de Diamante", price: 5000, type: "tool", toolType: "pickaxe", tier: "diamante", durability: 150, effect: { mineBonus: 0.5 } },
+    "repairkit": { name: "Kit de Reparos", price: 350, type: "consumable", effect: { repair: 40 } },
+    "vault": { name: "Cofre", price: 1000, type: "upgrade", effect: { bankCapacity: 5000 } },
+    "lucky": { name: "Amuleto da Sorte", price: 1500, type: "upgrade", effect: { workBonus: 0.2 } },
+    "rod": { name: "Vara de Pesca", price: 400, type: "tool", effect: { fishBonus: 0.2 } },
+    "lamp": { name: "Lanterna", price: 600, type: "tool", effect: { exploreBonus: 0.2 } },
+    "bow": { name: "Arco de Caça", price: 800, type: "tool", effect: { huntBonus: 0.25 } },
+    "forge": { name: "Kit de Forja", price: 1200, type: "tool", effect: { forgeBonus: 0.25 } },
+    "espada_ferro": { name: "Espada de Ferro", price: 800, type: "equipment", slot: "weapon", attackBonus: 10, durability: 50 },
+    "espada_aco": { name: "Espada de Aço", price: 1500, type: "equipment", slot: "weapon", attackBonus: 18, durability: 80 },
+    "espada_diamante": { name: "Espada de Diamante", price: 3000, type: "equipment", slot: "weapon", attackBonus: 30, durability: 120 },
+    "arco_basico": { name: "Arco Básico", price: 600, type: "equipment", slot: "weapon", attackBonus: 8, durability: 40 },
+    "arco_reforcado": { name: "Arco Reforçado", price: 1800, type: "equipment", slot: "weapon", attackBonus: 20, durability: 70 },
+    "armadura_couro": { name: "Armadura de Couro", price: 900, type: "equipment", slot: "armor", defenseBonus: 8, durability: 60 },
+    "armadura_ferro": { name: "Armadura de Ferro", price: 2400, type: "equipment", slot: "armor", defenseBonus: 20, durability: 100 },
+    "armadura_aco": { name: "Armadura de Aço", price: 3600, type: "equipment", slot: "armor", defenseBonus: 32, durability: 140 },
+    "escudo_madeira": { name: "Escudo de Madeira", price: 450, type: "equipment", slot: "shield", defenseBonus: 5, durability: 30 },
+    "escudo_ferro": { name: "Escudo de Ferro", price: 1350, type: "equipment", slot: "shield", defenseBonus: 15, durability: 60 },
+    "elmo_couro": { name: "Elmo de Couro", price: 600, type: "equipment", slot: "helmet", defenseBonus: 4, durability: 40 },
+    "elmo_ferro": { name: "Elmo de Ferro", price: 1200, type: "equipment", slot: "helmet", defenseBonus: 12, durability: 70 },
+    "elmo_aco": { name: "Elmo de Aço", price: 2100, type: "equipment", slot: "helmet", defenseBonus: 20, durability: 100 },
+    "botas_couro": { name: "Botas de Couro", price: 750, type: "equipment", slot: "boots", defenseBonus: 3, durability: 45 },
+    "botas_ferro": { name: "Botas de Ferro", price: 1500, type: "equipment", slot: "boots", defenseBonus: 10, durability: 80 },
+    "botas_aco": { name: "Botas de Aço", price: 2700, type: "equipment", slot: "boots", defenseBonus: 18, durability: 120 },
+    "anel_ferro": { name: "Anel de Ferro", price: 1050, type: "equipment", slot: "accessory", attackBonus: 5, defenseBonus: 3, durability: 50 },
+    "anel_ouro": { name: "Anel de Ouro", price: 2400, type: "equipment", slot: "accessory", attackBonus: 12, defenseBonus: 8, durability: 80 },
+    "amuleto_protecao": { name: "Amuleto de Proteção", price: 3000, type: "equipment", slot: "accessory", defenseBonus: 15, hpBonus: 20, durability: 100 },
+    "luvas_ferro": { name: "Luvas de Ferro", price: 900, type: "equipment", slot: "accessory", attackBonus: 4, defenseBonus: 4, durability: 40 },
+    "luvas_aco": { name: "Luvas de Aço", price: 1800, type: "equipment", slot: "accessory", attackBonus: 10, defenseBonus: 10, durability: 70 },
+    "pet_sword": { name: "Espada para Pet", price: 1200, type: "pet_equipment", slot: "weapon", attackBonus: 15, durability: 30 },
+    "pet_armor": { name: "Armadura para Pet", price: 1500, type: "pet_equipment", slot: "armor", defenseBonus: 12, durability: 40 },
+    "pet_shield": { name: "Escudo para Pet", price: 1000, type: "pet_equipment", slot: "shield", defenseBonus: 8, durability: 50 },
+    "pet_ring": { name: "Anel do Pet", price: 700, type: "pet_equipment", slot: "accessory", attackBonus: 5, defenseBonus: 5, durability: 25 },
+    "dragonslayer": { name: "Mata-Dragões", price: 3000, type: "pet_equipment", slot: "weapon", attackBonus: 20, advantage: "dragao", durability: 40 },
+    "wolfbane": { name: "Maldição Lobisomem", price: 2500, type: "pet_equipment", slot: "weapon", attackBonus: 18, advantage: "lobo", durability: 35 },
+    "phoenix_feather": { name: "Pena de Fênix", price: 2800, type: "pet_equipment", slot: "accessory", hpBonus: 30, advantage: "fenix", durability: 30 },
+    "tiger_talisman": { name: "Talismã do Tigre", price: 2200, type: "pet_equipment", slot: "accessory", attackBonus: 12, advantage: "tigre", durability: 25 },
+    "eagle_eye": { name: "Olho de Águia", price: 2400, type: "pet_equipment", slot: "accessory", critBonus: 15, advantage: "aguia", durability: 30 },
+    "mystic_collar": { name: "Coleira Mística", price: 3500, type: "pet_equipment", slot: "accessory", attackBonus: 10, defenseBonus: 10, hpBonus: 20, durability: 50 },
+    "battle_potion": { name: "Poção de Batalha", price: 500, type: "consumable", effect: { tempAttack: 10, duration: 3 } },
+    "defense_potion": { name: "Poção de Defesa", price: 500, type: "consumable", effect: { tempDefense: 10, duration: 3 } },
+    "evolution_stone": { name: "Pedra da Evolução", price: 10000, type: "consumable", effect: { evolve: true } }
+  },
+  materialsPrices: {
+    pedra: 2, ferro: 6, ouro: 12, diamante: 30,
+    madeira: 1, corda: 3, couro: 4, linha: 2, carvao: 5, cristal: 25
+  },
+  recipes: {
+    pickaxe_bronze: { requires: { pedra: 10, ferro: 2 }, gold: 100 },
+    pickaxe_ferro: { requires: { ferro: 10, ouro: 2 }, gold: 300 },
+    pickaxe_diamante: { requires: { ouro: 10, diamante: 4 }, gold: 1200 },
+    espada_ferro: { requires: { ferro: 15, madeira: 5 }, gold: 250 },
+    espada_aco: { requires: { ferro: 25, carvao: 10 }, gold: 500 },
+    espada_diamante: { requires: { diamante: 8, ferro: 20 }, gold: 1500 },
+    arco_basico: { requires: { madeira: 10, corda: 3 }, gold: 200 },
+    arco_reforcado: { requires: { madeira: 15, ferro: 12 }, gold: 600 },
+    armadura_couro: { requires: { couro: 20, linha: 5 }, gold: 300 },
+    armadura_ferro: { requires: { ferro: 30, couro: 15 }, gold: 800 },
+    armadura_aco: { requires: { ferro: 40, carvao: 15 }, gold: 1200 },
+    escudo_madeira: { requires: { madeira: 15, ferro: 5 }, gold: 150 },
+    escudo_ferro: { requires: { ferro: 25, madeira: 10 }, gold: 450 },
+    elmo_couro: { requires: { couro: 10, linha: 3 }, gold: 200 },
+    elmo_ferro: { requires: { ferro: 15, couro: 8 }, gold: 400 },
+    elmo_aco: { requires: { ferro: 20, carvao: 8 }, gold: 700 },
+    botas_couro: { requires: { couro: 12, linha: 4 }, gold: 250 },
+    botas_ferro: { requires: { ferro: 18, couro: 10 }, gold: 500 },
+    botas_aco: { requires: { ferro: 25, carvao: 10 }, gold: 900 },
+    anel_ferro: { requires: { ferro: 8, ouro: 2 }, gold: 350 },
+    anel_ouro: { requires: { ouro: 12, diamante: 2 }, gold: 800 },
+    amuleto_protecao: { requires: { cristal: 5, ouro: 8 }, gold: 1000 },
+    luvas_ferro: { requires: { ferro: 10, couro: 5 }, gold: 300 },
+    luvas_aco: { requires: { ferro: 15, carvao: 6 }, gold: 600 }
+  },
+  jobCatalog: {
+    "estagiario": { name: "Estagiário", min: 80, max: 140 },
+    "designer": { name: "Designer", min: 150, max: 250 },
+    "programador": { name: "Programador", min: 200, max: 350 },
+    "gerente": { name: "Gerente", min: 260, max: 420 }
+  }
+});
+ensureJsonFileExists(LEVELING_FILE, {
+  users: {},
+  patents: [
+    { name: "Iniciante", minLevel: 1 },
+    { name: "Aprendiz", minLevel: 2 },
+    { name: "Explorador", minLevel: 5 },
+    { name: "Aventureiro", minLevel: 10 },
+    { name: "Veterano", minLevel: 15 },
+    { name: "Mestre", minLevel: 20 },
+    { name: "Lenda", minLevel: 25 },
+    { name: "Herói", minLevel: 30 },
+    { name: "Conquistador", minLevel: 35 },
+    { name: "Imperador", minLevel: 40 },
+    { name: "Deus", minLevel: 50 },
+    { name: "Titã", minLevel: 60 },
+    { name: "Soberano", minLevel: 70 },
+    { name: "Celestial", minLevel: 80 },
+    { name: "Imortal", minLevel: 90 },
+    { name: "Divindade", minLevel: 100 },
+    { name: "Cósmico", minLevel: 120 },
+    { name: "Eterno", minLevel: 140 },
+    { name: "Supremo", minLevel: 160 },
+    { name: "Omnipotente", minLevel: 180 },
+    { name: "Transcendente", minLevel: 200 },
+    { name: "Absoluto", minLevel: 250 },
+    { name: "Infinito", minLevel: 300 }
+  ]
+});
+ensureJsonFileExists(MSGPREFIX_FILE, { message: false });
+ensureJsonFileExists(MSGBOTON_FILE, { enabled: true,
+message: `╭───⊱ 🍥 『 *{botName}* 』 ⊱───╮
+┊
+┊ ✨ *Oiiiii! Estou online!* ✨
+┊
+┊ 🚀 *Status:* Pronta para uso!
+┊ 🌀 *Evolução:* Ativa
+┊
+┊ Aproveite a experiência! 🌟
+┊
+┊ _Para gerenciar este aviso, use:_
+┊ ⌨️ *{prefix}msgboton*
+┊
+╰────⊱ 🍥 ✨ 🍥 ⊱────╯`
+});
+ensureJsonFileExists(CUSTOM_REACTS_FILE, { reacts: [] });
+ensureJsonFileExists(REMINDERS_FILE, { reminders: [] });
+ensureJsonFileExists(CMD_NOT_FOUND_FILE, {
+  enabled: true,
+  message: '❌ Comando não encontrado! Tente {prefix}menu para ver todos os comandos disponíveis.',
+  style: 'friendly',
+  variables: {
+    command: '{command}',
+    prefix: '{prefix}',
+    user: '{user}',
+    botName: '{botName}',
+    userName: '{userName}'
+  }
+});
+ensureJsonFileExists(SUBDONOS_FILE, { subdonos: [] });
+ensureJsonFileExists(ALUGUEIS_FILE, { globalMode: false, groups: {} });
+ensureJsonFileExists(CODIGOS_ALUGUEL_FILE, { codes: {} });
+ensureJsonFileExists(RELATIONSHIPS_FILE, { pairs: {}, archived: [] });
+ensureJsonFileExists(SUPPORT_TICKETS_FILE, { groups: {} });

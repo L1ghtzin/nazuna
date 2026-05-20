@@ -3,13 +3,13 @@
     "version": "9.0.0",
     "description": "Bot de whatsapp criada por hiudy",
     "type": "module",
-    "main": "dados/src/connect.js",
+    "main": "src/connect.js",
     "scripts": {
-        "start": "node dados/src/.scripts/start.js",
-        "dev": "nodemon dados/src/.scripts/start.js",
-        "config": "node dados/src/.scripts/config.js",
-        "config:install": "node dados/src/.scripts/config.js --install",
-        "update": "node dados/src/.scripts/update.js"
+        "start": "node src/.scripts/start.js",
+        "dev": "nodemon src/.scripts/start.js",
+        "config": "node src/.scripts/config.js",
+        "config:install": "node src/.scripts/config.js --install",
+        "update": "node src/.scripts/update.js"
     },
     "repository": {
         "type": "git",
