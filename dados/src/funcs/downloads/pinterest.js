@@ -1,226 +1,126 @@
 /**
- * Pinterest Download - Implementação direta sem API externa
- * Scraping direto do Pinterest
+ * Pinterest - SystemZone + SiputZX + apisnodz
  */
-
 import axios from 'axios';
-import SimpleCache from '../../utils/simpleCache.js';
 
-const BASE_URL = 'https://br.pinterest.com';
-
-// Cache simples
-const CACHE_TTL = 30 * 60 * 1000; // 30 minutos
-const cache = new SimpleCache(CACHE_TTL);
+const SYSZONE = 'https://systemzone.store/api';
+const SIPUTZX = 'https://api.siputzx.my.id/api';
+const NODZ = 'https://apisnodz.com.br/api';
+const CACHE_TTL = 30 * 60 * 1000;
+const cache = new Map();
+const PIN_REGEX = /^https?:\/\/(?:(?:[a-zA-Z0-9-]+\.)?pinterest\.\w{2,6}(?:\.\w{2})?\/pin\/\d+|pin\.it\/[a-zA-Z0-9]+)/;
 
 function getCached(key) {
-  return cache.get(key);
+  const item = cache.get(key);
+  if (!item) return null;
+  if (Date.now() - item.ts > CACHE_TTL) { cache.delete(key); return null; }
+  return item.val;
 }
 
 function setCache(key, val) {
-  cache.set(key, val, CACHE_TTL);
-}
-
-// Headers
-const MOBILE_HEADERS = {
-  'User-Agent': 'Mozilla/5.0 (Linux; Android 10; SM-G975F) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/88.0.4324.152 Mobile Safari/537.36'
-};
-
-const DESKTOP_HEADERS = {
-  'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-};
-
-// Validador de URL
-const PIN_REGEX = /^https?:\/\/(?:[a-zA-Z0-9-]+\.)?pinterest\.\w{2,6}(?:\.\w{2})?\/pin\/\d+|https?:\/\/pin\.it\/[a-zA-Z0-9]+/;
-
-function isValidPinURL(url) {
-  return PIN_REGEX.test(url);
+  if (cache.size >= 1000) cache.delete(cache.keys().next().value);
+  cache.set(key, { val, ts: Date.now() });
 }
 
 function extractPinId(url) {
-  const match = url.match(/(?:\/pin\/(\d+)|\/pin\/([a-zA-Z0-9]+))/);
-  return match ? match[1] || match[2] : null;
+  const m = url.match(/\/pin\/(\w+)/);
+  return m ? m[1] : null;
 }
 
-/**
- * Extrai URLs de imagens do HTML
- */
-function extractImagesFromHTML(html) {
-  const images = new Set();
-  const imgRegex = /"(https:\/\/i\.pinimg\.com\/[^"]+)"/g;
-  let match;
-  
-  while ((match = imgRegex.exec(html)) !== null) {
-    const url = match[1];
-    // Melhorar qualidade da imagem
-    const enhancedUrl = url
-      .replace(/236x/g, '736x')
-      .replace(/60x60/g, '736x');
-    images.add(enhancedUrl);
-  }
-
-  return Array.from(images);
-}
-
-/**
- * Pesquisa imagens no Pinterest
- * @param {string} query - Termo de pesquisa
- * @returns {Promise<Object>} Resultados da pesquisa
- */
 async function search(query) {
   try {
-    if (!query || typeof query !== 'string' || query.trim().length === 0) {
-      return {
-        ok: false,
-        msg: 'Termo de pesquisa inválido'
-      };
-    }
+    if (!query?.trim()) return { ok: false, msg: 'Termo de pesquisa inválido' };
 
-    // Verificar cache
-    const cached = getCached(`search:${query.toLowerCase()}`);
+    const key = `s:${query.toLowerCase()}`;
+    const cached = getCached(key);
     if (cached) return { ok: true, ...cached, cached: true };
 
-    const response = await axios.get(`${BASE_URL}/search/pins/?q=${encodeURIComponent(query)}`, {
-      headers: MOBILE_HEADERS,
-      timeout: 60000
-    });
+    // 1. SystemZone API (múltiplos resultados, qualidade original)
+    try {
+      const { data } = await axios.get(`${SYSZONE}/pinterest`, { params: { q: query, limit: 10 }, timeout: 15000 });
+      if (data?.status && data.results?.length) {
+        const urls = data.results.map(r => r.image_url).filter(Boolean);
+        if (urls.length) {
+          const result = { type: 'image', mime: 'image/jpeg', query, count: urls.length, urls };
+          setCache(key, result);
+          return { ok: true, ...result };
+        }
+      }
+    } catch {}
 
-    const images = extractImagesFromHTML(response.data);
+    // 2. SiputZX API (múltiplos resultados, qualidade original)
+    try {
+      const { data } = await axios.get(`${SIPUTZX}/s/pinterest`, { params: { query, type: 'image' }, timeout: 15000 });
+      if (data?.status && data.data?.length) {
+        const urls = data.data.map(i => i.image_url || i.video_url || i.gif_url).filter(Boolean);
+        if (urls.length) {
+          const result = { type: 'image', mime: 'image/jpeg', query, count: urls.length, urls };
+          setCache(key, result);
+          return { ok: true, ...result };
+        }
+      }
+    } catch {}
 
-    if (images.length === 0) {
-      return {
-        ok: false,
-        msg: 'Nenhuma imagem encontrada'
-      };
-    }
+    // 3. apisnodz
+    try {
+      const { data } = await axios.get(`${NODZ}/pesquisas/pinterest`, { params: { query }, timeout: 15000 });
+      if (data?.success && data.resultado?.imagem) {
+        const result = { type: 'image', mime: 'image/jpeg', query, count: 1, urls: [data.resultado.imagem] };
+        setCache(key, result);
+        return { ok: true, ...result };
+      }
+    } catch {}
 
-    const result = {
-      criador: 'Hiudy',
-      type: 'image',
-      mime: 'image/jpeg',
-      query: query,
-      count: images.length,
-      urls: images.slice(0, 50) // Máximo 50 resultados
-    };
-
-    setCache(`search:${query.toLowerCase()}`, result);
-
-    return {
-      ok: true,
-      ...result
-    };
-  } catch (error) {
-    console.error('Erro na pesquisa Pinterest:', error.message);
-    return {
-      ok: false,
-      msg: 'Erro ao buscar imagens no Pinterest'
-    };
+    return { ok: false, msg: 'Nenhuma imagem encontrada' };
+  } catch (e) {
+    console.error('[Pinterest] search:', e.message);
+    return { ok: false, msg: 'Erro ao buscar imagens no Pinterest' };
   }
 }
 
-/**
- * Faz download de um pin do Pinterest
- * @param {string} url - URL do pin
- * @returns {Promise<Object>} Dados do download
- */
 async function dl(url) {
   try {
-    if (!isValidPinURL(url)) {
-      return {
-        ok: false,
-        msg: 'URL inválida. Certifique-se de que é um link válido do Pinterest'
-      };
-    }
+    if (!PIN_REGEX.test(url)) return { ok: false, msg: 'URL inválida do Pinterest' };
 
-    // Verificar cache
-    const cached = getCached(`download:${url}`);
+    const key = `d:${url}`;
+    const cached = getCached(key);
     if (cached) return { ok: true, ...cached, cached: true };
 
     const pinId = extractPinId(url);
-    if (!pinId) {
-      return {
-        ok: false,
-        msg: 'Não foi possível extrair o ID do pin da URL'
-      };
-    }
 
-    const params = {
-      source_url: `/pin/${pinId}/`,
-      data: {
-        options: {
-          id: pinId,
-          field_set_key: 'auth_web_main_pin',
-          noCache: true,
-          fetch_visual_search_objects: true
-        },
-        context: {}
+    // 1. SystemZone API
+    try {
+      const { data } = await axios.get(`${SYSZONE}/v2/pinterest`, { params: { url }, timeout: 15000 });
+      if (data?.status && data.data) {
+        const r = data.data;
+        const urls = [r.url, r.image, r.video, ...(r.medias || []).map(m => m.url)].filter(Boolean);
+        if (urls.length) {
+          const result = { pin_id: pinId, type: r.video ? 'video' : 'image', mime: r.video ? 'video/mp4' : 'image/jpeg', title: r.title || '', description: r.description || '', urls };
+          setCache(key, result);
+          return { ok: true, ...result };
+        }
       }
-    };
+    } catch {}
 
-    const response = await axios.get(`${BASE_URL}/resource/PinResource/get/?${new URLSearchParams({
-      source_url: params.source_url,
-      data: JSON.stringify(params.data)
-    })}`, {
-      headers: DESKTOP_HEADERS,
-      timeout: 60000
-    });
+    // 2. apisnodz API
+    try {
+      const { data } = await axios.get(`${NODZ}/downloads/pinterest`, { params: { url }, timeout: 15000 });
+      if (data?.success && data.resultado && !data.resultado.msg) {
+        const r = data.resultado;
+        const urls = [r.url, r.imagem, r.video, ...(r.urls || [])].filter(Boolean);
+        if (urls.length) {
+          const result = { pin_id: pinId, type: r.video ? 'video' : 'image', mime: r.video ? 'video/mp4' : 'image/jpeg', title: r.title || '', description: r.description || '', urls };
+          setCache(key, result);
+          return { ok: true, ...result };
+        }
+      }
+    } catch {}
 
-    const pinData = response.data.resource_response?.data;
-    if (!pinData) {
-      return {
-        ok: false,
-        msg: 'Pin não encontrado'
-      };
-    }
-
-    const videos = pinData.videos?.video_list;
-    const images = pinData.images;
-    let mediaUrls = [];
-
-    if (videos) {
-      Object.values(videos).forEach(video => {
-        if (video.url) mediaUrls.push(video.url);
-      });
-    }
-
-    if (images) {
-      Object.values(images).forEach(image => {
-        if (image.url) mediaUrls.push(image.url);
-      });
-    }
-
-    if (mediaUrls.length === 0) {
-      return {
-        ok: false,
-        msg: 'O pin não contém mídia disponível para download'
-      };
-    }
-
-    const result = {
-      criador: 'Hiudy',
-      pin_id: pinId,
-      type: videos ? 'video' : 'image',
-      mime: videos ? 'video/mp4' : 'image/jpeg',
-      title: pinData.title || 'Pin do Pinterest',
-      description: pinData.description || '',
-      urls: mediaUrls
-    };
-
-    setCache(`download:${url}`, result);
-
-    return {
-      ok: true,
-      ...result
-    };
-  } catch (error) {
-    console.error('Erro no download Pinterest:', error.message);
-    return {
-      ok: false,
-      msg: 'Erro ao baixar o conteúdo do Pinterest'
-    };
+    return { ok: false, msg: 'Sem mídia disponível para download' };
+  } catch (e) {
+    console.error('[Pinterest] dl:', e.message);
+    return { ok: false, msg: 'Erro ao baixar do Pinterest' };
   }
 }
 
-export {
-  search,
-  dl
-};
+export { search, dl };

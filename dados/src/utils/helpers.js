@@ -1,5 +1,6 @@
 import fs from 'fs';
 import pathz from 'path';
+import { fileURLToPath } from 'url';
 
 // Cache global de JID → LID em memória (para acesso rápido)
 let jidLidMemoryCache = new Map();

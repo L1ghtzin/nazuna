@@ -1,16 +1,17 @@
-import modules from "../../funcs/exports.js";
-const { pinterest } = modules;
-
 export default {
   name: "pinterest",
   description: "Pesquisa imagens e vídeos no Pinterest ou baixa diretamente a partir de um link",
   commands: ["pinterest", "pin"],
   usage: `${global.prefix}pinterest <termo> [/quantidade] ou ${global.prefix}pinterest <link>`,
   handle: async ({ 
-    reply, q, nazu, from, info, prefix,
+    reply, q, nazu, from, info, prefix, pinterest,
     MESSAGES
   }) => {
     try {
+      if (!pinterest || typeof pinterest.search !== 'function') {
+        return reply('⚠️ Módulo Pinterest indisponível no momento. Tente novamente em instantes.');
+      }
+
       if (!q) return reply('Digite o termo para pesquisar no Pinterest. Exemplo: ' + prefix + 'pinterest gatinhos /3');
 
       // Detecta se é URL de Pinterest antes de qualquer split
@@ -18,7 +19,7 @@ export default {
       let maxImages = 3;
       let searchTerm = q.trim();
 
-      // Só extrai limite \/N se NÃO for URL
+      // Só extrai limite /N se NÃO for URL
       if (!PIN_URL_REGEX.test(searchTerm)) {
         const limitMatch = searchTerm.match(/\s\/\s*(\d{1,2})\s*$/);
         if (limitMatch) {
@@ -33,20 +34,27 @@ export default {
 
       const isPinUrl = PIN_URL_REGEX.test(searchTerm);
       
+      await reply(isPinUrl ? '⏳ Baixando do Pinterest... Isso pode levar um momento.' : `🔍 Pesquisando no Pinterest por "*${searchTerm}*"...\n\n⏳ Aguarde um momento...`);
+
       const pinPromise = isPinUrl ? pinterest.dl(searchTerm) : pinterest.search(searchTerm);
 
       pinPromise
         .then(async (datinha) => {
-          if (!datinha.ok || !datinha.urls || datinha.urls.length === 0) {
+          if (!datinha || !datinha.ok || !datinha.urls || datinha.urls.length === 0) {
             return reply(isPinUrl ? 'Não foi possível baixar este link do Pinterest. 😕' : 'Nenhuma imagem encontrada para o termo pesquisado. 😕');
           }
 
           const itemsToSend = datinha.urls.slice(0, maxImages);
           for (const url of itemsToSend) {
-            const message = isPinUrl && datinha.type === 'video'
-              ? { video: { url }, caption: '📌 Download do Pinterest' }
-              : { image: { url }, caption: isPinUrl ? '📌 Download do Pinterest' : `📌 Resultado da pesquisa por "${searchTerm}"` };
-            await nazu.sendMessage(from, message, { quoted: info });
+            try {
+              const message = isPinUrl && datinha.type === 'video'
+                ? { video: { url }, caption: '📌 Download do Pinterest' }
+                : { image: { url }, caption: isPinUrl ? '📌 Download do Pinterest' : `📌 Resultado da pesquisa por "${searchTerm}"` };
+              await nazu.sendMessage(from, message, { quoted: info });
+            } catch (sendErr) {
+              console.error('Erro ao enviar mídia Pinterest:', sendErr.message);
+              // Tenta a próxima URL se houver
+            }
           }
         })
         .catch((e) => {
