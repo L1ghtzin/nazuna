@@ -1,3 +1,4 @@
+import { hasPaymentMessage } from '../utils/securityHelpers.js';
 const soadmBypassCommands = ['suporte', 'ticketsuporte', 'suporteticket', 'ticket'];
 
 // Debounce para escrita do antispam — evita I/O excessivo em alta carga
@@ -61,23 +62,26 @@ export async function processGroupSecurity(context) {
       }
     }
 
-    // 2. AntiStatus
+    // 2. AntiStatus (ação configurável: 'apagar' ou 'banir')
     if (isGroup && isStatusMention && groupData.antistatus && !isGroupAdmin) {
       if (!isUserWhitelisted(sender, 'antistatus')) {
-        if (isBotAdmin) {
-          await nazu.groupParticipantsUpdate(from, [sender], 'remove');
+        const statusAction = groupData.antistatus_action || 'banir';
+        try {
           await nazu.sendMessage(from, { delete: info.key });
-          await reply(`🚫 @${getUserName(sender)}, Status não são permitidos neste grupo. Você foi removido.`, { mentions: [sender] });
-        } else {
-          await nazu.sendMessage(from, { delete: info.key });
-          await reply(`🚫 Atenção, @${getUserName(sender)}! Status não são permitidos neste grupo. Não consigo remover você, mas evite compartilhar status aqui.`, { mentions: [sender] });
+          if (statusAction === 'banir' && isBotAdmin) {
+            await nazu.groupParticipantsUpdate(from, [sender], 'remove');
+            await reply(`🚫 @${getUserName(sender)}, Status não são permitidos neste grupo. Você foi removido.`, { mentions: [sender] });
+          } else {
+            await reply(`🚫 @${getUserName(sender)}, Status não são permitidos neste grupo!${statusAction === 'banir' && !isBotAdmin ? ' (não sou admin para remover)' : ''}`, { mentions: [sender] });
+          }
+        } catch (error) {
+          console.error('Erro no AntiStatus:', error);
         }
       }
     }
 
-    // 3. AntiBtn & AntiPayload (Proteção contra requestPaymentMessage, orderMessage, etc)
-    const isSpecialPayload = ['requestPaymentMessage', 'orderMessage', 'paymentConfirmMessage'].includes(type);
-    if (isGroup && (isButtonMessage || isSpecialPayload) && groupData.antibtn && !isGroupAdmin) {
+    // 3. AntiBtn (Proteção contra mensagens de botões)
+    if (isGroup && isButtonMessage && groupData.antibtn && !isGroupAdmin) {
       if (!isUserWhitelisted(sender, 'antibtn')) {
         if (isBotAdmin) {
           await nazu.groupParticipantsUpdate(from, [sender], 'remove');
@@ -86,6 +90,104 @@ export async function processGroupSecurity(context) {
         } else {
           await nazu.sendMessage(from, { delete: { remoteJid: from, fromMe: false, id: info.key.id, participant: sender } });
           await reply(`⚠️ Atenção, @${getUserName(sender)}! Mensagens com botões não são permitidas. Não consigo remover você, mas evite usar esse tipo de mensagem.`, { mentions: [sender] });
+        }
+      }
+    }
+
+    // 3.5 Anti-Payment Recursivo (Ação fixa: Banir + Fechar grupo + Limpeza)
+    if (isGroup && groupData.antipayment && info.message && !isGroupAdmin && !isOwner) {
+      if (hasPaymentMessage(info.message)) {
+        if (!isUserWhitelisted(sender, 'antipayment')) {
+          try {
+            // 1. Fechar o grupo temporariamente (panic mode)
+            if (isBotAdmin) {
+              await nazu.groupSettingUpdate(from, 'announcement');
+            }
+
+            // 2. Remover o usuário
+            if (isBotAdmin) {
+              await nazu.groupParticipantsUpdate(from, [sender], 'remove');
+            }
+
+            // 3. Limpeza do chat (scroll/clearChat)
+            const cleanText = Array(400).fill('🤍').join('\n');
+            await nazu.sendMessage(from, {
+              text: `${cleanText}\n🚫 *Anti-Payment:* Pagamento detectado. @${getUserName(sender)} foi removido e o grupo foi fechado temporariamente por segurança!`,
+              mentions: [sender]
+            });
+
+          } catch (error) {
+            console.error('Erro no processamento de Anti-Payment:', error);
+          }
+        }
+      }
+    }
+
+    // 3.6 Anti-Mídias (Anti-Coisas)
+    const isViewOnce = info.message?.viewOnceMessage?.message ||
+                       info.message?.viewOnceMessageV2?.message ||
+                       info.message?.viewOnceMessageV2Extension?.message;
+
+    const hasNormalImage = type === 'imageMessage';
+    const hasViewOnceImage = !!(isViewOnce && isViewOnce.imageMessage);
+
+    const hasNormalVideo = type === 'videoMessage';
+    const hasViewOnceVideo = !!(isViewOnce && isViewOnce.videoMessage);
+
+    const hasNormalAudio = type === 'audioMessage';
+    const hasViewOnceAudio = !!(isViewOnce && isViewOnce.audioMessage);
+
+    const hasDoc = type === 'documentMessage' || type === 'documentWithCaptionMessage' ||
+                   info.message?.documentWithCaptionMessage?.message?.documentMessage;
+
+    const hasEvent = type === 'eventMessage';
+
+    const hasProduct = type === 'productMessage' || type === 'catalogMessage' ||
+                       type === 'orderMessage';
+
+    if (isGroup && !isGroupAdmin && !isOwner) {
+      let isMediaRestricted = false;
+      let restrictedTypeLabel = '';
+      let mediaActionKey = '';
+
+      if (groupData.antiimage && (hasNormalImage || (groupData.antiimage_vizu && hasViewOnceImage))) {
+        isMediaRestricted = true;
+        restrictedTypeLabel = hasViewOnceImage ? 'Imagens (Vizu Única)' : 'Imagens';
+        mediaActionKey = 'antiimage_action';
+      } else if (groupData.antivideo && (hasNormalVideo || (groupData.antivideo_vizu && hasViewOnceVideo))) {
+        isMediaRestricted = true;
+        restrictedTypeLabel = hasViewOnceVideo ? 'Vídeos (Vizu Única)' : 'Vídeos';
+        mediaActionKey = 'antivideo_action';
+      } else if (groupData.antiaudio && (hasNormalAudio || (groupData.antiaudio_vizu && hasViewOnceAudio))) {
+        isMediaRestricted = true;
+        restrictedTypeLabel = hasViewOnceAudio ? 'Áudios (Vizu Única)' : 'Áudios';
+        mediaActionKey = 'antiaudio_action';
+      } else if (groupData.antidoc && hasDoc) {
+        isMediaRestricted = true;
+        restrictedTypeLabel = 'Documentos';
+        mediaActionKey = 'antidoc_action';
+      } else if (groupData.antievento && hasEvent) {
+        isMediaRestricted = true;
+        restrictedTypeLabel = 'Eventos';
+        mediaActionKey = 'antievento_action';
+      } else if (groupData.antiproduto && hasProduct) {
+        isMediaRestricted = true;
+        restrictedTypeLabel = 'Produtos/Catálogos';
+        mediaActionKey = 'antiproduto_action';
+      }
+
+      if (isMediaRestricted) {
+        const mediaAction = groupData[mediaActionKey] || 'apagar';
+        try {
+          await nazu.sendMessage(from, { delete: { remoteJid: from, fromMe: false, id: info.key.id, participant: sender } });
+          if (mediaAction === 'banir' && isBotAdmin) {
+            await nazu.groupParticipantsUpdate(from, [sender], 'remove');
+            await reply(`🚫 @${getUserName(sender)}, o envio de *${restrictedTypeLabel}* é proibido neste grupo. Você foi removido!`, { mentions: [sender] });
+          } else {
+            await reply(`⚠️ @${getUserName(sender)}, o envio de *${restrictedTypeLabel}* está proibido neste grupo!${mediaAction === 'banir' && !isBotAdmin ? ' (não sou admin para remover)' : ''}`, { mentions: [sender] });
+          }
+        } catch (error) {
+          console.error(`Erro ao deletar mídia restrita (${restrictedTypeLabel}):`, error);
         }
       }
     }

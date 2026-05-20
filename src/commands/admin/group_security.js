@@ -3,7 +3,7 @@
 export default {
   name: "group_security",
   description: "Segurança e moderação avançada de grupos",
-  commands: ["aceitarticket", "addblacklist", "addparceria", "addpartnership", "adv", "advertir", "antibanmarcar", "antifig", "antipalavra", "antisl", "antistatus", "antisticker+", "antistickerplus", "antistickerplusbot", "antitoxic", "antitóxico", "antiword", "banghost", "bemvindo", "blacklist", "boasvindas", "bv", "clean", "configsaida", "delblacklist", "delfotobv", "delfotosaiu", "delparceria", "delpartnership", "exit", "exitimg", "exitmsg", "fotobv", "fotosaida", "fotosaiu", "imgsaiu", "legendasaiu", "limpar", "listadv", "listblacklist", "modoparceria", "parcerias", "partnerships", "protecaomarcar", "removeradv", "removerfotobv", "removerfotosaiu", "rmadv", "rmexitimg", "rmfotobv", "rmfotosaiu", "rmwelcomeimg", "saida", "suporte", "suporteaceitar", "suporteticket", "textsaiu", "ticket", "ticket.aceitar", "ticketaceitar", "ticketsuporte", "unblacklist", "unwarning", "warning", "warninglist", "welcome", "welcomeimg"],
+  commands: ["aceitarticket", "addblacklist", "addparceria", "addpartnership", "adv", "advertir", "antibanmarcar", "antifig", "antipalavra", "antisl", "antistatus", "antisticker+", "antistickerplus", "antistickerplusbot", "antitoxic", "antitóxico", "antiword", "banghost", "bemvindo", "blacklist", "boasvindas", "bv", "clean", "configsaida", "delblacklist", "delfotobv", "delfotosaiu", "delparceria", "delpartnership", "exit", "exitimg", "exitmsg", "fotobv", "fotosaida", "fotosaiu", "imgsaiu", "legendasaiu", "limpar", "listadv", "listblacklist", "modoparceria", "parcerias", "partnerships", "protecaomarcar", "removeradv", "removerfotobv", "removerfotosaiu", "rmadv", "rmexitimg", "rmfotobv", "rmfotosaiu", "rmwelcomeimg", "saida", "suporte", "suporteaceitar", "suporteticket", "textsaiu", "ticket", "ticket.aceitar", "ticketaceitar", "ticketsuporte", "unblacklist", "unwarning", "warning", "warninglist", "welcome", "welcomeimg", "antipayment", "antipagamento", "antiimagem", "antivideo", "antiaudio", "antidoc", "antievento", "antiproduto"],
   handle: async ({ 
     nazu, from, info, command, args, reply, prefix, pushname, sender, q,
     isGroup, isGroupAdmin, isBotAdmin, isOwner, AllgroupMembers, groupData, groupFile,
@@ -270,9 +270,24 @@ export default {
       if (!isGroup) return reply(MESSAGES.permission.groupOnly);
       if (!isGroupAdmin) return reply(MESSAGES.permission.adminOnly);
       if (!isBotAdmin) return reply(MESSAGES.permission.botAdminOnly);
+
+      const action = args[0]?.toLowerCase();
+
+      if (action === 'apagar' || action === 'banir') {
+        groupData.antistatus = true;
+        groupData.antistatus_action = action;
+        await optimizer.saveJsonWithCache(groupFile, groupData);
+        return reply(`🛡️ *AntiStatus* ativado!\n🔧 Ação: *${action === 'banir' ? 'Apagar + Banir 🔨' : 'Apenas apagar 🗑️'}*`);
+      }
+
       groupData.antistatus = !groupData.antistatus;
       await optimizer.saveJsonWithCache(groupFile, groupData);
-      return reply(`🛡️ *AntiStatus* ${groupData.antistatus ? 'ativado' : 'desativado'}!`);
+
+      if (groupData.antistatus) {
+        const currentAction = groupData.antistatus_action || 'banir';
+        return reply(`🛡️ *AntiStatus* ativado!\n🔧 Ação atual: *${currentAction === 'banir' ? 'Apagar + Banir 🔨' : 'Apenas apagar 🗑️'}*\n\n📝 Para mudar a ação:\n• ${prefix}antistatus apagar\n• ${prefix}antistatus banir`);
+      }
+      return reply(`🛡️ *AntiStatus* desativado!`);
     }
 
     if (['antistickerplus', 'antisticker+', 'antisl', 'antistickerplusbot'].includes(cmd)) {
@@ -297,6 +312,179 @@ export default {
       if (!antipalavra) return reply("❌ Sistema Antipalavra indisponível.");
       await antipalavra.handleCommand(nazu, from, args, groupData, { reply, prefix });
       return;
+    }
+
+    if (['antipayment', 'antipagamento'].includes(cmd)) {
+      if (!isGroup) return reply(MESSAGES.permission.groupOnly);
+      if (!isGroupAdmin) return reply(MESSAGES.permission.adminOnly);
+      if (!isBotAdmin) return reply(MESSAGES.permission.botAdminOnly);
+
+      groupData.antipayment = !groupData.antipayment;
+      await optimizer.saveJsonWithCache(groupFile, groupData);
+
+      if (groupData.antipayment) {
+        return reply(`🛡️ *Anti-Payment* ativado!\n🔧 Ação: *Banir + Fechar grupo + Limpeza 🔨*`);
+      }
+      return reply(`🛡️ *Anti-Payment* desativado!`);
+    }
+
+    if (['antiimagem', 'antiimage'].includes(cmd)) {
+      if (!isGroup) return reply(MESSAGES.permission.groupOnly);
+      if (!isGroupAdmin) return reply(MESSAGES.permission.adminOnly);
+
+      const action = args[0]?.toLowerCase();
+
+      if (action === 'vizu') {
+        groupData.antiimage_vizu = !groupData.antiimage_vizu;
+        await optimizer.saveJsonWithCache(groupFile, groupData);
+        return reply(`🛡️ *Anti-Imagem (Vizu Única)*: ${groupData.antiimage_vizu ? '✅ Ativado! Imagens de visualização única também serão bloqueadas.' : '❌ Desativado! Apenas imagens normais serão bloqueadas.'}`);
+      }
+
+      if (action === 'apagar' || action === 'banir') {
+        groupData.antiimage = true;
+        groupData.antiimage_action = action;
+        await optimizer.saveJsonWithCache(groupFile, groupData);
+        return reply(`🛡️ *Anti-Imagem* ativado!\n🔧 Ação: *${action === 'banir' ? 'Apagar + Banir 🔨' : 'Apenas apagar 🗑️'}*`);
+      }
+
+      groupData.antiimage = !groupData.antiimage;
+      await optimizer.saveJsonWithCache(groupFile, groupData);
+
+      if (groupData.antiimage) {
+        const currentAction = groupData.antiimage_action || 'apagar';
+        const vizuStatus = groupData.antiimage_vizu ? '✅ Sim' : '❌ Não';
+        return reply(`🛡️ *Anti-Imagem* ativado!\n🔧 Ação atual: *${currentAction === 'banir' ? 'Apagar + Banir 🔨' : 'Apenas apagar 🗑️'}*\n👁️ Bloquear Vizu Única: *${vizuStatus}*\n\n📝 Configurações:\n• ${prefix}antiimagem apagar\n• ${prefix}antiimagem banir\n• ${prefix}antiimagem vizu`);
+      }
+      return reply(`🛡️ *Anti-Imagem* desativado!`);
+    }
+
+    if (['antivideo'].includes(cmd)) {
+      if (!isGroup) return reply(MESSAGES.permission.groupOnly);
+      if (!isGroupAdmin) return reply(MESSAGES.permission.adminOnly);
+
+      const action = args[0]?.toLowerCase();
+
+      if (action === 'vizu') {
+        groupData.antivideo_vizu = !groupData.antivideo_vizu;
+        await optimizer.saveJsonWithCache(groupFile, groupData);
+        return reply(`🛡️ *Anti-Vídeo (Vizu Única)*: ${groupData.antivideo_vizu ? '✅ Ativado! Vídeos de visualização única também serão bloqueados.' : '❌ Desativado! Apenas vídeos normais serão bloqueados.'}`);
+      }
+
+      if (action === 'apagar' || action === 'banir') {
+        groupData.antivideo = true;
+        groupData.antivideo_action = action;
+        await optimizer.saveJsonWithCache(groupFile, groupData);
+        return reply(`🛡️ *Anti-Vídeo* ativado!\n🔧 Ação: *${action === 'banir' ? 'Apagar + Banir 🔨' : 'Apenas apagar 🗑️'}*`);
+      }
+
+      groupData.antivideo = !groupData.antivideo;
+      await optimizer.saveJsonWithCache(groupFile, groupData);
+
+      if (groupData.antivideo) {
+        const currentAction = groupData.antivideo_action || 'apagar';
+        const vizuStatus = groupData.antivideo_vizu ? '✅ Sim' : '❌ Não';
+        return reply(`🛡️ *Anti-Vídeo* ativado!\n🔧 Ação atual: *${currentAction === 'banir' ? 'Apagar + Banir 🔨' : 'Apenas apagar 🗑️'}*\n👁️ Bloquear Vizu Única: *${vizuStatus}*\n\n📝 Configurações:\n• ${prefix}antivideo apagar\n• ${prefix}antivideo banir\n• ${prefix}antivideo vizu`);
+      }
+      return reply(`🛡️ *Anti-Vídeo* desativado!`);
+    }
+
+    if (['antiaudio'].includes(cmd)) {
+      if (!isGroup) return reply(MESSAGES.permission.groupOnly);
+      if (!isGroupAdmin) return reply(MESSAGES.permission.adminOnly);
+
+      const action = args[0]?.toLowerCase();
+
+      if (action === 'vizu') {
+        groupData.antiaudio_vizu = !groupData.antiaudio_vizu;
+        await optimizer.saveJsonWithCache(groupFile, groupData);
+        return reply(`🛡️ *Anti-Áudio (Vizu Única)*: ${groupData.antiaudio_vizu ? '✅ Ativado! Áudios de visualização única também serão bloqueados.' : '❌ Desativado! Apenas áudios normais serão bloqueados.'}`);
+      }
+
+      if (action === 'apagar' || action === 'banir') {
+        groupData.antiaudio = true;
+        groupData.antiaudio_action = action;
+        await optimizer.saveJsonWithCache(groupFile, groupData);
+        return reply(`🛡️ *Anti-Áudio* ativado!\n🔧 Ação: *${action === 'banir' ? 'Apagar + Banir 🔨' : 'Apenas apagar 🗑️'}*`);
+      }
+
+      groupData.antiaudio = !groupData.antiaudio;
+      await optimizer.saveJsonWithCache(groupFile, groupData);
+
+      if (groupData.antiaudio) {
+        const currentAction = groupData.antiaudio_action || 'apagar';
+        const vizuStatus = groupData.antiaudio_vizu ? '✅ Sim' : '❌ Não';
+        return reply(`🛡️ *Anti-Áudio* ativado!\n🔧 Ação atual: *${currentAction === 'banir' ? 'Apagar + Banir 🔨' : 'Apenas apagar 🗑️'}*\n👁️ Bloquear Vizu Única: *${vizuStatus}*\n\n📝 Configurações:\n• ${prefix}antiaudio apagar\n• ${prefix}antiaudio banir\n• ${prefix}antiaudio vizu`);
+      }
+      return reply(`🛡️ *Anti-Áudio* desativado!`);
+    }
+
+    if (['antidoc'].includes(cmd)) {
+      if (!isGroup) return reply(MESSAGES.permission.groupOnly);
+      if (!isGroupAdmin) return reply(MESSAGES.permission.adminOnly);
+
+      const action = args[0]?.toLowerCase();
+
+      if (action === 'apagar' || action === 'banir') {
+        groupData.antidoc = true;
+        groupData.antidoc_action = action;
+        await optimizer.saveJsonWithCache(groupFile, groupData);
+        return reply(`🛡️ *Anti-Documento* ativado!\n🔧 Ação: *${action === 'banir' ? 'Apagar + Banir 🔨' : 'Apenas apagar 🗑️'}*`);
+      }
+
+      groupData.antidoc = !groupData.antidoc;
+      await optimizer.saveJsonWithCache(groupFile, groupData);
+
+      if (groupData.antidoc) {
+        const currentAction = groupData.antidoc_action || 'apagar';
+        return reply(`🛡️ *Anti-Documento* ativado!\n🔧 Ação atual: *${currentAction === 'banir' ? 'Apagar + Banir 🔨' : 'Apenas apagar 🗑️'}*\n\n📝 Para mudar a ação:\n• ${prefix}antidoc apagar\n• ${prefix}antidoc banir`);
+      }
+      return reply(`🛡️ *Anti-Documento* desativado!`);
+    }
+
+    if (['antievento'].includes(cmd)) {
+      if (!isGroup) return reply(MESSAGES.permission.groupOnly);
+      if (!isGroupAdmin) return reply(MESSAGES.permission.adminOnly);
+
+      const action = args[0]?.toLowerCase();
+
+      if (action === 'apagar' || action === 'banir') {
+        groupData.antievento = true;
+        groupData.antievento_action = action;
+        await optimizer.saveJsonWithCache(groupFile, groupData);
+        return reply(`🛡️ *Anti-Evento* ativado!\n🔧 Ação: *${action === 'banir' ? 'Apagar + Banir 🔨' : 'Apenas apagar 🗑️'}*`);
+      }
+
+      groupData.antievento = !groupData.antievento;
+      await optimizer.saveJsonWithCache(groupFile, groupData);
+
+      if (groupData.antievento) {
+        const currentAction = groupData.antievento_action || 'apagar';
+        return reply(`🛡️ *Anti-Evento* ativado!\n🔧 Ação atual: *${currentAction === 'banir' ? 'Apagar + Banir 🔨' : 'Apenas apagar 🗑️'}*\n\n📝 Para mudar a ação:\n• ${prefix}antievento apagar\n• ${prefix}antievento banir`);
+      }
+      return reply(`🛡️ *Anti-Evento* desativado!`);
+    }
+
+    if (['antiproduto'].includes(cmd)) {
+      if (!isGroup) return reply(MESSAGES.permission.groupOnly);
+      if (!isGroupAdmin) return reply(MESSAGES.permission.adminOnly);
+
+      const action = args[0]?.toLowerCase();
+
+      if (action === 'apagar' || action === 'banir') {
+        groupData.antiproduto = true;
+        groupData.antiproduto_action = action;
+        await optimizer.saveJsonWithCache(groupFile, groupData);
+        return reply(`🛡️ *Anti-Produto* ativado!\n🔧 Ação: *${action === 'banir' ? 'Apagar + Banir 🔨' : 'Apenas apagar 🗑️'}*`);
+      }
+
+      groupData.antiproduto = !groupData.antiproduto;
+      await optimizer.saveJsonWithCache(groupFile, groupData);
+
+      if (groupData.antiproduto) {
+        const currentAction = groupData.antiproduto_action || 'apagar';
+        return reply(`🛡️ *Anti-Produto* ativado!\n🔧 Ação atual: *${currentAction === 'banir' ? 'Apagar + Banir 🔨' : 'Apenas apagar 🗑️'}*\n\n📝 Para mudar a ação:\n• ${prefix}antiproduto apagar\n• ${prefix}antiproduto banir`);
+      }
+      return reply(`🛡️ *Anti-Produto* desativado!`);
     }
   }
 };

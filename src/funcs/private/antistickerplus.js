@@ -68,24 +68,23 @@ export const checkSticker = async (nazu, from, info, groupData, { isGroupAdmin, 
             msg?.extendedTextMessage?.contextInfo?.quotedMessage?.lottieStickerMessage?.message?.stickerMessage;
 
         if (stickerMsg && stickerMsg?.isLottie === true) {
-            // Ação: Apagar mensagem
-            if (groupData.antistickerplus_apagar || groupData.antistickerplus_remover) {
-                await nazu.sendMessage(from, {
-                    delete: info.key
-                });
-            }
+            // Ação: Apagar mensagem (sempre)
+            await nazu.sendMessage(from, {
+                delete: info.key
+            });
 
-            // Ação: Notificar
-            if (groupData.antistickerplus_remover) {
-                await reply(
-                    `🚫 @${getUserName(sender)}, este grupo não permite esse tipo de figurinha do whatsapp plus (Lottie).`,
-                    { mentions: [sender] }
-                );
-            }
-
-            // Ação: Remover usuário
+            // Ação: Remover usuário (se configurado)
             if (groupData.antistickerplus_remover && isBotAdmin) {
                 await nazu.groupParticipantsUpdate(from, [sender], 'remove');
+                await reply(
+                    `🚫 @${getUserName(sender)}, figurinhas Lottie (WhatsApp Plus) não são permitidas neste grupo. Você foi removido!`,
+                    { mentions: [sender] }
+                );
+            } else {
+                await reply(
+                    `⚠️ @${getUserName(sender)}, figurinhas Lottie (WhatsApp Plus) não são permitidas neste grupo!`,
+                    { mentions: [sender] }
+                );
             }
         }
     } catch (err) {

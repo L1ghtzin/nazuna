@@ -33,6 +33,7 @@ import { removeBg, upscale } from '../funcs/utils/imagetools.js';
 import spotifyModule from '../funcs/downloads/spotify.js';
 import captchaIndex, { initCaptchaIndex, addCaptcha, removeCaptcha, getCaptcha, hasPendingCaptcha } from './captchaIndex.js';
 import fsPromises from 'fs/promises';
+import { hasGroupStatusMessage } from './securityHelpers.js';
 
 import {
   formatUptime,
@@ -554,11 +555,7 @@ export async function buildMessageContext(nazu, info, store, messagesCache, rent
     const isVisuU = type === 'viewOnceMessage';
     const isButtonMessage = info.message.interactiveMessage || info.message.templateButtonReplyMessage || info.message.buttonsMessage || info.message.interactiveResponseMessage || info.message.listResponseMessage || info.message.buttonsResponseMessage ? true : false;
     const msgString = info.message ? JSON.stringify(info.message) : '';
-    const isStatusMention = msgString.includes('groupStatusMentionMessage') || 
-                            msgString.includes('groupStatusMessage') || 
-                            msgString.includes('statusMentionMessage') || 
-                            msgString.includes('groupStatusMessageV2') ||
-                            msgString.includes('groupStatusMentionMessageV2');
+    const isStatusMention = info.message ? hasGroupStatusMessage(info.message) : false;
     const body = getMessageText(info.message) || info?.text || '';
 
     let args = body.trim().split(/ +/).slice(1);

@@ -136,7 +136,9 @@ export default {
         'antidel': 'antidel',
         'antidelete': 'antidel',
         'autodl': 'autodl',
-        'autodown': 'autodl'
+        'autodown': 'autodl',
+        'antibotao': 'antibtn',
+        'antibtn': 'antibtn'
       };
       
       const feature = featureMap[cmd] || cmd;
