@@ -3,7 +3,7 @@ import { resolveParamAlias, timeLeft } from "../../utils/helpers.js";
 export default {
   name: "casino",
   description: "Jogos de azar e cassino do RPG",
-  commands: ["bet", "blackjack", "coinflip", "crash", "dados", "dice", "moeda", "roleta", "slots"],
+  commands: ["bet", "blackjack", "bj", "coinflip", "crash", "dados", "dice", "moeda", "roleta", "slots"],
   usage: "{prefix}roleta <cor> <valor>",
   handle: async ({ 
     reply, 

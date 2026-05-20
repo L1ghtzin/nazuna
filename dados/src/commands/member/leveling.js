@@ -1,7 +1,7 @@
 export default {
   name: "leveling",
   description: "Sistema de níveis e experiência por mensagens",
-  commands: ["21", "addxp", "adicionardinheiro", "adicionaritem", "bj", "blackjack", "buypremium", "cacaniquel", "cavalos", "comprarpremium", "corrida", "definirnivelrpg", "delxp", "estatisticasrpg", "globalrank", "horserace", "level", "leveling", "lojadeluxo", "lojapremium", "loteria", "lottery", "mega", "premiumshop", "rankglobal", "removerdinheiro", "removeritem", "resetarjogador", "resetrpgglobal", "roleta", "roulette", "rpgadd", "rpgadditem", "rpgaddmoney", "rpgremove", "rpgremoveitem", "rpgremovemoney", "rpgresetglobal", "rpgresetplayer", "rpgsetlevel", "rpgstatistics", "rpgstats", "setlevel", "slotmachine", "slots", "topglobal", "toprpgglobal", "votar", "vote"],
+  commands: ["leveling", "level", "rank", "ranking", "addxp", "delxp", "setlevel"],
   handle: async ({ 
     nazu, from, info, command, q, args, reply, prefix, pushname, sender, menc_os2,
     isGroup, isGroupAdmin, isOwner, groupData, groupFile, getUserName, optimizer,

@@ -1970,11 +1970,16 @@ function ensureEconomyDefaults(econ) {
   if (!econ.lottery) {
     econ.lottery = {
       jackpot: 10000,
+      tickets: {},
       lastDraw: Date.now(),
       drawInterval: 86400000, // 24h
       ticketPrice: 100,
       winners: []
     };
+    changed = true;
+  }
+  if (!econ.lottery.tickets) {
+    econ.lottery.tickets = {};
     changed = true;
   }
   

@@ -28,7 +28,11 @@ export default {
 
     // --- LOTERIA ---
     if (command === 'loteria' || command === 'lottery' || command === 'mega') {
-      if (!econ.lottery) econ.lottery = { jackpot: 100000, tickets: {}, lastDraw: Date.now() };
+      if (!econ.lottery) {
+        econ.lottery = { jackpot: 100000, tickets: {}, lastDraw: Date.now() };
+      } else if (!econ.lottery.tickets) {
+        econ.lottery.tickets = {};
+      }
       const sub = args[0]?.toLowerCase();
       
       if (!sub || sub === 'ver') {
