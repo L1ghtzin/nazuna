@@ -94,6 +94,27 @@ class OptimizedCacheManager {
             forceString: false
         }));
 
+        for (const [type, cache] of this.caches.entries()) {
+            this.setupCacheEvents(type, cache);
+        }
+    }
+
+    setupCacheEvents(type, cache) {
+        const cleanupKey = (key) => {
+            const scopedKey = `${type}:${key}`;
+            this.lruOrder.delete(scopedKey);
+            this.accessCounts.delete(scopedKey);
+        };
+        cache.on('del', cleanupKey);
+        cache.on('expired', cleanupKey);
+        cache.on('flush', () => {
+            for (const k of this.lruOrder.keys()) {
+                if (k.startsWith(`${type}:`)) {
+                    this.lruOrder.delete(k);
+                    this.accessCounts.delete(k);
+                }
+            }
+        });
     }
 
     /**
@@ -134,12 +155,14 @@ class OptimizedCacheManager {
                 finalValue = await this.compressData(value);
             }
 
+            const scopedKey = `${cacheType}:${key}`;
+
             // Update access counts and LRU
-            this.accessCounts.set(key, (this.accessCounts.get(key) || 0) + 1);
-            this.lruOrder.set(key, Date.now());
+            this.accessCounts.set(scopedKey, (this.accessCounts.get(scopedKey) || 0) + 1);
+            this.lruOrder.set(scopedKey, Date.now());
 
             // Calculate dynamic TTL based on access frequency
-            const accessCount = this.accessCounts.get(key);
+            const accessCount = this.accessCounts.get(scopedKey);
             let dynamicTtl = ttl;
             if (!ttl && accessCount > 5) {
                 dynamicTtl = Math.min(60 * 60, accessCount * 60); // Up to 1 hour for frequently accessed
@@ -169,9 +192,10 @@ class OptimizedCacheManager {
             let value = cache.get(key);
             
             if (value !== undefined) {
+                const scopedKey = `${cacheType}:${key}`;
                 // Update LRU and access counts
-                this.lruOrder.set(key, Date.now());
-                this.accessCounts.set(key, (this.accessCounts.get(key) || 0) + 1);
+                this.lruOrder.set(scopedKey, Date.now());
+                this.accessCounts.set(scopedKey, (this.accessCounts.get(scopedKey) || 0) + 1);
 
                 if (this.compressionEnabled && this.isCompressed(value)) {
                     value = await this.decompressData(value);
@@ -194,8 +218,9 @@ class OptimizedCacheManager {
             if (cache) {
                 const deleted = cache.del(key);
                 if (deleted) {
-                    this.lruOrder.delete(key);
-                    this.accessCounts.delete(key);
+                    const scopedKey = `${cacheType}:${key}`;
+                    this.lruOrder.delete(scopedKey);
+                    this.accessCounts.delete(scopedKey);
                 }
                 return deleted;
             }
@@ -336,10 +361,10 @@ class OptimizedCacheManager {
                         if (['media', 'messages'].includes(cacheType)) {
                             cache.flushAll();
                         } else {
-                            await this.removeOldCacheItems(cache, 0.5);
+                            await this.removeOldCacheItems(cacheType, cache, 0.5);
                         }
                     } else {
-                        await this.removeOldCacheItems(cache, 0.2);
+                        await this.removeOldCacheItems(cacheType, cache, 0.2);
                     }
                 }
                 
@@ -368,7 +393,7 @@ class OptimizedCacheManager {
     /**
      * Remove itens antigos do cache usando LRU
      */
-    async removeOldCacheItems(cache, percentage) {
+    async removeOldCacheItems(cacheType, cache, percentage) {
         try {
             const keys = cache.keys();
             const removeCount = Math.floor(keys.length * percentage);
@@ -376,13 +401,14 @@ class OptimizedCacheManager {
             if (removeCount === 0) return;
 
             // Sort by LRU order (oldest first)
-            const sortedKeys = keys.sort((a, b) => (this.lruOrder.get(a) || 0) - (this.lruOrder.get(b) || 0));
+            const sortedKeys = keys.sort((a, b) => (this.lruOrder.get(`${cacheType}:${a}`) || 0) - (this.lruOrder.get(`${cacheType}:${b}`) || 0));
             const keysToRemove = sortedKeys.slice(0, removeCount);
             
             for (const key of keysToRemove) {
                 cache.del(key);
-                this.lruOrder.delete(key);
-                this.accessCounts.delete(key);
+                const scopedKey = `${cacheType}:${key}`;
+                this.lruOrder.delete(scopedKey);
+                this.accessCounts.delete(scopedKey);
             }
             
         } catch (error) {
