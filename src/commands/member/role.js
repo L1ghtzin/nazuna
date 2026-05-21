@@ -108,7 +108,7 @@ export default {
     getFileBuffer,
     MESSAGES
   }) => {
-    if (!isGroup) return reply('⚠️ Este comando só pode ser usado em grupos.');
+    if (!isGroup) return reply(MESSAGES.permission.groupOnly);
 
     const sub = command.toLowerCase();
     const groupPrefix = groupData.customPrefix || prefix;
@@ -185,7 +185,7 @@ export default {
 
     // CRIAR ROLE
     if (sub === 'role.criar') {
-      if (!isGroupAdmin) return reply('🚫 Apenas administradores podem criar rolês.');
+      if (!isGroupAdmin) return reply(MESSAGES.permission.adminOnly);
 
       const parts = parsePipeArgs(q);
       if (parts.length < 1) {
@@ -282,7 +282,7 @@ export default {
 
     // ALTERAR ROLE
     if (sub === 'role.alterar') {
-      if (!isGroupAdmin) return reply('🚫 Apenas administradores podem alterar rolês.');
+      if (!isGroupAdmin) return reply(MESSAGES.permission.adminOnly);
 
       const parts = parsePipeArgs(q);
       if (!parts.length) {
@@ -366,7 +366,7 @@ export default {
 
     // EXCLUIR ROLE
     if (sub === 'role.excluir') {
-      if (!isGroupAdmin) return reply('🚫 Apenas administradores podem excluir rolês.');
+      if (!isGroupAdmin) return reply(MESSAGES.permission.adminOnly);
 
       const code = sanitizeRoleCode(q || args[0] || '');
       if (!code) return reply(`📋 Informe o código do rolê. Exemplo: ${groupPrefix}role.excluir CODIGO`);

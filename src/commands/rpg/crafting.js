@@ -120,7 +120,7 @@ export default {
       
       const itemName = args.join(' ').toLowerCase();
       if (!me.inventory[itemName] || me.inventory[itemName] <= 0) {
-        return reply('❌ Você não tem este item!');
+        return reply(MESSAGES.rpg.itemNotFound);
       }
       
       me.inventory[itemName]--;

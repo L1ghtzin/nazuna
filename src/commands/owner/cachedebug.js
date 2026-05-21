@@ -16,7 +16,7 @@ export default {
     // ou assumir isOwner por enquanto (pode ser ajustado)
     // Para simplificar, vou permitir se for isOwner.
     try {
-      if (!isOwner) return reply('🚫 Apenas o dono pode usar este comando.');
+      if (!isOwner) return reply(MESSAGES.permission.ownerOnly);
       
       const cacheFilePath = JID_LID_CACHE_FILE;
       

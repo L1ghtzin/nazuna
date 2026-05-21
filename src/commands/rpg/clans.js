@@ -100,7 +100,7 @@ export default {
       if (!q) {
         if (!me.clan) return reply(`💔 Você não faz parte de nenhum clã. Use: ${prefix}cla <nome do clã> para consultar outro clã.`);
         clanObj = econ.clans[me.clan];
-        if (!clanObj) { me.clan = null; saveEconomy(econ); return reply('❌ Seu clã não foi encontrado.'); }
+        if (!clanObj) { me.clan = null; saveEconomy(econ); return reply(MESSAGES.rpg.clanNotFound); }
       } else {
         const qTrim = q.trim();
         const qLower = qTrim.toLowerCase();

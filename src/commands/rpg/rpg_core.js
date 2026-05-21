@@ -294,8 +294,8 @@ export default {
         if (sub === 'comprar' || sub === 'buy') {
             const key = (args[0] || '').toLowerCase();
             const it = econ.shop?.[key];
-            if (!it) return reply(`💔 Item não encontrado.`);
-            if (me.wallet < it.price) return reply('💰 Saldo insuficiente.');
+            if (!it) return reply(MESSAGES.rpg.invalidItem);
+            if (me.wallet < it.price) return reply(MESSAGES.rpg.insufficientCoins(it.price));
             me.wallet -= it.price;
             if (it.type === 'tool') {
                 me.tools = me.tools || {};

@@ -116,10 +116,10 @@ export default {
         key.toLowerCase().includes(itemIdQuery) && me.inventory[key] > 0
       );
       
-      if (!foundItemId) return reply('❌ Você não tem esse item no inventário!');
+      if (!foundItemId) return reply(MESSAGES.rpg.itemNotFound);
       
       const item = shop[foundItemId];
-      if (!item) return reply('❌ Item inválido!');
+      if (!item) return reply(MESSAGES.rpg.invalidItem);
       
       // Determina o slot do equipamento do pet
       let slot = 'weapon';

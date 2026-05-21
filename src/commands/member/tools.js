@@ -103,7 +103,7 @@ export default {
 
     // --- GROUPSTATS ---
     if (['groupstats', 'estatisticas', 'statsgrupo'].includes(command)) {
-      if (!isGroup) return reply('⚠️ Este comando só funciona em grupos!');
+      if (!isGroup) return reply(MESSAGES.permission.groupOnly);
       try {
         const groupMeta = await getCachedGroupMetadata(from);
         const members = groupMeta.participants.length;

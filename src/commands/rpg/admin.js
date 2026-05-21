@@ -46,7 +46,7 @@ export default {
     }
 
     // --- ADMIN COMMANDS CHECK ---
-    if (!isOwnerOrSub) return reply('🚫 Apenas donos e subdonos podem usar este comando!');
+    if (!isOwnerOrSub) return reply(MESSAGES.permission.subOwnerOnly);
 
     const econ = loadEconomy();
 
@@ -109,7 +109,7 @@ export default {
 
     // --- RESET GLOBAL ---
     if (command === 'rpgresetglobal' || command === 'resetrpgglobal') {
-      if (!isOwner) return reply('🚫 Comando exclusivo do dono!');
+      if (!isOwner) return reply(MESSAGES.permission.ownerOnly);
       if (args[0] !== 'confirmar') return reply(`⚠️ Use ${prefix}rpgresetglobal confirmar para resetar TUDO.`);
       econ.users = {};
       saveEconomy(econ);

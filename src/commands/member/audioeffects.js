@@ -90,7 +90,7 @@ export default {
           if (fs.existsSync(gem)) fs.unlinkSync(gem);
           if (err) {
             console.error(`FFMPEG Error (Audio Effect ${command}):`, err);
-            return reply("❌ Erro ao processar o áudio. Verifique se o FFmpeg está instalado corretamente no seu sistema.");
+            return reply(MESSAGES.error.ffmpegMissing);
           }
           
           if (fs.existsSync(ran)) {
@@ -109,7 +109,7 @@ export default {
       }
     } catch (e) {
       console.error(e);
-      await reply("❌ Ocorreu um erro interno. O caminho do diretório de temporários existe?");
+      await reply(MESSAGES.error.internal);
     }
   },
 };

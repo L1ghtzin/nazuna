@@ -22,7 +22,7 @@ export default {
     AllgroupMembers,
     MESSAGES
   }) => {
-    if (!isGroup) return reply(`💔 Este comando só pode ser usado em grupos!`);
+    if (!isGroup) return reply(MESSAGES.permission.groupOnly);
     
     // O sistema de relacionamentos usa o 'isModoBn' (Modo Brincadeira) no index.js original
     // mas aqui estamos usando groupData.modorpg ou similar se for parte do RPG.

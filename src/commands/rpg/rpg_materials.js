@@ -58,10 +58,10 @@ export default {
             const price = (econ.materialsPrices || {})[matKey];
             if (!price) return reply(`❌ Material inválido.\n\n💱 Veja preços com ${prefix}precos`);
             const have = me.materials?.[matKey] || 0;
-            if (have <= 0) return reply('❌ Você não possui esse material.');
+            if (have <= 0) return reply(MESSAGES.rpg.itemNotFound);
             const qtyArg = args[1] || 'all';
             const qty = ['all', 'tudo', 'max'].includes((qtyArg || '').toLowerCase()) ? have : parseAmount(qtyArg, have);
-            if (!isFinite(qty) || qty <= 0) return reply('❌ Quantidade inválida.');
+            if (!isFinite(qty) || qty <= 0) return reply(MESSAGES.error.invalidQuantity);
             const gain = qty * price;
             me.materials[matKey] = have - qty;
             me.wallet += gain;

@@ -66,7 +66,7 @@ export default {
       const stockType = aliases[rawStockType];
 
       if (!stockType || !me.investments.stocks[stockType] || me.investments.stocks[stockType] < amount) {
-        return reply('❌ Você não tem ações suficientes!');
+        return reply(MESSAGES.error.notEnough('ações'));
       }
 
       const price = Math.floor(econ.stockMarket.prices[stockType]);
@@ -103,7 +103,7 @@ export default {
       const stockType = aliasesForBuy[rawStockType];
 
       if (!stockType || !econ.stockMarket.prices[stockType]) {
-        return reply('❌ Ação inválida! Escolha: tecnologia, ouro, bitcoin, energia');
+        return reply(MESSAGES.rpg.invalidItem + ' Escolha: tecnologia, ouro, bitcoin, energia');
       }
 
       const price = Math.floor(econ.stockMarket.prices[stockType]);

@@ -26,6 +26,7 @@ import { buildMessageContext } from './utils/contextBuilder.js';
 import { handleCustomCommand } from './middleware/customCommandHandler.js';
 import { dispatchCommand } from './middleware/commandDispatcher.js';
 import { logProcessedMessage } from './utils/logger.js';
+import { MESSAGES } from './utils/messages.js';
 
 // ==================== INICIALIZAÇÃO ====================
 const __filename = fileURLToPath(import.meta.url);
@@ -136,6 +137,13 @@ async function NazuninhaBotExec(nazu, info, store, messagesCache, rentalExpirati
   } catch (error) {
     console.error(`❌ [${msgId}] ERRO NO PROCESSAMENTO`);
     console.error('Erro no processamento da mensagem:', error);
+    try {
+      if (info?.key?.remoteJid) {
+        await nazu.sendMessage(info.key.remoteJid, { text: MESSAGES.error.unexpected }, { quoted: info });
+      }
+    } catch (e) {
+      console.error('Falha ao enviar mensagem de erro:', e);
+    }
   }
 }
 

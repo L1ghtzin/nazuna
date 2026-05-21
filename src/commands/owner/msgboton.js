@@ -10,7 +10,7 @@ export default {
     MESSAGES
   }) => {
     try {
-      if (!isOwner) return reply('🚫 Apenas o dono pode alterar esta configuração!');
+      if (!isOwner) return reply(MESSAGES.permission.ownerOnly);
       
       const currentConfig = loadMsgBotOn();
       const newStatus = !currentConfig.enabled;

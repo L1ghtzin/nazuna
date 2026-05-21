@@ -25,7 +25,7 @@ export default {
     menc_os2,
     MESSAGES
   }) => {
-    if (!isGroup) return reply("❌ Este comando só pode ser usado em grupos!");
+    if (!isGroup) return reply(MESSAGES.permission.groupOnly);
     // command já vem desestruturado
 
 
@@ -52,7 +52,7 @@ export default {
       return reply(`❌ Opção inválida! Use *${prefix}mention* para ver as opções.`);
     }
 
-    if (!isGroupAdmin && !isOwner) return reply("❌ Apenas administradores podem usar este comando!");
+    if (!isGroupAdmin && !isOwner) return reply(MESSAGES.permission.adminOnly);
 
     // --- DELETAR (Apagar mensagem do bot ou de outros se for admin) ---
     if (['deletar', 'del', 'd', 'delete'].includes(command)) {

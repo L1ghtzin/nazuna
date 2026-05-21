@@ -5,8 +5,8 @@ export default {
   description: "Gerencia o envio automático de horários pagantes",
   commands: ["autohorarios"],
   usage: `${global.prefix}autohorarios <on|off|status|link>`,
-  handle: async ({ reply, isOwner, isGroupAdmin, args, prefix, from }) => {
-    if (!isOwner && !isGroupAdmin) return reply('⚠️ Este comando é apenas para administradores!');
+  handle: async ({ reply, isOwner, isGroupAdmin, args, prefix, from, MESSAGES }) => {
+    if (!isOwner && !isGroupAdmin) return reply(MESSAGES.permission.adminOnly);
     
     try {
       const action = args[0]?.toLowerCase();

@@ -23,7 +23,7 @@ export default {
     // 👋 BOAS-VINDAS / SAÍDA (WELCOME/EXIT)
     // ═══════════════════════════════════════════════════════════════
     if (['bemvindo', 'bv', 'boasvindas', 'welcome', 'saida', 'exit'].includes(cmd)) {
-      if (!isGroup) return reply("Grupo apenas 💔");
+      if (!isGroup) return reply(MESSAGES.permission.groupOnly);
       if (!isGroupAdmin) return reply(MESSAGES.permission.adminOnly);
       const isWelcome = ['bemvindo', 'bv', 'boasvindas', 'welcome'].includes(cmd);
       
@@ -52,7 +52,7 @@ export default {
     }
 
     if (['fotobv', 'welcomeimg', 'fotosaida', 'exitimg'].includes(cmd)) {
-      if (!isGroup) return reply("Grupo apenas 💔");
+      if (!isGroup) return reply(MESSAGES.permission.groupOnly);
       if (!isGroupAdmin) return reply(MESSAGES.permission.adminOnly);
       if (!isQuotedImage && !isImage) return reply("Envie/marque uma imagem.");
       
@@ -70,7 +70,8 @@ export default {
     }
 
     if (['removerfotobv', 'rmfotobv', 'delfotobv', 'rmwelcomeimg'].includes(cmd)) {
-      if (!isGroup || !isGroupAdmin) return reply("Permissões insuficientes 💔");
+      if (!isGroup) return reply(MESSAGES.permission.groupOnly);
+      if (!isGroupAdmin) return reply(MESSAGES.permission.adminOnly);
       if (!groupData.welcome?.image) return reply("❌ Não há imagem configurada.");
       delete groupData.welcome.image;
       await optimizer.saveJsonWithCache(groupFile, groupData);
@@ -78,7 +79,8 @@ export default {
     }
 
     if (['removerfotosaiu', 'rmfotosaiu', 'delfotosaiu', 'rmexitimg'].includes(cmd)) {
-      if (!isGroup || !isGroupAdmin) return reply("Permissões insuficientes 💔");
+      if (!isGroup) return reply(MESSAGES.permission.groupOnly);
+      if (!isGroupAdmin) return reply(MESSAGES.permission.adminOnly);
       if (!groupData.exit?.image) return reply("❌ Não há imagem configurada.");
       delete groupData.exit.image;
       await optimizer.saveJsonWithCache(groupFile, groupData);
@@ -86,7 +88,7 @@ export default {
     }
 
     if (['configsaida', 'textsaiu', 'legendasaiu', 'exitmsg'].includes(cmd)) {
-      if (!isGroup) return reply("Grupo apenas 💔");
+      if (!isGroup) return reply(MESSAGES.permission.groupOnly);
       if (!isGroupAdmin) return reply(MESSAGES.permission.adminOnly);
       if (!q) return reply(`Uso: ${prefix}${cmd} <mensagem>\n\nTags: #numerodele#, #nomedogp#, #membros#, #desc#`);
       groupData.exit = groupData.exit || {};
@@ -100,7 +102,9 @@ export default {
     // 👻 FANTASMAS (GHOST)
     // ═══════════════════════════════════════════════════════════════
     if (cmd === 'banghost') {
-      if (!isGroup || !isGroupAdmin || !isBotAdmin) return reply("Permissões insuficientes 💔");
+      if (!isGroup) return reply(MESSAGES.permission.groupOnly);
+      if (!isGroupAdmin) return reply(MESSAGES.permission.adminOnly);
+      if (!isBotAdmin) return reply(MESSAGES.permission.botAdminOnly);
       const limit = parseInt(q);
       if (isNaN(limit)) return reply(`Uso: ${prefix}banghost <limite_msgs>`);
       
@@ -120,7 +124,7 @@ export default {
     // ═══════════════════════════════════════════════════════════════
     if (['antibanmarcar', 'protecaomarcar'].includes(cmd)) {
       if (!isOwner) return reply(MESSAGES.permission.ownerOnly);
-      if (!isGroup) return reply("Grupo apenas 💔");
+      if (!isGroup) return reply(MESSAGES.permission.groupOnly);
       
       const mmConfig = loadMassMentionConfig();
       const action = args[0]?.toLowerCase();
@@ -291,7 +295,7 @@ export default {
     }
 
     if (['antistickerplus', 'antisticker+', 'antisl', 'antistickerplusbot'].includes(cmd)) {
-      if (!isGroup) return reply("Grupo apenas 💔");
+      if (!isGroup) return reply(MESSAGES.permission.groupOnly);
       if (!isGroupAdmin && !isOwner) return reply(MESSAGES.permission.adminOnly);
       if (!antistickerplus) return reply("❌ Sistema AntistickerPlus indisponível.");
       await antistickerplus.handleCommand(nazu, from, args, groupData, { reply, prefix });
@@ -299,7 +303,7 @@ export default {
     }
 
     if (cmd === 'antitoxic') {
-      if (!isGroup) return reply("Grupo apenas 💔");
+      if (!isGroup) return reply(MESSAGES.permission.groupOnly);
       if (!isGroupAdmin && !isOwner) return reply(MESSAGES.permission.adminOnly);
       if (!antitoxic) return reply("❌ Sistema Antitoxic indisponível.");
       await antitoxic.handleCommand(nazu, from, args, groupData, { reply, prefix });
@@ -307,7 +311,7 @@ export default {
     }
 
     if (['antipalavra', 'antiword'].includes(cmd)) {
-      if (!isGroup) return reply("Grupo apenas 💔");
+      if (!isGroup) return reply(MESSAGES.permission.groupOnly);
       if (!isGroupAdmin && !isOwner) return reply(MESSAGES.permission.adminOnly);
       if (!antipalavra) return reply("❌ Sistema Antipalavra indisponível.");
       await antipalavra.handleCommand(nazu, from, args, groupData, { reply, prefix });

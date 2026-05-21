@@ -92,7 +92,7 @@ export default {
     // --- INFOSERVER (DIAGNÓSTICO COMPLETO PARA DONO) ---
     if (['infoserver'].includes(cmd)) {
       if (!isOwner) {
-        return reply('🚫 *Ops! Você não tem permissão!* 😅\n\n🌸 *Este comando é só para o dono*\nInformações do servidor são confidenciais! ✨');
+        return reply(MESSAGES.permission.ownerOnly);
       }
       
       const serverUptime = process.uptime();

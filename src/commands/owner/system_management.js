@@ -11,12 +11,12 @@ export default {
     const cmd = command.toLowerCase();
 
     if (!isOwnerOrSub) {
-       return reply('🚫 Apenas o dono ou subdonos podem usar este comando.');
+       return reply(MESSAGES.permission.subOwnerOnly);
     }
 
     // --- UPDATES ---
     if (['updates', 'atualizar', 'update', 'atualizarbot'].includes(cmd)) {
-      if (!isOwner) return reply("🚫 Apenas o Dono principal pode atualizar o bot!");
+      if (!isOwner) return reply(MESSAGES.permission.ownerOnly);
 
       if (!q || q.toLowerCase() !== 'sim') {
         const avisoMsg = `⚠️ *ATENÇÃO - ATUALIZAÇÃO DO BOT* ⚠️\n\n` +

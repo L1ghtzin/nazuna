@@ -44,8 +44,8 @@ export default {
     }
     
     if ((args[0] || '').toLowerCase() === 'coletar') {
-      if (show.claimed) return reply('❌ Você já coletou este prêmio.');
-      if (!isPeriodCompleted(show)) return reply('❌ Complete todas as tarefas para coletar.');
+      if (show.claimed) return reply(MESSAGES.rpg.alreadyClaimed);
+      if (!isPeriodCompleted(show)) return reply(MESSAGES.rpg.notCompleted);
       
       me.wallet += show.reward; 
       show.claimed = true; 
