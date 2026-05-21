@@ -3,7 +3,7 @@ import { resolveParamAlias, timeLeft } from "../../utils/helpers.js";
 export default {
   name: "casino",
   description: "Jogos de azar e cassino do RPG",
-  commands: ["bet", "blackjack", "bj", "coinflip", "crash", "dados", "dice", "moeda", "roleta", "slots"],
+  commands: ["bet", "blackjack", "bj", "coinflip", "crash", "dados", "dice", "moeda", "roleta", "slots", "slotmachine", "cacaniquel"],
   usage: "{prefix}roleta <cor> <valor>",
   handle: async ({ 
     reply, 
@@ -17,6 +17,8 @@ export default {
     loadEconomy, 
     saveEconomy, 
     getEcoUser,
+    parseAmount,
+    fmt,
     MESSAGES
   }) => {
     if (!isGroup) return reply('⚔️ Este comando funciona apenas em grupos com Modo RPG ativo.');
@@ -73,28 +75,54 @@ export default {
     }
 
     // --- SLOTS ---
-    if (command === 'slots') {
-      const bet = parseInt(args[0]) || 0;
-      if (bet < 100) return reply(`💡 Use ${prefix}slots <valor>`);
-      if (me.wallet < bet) return reply('💰 Saldo insuficiente!');
+    if (['slots', 'slotmachine', 'cacaniquel'].includes(command)) {
+      // Cooldown de 10 segundos
+      const cdSlots = me.cooldowns?.slots || 0;
+      if (Date.now() < cdSlots) return reply(`⏳ Aguarde ${timeLeft(cdSlots)} para jogar slots novamente.`);
 
-      const emojis = ['🍒', '🍋', '🔔', '💎', '7️⃣'];
-      const r1 = emojis[Math.floor(Math.random() * emojis.length)];
-      const r2 = emojis[Math.floor(Math.random() * emojis.length)];
-      const r3 = emojis[Math.floor(Math.random() * emojis.length)];
+      if (!args[0]) return reply(`💡 Use ${prefix}slots <valor>`);
+      const bet = parseAmount(args[0], me.wallet);
+      if (!isFinite(bet) || bet <= 0) return reply('❌ Valor inválido!');
+      if (bet < 100) return reply(`💡 Aposta mínima é de 100 gold.`);
+      if (me.wallet < bet) return reply('💰 Saldo insuficiente na carteira!');
 
-      let msg = `🎰 [ ${r1} | ${r2} | ${r3} ] 🎰\n\n`;
-      if (r1 === r2 && r2 === r3) {
-        const win = bet * 10;
+      // SLOTS COM PESOS (PORTADO DO TOKYO/ORIGINAL)
+      const symbols = ['🍒', '🍋', '🍉', '⭐', '🔔', '🍇', '🍊', '🍓'];
+      const getSlot = (idx) => {
+        // Cada posição tem preferência por símbolos diferentes
+        const weights = [30, 20, 15, 12, 10, 6, 4, 3];
+        const shifted = [...weights.slice(idx * 2), ...weights.slice(0, idx * 2)];
+        const total = shifted.reduce((a, b) => a + b, 0);
+        let rand = Math.random() * total;
+        for (let i = 0; i < symbols.length; i++) {
+          rand -= shifted[i];
+          if (rand <= 0) return symbols[i];
+        }
+        return symbols[0];
+      };
+
+      const slot1 = getSlot(0);
+      const slot2 = getSlot(1);
+      const slot3 = getSlot(2);
+
+      me.cooldowns = me.cooldowns || {};
+      me.cooldowns.slots = Date.now() + 10 * 1000; // 10 segundos
+
+      let msg = `🎰 *CAÇA-NÍQUEIS* 🎰\n\n`;
+      msg += `  [ ${slot1} | ${slot2} | ${slot3} ]\n\n`;
+
+      if (slot1 === slot2 && slot2 === slot3) {
+        const multi = slot1 === '🍒' ? 5 : slot1 === '🍋' ? 8 : slot1 === '🍉' ? 12 : slot1 === '⭐' ? 20 : slot1 === '🔔' ? 15 : slot1 === '🍇' ? 10 : slot1 === '🍊' ? 6 : 4;
+        const win = Math.floor(bet * multi);
         me.wallet += win;
-        msg += `✨ JACKPOT! Você ganhou ${win.toLocaleString()}!`;
-      } else if (r1 === r2 || r2 === r3 || r1 === r3) {
+        msg += `🎉 *JACKPOT!* Você alinhou 3 ${slot1} e ganhou *${fmt(win)}* gold! (${multi}x)`;
+      } else if (slot1 === slot2 || slot2 === slot3 || slot1 === slot3) {
         const win = Math.floor(bet * 1.5);
         me.wallet += win - bet;
-        msg += `🎉 Combinou 2! Ganhou ${win.toLocaleString()}!`;
+        msg += `✨ *PAR!* Você combinou 2 símbolos e ganhou *${fmt(win)}* gold! (1.5x)`;
       } else {
         me.wallet -= bet;
-        msg += `😢 Perdeu ${bet.toLocaleString()}.`;
+        msg += `💀 Você perdeu *${fmt(bet)}* gold. A sorte não está com você!`;
       }
       saveEconomy(econ);
       return reply(msg);
