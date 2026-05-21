@@ -36,7 +36,7 @@ export default {
 
     // --- VER CASA ---
     if (!args[0]) {
-      if (!me.house.type) return reply(`🏠 Você mora na rua! Use ${prefix}comprarcasa para mudar isso.`);
+      if (!me.house.type) return reply(`🏠 Você mora na rua! Use ${prefix}casa comprar para mudar isso.`);
       
       const myHouse = houses[me.house.type];
       let text = `╭━━━⊱ ${myHouse.emoji} *SUA PROPRIEDADE* ⊱━━━╮\n`;

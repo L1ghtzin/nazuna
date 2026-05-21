@@ -41,8 +41,9 @@ function fuzzySimilarity(targetNGrams, targetLength, commandObj) {
   if (!nGrams2 || nGrams2.length === 0) return 0;
   
   const commonNGrams = targetNGrams.filter(nGram => nGrams2.includes(nGram));
-  const similarity = Math.round((2 * commonNGrams.length) / (targetLength + nGrams2.length) * 100);
-  return isNaN(similarity) ? 0 : similarity;
+  let similarity = Math.round((2 * commonNGrams.length) / (targetLength + nGrams2.length) * 100);
+  if (similarity > 100) similarity = 100;
+  return isNaN(similarity) ? 0 : Math.max(0, similarity);
 }
 
 /**
