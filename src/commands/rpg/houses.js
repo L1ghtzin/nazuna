@@ -52,7 +52,14 @@ export default {
     if (args[0] === 'comprar') {
       const type = args[1]?.toLowerCase();
       const house = houses[type];
-      if (!house) return reply(`💔 Casa não encontrada!`);
+      if (!house) {
+        let text = `💔 Casa não encontrada!\n\n*Casas disponíveis para compra:*\n`;
+        for (const [key, h] of Object.entries(houses)) {
+          text += `│ ${h.emoji} *${key.charAt(0).toUpperCase() + key.slice(1)}* - ${h.price.toLocaleString()} moedas\n`;
+        }
+        text += `\n💡 *Exemplo:* ${prefix}casa comprar cabana`;
+        return reply(text);
+      }
       
       if (me.wallet < house.price) return reply(`💰 Você precisa de ${house.price.toLocaleString()}!`);
       
