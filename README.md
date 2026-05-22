@@ -1,15 +1,18 @@
-# NAZUNA BOT (WHATSAPP) 
+# CHAINY BOT (WHATSAPP) 
 
 <div align="center">
-  <img src="https://files.catbox.moe/iix8ae.gif" alt="Banner" width="100%">
+  <img src="https://files.catbox.moe/1p22ef.png" alt="Banner" width="100%">
 </div>
 
-> **Nazuna** é um bot de WhatsApp poderoso, fácil de usar e cheio de funcionalidades.  
+> **Chainy** é um bot de WhatsApp poderoso, fácil de usar e cheio de funcionalidades.  
 > Ele foi criado para ajudar na administração de grupos, entretenimento e automação.
 
-## 🧠 Sobre a Nazuna
+> **Baseado no projeto [Nazuna](https://github.com/DevTokyoVx/nazuna)**, criado originalmente por Hiudy e posteriormente assumido por DevTokyoVx.
 
-- A **Nazuna** é um bot versátil desenvolvido com **Node.js**.  
+## 🧠 Sobre a Chainy
+
+- A **Chainy** é um bot versátil desenvolvido com **Node.js**, baseado na Nazuna.
+- **Aviso:** Ao migrar da Nazuna para a Chainy, é altamente recomendada uma **instalação limpa** para evitar conflitos de dados ou configurações.
 - É um projeto **gratuito e de código aberto**, mas protegido por direitos autorais.  
 
 ## 🚀 Funcionalidades principais
@@ -27,10 +30,10 @@ Siga os comandos abaixo na ordem para instalar e iniciar o bot:
 
 ```bash
 # 1. Clone o repositório
-git clone https://github.com/L1ghtzin/nazuna.git
+git clone https://github.com/L1ghtzin/chainy.git
 
 # 2. Entre na pasta
-cd nazuna
+cd chainy
 
 # 3. Configure o ambiente
 npm run config
@@ -71,7 +74,7 @@ npm start
 ```bash
 npm run update
 ```
-> *Fique tranquilo: seus dados e configurações não serão perdidos durante a atualização.*
+> *Atenção: Se estiver migrando da Nazuna ou enfrentando problemas, faça uma **instalação limpa**. Lembre-se de fazer backup antes de atualizar!*
 
 ## 🖥️ Plataformas compatíveis
 
@@ -93,8 +96,7 @@ npm run update
 > **© 2025 Hiudy — Todos os direitos reservados.**  
 > Este software é de código aberto e seu uso é 100% gratuito. No entanto, a **venda ou comercialização é estritamente proibida**.
 
-## 👤 Desenvolvedor
+## 👤 Créditos
 
-Criado e mantido por **Hiudy**. Sinta-se livre para explorar meus outros projetos no repositório oficial:
-
-- 💻 **GitHub:** [hiudyy](https://github.com/hiudyy)
+- **Projeto original:** [Nazuna](https://github.com/DevTokyoVx/nazuna) criado por **Hiudy** e mantido por **DevTokyoVx**
+- **Chainy:** Baseado na Nazuna, com modificações e melhorias.

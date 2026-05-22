@@ -1,7 +1,7 @@
 {
-    "name": "nazuna",
+    "name": "chainy",
     "version": "9.0.0",
-    "description": "Bot de whatsapp criada por hiudy",
+    "description": "Bot de WhatsApp baseada na Nazuna",
     "type": "module",
     "main": "src/connect.js",
     "scripts": {
@@ -13,9 +13,8 @@
     },
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/L1ghtzin/nazuna.git"
+        "url": "git+https://github.com/L1ghtzin/chainy.git"
     },
-    "homepage": "https://loja.nodzhostinger.com.br",
     "author": "Hiudy",
     "license": "ISC",
     "dependencies": {

@@ -12,7 +12,7 @@ const execAsync = promisify(exec);
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const REPO_URL = 'https://github.com/L1ghtzin/nazuna';
+const REPO_URL = 'https://github.com/L1ghtzin/chainy';
 const BACKUP_DIR = path.join(process.cwd(), `backup_${new Date().toISOString().replace(/[:.]/g, '_').replace(/T/, '_')}`);
 const TEMP_DIR = path.join(process.cwd(), 'temp_bot');
 const isWindows = os.platform() === 'win32';
@@ -565,7 +565,7 @@ async function main() {
     await cleanup();
     printMessage('🔄 Buscando informações do último commit...');
     
-    const response = await fetch('https://api.github.com/repos/L1ghtzin/nazuna/commits?per_page=1', {
+    const response = await fetch('https://api.github.com/repos/L1ghtzin/chainy/commits?per_page=1', {
       headers: { Accept: 'application/vnd.github+json' },
     });
     if (!response.ok) {

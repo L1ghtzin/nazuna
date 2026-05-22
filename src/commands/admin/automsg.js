@@ -89,7 +89,7 @@ Use os subcomandos:
         if (isQuotedImage || isQuotedVisuU || isQuotedVisuU2) {
           msgConfig.type = 'image';
           msgConfig.caption = quotedMessageContent.imageMessage?.caption || description;
-          // O buffer precisaria ser salvo em disco. No Nazuna, 
+          // O buffer precisaria ser salvo em disco. No Chainy, 
           // assumimos que o sistema de carregamento cuidará disso.
           return reply("⚠️ Salvamento de mídia para automsg modularizado requer integração com o sistema de arquivos local. Migrando apenas metadados por enquanto.");
         } else if (isQuotedMsg || isQuotedMsg2) {

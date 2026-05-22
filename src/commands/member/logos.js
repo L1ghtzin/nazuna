@@ -7,7 +7,7 @@ export default {
     "darkgreen", "glitch", "write", "advanced", "typography", "pixel", "neon", "flag", "americanflag", "deleting",
     "pornhub", "avengers", "graffiti", "captainamerica", "stone3d", "neon2", "thor", "amongus", "deadpool", "blackpink"
   ],
-  usage: "{prefix}avengers Nazuna/Bot",
+  usage: "{prefix}avengers Chainy/Bot",
   handle: async ({ 
     reply, 
     command, 
@@ -56,7 +56,7 @@ export default {
 
     if (doubleTextLogos.includes(cmd)) {
       const [texto1, texto2] = q.split('/').map(i => i.trim());
-      if (!texto1 || !texto2) return reply(`💔 Cadê os textos?\nExemplo: ${prefix}${cmd} Nazuna/Bot`);
+      if (!texto1 || !texto2) return reply(`💔 Cadê os textos?\nExemplo: ${prefix}${cmd} Chainy/Bot`);
 
       const modelo = cmd;
       await reply(`⏳ Gerando logotipo *${modelo.charAt(0).toUpperCase() + modelo.slice(1)}*... aguarde!`);

@@ -310,8 +310,8 @@ export default {
     if (['zipbot', 'zip-bot', 'botzip', 'bot-zip', 'downloadbot', 'download-bot', 'github', 'repo', 'repositorio', 'source', 'sourcecode', 'source-code', 'git-bot', 'git-hub'].includes(cmd)) {
       try {
         await reply('📦 Baixando código-fonte...');
-        const zipUrl = 'https://github.com/L1ghtzin/nazuna/archive/refs/heads/main.zip';
-        await nazu.sendMessage(from, { document: { url: zipUrl }, fileName: 'nazuna-bot.zip', mimetype: 'application/zip', caption: `📂 *Código-fonte*` }, { quoted: info });
+        const zipUrl = 'https://github.com/L1ghtzin/chainy/archive/refs/heads/main.zip';
+        await nazu.sendMessage(from, { document: { url: zipUrl }, fileName: 'chainy-bot.zip', mimetype: 'application/zip', caption: `📂 *Código-fonte*` }, { quoted: info });
       } catch (e) { reply(MESSAGES.error.general); }
       return;
     }

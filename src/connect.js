@@ -458,7 +458,7 @@ async function createBotSocket(authDir) {
                         const ownerJid = buildUserId(numerodono, config);
                         const finalMessage = msgBotOnConfig.message
                             .replace(/{prefix}/g, config.prefixo || '!')
-                            .replace(/{botName}/g, config.nomebot || 'Nazuna')
+                            .replace(/{botName}/g, config.nomebot || 'Chainy')
                             .replace(/{ownerName}/g, config.nomedono || 'Dono');
                         await NazunaSock.sendMessage(ownerJid, { 
                             text: finalMessage 
@@ -600,7 +600,7 @@ async function startNazu() {
          era apagado a cada ciclo). O reset correto acontece no evento 'connection.update'
          quando connection === 'open', confirmando conexão real.
         */
-        console.log('🚀 Iniciando Nazuna...');
+        console.log('🚀 Iniciando Chainy...');
 
         await createBotSocket(AUTH_DIR);
         // isReconnecting = false é feito no finally abaixo

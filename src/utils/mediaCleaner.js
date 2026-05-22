@@ -16,7 +16,7 @@ class MediaCleaner {
         this.mediaDirs = [
             path.join(this.baseDir, 'dados/midias'),
             path.join(this.baseDir, 'temp'),
-            '/tmp/nazuna-media',
+            '/tmp/chainy-media',
             '/tmp/baileys_media_cache'
         ];
         this.tempPrefixes = ['tmp_', 'temp_', 'download_', 'media_', 'baileys_'];

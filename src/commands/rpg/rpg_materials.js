@@ -1,8 +1,8 @@
-import { 
-    loadEconomy, 
-    saveEconomy, 
-    getEcoUser, 
-    ensureEconomyDefaults, 
+import {
+    loadEconomy,
+    saveEconomy,
+    getEcoUser,
+    ensureEconomyDefaults,
     fmt,
     parseAmount
 } from "../../utils/database.js";
@@ -11,10 +11,10 @@ export default {
     name: "rpg_materials",
     description: "Visualização e venda de materiais do RPG",
     commands: ["materiais", "precos", "preços", "vender"],
-    handle: async ({ 
-    reply, isGroup, groupData, sender, prefix, command, args,
-    MESSAGES
-  }) => {
+    handle: async ({
+        reply, isGroup, groupData, sender, prefix, command, args,
+        MESSAGES
+    }) => {
         if (!isGroup || !groupData.modorpg) return;
 
         const econ = loadEconomy();
@@ -22,7 +22,7 @@ export default {
         const me = getEcoUser(econ, sender);
         const sub = command.toLowerCase();
 
-        // Materiais e preços (idêntico ao nazuna-tokyo)
+        // Materiais e preços
         if (sub === 'materiais') {
             const mats = me.materials || {};
             const keys = Object.keys(mats).filter(k => mats[k] > 0);

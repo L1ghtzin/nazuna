@@ -100,7 +100,7 @@ export async function handleCaptchaResponse(nazu, sender, body, isGroup, info, r
       }).catch(() => {});
     }
     
-    // Se a lógica do nazuna aprova a requisição de grupo (para autoAccept), faz aqui também
+    // Se a lógica do chainy aprova a requisição de grupo (para autoAccept), faz aqui também
     try {
         await nazu.groupRequestParticipantsUpdate(isCapUser.groupId, [isCapUser.idOrigin], 'approve').catch(() => {});
     } catch {}

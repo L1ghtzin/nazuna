@@ -17,7 +17,7 @@ export default {
   }) => {
     try {
       if (!isOwner) return reply(MESSAGES.permission.ownerOnly);
-      if (!q) return reply(`Por favor, digite o novo nome do bot.\nExemplo: ${prefix}${command} Nazuna`);
+      if (!q) return reply(`Por favor, digite o novo nome do bot.\nExemplo: ${prefix}${command} Chainy`);
       
       let config = JSON.parse(fs.readFileSync(CONFIG_FILE));
       config.nomebot = q;

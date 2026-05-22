@@ -10,7 +10,7 @@ export default {
     styleText
   , MESSAGES }) => {
     try {
-      if (!q) return reply(`🎮 *GERADOR DE NICK*\n\n📝 *Como usar:*\n• Digite o nick após o comando\n• Ex: ${prefix}nick nazuna`);
+      if (!q) return reply(`🎮 *GERADOR DE NICK*\n\n📝 *Como usar:*\n• Digite o nick após o comando\n• Ex: ${prefix}nick chainy`);
       
       const datzn = await styleText(q);
       await reply(datzn.join('\n'));
