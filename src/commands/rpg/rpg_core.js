@@ -216,6 +216,7 @@ export default {
         if (sub === 'depositar' || sub === 'dep') {
             const amount = parseAmount(args[0], me.wallet);
             if (!amount || amount <= 0) return reply(`💔 Informe um valor.`);
+            if (amount > me.wallet) return reply(`💔 Você não tem tudo isso na carteira.`);
             const space = bankCapacity - me.bank;
             const toDep = Math.min(amount, space);
             if (toDep <= 0) return reply(`╭━━━⊱ ⚠️ *BANCO CHEIO* ⚠️ ⊱━━━╮\n│\n│ Seu limite bancário foi atingido.\n│ Compre mais espaço ou melhore\n│ sua conta!\n│\n╰━━━━━━━━━━━━━━━━━━━━━━━╯`);
@@ -227,6 +228,7 @@ export default {
         if (sub === 'sacar' || sub === 'saque') {
             const amount = parseAmount(args[0], me.bank);
             if (!amount || amount <= 0) return reply(`💔 Informe um valor.`);
+            if (amount > me.bank) return reply(`💔 Saldo insuficiente no banco.`);
             const taxa = Math.floor(amount * 0.05);
             me.bank -= amount; me.wallet += (amount - taxa);
             saveEconomy(econ);
