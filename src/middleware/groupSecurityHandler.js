@@ -1,4 +1,5 @@
 import { hasPaymentMessage } from '../utils/securityHelpers.js';
+import { sendCleanChat } from '../utils/cleanChat.js';
 const soadmBypassCommands = ['suporte', 'ticketsuporte', 'suporteticket', 'ticket'];
 
 // Debounce para escrita do antispam — evita I/O excessivo em alta carga
@@ -17,6 +18,20 @@ function debouncedAntiSpamWrite(filePath, data, writeJsonFile) {
             _antispamPendingData = null;
             _antispamPendingPath = null;
         }, 5000); // Escreve no máximo a cada 5 segundos
+    }
+}
+
+/**
+ * Executa um step do anti-payment com error handling isolado.
+ * Se o step falhar, loga o erro mas permite que os próximos steps continuem.
+ * @param {Function} step - Função async a executar
+ * @param {string} errorMessage - Mensagem de contexto para o log de erro
+ */
+async function runAntiPaymentStep(step, errorMessage) {
+    try {
+        await step();
+    } catch (error) {
+        console.error(`[ANTI-PAYMENT] ${errorMessage} Detalhes: ${error.message}`);
     }
 }
 
@@ -94,30 +109,48 @@ export async function processGroupSecurity(context) {
       }
     }
 
-    // 3.5 Anti-Payment Recursivo (Ação fixa: Banir + Fechar grupo + Limpeza)
+    // 3.5 Anti-Payment Recursivo (Ação fixa: Banir + Fechar grupo + Limpeza + Reabrir)
+    // Cada step é executado de forma isolada — se um falhar, os próximos continuam.
     if (isGroup && groupData.antipayment && info.message && !isGroupAdmin && !isOwner) {
       if (hasPaymentMessage(info.message)) {
         if (!isUserWhitelisted(sender, 'antipayment')) {
-          try {
-            // 1. Fechar o grupo temporariamente (panic mode)
-            if (isBotAdmin) {
-              await nazu.groupSettingUpdate(from, 'announcement');
-            }
+          // Step 1: Fechar o grupo temporariamente (panic mode)
+          if (isBotAdmin) {
+            await runAntiPaymentStep(
+              () => nazu.groupSettingUpdate(from, 'announcement'),
+              'Erro ao fechar o grupo.'
+            );
+          }
 
-            // 2. Remover o usuário
-            if (isBotAdmin) {
-              await nazu.groupParticipantsUpdate(from, [sender], 'remove');
-            }
+          // Step 2: Remover o usuário infrator
+          if (isBotAdmin) {
+            await runAntiPaymentStep(
+              () => nazu.groupParticipantsUpdate(from, [sender], 'remove'),
+              'Erro ao banir membro.'
+            );
+          }
 
-            // 3. Limpeza do chat (scroll/clearChat)
-            const cleanText = Array(400).fill('🤍').join('\n');
-            await nazu.sendMessage(from, {
-              text: `${cleanText}\n🚫 *Anti-Payment:* Pagamento detectado. @${getUserName(sender)} foi removido e o grupo foi fechado temporariamente por segurança!`,
+          // Step 3: Limpeza real do chat via relayMessage
+          await runAntiPaymentStep(
+            () => sendCleanChat({ nazu, from }),
+            'Erro ao limpar o chat.'
+          );
+
+          // Step 4: Notificação no grupo
+          await runAntiPaymentStep(
+            () => nazu.sendMessage(from, {
+              text: `🛡️ *Anti-Payment:* Pagamento detectado!\n\n🚫 @${getUserName(sender)} foi removido e o grupo foi fechado temporariamente por segurança.`,
               mentions: [sender]
-            });
+            }),
+            'Erro ao enviar notificação.'
+          );
 
-          } catch (error) {
-            console.error('Erro no processamento de Anti-Payment:', error);
+          // Step 5: Reabrir o grupo automaticamente
+          if (isBotAdmin) {
+            await runAntiPaymentStep(
+              () => nazu.groupSettingUpdate(from, 'not_announcement'),
+              'Erro ao reabrir o grupo.'
+            );
           }
         }
       }

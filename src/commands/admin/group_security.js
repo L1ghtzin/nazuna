@@ -1,4 +1,5 @@
 
+import { sendCleanChat } from '../../utils/cleanChat.js';
 
 export default {
   name: "group_security",
@@ -263,8 +264,15 @@ export default {
       if (!isGroup) return reply(MESSAGES.permission.groupOnly);
       if (!isGroupAdmin) return reply(MESSAGES.permission.adminOnly);
       if (!isBotAdmin) return reply(MESSAGES.permission.botAdminOnly);
-      const linhasEmBranco = Array(500).fill('🤍 ').join('\n');
-      return reply(`${linhasEmBranco}\n✅ Limpeza concluída!`);
+      try {
+        await sendCleanChat({ nazu, from, reply, successMessage: 'Limpeza concluída!' });
+      } catch (error) {
+        console.error('[CLEAN] Erro ao limpar chat:', error.message);
+        // Fallback para limpeza simples se o relayMessage falhar
+        const linhasEmBranco = Array(500).fill('🤍 ').join('\n');
+        return reply(`${linhasEmBranco}\n✅ Limpeza concluída!`);
+      }
+      return;
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -327,7 +335,7 @@ export default {
       await optimizer.saveJsonWithCache(groupFile, groupData);
 
       if (groupData.antipayment) {
-        return reply(`🛡️ *Anti-Payment* ativado!\n🔧 Ação: *Banir + Fechar grupo + Limpeza 🔨*`);
+        return reply(`🛡️ *Anti-Payment* ativado!\n\n🔧 Ações automáticas:\n• 🔒 Fechar grupo temporariamente\n• 🚫 Banir o remetente\n• 🗑️ Limpar o chat\n• 🔓 Reabrir o grupo automaticamente\n\n💡 Admins, owners e whitelisted não são afetados.`);
       }
       return reply(`🛡️ *Anti-Payment* desativado!`);
     }
