@@ -1,8 +1,7 @@
-
 export default {
   name: "casa",
   description: "Sistema de moradia e propriedades",
-  commands: ["casa", "house"],
+  commands: ["casa", "house", "coletarrenda"],
   usage: "{prefix}casa",
   handle: async ({ 
     reply, 
@@ -24,71 +23,139 @@ export default {
     const econ = loadEconomy();
     const me = getEcoUser(econ, sender);
     
-    const houses = {
-      'barraca': { name: 'Barraca', price: 5000, income: 100, emoji: '⛺', storage: 50 },
-      'cabana': { name: 'Cabana', price: 25000, income: 500, emoji: '🛖', storage: 200 },
-      'casa': { name: 'Casa Comum', price: 100000, income: 2500, emoji: '🏠', storage: 1000 },
-      'mansao': { name: 'Mansão', price: 500000, income: 10000, emoji: '🏰', storage: 5000 },
-      'castelo': { name: 'Castelo', price: 2000000, income: 50000, emoji: '🏰👑', storage: 25000 }
+    const casas = {
+      'barraca': { emoji: '⛺', name: 'Barraca', price: 5000, bonus: { storage: 10, regen: 1 }, renda: 100 },
+      'cabana': { emoji: '🏚️', name: 'Cabana de Madeira', price: 25000, bonus: { storage: 25, regen: 2 }, renda: 500 },
+      'casa': { emoji: '🏠', name: 'Casa Simples', price: 100000, bonus: { storage: 50, regen: 3 }, renda: 2000 },
+      'mansao': { emoji: '🏰', name: 'Mansão', price: 500000, bonus: { storage: 100, regen: 5 }, renda: 10000 },
+      'castelo': { emoji: '🏯', name: 'Castelo', price: 2000000, bonus: { storage: 200, regen: 10 }, renda: 50000 }
     };
 
-    if (!me.house) me.house = { type: null, lastCollect: 0, decorations: [] };
+    const decoracoes = {
+      'altar': { emoji: '⛩️', name: 'Altar Místico', price: 10000, bonus: 'xp', value: 10 },
+      'bau': { emoji: '📦', name: 'Baú Reforçado', price: 15000, bonus: 'storage', value: 20 },
+      'jardim': { emoji: '🌸', name: 'Jardim Encantado', price: 20000, bonus: 'regen', value: 2 },
+      'forja': { emoji: '🔥', name: 'Forja Caseira', price: 30000, bonus: 'craft', value: 15 },
+      'biblioteca': { emoji: '📚', name: 'Biblioteca', price: 25000, bonus: 'xp', value: 15 }
+    };
 
-    // --- VER CASA ---
-    if (!args[0]) {
-      if (!me.house.type) return reply(`🏠 Você mora na rua! Use ${prefix}casa comprar para mudar isso.`);
-      
-      const myHouse = houses[me.house.type];
-      let text = `╭━━━⊱ ${myHouse.emoji} *SUA PROPRIEDADE* ⊱━━━╮\n`;
-      text += `│ Tipo: ${myHouse.name}\n`;
-      text += `│ Renda: ${myHouse.income.toLocaleString()}/dia\n`;
-      text += `│ Baú: ${myHouse.storage} itens\n`;
-      text += `╰━━━━━━━━━━━━━━━━━━━━╯\n\n`;
-      text += `💡 Use ${prefix}coletarrenda para ganhar moedas`;
+    if (!me.house) {
+      me.house = { type: null, decorations: [], lastCollect: 0 };
+    }
+    
+    // Default to 'ver' if it's the alias coletarrenda or empty args
+    const sub = command === 'coletarrenda' ? 'coletar' : (args[0]?.toLowerCase() || 'ver');
+
+    // Ver informações da casa
+    if (sub === 'ver') {
+      let text = `╭━━━⊱ 🏠 *SUA CASA* ⊱━━━╮\n\n`;
+
+      if (me.house.type) {
+        const casa = casas[me.house.type];
+        text += `${casa.emoji} *${casa.name}*\n\n`;
+        text += `📦 Armazenamento: +${casa.bonus.storage}\n`;
+        text += `💚 Regeneração: +${casa.bonus.regen}/h\n`;
+        text += `💰 Renda passiva: ${casa.renda}/dia\n\n`;
+
+        if (me.house.decorations && me.house.decorations.length > 0) {
+          text += `🎨 *Decorações:*\n`;
+          me.house.decorations.forEach(d => {
+            const dec = decoracoes[d];
+            if (dec) text += `• ${dec.emoji} ${dec.name}\n`;
+          });
+        }
+
+        text += `\n💡 *Comandos:*\n`;
+        text += `• ${prefix}casa coletar - Coletar renda\n`;
+        text += `• ${prefix}casa decorar <item>\n`;
+      } else {
+        text += `❌ Você não tem uma casa!\n\n`;
+        text += `🏘️ *CASAS DISPONÍVEIS:*\n\n`;
+        for (const [id, data] of Object.entries(casas)) {
+          text += `${data.emoji} *${data.name}*\n`;
+          text += `   💰 ${data.price.toLocaleString()} | 📦 +${data.bonus.storage}\n\n`;
+        }
+        text += `💡 Use: ${prefix}casa comprar <tipo>`;
+      }
+
       return reply(text);
     }
 
-    // --- COMPRAR ---
-    if (args[0] === 'comprar') {
-      const type = args[1]?.toLowerCase();
-      const house = houses[type];
-      if (!house) {
-        let text = `💔 Casa não encontrada!\n\n*Casas disponíveis para compra:*\n`;
-        for (const [key, h] of Object.entries(houses)) {
-          text += `│ ${h.emoji} *${key.charAt(0).toUpperCase() + key.slice(1)}* - ${h.price.toLocaleString()} moedas\n`;
-        }
-        text += `\n💡 *Exemplo:* ${prefix}casa comprar cabana`;
-        return reply(text);
+    // Comprar casa
+    if (sub === 'comprar') {
+      const tipo = args[1]?.toLowerCase();
+      if (!tipo || !casas[tipo]) {
+        return reply(`❌ Tipo inválido!\n\n🏘️ Tipos: barraca, cabana, casa, mansao, castelo`);
       }
-      
-      if (me.wallet < house.price) return reply(`💰 Você precisa de ${house.price.toLocaleString()}!`);
-      
-      me.wallet -= house.price;
-      me.house.type = type;
+
+      const casa = casas[tipo];
+      if (me.wallet < casa.price) {
+        return reply(`💰 Você precisa de ${casa.price.toLocaleString()} para comprar ${casa.name}!`);
+      }
+
+      me.wallet -= casa.price;
+      me.house.type = tipo;
       me.house.lastCollect = Date.now();
-      
+
       saveEconomy(econ);
-      return reply(`🎉 Parabéns! Você comprou uma *${house.name}*! ${house.emoji}`);
+      return reply(`╭━━━⊱ 🎉 *CASA COMPRADA* ⊱━━━╮\n\n${casa.emoji} Você comprou uma *${casa.name}*!\n\n📦 Armazenamento: +${casa.bonus.storage}\n💰 Renda: ${casa.renda}/dia\n\n╰━━━━━━━━━━━━━━━━━━━━╯`);
     }
 
-    // --- COLETAR ---
-    if (args[0] === 'coletar' || command === 'coletarrenda') {
-      if (!me.house.type) return reply(`💔 Você não tem uma casa!`);
-      
-      const now = Date.now();
-      const diff = now - me.house.lastCollect;
-      if (diff < 86400000) {
-        const hours = Math.floor((86400000 - diff) / 3600000);
-        const mins = Math.floor(((86400000 - diff) % 3600000) / 60000);
-        return reply(`⏰ Próxima coleta em: ${hours}h ${mins}min`);
+    // Coletar renda
+    if (sub === 'coletar') {
+      if (!me.house.type) return reply('❌ Você não tem uma casa!');
+
+      const casa = casas[me.house.type];
+      const agora = Date.now();
+      const tempoPassado = agora - me.house.lastCollect;
+      const diasPassados = Math.floor(tempoPassado / 86400000);
+
+      if (diasPassados < 1) {
+        const tempoRestante = 86400000 - tempoPassado;
+        const horas = Math.floor(tempoRestante / 3600000);
+        const minutos = Math.floor((tempoRestante % 3600000) / 60000);
+        return reply(`⏰ Próxima coleta em: ${horas}h ${minutos}min`);
       }
-      
-      const house = houses[me.house.type];
-      me.wallet += house.income;
-      me.house.lastCollect = now;
-      
+
+      const rendaTotal = Math.min(diasPassados, 7) * casa.renda; // Máximo 7 dias acumulados
+      me.wallet += rendaTotal;
+      me.house.lastCollect = agora;
+
       saveEconomy(econ);
-      return reply(`💰 *RENDA COLETADA*\n\n${house.emoji} +${house.income.toLocaleString()} moedas`);
+      return reply(`💰 *RENDA COLETADA*\n\n${casa.emoji} ${casa.name}\n💵 +${rendaTotal.toLocaleString()} (${Math.min(diasPassados, 7)} dias)`);
     }
+
+    // Decorar
+    if (sub === 'decorar') {
+      if (!me.house.type) return reply('❌ Você não tem uma casa!');
+
+      const decId = args[1]?.toLowerCase();
+      if (!decId) {
+        let text = `🎨 *DECORAÇÕES DISPONÍVEIS*\n\n`;
+        for (const [id, data] of Object.entries(decoracoes)) {
+          const owned = (me.house.decorations || []).includes(id) ? '✅' : '';
+          text += `${data.emoji} *${data.name}* ${owned}\n`;
+          text += `   💰 ${data.price.toLocaleString()} | +${data.value} ${data.bonus}\n\n`;
+        }
+        text += `💡 Use: ${prefix}casa decorar <nome>`;
+        return reply(text);
+      }
+
+      if (!decoracoes[decId]) return reply('❌ Decoração não encontrada!');
+      
+      if (!me.house.decorations) me.house.decorations = [];
+      if (me.house.decorations.includes(decId)) return reply('❌ Você já tem essa decoração!');
+
+      const dec = decoracoes[decId];
+      if (me.wallet < dec.price) return reply(`💰 Você precisa de ${dec.price.toLocaleString()}!`);
+
+      me.wallet -= dec.price;
+      me.house.decorations.push(decId);
+
+      saveEconomy(econ);
+      return reply(`🎨 *DECORAÇÃO ADICIONADA*\n\n${dec.emoji} ${dec.name}\n✨ +${dec.value} ${dec.bonus}`);
+    }
+
+    return reply(`💡 Use: ${prefix}casa para ver opções`);
   }
 };
