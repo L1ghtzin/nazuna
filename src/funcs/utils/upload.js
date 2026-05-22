@@ -2,9 +2,10 @@ import axios from 'axios';
 
 // --- CONFIGURAÇÃO ---
 const tokenParts = [
-  "github_", "pat_11C", "CKVUAQ", "0x53k4", "lM6rgF",
-  "O_EUiT", "n9T0Xu", "IWdjql", "EgxYA4", "gz8ah3",
-  "VwYPq4", "MSvNHW", "wFw6KC", "JI7RC4", "x2jMJw", "v"
+  "github_", "pat_11C", "CKVUAQ01", "BbBrmHz0",
+  "Mql_9Kr", "vPwR9wV", "BmveVNJ",
+  "DyQEGji", "PrePq4j", "TLu6z7i",
+  "OO0C662", "H2PGJTT", "rsvHWAU"
 ];
 const CONFIG = {
     GITHUB: {
