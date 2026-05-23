@@ -341,7 +341,7 @@ export async function processGroupSecurity(context) {
       }
     }
 
-    // 8. AFK Check
+    // 8. AFK Check - Auto-remoção quando o usuário AFK manda mensagem
     if (isGroup && groupData.afkUsers && groupData.afkUsers[sender]) {
       try {
         const afkReason = groupData.afkUsers[sender].reason;
@@ -352,6 +352,30 @@ export async function processGroupSecurity(context) {
         await reply(`👋 *Bem-vindo(a) de volta!*\nSeu status AFK foi removido.\nVocê estava ausente desde: ${afkSince}`);
       } catch (error) {
         console.error("Erro ao processar remoção de AFK:", error);
+      }
+    }
+
+    // 8.1 AFK Mention Check - Notifica quando alguém menciona um usuário AFK
+    if (isGroup && groupData.afkUsers && info.message?.extendedTextMessage?.contextInfo?.mentionedJid) {
+      try {
+        const mentioned = info.message.extendedTextMessage.contextInfo.mentionedJid;
+        for (const jid of mentioned) {
+          if (groupData.afkUsers[jid]) {
+            const afkData = groupData.afkUsers[jid];
+            const afkSince = new Date(afkData.since).toLocaleString('pt-BR', {
+              timeZone: 'America/Sao_Paulo'
+            });
+            let afkMsg = `😴 @${getUserName(jid)} está AFK desde ${afkSince}.`;
+            if (afkData.reason) {
+              afkMsg += `\nMotivo: ${afkData.reason}`;
+            }
+            await reply(afkMsg, {
+              mentions: [jid]
+            });
+          }
+        }
+      } catch (error) {
+        console.error("Erro ao verificar menções AFK:", error);
       }
     }
 

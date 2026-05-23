@@ -237,15 +237,22 @@ export default {
 
         if (sub === 'transferir' || sub === 'pix') {
             const mentioned = menc_jid2?.[0];
-            if (!mentioned) return reply(`💔 Marque alguém.`);
-            const amount = parseAmount(args.slice(-1)[0], me.wallet);
-            if (!amount || amount <= 0) return reply(`💔 Informe um valor.`);
+            if (!mentioned) return reply(`╭━━━⊱ 💸 *TRANSFERÊNCIA* 💸 ⊱━━━╮\n│\n│ 👥 Marque um usuário e informe\n│    o valor a transferir\n│\n│ ⚠️ *Taxa de transferência: 15%*\n│\n│ 📝 *Exemplo:*\n│ ${prefix}${sub} @user 100\n│ ${prefix}${sub} 100 @user\n│\n╰━━━━━━━━━━━━━━━━━━━━━━━╯`);
+            if (mentioned === sender) return reply('❌ Você não pode transferir para si mesmo.');
+            // Busca o valor numérico entre os args, ignorando a menção
+            const rawArgs = q ? q.trim().split(/\s+/) : [];
+            const numericArg = rawArgs.find(a => !a.startsWith('@') && (/^\d+/.test(a) || a === 'tudo' || a === 'all' || a === 'metade' || a === 'half'));
+            const amount = parseAmount(numericArg, me.wallet);
+            if (!isFinite(amount) || amount <= 0) return reply('❌ Informe um valor válido.');
+            // TAXA DE TRANSFERÊNCIA: 15%
             const taxa = Math.floor(amount * 0.15);
-            if (me.wallet < amount + taxa) return reply(`💔 Saldo insuficiente (incluindo taxa 15%).`);
+            const totalNeeded = amount + taxa;
+            if (totalNeeded > me.wallet) return reply(`❌ Você não tem saldo suficiente.\n💰 Valor: ${fmt(amount)}\n💸 Taxa (15%): ${fmt(taxa)}\n📊 Total necessário: ${fmt(totalNeeded)}\n💼 Seu saldo: ${fmt(me.wallet)}`);
             const other = getEcoUser(econ, mentioned);
-            me.wallet -= (amount + taxa); other.wallet += amount;
+            me.wallet -= totalNeeded;
+            other.wallet += amount;
             saveEconomy(econ);
-            return reply(`╭━━━⊱ 💸 *TRANSFERÊNCIA* 💸 ⊱━━━╮\n│\n│ ✅ Pix enviado!\n│\n│ 👤 Para: @${mentioned.split('@')[0]}\n│ 💵 Valor: ${fmt(amount)}\n│ 📉 Taxa (15%): ${fmt(taxa)}\n│\n╰━━━━━━━━━━━━━━━━━━━━━━━━━╯`, { mentions: [mentioned] });
+            return reply(`╭━━━⊱ ✅ *TRANSFERÊNCIA* ✅ ⊱━━━╮\n│\n│ 💸 Transferido: ${fmt(amount)}\n│ 💰 Taxa (15%): ${fmt(taxa)}\n│ 📊 Total debitado: ${fmt(totalNeeded)}\n│ 👤 Para: @${mentioned.split('@')[0]}\n│\n╰━━━━━━━━━━━━━━━━━━━━━━━━╯`, { mentions: [mentioned] });
         }
 
         if (sub === 'minerar' || sub === 'mine') {
