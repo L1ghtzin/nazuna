@@ -117,7 +117,7 @@ export default {
 
       if (global.navalChallenges[gameKey] || global.navalGames[gameKey]) return reply('⚠️ Já existe um jogo ou desafio pendente neste grupo!');
       global.navalChallenges[gameKey] = { challenger: sender, challenged: menc_os2, status: 'pending', created: Date.now() };
-      return reply(`🚢 *DESAFIO DE BATALHA NAVAL*\n\n@${sender.split('@')[0]} desafiou @${menc_os2.split('@')[0]} para uma batalha naval!\n\n💡 O desafiado deve usar: ${prefix}batalhanaval aceitar\n⏱️ O desafio expira em 60 segundos.`, { mentions: [sender, menc_os2] });
+      return reply(`🚢 *DESAFIO DE BATALHA NAVAL*\n\n@${sender.split('@')[0]} desafiou @${menc_os2.split('@')[0]} para uma batalha naval!\n\n💡 O desafiado deve usar: ${prefix}batalhanaval aceitar (ou recusar)\n⏱️ O desafio expira em 60 segundos.`, { mentions: [sender, menc_os2] });
     }
 
     if (args[0]?.toLowerCase() === 'aceitar') {
@@ -139,6 +139,11 @@ export default {
       };
       delete global.navalChallenges[gameKey];
       return reply(`🚢 *BATALHA NAVAL INICIADA!*\n\n@${ch.challenger.split('@')[0]} vs @${ch.challenged.split('@')[0]}\n\n🎯 É a vez de @${ch.challenger.split('@')[0]} atirar!\n\n💡 Use: ${prefix}batalhanaval [coordenada]\n📌 Exemplo: ${prefix}batalhanaval A5`, { mentions: [ch.challenger, ch.challenged] });
+    } else if (args[0]?.toLowerCase() === 'recusar') {
+      const ch = global.navalChallenges[gameKey];
+      if (!ch || ch.challenged !== sender || ch.status !== 'pending') return reply(`💔 Não há desafio pendente para você recusar!`);
+      delete global.navalChallenges[gameKey];
+      return reply(`🚫 @${sender.split('@')[0]} recusou o desafio de Batalha Naval.`, { mentions: [sender] });
     }
 
     if (global.navalGames[gameKey] && args[0]) {
@@ -217,6 +222,6 @@ export default {
       return reply(status, { mentions: [game.jogador1, game.jogador2] });
     }
 
-    return reply(`🚢 *BATALHA NAVAL*\n\n💡 *Como jogar:*\n\n1️⃣ Desafie alguém:\n${prefix}batalhanaval @usuario\n\n2️⃣ O desafiado aceita:\n${prefix}batalhanaval aceitar\n\n3️⃣ Atire em coordenadas:\n${prefix}batalhanaval A5\n\n🎯 Objetivo: Afundar todos os navios do oponente!\n\n📌 Coordenadas: A-J (colunas) e 1-10 (linhas)\n💥 = Acerto | ❌ = Água`);
+    return reply(`🚢 *BATALHA NAVAL*\n\n💡 *Como jogar:*\n\n1️⃣ Desafie alguém:\n${prefix}batalhanaval @usuario\n\n2️⃣ O desafiado aceita ou recusa:\n${prefix}batalhanaval aceitar / recusar\n\n3️⃣ Atire em coordenadas:\n${prefix}batalhanaval A5\n\n🎯 Objetivo: Afundar todos os navios do oponente!\n\n📌 Coordenadas: A-J (colunas) e 1-10 (linhas)\n💥 = Acerto | ❌ = Água`);
   },
 };
