@@ -846,6 +846,80 @@ function saveJsonFileSafe(filePath, data, createBackupFile = true) {
 }
 
 /**
+ * Salva arquivo JSON de forma assíncrona para não bloquear a thread principal (Safe Win Performance)
+ */
+async function saveJsonFileAsync(filePath, data, createBackupFile = true) {
+  try {
+    if (data === undefined) return false;
+    
+    let jsonString;
+    try {
+      jsonString = JSON.stringify(data, null, 2);
+      JSON.parse(jsonString); // Validate
+    } catch (stringifyError) {
+      return false;
+    }
+    
+    if (createBackupFile && fs.existsSync(filePath)) {
+      createBackup(filePath);
+    }
+    
+    await fs.promises.writeFile(filePath, jsonString, 'utf-8');
+    return true;
+  } catch (error) {
+    console.error(`❌ Erro ao salvar async ${filePath}:`, error.message);
+    return false;
+  }
+}
+
+/**
+ * Sistema de Debounce Global para não floodar o disco com operações pesadas (RPG, Leveling)
+ */
+const saveTimers = new Map();
+const pendingData = new Map();
+
+function debouncedSaveJson(filePath, data, delayMs = 3000) {
+  // Atualiza a memória instantaneamente para quem ler depois
+  pendingData.set(filePath, JSON.stringify(data, null, 2));
+
+  if (saveTimers.has(filePath)) {
+    clearTimeout(saveTimers.get(filePath));
+  }
+
+  const timer = setTimeout(async () => {
+    try {
+      const dataToSave = pendingData.get(filePath);
+      if (dataToSave) {
+        // Usa writeFile async com os dados em string, muito mais rápido
+        await fs.promises.writeFile(filePath, dataToSave, 'utf-8');
+      }
+      pendingData.delete(filePath);
+      saveTimers.delete(filePath);
+    } catch (error) {
+      console.error(`❌ Erro no debounce save de ${filePath}:`, error);
+    }
+  }, delayMs);
+
+  saveTimers.set(filePath, timer);
+}
+
+/**
+ * Força salvar todos os debounces pendentes (útil no exit)
+ */
+function flushAllDebouncedSaves() {
+  for (const [filePath, dataStr] of pendingData.entries()) {
+    try {
+      fs.writeFileSync(filePath, dataStr, 'utf-8');
+    } catch (e) {
+      console.error(`Erro no flush final de ${filePath}`, e);
+    }
+  }
+  pendingData.clear();
+  for (const timer of saveTimers.values()) clearTimeout(timer);
+  saveTimers.clear();
+}
+
+/**
  * Valida estrutura de usuário do leveling
  */
 function validateLevelingUser(user) {
