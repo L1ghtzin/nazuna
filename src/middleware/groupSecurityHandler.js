@@ -92,6 +92,7 @@ export async function processGroupSecurity(context) {
         } catch (error) {
           console.error('Erro no AntiStatus:', error);
         }
+        return { stopProcessing: true };
       }
     }
 
@@ -106,6 +107,7 @@ export async function processGroupSecurity(context) {
           await nazu.sendMessage(from, { delete: { remoteJid: from, fromMe: false, id: info.key.id, participant: sender } });
           await reply(`⚠️ Atenção, @${getUserName(sender)}! Mensagens com botões não são permitidas. Não consigo remover você, mas evite usar esse tipo de mensagem.`, { mentions: [sender] });
         }
+        return { stopProcessing: true };
       }
     }
 
@@ -152,6 +154,7 @@ export async function processGroupSecurity(context) {
               'Erro ao reabrir o grupo.'
             );
           }
+          return { stopProcessing: true };
         }
       }
     }
@@ -222,6 +225,7 @@ export async function processGroupSecurity(context) {
         } catch (error) {
           console.error(`Erro ao deletar mídia restrita (${restrictedTypeLabel}):`, error);
         }
+        return { stopProcessing: true };
       }
     }
 
