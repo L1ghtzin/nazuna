@@ -1,3 +1,4 @@
+import { debouncedSaveJson } from '../../utils/helpers.js';
 // --- SISTEMA DE REPUTAÇÃO E DENÚNCIAS ---
 import fs from 'fs';
 import path from 'path';
@@ -45,7 +46,7 @@ const saveReputation = (data) => {
         if (!fs.existsSync(dir)) {
             fs.mkdirSync(dir, { recursive: true });
         }
-        fs.writeFileSync(REP_FILE, JSON.stringify(data, null, 2));
+        debouncedSaveJson(REP_FILE, data, 1000);
     } catch (err) {
         console.error('[REPUTATION] Erro ao salvar:', err.message);
     }
@@ -228,7 +229,7 @@ const saveReports = (data) => {
         if (!fs.existsSync(dir)) {
             fs.mkdirSync(dir, { recursive: true });
         }
-        fs.writeFileSync(REPORTS_FILE, JSON.stringify(data, null, 2));
+        debouncedSaveJson(REPORTS_FILE, data, 1000);
     } catch (err) {
         console.error('[REPORTS] Erro ao salvar:', err.message);
     }

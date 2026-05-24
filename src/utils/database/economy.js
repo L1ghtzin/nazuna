@@ -1,7 +1,7 @@
 // ==================== DATABASE ECONOMY ====================
 // Sistema de economia RPG: load/save, migração, defaults, challenges, skills, quests, pets.
 
-import { loadJsonFileSafe, saveJsonFileSafe, getUserName } from '../helpers.js';
+import { loadJsonFileSafe, saveJsonFileSafe, debouncedSaveJson, getUserName } from '../helpers.js';
 import { ECONOMY_FILE, LEVELING_FILE } from '../paths.js';
 
 // ====== Leveling Helpers (usados aqui e exportados) ======
@@ -47,7 +47,8 @@ export function saveEconomy(data) {
       console.error('❌ Tentativa de salvar economia com dados inválidos');
       return false;
     }
-    return saveJsonFileSafe(ECONOMY_FILE, data, true);
+    debouncedSaveJson(ECONOMY_FILE, data, 5000);
+    return true;
   } catch (e) { 
     console.error('❌ Erro ao salvar economy.json:', e.message); 
     return false; 

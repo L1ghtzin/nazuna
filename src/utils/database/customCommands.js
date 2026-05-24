@@ -2,7 +2,7 @@
 // Comandos personalizados, apelidos (aliases), comandos sem prefixo e limites de comandos.
 
 import fs from 'fs';
-import { ensureDirectoryExists, loadJsonFile, normalizar } from '../helpers.js';
+import { ensureDirectoryExists, loadJsonFile, normalizar , debouncedSaveJson} from '../helpers.js';
 import {
   DATABASE_DIR,
   DONO_DIR,
@@ -27,7 +27,7 @@ export const loadCustomCommands = () => {
 export const saveCustomCommands = (commands) => {
   try {
     ensureDirectoryExists(DONO_DIR);
-    fs.writeFileSync(CUSTOM_COMMANDS_FILE, JSON.stringify({ commands }, null, 2));
+    debouncedSaveJson(CUSTOM_COMMANDS_FILE, { commands }, 1000);
     return true;
   } catch (error) {
     console.error('❌ Erro ao salvar comandos personalizados:', error);
@@ -73,9 +73,9 @@ export const loadNoPrefixCommands = () => {
 export const saveNoPrefixCommands = commands => {
   try {
     ensureDirectoryExists(DATABASE_DIR);
-    fs.writeFileSync(NO_PREFIX_COMMANDS_FILE, JSON.stringify({
+    debouncedSaveJson(NO_PREFIX_COMMANDS_FILE, {
       commands
-    }, null, 2));
+    }, 1000);
     return true;
   } catch (error) {
     console.error('❌ Erro ao salvar comandos sem prefixo:', error);
@@ -116,9 +116,9 @@ export const loadCommandAliases = () => {
 export const saveCommandAliases = aliases => {
   try {
     ensureDirectoryExists(DATABASE_DIR);
-    fs.writeFileSync(COMMAND_ALIASES_FILE, JSON.stringify({
+    debouncedSaveJson(COMMAND_ALIASES_FILE, {
       aliases
-    }, null, 2));
+    }, 1000);
     return true;
   } catch (error) {
     console.error('❌ Erro ao salvar apelidos de comandos:', error);
@@ -167,7 +167,7 @@ export const loadCommandLimits = () => {
 export const saveCommandLimits = (data) => {
   try {
     ensureDirectoryExists(DATABASE_DIR);
-    fs.writeFileSync(CMD_LIMIT_FILE, JSON.stringify(data, null, 2));
+    debouncedSaveJson(CMD_LIMIT_FILE, data, 1000);
     return true;
   } catch (error) {
     console.error('❌ Erro ao salvar limites de comandos:', error);

@@ -1,3 +1,4 @@
+import { debouncedSaveJson } from '../../utils/helpers.js';
 // --- SISTEMA DE NOTAS ---
 import fs from 'fs';
 import path from 'path';
@@ -39,7 +40,7 @@ const saveNotes = (data) => {
         if (!fs.existsSync(dir)) {
             fs.mkdirSync(dir, { recursive: true });
         }
-        fs.writeFileSync(NOTES_FILE, JSON.stringify(data, null, 2));
+        debouncedSaveJson(NOTES_FILE, data, 1000);
     } catch (err) {
         console.error('[NOTES] Erro ao salvar:', err.message);
     }

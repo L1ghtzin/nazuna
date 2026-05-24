@@ -1,7 +1,7 @@
-// --- JOGO DA MEMÓRIA ---
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { debouncedSaveJson } from '../../utils/helpers.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -231,7 +231,7 @@ const saveRanking = (data) => {
         if (!fs.existsSync(dir)) {
             fs.mkdirSync(dir, { recursive: true });
         }
-        fs.writeFileSync(RANKING_FILE, JSON.stringify(data, null, 2));
+        debouncedSaveJson(RANKING_FILE, data, 5000);
     } catch (err) {
         console.error('[MEMORIA] Erro ao salvar ranking:', err.message);
     }

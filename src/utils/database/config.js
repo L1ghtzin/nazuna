@@ -4,7 +4,7 @@
 import fs from 'fs';
 import pathz from 'path';
 import { PREFIX } from '../../config.js';
-import { ensureDirectoryExists, loadJsonFile, normalizar, getUserName, isUserId, isValidJid, isGroupId, buildUserId, getLidFromJidCached, idsMatch } from '../helpers.js';
+import { ensureDirectoryExists, loadJsonFile, normalizar, getUserName, isUserId, isValidJid, isGroupId, buildUserId, getLidFromJidCached, idsMatch , debouncedSaveJson} from '../helpers.js';
 import {
   DATABASE_DIR,
   DONO_DIR,
@@ -33,7 +33,7 @@ export const loadMsgPrefix = () => {
 export const saveMsgPrefix = (message) => {
   try {
     ensureDirectoryExists(DONO_DIR);
-    fs.writeFileSync(MSGPREFIX_FILE, JSON.stringify({ message }, null, 2));
+    debouncedSaveJson(MSGPREFIX_FILE, { message }, 1000);
     return true;
   } catch (error) {
     console.error('❌ Erro ao salvar msgprefix:', error);
@@ -71,7 +71,7 @@ export const saveMsgBotOn = (enabled, message = null) => {
       enabled: enabled,
       message: message || currentData.message
     };
-    fs.writeFileSync(MSGBOTON_FILE, JSON.stringify(newData, null, 2));
+    debouncedSaveJson(MSGBOTON_FILE, newData, 1000);
     return true;
   } catch (error) {
     console.error('❌ Erro ao salvar msgboton:', error);
@@ -112,7 +112,7 @@ export const saveCmdNotFoundConfig = (config, action = 'update') => {
       },
       lastUpdated: new Date().toISOString()
     };
-    fs.writeFileSync(CMD_NOT_FOUND_FILE, JSON.stringify(validatedConfig, null, 2));
+    debouncedSaveJson(CMD_NOT_FOUND_FILE, validatedConfig, 1000);
     
     const logMessage = `🔧 Configuração de comando não encontrado ${action}:\n` +
       `• Status: ${validatedConfig.enabled ? 'ATIVADO' : 'DESATIVADO'}\n` +
@@ -190,7 +190,7 @@ export const loadCustomReacts = () => {
 export const saveCustomReacts = (reacts) => {
   try {
     ensureDirectoryExists(DATABASE_DIR);
-    fs.writeFileSync(CUSTOM_REACTS_FILE, JSON.stringify({ reacts }, null, 2));
+    debouncedSaveJson(CUSTOM_REACTS_FILE, { reacts }, 1000);
     return true;
   } catch (error) {
     console.error('❌ Erro ao salvar custom reacts:', error);
@@ -224,7 +224,7 @@ export const loadReminders = () => {
 export const saveReminders = (reminders) => {
   try {
     ensureDirectoryExists(DATABASE_DIR);
-    fs.writeFileSync(REMINDERS_FILE, JSON.stringify({ reminders }, null, 2));
+    debouncedSaveJson(REMINDERS_FILE, { reminders }, 1000);
     return true;
   } catch (error) {
     console.error('❌ Erro ao salvar lembretes:', error);
@@ -241,7 +241,7 @@ export const loadDivulgacao = () => {
 export const saveDivulgacao = (data) => {
   try {
     ensureDirectoryExists(DONO_DIR);
-    fs.writeFileSync(DIVULGACAO_FILE, JSON.stringify(data, null, 2));
+    debouncedSaveJson(DIVULGACAO_FILE, data, 1000);
     return true;
   } catch (error) {
     console.error('❌ Erro ao salvar divulgação.json:', error);
@@ -262,7 +262,7 @@ export const loadDonoDivulgacao = () => {
 export const saveDonoDivulgacao = (data) => {
   try {
     ensureDirectoryExists(DONO_DIR);
-    fs.writeFileSync(DONO_DIVULGACAO_FILE, JSON.stringify(data, null, 2));
+    debouncedSaveJson(DONO_DIVULGACAO_FILE, data, 1000);
     return true;
   } catch (error) {
     console.error('❌ Erro ao salvar divulgacao_dono.json:', error);
@@ -279,7 +279,7 @@ export const loadSubdonos = () => {
 export const saveSubdonos = subdonoList => {
   try {
     ensureDirectoryExists(DONO_DIR);
-    fs.writeFileSync(SUBDONOS_FILE, JSON.stringify({ subdonos: subdonoList }, null, 2));
+    debouncedSaveJson(SUBDONOS_FILE, { subdonos: subdonoList }, 1000);
     return true;
   } catch (error) {
     console.error('❌ Erro ao salvar subdonos:', error);
@@ -383,7 +383,7 @@ export const loadGlobalBlacklist = () => {
 export const saveGlobalBlacklist = data => {
   try {
     ensureDirectoryExists(DONO_DIR);
-    fs.writeFileSync(GLOBAL_BLACKLIST_FILE, JSON.stringify(data, null, 2));
+    debouncedSaveJson(GLOBAL_BLACKLIST_FILE, data, 1000);
     return true;
   } catch (error) {
     console.error('❌ Erro ao salvar blacklist global:', error);
@@ -489,7 +489,7 @@ export const loadMenuDesign = () => {
 export const saveMenuDesign = (design) => {
   try {
     ensureDirectoryExists(DONO_DIR);
-    fs.writeFileSync(MENU_DESIGN_FILE, JSON.stringify(design, null, 2));
+    debouncedSaveJson(MENU_DESIGN_FILE, design, 1000);
     return true;
   } catch (error) {
     console.error(`❌ Erro ao salvar design do menu: ${error.message}`);
@@ -522,7 +522,7 @@ export const loadRelationships = () => {
 export const saveRelationships = (data = { pairs: {} }) => {
   try {
     ensureDirectoryExists(DATABASE_DIR);
-    fs.writeFileSync(RELATIONSHIPS_FILE, JSON.stringify(data, null, 2));
+    debouncedSaveJson(RELATIONSHIPS_FILE, data, 1000);
     return true;
   } catch (error) {
     console.error('❌ Erro ao salvar dados de relacionamento:', error);
@@ -552,7 +552,7 @@ export const loadParceriasData = groupId => {
 export const saveParceriasData = (groupId, data) => {
   const filePath = pathz.join(PARCERIAS_DIR, `${groupId}.json`);
   try {
-    fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
+    debouncedSaveJson(filePath, data, 1000);
     return true;
   } catch (error) {
     console.error(`Erro ao salvar dados de parcerias para ${groupId}:`, error);

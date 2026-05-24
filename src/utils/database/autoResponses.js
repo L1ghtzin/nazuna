@@ -3,7 +3,7 @@
 
 import fs from 'fs';
 import pathz from 'path';
-import { ensureDirectoryExists, loadJsonFile, normalizar } from '../helpers.js';
+import { ensureDirectoryExists, loadJsonFile, normalizar , debouncedSaveJson} from '../helpers.js';
 import { DATABASE_DIR, GRUPOS_DIR, CUSTOM_AUTORESPONSES_FILE } from '../paths.js';
 
 export const loadCustomAutoResponses = () => {
@@ -15,9 +15,9 @@ export const loadCustomAutoResponses = () => {
 export const saveCustomAutoResponses = responses => {
   try {
     ensureDirectoryExists(DATABASE_DIR);
-    fs.writeFileSync(CUSTOM_AUTORESPONSES_FILE, JSON.stringify({
+    debouncedSaveJson(CUSTOM_AUTORESPONSES_FILE, {
       responses
-    }, null, 2));
+    }, 1000);
     return true;
   } catch (error) {
     console.error('❌ Erro ao salvar auto-respostas personalizadas:', error);
@@ -36,7 +36,7 @@ export const saveGroupAutoResponses = (groupId, autoResponses) => {
     const groupFile = pathz.join(GRUPOS_DIR, `${groupId}.json`);
     let groupData = loadJsonFile(groupFile, {});
     groupData.autoResponses = autoResponses;
-    fs.writeFileSync(groupFile, JSON.stringify(groupData, null, 2));
+    debouncedSaveJson(groupFile, groupData, 1000);
     return true;
   } catch (error) {
     console.error('❌ Erro ao salvar auto-respostas do grupo:', error);

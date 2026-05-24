@@ -2,7 +2,7 @@
 // Sistema de tickets de suporte: load/save, criar, aceitar, listar tickets.
 
 import fs from 'fs';
-import { ensureDirectoryExists, loadJsonFile, idsMatch } from '../helpers.js';
+import { ensureDirectoryExists, loadJsonFile, idsMatch , debouncedSaveJson} from '../helpers.js';
 import { DATABASE_DIR, SUPPORT_TICKETS_FILE } from '../paths.js';
 
 export const loadSupportTicketsData = () => {
@@ -12,7 +12,7 @@ export const loadSupportTicketsData = () => {
 export const saveSupportTicketsData = (data) => {
   try {
     ensureDirectoryExists(DATABASE_DIR);
-    fs.writeFileSync(SUPPORT_TICKETS_FILE, JSON.stringify(data, null, 2));
+    debouncedSaveJson(SUPPORT_TICKETS_FILE, data, 1000);
     return true;
   } catch (error) {
     console.error('❌ Erro ao salvar tickets de suporte:', error);

@@ -1,3 +1,4 @@
+import { debouncedSaveJson } from '../../utils/helpers.js';
 // --- SISTEMA DE PRESENTES ---
 import fs from 'fs';
 import path from 'path';
@@ -81,7 +82,7 @@ const saveGifts = (data) => {
         if (!fs.existsSync(dir)) {
             fs.mkdirSync(dir, { recursive: true });
         }
-        fs.writeFileSync(GIFTS_FILE, JSON.stringify(data, null, 2));
+        debouncedSaveJson(GIFTS_FILE, data, 1000);
     } catch (err) {
         console.error('[GIFTS] Erro ao salvar:', err.message);
     }

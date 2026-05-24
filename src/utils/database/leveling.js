@@ -1,7 +1,7 @@
 // ==================== DATABASE LEVELING ====================
 // Sistema de leveling por mensagens: XP, patentes, level up/down.
 
-import { loadJsonFileSafe, saveJsonFileSafe, validateLevelingUser, getUserName } from '../helpers.js';
+import { loadJsonFileSafe, saveJsonFileSafe, debouncedSaveJson, validateLevelingUser, getUserName } from '../helpers.js';
 import { LEVELING_FILE } from '../paths.js';
 import { calculateNextLevelXp, getPatent } from './economy.js';
 
@@ -57,7 +57,8 @@ export function saveLevelingSafe(data) {
     }
     data.users = data.users || {};
     data.patents = data.patents || DEFAULT_PATENTS;
-    return saveJsonFileSafe(LEVELING_FILE, data, true);
+    debouncedSaveJson(LEVELING_FILE, data, 5000);
+    return true;
   } catch (error) {
     console.error('❌ Erro ao salvar leveling:', error.message);
     return false;

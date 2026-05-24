@@ -2,7 +2,7 @@
 // Customização de grupos, áudio do menu e ler mais do menu.
 
 import fs from 'fs';
-import { ensureJsonFileExists, loadJsonFile } from '../helpers.js';
+import { ensureJsonFileExists, loadJsonFile , debouncedSaveJson} from '../helpers.js';
 import { GROUP_CUSTOMIZATION_FILE, MENU_AUDIO_FILE, MENU_LERMAIS_FILE } from '../paths.js';
 
 // ==================== SISTEMA DE PERSONALIZAÇÃO DE GRUPO ====================
@@ -13,7 +13,7 @@ export const loadGroupCustomization = () => {
 };
 
 export const saveGroupCustomization = (data) => {
-  fs.writeFileSync(GROUP_CUSTOMIZATION_FILE, JSON.stringify(data, null, 2));
+  debouncedSaveJson(GROUP_CUSTOMIZATION_FILE, data, 1000);
 };
 
 export const isGroupCustomizationEnabled = () => {
@@ -93,7 +93,7 @@ export const loadMenuAudio = () => {
 };
 
 export const saveMenuAudio = (data) => {
-  fs.writeFileSync(MENU_AUDIO_FILE, JSON.stringify(data, null, 2));
+  debouncedSaveJson(MENU_AUDIO_FILE, data, 1000);
 };
 
 export const isMenuAudioEnabled = () => {
@@ -142,7 +142,7 @@ export const loadMenuLerMais = () => {
 };
 
 export const saveMenuLerMais = (data) => {
-  fs.writeFileSync(MENU_LERMAIS_FILE, JSON.stringify(data, null, 2));
+  debouncedSaveJson(MENU_LERMAIS_FILE, data, 1000);
 };
 
 export const isMenuLerMaisEnabled = () => {

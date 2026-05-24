@@ -1,3 +1,4 @@
+import { debouncedSaveJson } from '../../utils/helpers.js';
 // --- SISTEMA DE TRANSMISSÃO (BROADCAST LIST) ---
 // Permite que usuários se inscrevam para receber transmissões do dono
 import fs from 'fs';
@@ -48,7 +49,7 @@ const saveSubscribers = (data) => {
         if (!fs.existsSync(dir)) {
             fs.mkdirSync(dir, { recursive: true });
         }
-        fs.writeFileSync(TRANSMISSAO_FILE, JSON.stringify(data, null, 2));
+        debouncedSaveJson(TRANSMISSAO_FILE, data, 1000);
         return true;
     } catch (err) {
         console.error('[TRANSMISSAO] Erro ao salvar inscritos:', err.message);

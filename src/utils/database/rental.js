@@ -4,7 +4,7 @@
 import fs from 'fs';
 import crypto from 'crypto';
 import { PREFIX } from '../../config.js';
-import { ensureDirectoryExists, loadJsonFile, getUserName, isGroupId } from '../helpers.js';
+import { ensureDirectoryExists, loadJsonFile, getUserName, isGroupId , debouncedSaveJson} from '../helpers.js';
 import { DONO_DIR, ALUGUEIS_FILE, CODIGOS_ALUGUEL_FILE } from '../paths.js';
 
 export const loadRentalData = () => {
@@ -14,7 +14,7 @@ export const loadRentalData = () => {
 export const saveRentalData = data => {
   try {
     ensureDirectoryExists(DONO_DIR);
-    fs.writeFileSync(ALUGUEIS_FILE, JSON.stringify(data, null, 2));
+    debouncedSaveJson(ALUGUEIS_FILE, data, 1000);
     return true;
   } catch (error) {
     console.error('❌ Erro ao salvar dados de aluguel:', error);
@@ -98,7 +98,7 @@ export const loadActivationCodes = () => {
 export const saveActivationCodes = data => {
   try {
     ensureDirectoryExists(DONO_DIR);
-    fs.writeFileSync(CODIGOS_ALUGUEL_FILE, JSON.stringify(data, null, 2));
+    debouncedSaveJson(CODIGOS_ALUGUEL_FILE, data, 1000);
     return true;
   } catch (error) {
     console.error('❌ Erro ao salvar códigos de ativação:', error);

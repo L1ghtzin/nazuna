@@ -1,3 +1,4 @@
+import { debouncedSaveJson } from '../../utils/helpers.js';
 // --- SISTEMA DE CONQUISTAS ---
 import fs from 'fs';
 import path from 'path';
@@ -308,7 +309,7 @@ const saveAchievements = (data) => {
         if (!fs.existsSync(dir)) {
             fs.mkdirSync(dir, { recursive: true });
         }
-        fs.writeFileSync(ACHIEVEMENTS_FILE, JSON.stringify(data, null, 2));
+        debouncedSaveJson(ACHIEVEMENTS_FILE, data, 1000);
     } catch (err) {
         console.error('[ACHIEVEMENTS] Erro ao salvar:', err.message);
     }

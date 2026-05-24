@@ -1,3 +1,4 @@
+import { debouncedSaveJson } from '../../utils/helpers.js';
 // --- SISTEMA ANTITOXIC ---
 import fs from 'fs';
 import path from 'path';
@@ -67,7 +68,7 @@ const saveAntitoxic = (data) => {
         if (!fs.existsSync(dir)) {
             fs.mkdirSync(dir, { recursive: true });
         }
-        fs.writeFileSync(ANTITOXIC_FILE, JSON.stringify(data, null, 2));
+        debouncedSaveJson(ANTITOXIC_FILE, data, 1000);
     } catch (err) {
         console.error('[ANTITOXIC] Erro ao salvar:', err.message);
     }
