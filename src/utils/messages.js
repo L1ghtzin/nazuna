@@ -4,17 +4,10 @@
 
 export const MESSAGES = {
   error: {
-    unexpected: "😥 Ops! Ocorreu um erro inesperado. Tente novamente em alguns instantes, por favor!",
-    general: "Ocorreu um erro ao processar sua solicitação.",
-    internal: "❌ Ocorreu um erro interno. Tente novamente em alguns minutos.",
-    simple: "ocorreu um erro",
+    general: "😥 Ops! Ocorreu um erro inesperado ao processar sua solicitação. Tente novamente!",
     notFound: "❌ Comando não encontrado!",
-    noMedia: "Marque uma mídia.",
-    noText: "Cadê o texto?",
-    invalidValue: "❌ Valor inválido!",
-    invalidQuantity: "❌ Quantidade inválida.",
-    invalidNumber: "❌ Número inválido!",
-    noResults: "🔍 Nenhum resultado encontrado.",
+    invalid: (param = "valor") => `❌ ${param.charAt(0).toUpperCase() + param.slice(1)} inválido(a)!`,
+    missing: (item) => `⚠️ Por favor, envie ou marque ${item}.`,
     timeout: "⏰ Tempo esgotado! Tente novamente.",
     ffmpegMissing: "❌ Erro ao processar o áudio. Verifique se o FFmpeg está instalado corretamente no seu sistema.",
     cooldown: (time) => `⏳ Aguarde ${time} antes de usar novamente.`,
@@ -28,10 +21,8 @@ export const MESSAGES = {
     userAdminOnly: "Você precisa ser admin.",
     groupOnly: "Isso só pode ser usado em grupo.",
     privateOnly: "❌ Este comando só funciona no privado!",
-    mentionRequired: "Marque alguém.",
-    cantBanOwner: "Não posso banir o dono do bot.",
     cantBanSelf: "Ops! Eu faço parte da bagunça, não dá pra me remover.",
-    cantBanAdmin: "Não posso banir um administrador do grupo.",
+    cantBanRole: (role) => `🚫 Não posso banir o/um ${role}.`,
     premiumOnly: "💎 Isso só pode ser usado por membros premium.",
   },
   general: {
@@ -53,5 +44,3 @@ export const MESSAGES = {
     insufficientCoins: (needed) => `❌ Você precisa de ${needed} moedas!`,
   }
 };
-
-

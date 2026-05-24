@@ -19,7 +19,7 @@ export default {
 
     // --- ADICIONAR PREMIUM ---
     if (['addpremium', 'addvip'].includes(cmd)) {
-      if (!menc_os2) return reply(MESSAGES.permission.mentionRequired);
+      if (!menc_os2) return reply(MESSAGES.error.missing('alguém'));
       if (premiumListaZinha[menc_os2]) return reply('O usuário já está na lista premium.');
       
       premiumListaZinha[menc_os2] = true;
@@ -34,7 +34,7 @@ export default {
 
     // --- REMOVER PREMIUM ---
     if (['delpremium', 'delvip', 'rmpremium', 'rmvip'].includes(cmd)) {
-      if (!menc_os2) return reply(MESSAGES.permission.mentionRequired);
+      if (!menc_os2) return reply(MESSAGES.error.missing('alguém'));
       if (!premiumListaZinha[menc_os2]) return reply('O usuário não está na lista premium.');
       
       delete premiumListaZinha[menc_os2];

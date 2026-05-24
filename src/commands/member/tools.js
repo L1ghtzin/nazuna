@@ -55,7 +55,7 @@ export default {
 ╰━━━━━━━━━━━━━━━━━━━━━━━━╯`);
       } catch (e) {
         console.error("Erro no comando ping:", e);
-        return reply(MESSAGES.error.internal);
+        return reply(MESSAGES.error.general);
       }
     }
 
@@ -74,13 +74,13 @@ export default {
         const buff = await getFileBuffer(info.message.extendedTextMessage.contextInfo.quotedMessage.stickerMessage, 'sticker');
         return nazu.sendMessage(from, { image: buff }, { quoted: info });
       } catch (e) { 
-        return reply(MESSAGES.error.internal);      }
+        return reply(MESSAGES.error.general);      }
     }
 
     // --- RMBG / UPSCALE ---
     if (['rmbg', 'sbg', 'sfundo', 'upscale'].includes(cmd)) {
       const imgMsg = quotedMessageContent?.imageMessage || info.message?.imageMessage;
-      if (!imgMsg) return reply(MESSAGES.error.noMedia);
+      if (!imgMsg) return reply(MESSAGES.error.missing('uma mídia'));
 
       reply(MESSAGES.general.wait);
       try {

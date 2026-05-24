@@ -34,7 +34,7 @@ export default {
       reply(`🔒 O comando *${q.trim()}* foi bloqueado e só pode ser usado por administradores.`);
     } catch (e) {
       console.error(e);
-      reply(MESSAGES.error.simple);
+      reply(MESSAGES.error.general);
     }
   }
 };

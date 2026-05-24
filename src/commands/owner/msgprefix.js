@@ -19,7 +19,7 @@ export default {
       }
     } catch (e) {
       console.error('Erro no msgprefix:', e);
-      await reply(MESSAGES.error.simple);
+      await reply(MESSAGES.error.general);
     }
   }
 };

@@ -16,7 +16,7 @@ export default {
     // ═══════════════════════════════════════════════════════════════
     if (['ttt', 'jogodavelha', 'tictactoe'].includes(cmd)) {
       if (!tictactoe) return reply("Sistema de Jogo da Velha indisponível.");
-      if (!menc_os2) return reply(MESSAGES.permission.mentionRequired);
+      if (!menc_os2) return reply(MESSAGES.error.missing('alguém'));
       const result = await tictactoe.invitePlayer(from, sender, menc_os2);
       await nazu.sendMessage(from, { text: result.message, mentions: result.mentions });
       return;
@@ -27,7 +27,7 @@ export default {
     // ═══════════════════════════════════════════════════════════════
     if (['connect4', 'c4', 'ligue4'].includes(cmd)) {
       if (!connect4) return reply("Sistema Connect4 indisponível.");
-      if (!menc_os2) return reply(MESSAGES.permission.mentionRequired);
+      if (!menc_os2) return reply(MESSAGES.error.missing('alguém'));
       const result = await connect4.invitePlayer(from, sender, menc_os2);
       await nazu.sendMessage(from, { text: result.message, mentions: result.mentions });
       return;

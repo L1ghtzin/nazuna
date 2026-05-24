@@ -15,7 +15,7 @@ export default {
       await reply(result.message);
     } catch (e) {
       console.error('Erro no addreact:', e);
-      await reply(MESSAGES.error.simple);
+      await reply(MESSAGES.error.general);
     }
   }
 };

@@ -60,7 +60,7 @@ export default {
       });
     } catch (e) {
       console.error('Erro no comando shipo:', e);
-      await reply(MESSAGES.error.simple);
+      await reply(MESSAGES.error.general);
     }
   }
 };

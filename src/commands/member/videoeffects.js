@@ -98,7 +98,7 @@ export default {
       }
     } catch (e) {
       console.error(e);
-      await reply(MESSAGES.error.internal);
+      await reply(MESSAGES.error.general);
     }
   },
 };

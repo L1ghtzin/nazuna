@@ -130,7 +130,7 @@ export default {
     }
 
     if (cmd === 'blockuserg') {
-      if (!menc_os2) return reply(MESSAGES.permission.mentionRequired);
+      if (!menc_os2) return reply(MESSAGES.error.missing('alguém'));
       let reason = q.includes(' ') ? q.substring(q.indexOf(' ')).trim() : "Não informado";
       let target = menc_os2.includes(' ') ? menc_os2.split(' ')[0] : menc_os2;
       
@@ -143,7 +143,7 @@ export default {
     }
 
     if (cmd === 'unblockuserg') {
-      if (!menc_os2) return reply(MESSAGES.permission.mentionRequired);
+      if (!menc_os2) return reply(MESSAGES.error.missing('alguém'));
       let target = menc_os2.includes(' ') ? menc_os2.split(' ')[0] : menc_os2;
       
       const blockFile = pathz.join(DATABASE_DIR, 'globalBlocks.json');

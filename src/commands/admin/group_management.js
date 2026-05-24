@@ -539,7 +539,7 @@ export default {
       if (!isGroupAdmin && !isOwner) return reply(MESSAGES.permission.adminOnly);
       const type = ['aprovar', 'aceitar', 'approve'].includes(cmd) ? 'approve' : 'reject';
       const target = menc_os2 || (args[0] && args[0].includes('@') ? args[0].replace('@', '') + '@s.whatsapp.net' : null);
-      if (!target) return reply(MESSAGES.permission.mentionRequired);
+      if (!target) return reply(MESSAGES.error.missing('alguém'));
       try {
         await nazu.groupRequestParticipantsUpdate(from, [target], type);
         return reply(`${type === 'approve' ? '✅ Aprovado!' : '❌ Recusado!'}`);

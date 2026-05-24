@@ -27,7 +27,7 @@ export default {
       await reply(`Número do dono alterado com sucesso para "${q}"!`);
     } catch (e) {
       console.error(e);
-      await reply(MESSAGES.error.unexpected);
+      await reply(MESSAGES.error.general);
     }
   }
 };

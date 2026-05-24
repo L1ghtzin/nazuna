@@ -64,7 +64,7 @@ export default {
       }
     } catch (e) {
       console.error(`Erro no comando textorandom (${command}):`, e);
-      await reply(MESSAGES.error.internal);
+      await reply(MESSAGES.error.general);
     }
   }
 };

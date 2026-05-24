@@ -18,17 +18,17 @@ export default {
     // --- EXECUÇÃO DO BAN2 (REAL) ---
     if (['ban2', 'banir2'].includes(cmd)) {
       if (!isBotAdmin) return reply(MESSAGES.permission.botAdminOnly);
-      if (!menc_os2) return reply(MESSAGES.permission.mentionRequired);
+      if (!menc_os2) return reply(MESSAGES.error.missing('alguém'));
       
       // Proteções essenciais
       if (idsMatch && idsMatch(menc_os2, ownerJid) || (lidowner && idsMatch && idsMatch(menc_os2, lidowner))) {
-        return reply(MESSAGES.permission.cantBanOwner);
+        return reply(MESSAGES.permission.cantBanRole('dono do bot'));
       }
       if (idsMatch && idsMatch(menc_os2, botNumber) || (botNumberLid && idsMatch && idsMatch(menc_os2, botNumberLid))) {
         return reply(MESSAGES.permission.cantBanSelf);
       }
       if (idInArray && idInArray(menc_os2, groupAdmins)) {
-        return reply(MESSAGES.permission.cantBanAdmin);
+        return reply(MESSAGES.permission.cantBanRole('administrador do grupo'));
       }
       
       await nazu.sendMessage(from, {
@@ -58,7 +58,7 @@ export default {
 
     // --- EXECUÇÃO DO BAM (FAKE) ---
     if (['bam', 'banfake'].includes(cmd)) {
-      if (!menc_os2) return reply(MESSAGES.permission.mentionRequired);
+      if (!menc_os2) return reply(MESSAGES.error.missing('alguém'));
       
       await nazu.sendMessage(from, {
         text: `⏳ *ÚLTIMAS PALAVRAS!*\n\n@${menc_os2.split('@')[0]}, você tem *10 segundos* para dizer suas últimas palavras antes de ser banido! 🔨`,

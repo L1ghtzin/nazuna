@@ -29,10 +29,10 @@ export default {
       if (!isGroup) return reply(MESSAGES.permission.groupOnly);
       if (!isGroupAdmin) return reply(MESSAGES.permission.adminOnly);
       if (!isBotAdmin) return reply(MESSAGES.permission.botAdminOnly);
-      if (!menc_os2) return reply(MESSAGES.permission.mentionRequired);
-      if (idsMatch(menc_os2, ownerJid) || (lidowner && idsMatch(menc_os2, lidowner))) return reply(MESSAGES.permission.cantBanOwner);
+      if (!menc_os2) return reply(MESSAGES.error.missing('alguém'));
+      if (idsMatch(menc_os2, ownerJid) || (lidowner && idsMatch(menc_os2, lidowner))) return reply(MESSAGES.permission.cantBanRole('dono do bot'));
       if (idsMatch(menc_os2, botNumber) || (botNumberLid && idsMatch(menc_os2, botNumberLid))) return reply(MESSAGES.permission.cantBanSelf);
-      if (idInArray(menc_os2, groupAdmins)) return reply(MESSAGES.permission.cantBanAdmin);
+      if (idInArray(menc_os2, groupAdmins)) return reply(MESSAGES.permission.cantBanRole('administrador do grupo'));
       
       // Converte para LID se necessário para grupos ocultos
       let targetId = menc_os2;
@@ -60,7 +60,7 @@ export default {
       reply(`✅ Usuário banido com sucesso!\n\nMotivo: ${banReason}`);
     } catch (e) {
       console.error(e);
-      reply(MESSAGES.error.simple);
+      reply(MESSAGES.error.general);
     }
   }
 };

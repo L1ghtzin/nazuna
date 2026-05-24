@@ -22,7 +22,7 @@ export default {
       reply(`✅ *Link encurtado com sucesso!*\n\n🔗 *Link curto:* ${shortResponse.data.short_url}\n📎 *Link original:* ${shortResponse.data.long_url}`);
     } catch (e) {
       console.error(e);
-      await reply(MESSAGES.error.internal);
+      await reply(MESSAGES.error.general);
     }
   }
 };

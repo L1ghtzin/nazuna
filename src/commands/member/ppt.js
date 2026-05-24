@@ -26,7 +26,7 @@ export default {
       await reply(`🖐️ *Pedra, Papel, Tesoura* 🖐️\n\nVocê: ${usuarioEscolha}\nEu: ${botEscolha}\n\n${resultado}`);
     } catch (e) {
       console.error('Erro no comando ppt:', e);
-      await reply(MESSAGES.error.simple);
+      await reply(MESSAGES.error.general);
     }
   }
 };

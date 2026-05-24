@@ -22,7 +22,7 @@ export default {
     // --- ADICIONAR INDICAÇÃO ---
     if (cmd.startsWith('add')) {
       if (!isOwner) return reply(MESSAGES.permission.ownerOnly);
-      if (!menc_os2) return reply(MESSAGES.permission.mentionRequired);
+      if (!menc_os2) return reply(MESSAGES.error.missing('alguém'));
       
       if (!data.users[menc_os2]) {
         data.users[menc_os2] = { count: 0, addedBy: [], createdAt: new Date().toISOString() };

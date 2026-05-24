@@ -17,7 +17,7 @@ export default {
         `${KKMeMamaTemu}`
       );
     } catch (e) {
-      await reply(MESSAGES.error.unexpected);
+      await reply(MESSAGES.error.general);
       console.error(e);
     }
   }

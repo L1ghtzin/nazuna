@@ -57,7 +57,7 @@ export default {
       });
     } catch (e) {
       console.error('Erro no comando casal:', e);
-      await reply(MESSAGES.error.simple);
+      await reply(MESSAGES.error.general);
     }
   }
 };

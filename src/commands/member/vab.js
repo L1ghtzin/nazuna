@@ -24,7 +24,7 @@ export default {
       });
     } catch (e) {
       console.error('Erro no comando vab:', e);
-      await reply(MESSAGES.error.internal);
+      await reply(MESSAGES.error.general);
     }
   }
 };

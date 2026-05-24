@@ -82,7 +82,7 @@ export default {
 
       if (!args[0]) return reply(`💡 Use ${prefix}slots <valor>`);
       const bet = parseAmount(args[0], me.wallet);
-      if (!isFinite(bet) || bet <= 0) return reply(MESSAGES.error.invalidValue);
+      if (!isFinite(bet) || bet <= 0) return reply(MESSAGES.error.invalid('valor'));
       if (bet < 100) return reply(`💡 Aposta mínima é de 100 gold.`);
       if (me.wallet < bet) return reply('💰 Saldo insuficiente na carteira!');
 

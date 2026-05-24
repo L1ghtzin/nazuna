@@ -41,7 +41,7 @@ export default {
       await reply(`${linkz}`);
     } catch (e) {
       console.error('Erro no comando upload:', e);
-      await reply(MESSAGES.error.internal);
+      await reply(MESSAGES.error.general);
     }
   }
 };

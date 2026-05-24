@@ -19,7 +19,7 @@ export default {
       await reply(TextinDonoInfo);
     } catch (e) {
       console.error(e);
-      await reply(MESSAGES.error.internal);
+      await reply(MESSAGES.error.general);
     }
   }
 };

@@ -17,7 +17,7 @@ export default {
       await reply(listMsg);
     } catch (e) {
       console.error('Erro no listreact:', e);
-      await reply(MESSAGES.error.simple);
+      await reply(MESSAGES.error.general);
     }
   }
 };

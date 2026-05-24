@@ -165,7 +165,7 @@ export default {
         return reply(text, { mentions: Object.keys(groupData.warnings) });
       }
 
-      if (!menc_os2) return reply(MESSAGES.permission.mentionRequired);
+      if (!menc_os2) return reply(MESSAGES.error.missing('alguém'));
       
       if (['removeradv', 'rmadv', 'unwarning', 'removeraviso', 'rmaviso'].includes(cmd)) {
         if (!groupData.warnings[menc_os2]) return reply("Sem advertências.");
@@ -245,7 +245,7 @@ export default {
         return reply("📋 BLACKLIST:\n" + keys.map(u => `@${getUserName(u)}`).join('\n'), { mentions: keys });
       }
 
-      if (!menc_os2) return reply(MESSAGES.permission.mentionRequired);
+      if (!menc_os2) return reply(MESSAGES.error.missing('alguém'));
       if (['delblacklist', 'unblacklist'].includes(cmd)) {
         delete groupData.blacklist[menc_os2];
         await optimizer.saveJsonWithCache(groupFile, groupData);

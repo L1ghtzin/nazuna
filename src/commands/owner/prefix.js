@@ -36,7 +36,7 @@ export default {
       
     } catch (e) {
       console.error(e);
-      reply(MESSAGES.error.simple);
+      reply(MESSAGES.error.general);
     }
   }
 };

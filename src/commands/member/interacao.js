@@ -21,7 +21,7 @@ export default {
       if (!isGroup) return reply(MESSAGES.permission.groupOnly);
       if (!isModoBn) return reply(`💔 O modo brincadeira não está ativo nesse grupo.`);
       
-      if (!menc_os2) return reply(MESSAGES.permission.mentionRequired);
+      if (!menc_os2) return reply(MESSAGES.error.missing('alguém'));
       
       const gamesPath = path.join(__dirname, '../../funcs/json/games.json');
       const markgamePath = path.join(__dirname, '../../funcs/json/markgame.json');
@@ -65,7 +65,7 @@ export default {
       }
     } catch (e) {
       console.error(e);
-      await reply(MESSAGES.error.internal);
+      await reply(MESSAGES.error.general);
     }
   }
 };

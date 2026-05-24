@@ -43,7 +43,7 @@ export default {
       }
     } catch (e) {
       console.error(e);
-      await reply(MESSAGES.error.simple);
+      await reply(MESSAGES.error.general);
     }
   }
 };

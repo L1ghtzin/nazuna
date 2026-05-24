@@ -61,7 +61,7 @@ export default {
             if (have <= 0) return reply(MESSAGES.rpg.itemNotFound);
             const qtyArg = args[1] || 'all';
             const qty = ['all', 'tudo', 'max'].includes((qtyArg || '').toLowerCase()) ? have : parseAmount(qtyArg, have);
-            if (!isFinite(qty) || qty <= 0) return reply(MESSAGES.error.invalidQuantity);
+            if (!isFinite(qty) || qty <= 0) return reply(MESSAGES.error.invalid('quantidade'));
             const gain = qty * price;
             me.materials[matKey] = have - qty;
             me.wallet += gain;

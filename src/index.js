@@ -139,7 +139,7 @@ async function NazuninhaBotExec(nazu, info, store, messagesCache, rentalExpirati
     console.error('Erro no processamento da mensagem:', error);
     try {
       if (info?.key?.remoteJid) {
-        await nazu.sendMessage(info.key.remoteJid, { text: MESSAGES.error.unexpected }, { quoted: info });
+        await nazu.sendMessage(info.key.remoteJid, { text: MESSAGES.error.general }, { quoted: info });
       }
     } catch (e) {
       console.error('Falha ao enviar mensagem de erro:', e);

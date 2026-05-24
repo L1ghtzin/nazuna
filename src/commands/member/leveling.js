@@ -59,7 +59,7 @@ export default {
     // ═══════════════════════════════════════════════════════════════
     if (['addxp', 'delxp', 'setlevel'].includes(cmd)) {
       if (!isOwner) return reply(MESSAGES.permission.ownerOnly);
-      if (!menc_os2) return reply(MESSAGES.permission.mentionRequired);
+      if (!menc_os2) return reply(MESSAGES.error.missing('alguém'));
       const val = parseInt(q);
       if (isNaN(val)) return reply("Informe um número.");
       

@@ -25,7 +25,7 @@ export default {
     // 🎨 BRAT / BRATVID
     // ═══════════════════════════════════════════════════════════════
     if (['brat', 'bratvid'].includes(cmd)) {
-      if (!q) return reply(MESSAGES.error.noText);
+      if (!q) return reply(MESSAGES.error.missing('um texto'));
       const isAnimated = cmd === 'bratvid';
       const delay = 500;
       const apiUrl = `https://api.siputzx.my.id/api/m/brat?text=${encodeURIComponent(q)}&isAnimated=${isAnimated}&delay=${delay}`;

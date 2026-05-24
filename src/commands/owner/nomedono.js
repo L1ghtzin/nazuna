@@ -28,7 +28,7 @@ export default {
       
     } catch (e) {
       console.error(e);
-      await reply(MESSAGES.error.unexpected);
+      await reply(MESSAGES.error.general);
     }
   }
 };

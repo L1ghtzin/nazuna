@@ -20,7 +20,7 @@ export default {
       if (!isGroup) return reply(MESSAGES.permission.groupOnly);
       if (!isGroupAdmin) return reply(MESSAGES.permission.adminOnly);
       if (!isBotAdmin) return reply(MESSAGES.permission.botAdminOnly);
-      if (!menc_os2) return reply(MESSAGES.permission.mentionRequired);
+      if (!menc_os2) return reply(MESSAGES.error.missing('alguém'));
       
       // Converte para LID se necessário para grupos ocultos
       let targetId = menc_os2;
@@ -46,7 +46,7 @@ export default {
       reply(`✅ Usuário promovido a administrador!`);
     } catch (e) {
       console.error(e);
-      reply(MESSAGES.error.simple);
+      reply(MESSAGES.error.general);
     }
   }
 };

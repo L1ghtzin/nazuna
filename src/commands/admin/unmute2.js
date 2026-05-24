@@ -28,7 +28,7 @@ export default {
     try {
       if (!isGroup) return reply(MESSAGES.permission.groupOnly);
       if (!isGroupAdmin) return reply(MESSAGES.permission.userAdminOnly);
-      if (!menc_os2) return reply(MESSAGES.permission.mentionRequired);
+      if (!menc_os2) return reply(MESSAGES.error.missing('alguém'));
       
       const groupFilePath = buildGroupFilePath(from);
       let groupData = await optimizer.loadJsonWithCache(groupFilePath, { mutedUsers2: {} });
@@ -53,7 +53,7 @@ export default {
       
     } catch (e) {
       console.error(e);
-      reply(MESSAGES.error.simple);
+      reply(MESSAGES.error.general);
     }
   }
 };
