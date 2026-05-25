@@ -54,69 +54,52 @@ function fmtDur(s) {
 }
 
 /**
- * Fallback: Nayan Video Downloader
- */
-async function fetchNayan(url, format, retries = 2) {
-  let lastError;
-  for (let i = 0; i < retries; i++) {
-    try {
-      const { data: raw } = await api.get('https://nayan-video-downloader.vercel.app/ytdown', { params: { url } });
-      const body = (raw?.status !== undefined && raw.data) ? raw.data : raw;
-      if (!body || body.status === false) throw new Error('Nayan: Resposta inválida');
-
-      const media = (body.data?.title || body.data?.video || body.data?.audio) ? body.data : body;
-      const dlUrl = format === 'mp3' ? media.audio : (media.video_hd || media.video);
-      if (!dlUrl) throw new Error(`Nayan: URL de ${format} não disponível`);
-
-      const { data } = await api.get(dlUrl, {
-        responseType: 'arraybuffer',
-        timeout: DL_TIMEOUT,
-        headers: { Referer: 'https://nayan-video-downloader.vercel.app/' }
-      });
-
-      const buffer = Buffer.from(data);
-      if (buffer.length < 1000) throw new Error('Nayan: Arquivo muito pequeno');
-
-      return { buffer, title: media.title || 'YouTube Media', thumb: media.thumb, source: 'nayan' };
-    } catch (e) {
-      lastError = e;
-      if (i < retries - 1) await new Promise(res => setTimeout(res, 1500));
-    }
-  }
-  throw lastError;
-}
-
-/**
- * Principal: System Zero API
- * Resposta real: { status, title, download_url, youtube_url, thumbnail, duration, creator, source_used }
+ * API 2: System Zero
  */
 async function fetchSystemZero(query, mode = 'mp3') {
   try {
     const endpoint = mode === 'mp3' ? 'https://systemzone.store/api/play' : 'https://systemzone.store/api/ytmp4';
     const { data } = await api.get(endpoint, { params: { text: query } });
 
-    if (!data || data.status === false || !data.download_url) {
-      throw new Error(data?.message || 'Resultado não encontrado');
+    if (mode === 'mp4') {
+      if (!data || data.status === false || !data.result || !data.result.download) throw new Error(data?.message || 'Resultado não encontrado');
+      return { url: data.result.download, title: data.result.title, thumb: data.result.thumbnail };
+    } else {
+      if (!data || data.status === false || !data.download_url) throw new Error(data?.message || 'Resultado não encontrado');
+      return { url: data.download_url, title: data.title, thumb: data.thumbnail };
     }
-
-    return {
-      downloadUrl: data.download_url,
-      title: data.title || 'YouTube Media',
-      thumb: data.thumbnail,
-      source: 'systemzero',
-      url: data.youtube_url || query
-    };
   } catch (e) {
-    const status = e.response?.status;
-    const errorMsg = e.response?.data?.message || e.message;
-    throw new Error(`[${status || 'ERR'}] ${errorMsg}`);
+    throw new Error(`SystemZero: ${e.message}`);
   }
 }
 
-async function fetchBuffer(url) {
+/**
+ * API 3: Nayan
+ */
+async function fetchNayan(url, format, retries = 1) {
+  let lastError;
+  for (let i = 0; i < retries; i++) {
+    try {
+      const { data: raw } = await api.get('https://nayan-video-downloader.vercel.app/ytdown', { params: { url } });
+      const body = (raw?.status !== undefined && raw.data) ? raw.data : raw;
+      if (!body || body.status === false) throw new Error('Nayan: Resposta inválida');
+      const media = (body.data?.title || body.data?.video || body.data?.audio) ? body.data : body;
+      const dlUrl = format === 'mp3' ? media.audio : (media.video_hd || media.video);
+      if (!dlUrl) throw new Error(`Nayan: URL de ${format} não disponível`);
+      return { url: dlUrl, title: media.title, thumb: media.thumb };
+    } catch (e) {
+      lastError = e;
+    }
+  }
+  throw lastError;
+}
+
+async function fetchBuffer(url, referer = null) {
+  const headers = referer ? { Referer: referer } : {};
   const { data } = await api.get(url, {
     responseType: 'arraybuffer',
-    timeout: DL_TIMEOUT
+    timeout: DL_TIMEOUT,
+    headers
   });
   return Buffer.from(data);
 }
@@ -124,7 +107,65 @@ async function fetchBuffer(url) {
 async function search(query) {
   try {
     if (!query?.trim()) return { ok: false, msg: 'Termo de pesquisa inválido' };
-    const video = (await yts(query))?.videos?.[0];
+    
+    let video = null;
+    const videoId = getVideoId(query);
+    if (videoId) {
+      try {
+        video = await yts({ videoId });
+      } catch (e) {}
+    }
+    
+    if (!video) {
+      try {
+        video = (await yts(query))?.videos?.[0];
+      } catch (e) {}
+    }
+    
+    // Fallback para apisnodz caso yts não encontre
+    if (!video) {
+      try {
+        const { data } = await api.get('https://apisnodz.com.br/api/pesquisas/youtube', { params: { query } });
+        if (data?.success && data?.resultado?.length) {
+          const v = data.resultado[0];
+          return {
+            ok: true,
+            data: {
+              videoId: v.id,
+              url: v.url,
+              title: v.titulo,
+              description: '',
+              thumbnail: v.imagem,
+              seconds: 0,
+              timestamp: v.tempo,
+              ago: '',
+              views: v.views,
+              author: { name: v.autor, url: '' }
+            }
+          };
+        }
+      } catch (e) {}
+    }
+    
+    // Se tudo falhar mas tivermos um ID válido (ex: shorts que o yts falha)
+    if (!video && videoId) {
+      return {
+        ok: true,
+        data: {
+          videoId,
+          url: `https://youtube.com/watch?v=${videoId}`,
+          title: 'YouTube Video',
+          description: '',
+          thumbnail: `https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg`,
+          seconds: 0,
+          timestamp: '00:00',
+          ago: '',
+          views: 0,
+          author: { name: 'YouTube', url: '' }
+        }
+      };
+    }
+
     if (!video) return { ok: false, msg: 'Nenhum vídeo encontrado' };
 
     return {
@@ -149,35 +190,62 @@ async function search(query) {
 
 async function mp3(query, preInfo = null) {
   try {
-    let dlData;
-    let source = 'systemzero';
-    let buffer;
+    const s = await search(query);
+    if (!s.ok) throw new Error(s.msg);
+    const urlToUse = s.data.url;
+    const fallbackTitle = s.data.title || 'Audio';
+    const fallbackThumb = s.data.thumbnail || `https://i.ytimg.com/vi/${getVideoId(urlToUse) || 'default'}/maxresdefault.jpg`;
 
+    let buffer, title, thumbnail, quality, filename, source;
+
+    // 1: Apisnodz
     try {
-      // Tenta System Zero
-      dlData = await fetchSystemZero(query, 'mp3');
-      buffer = await fetchBuffer(dlData.downloadUrl);
-    } catch (e) {
-      console.warn('System Zero falhou, usando Nayan como fallback...', e.message);
-      source = 'nayan';
-      const s = await search(query);
-      if (!s.ok) throw new Error('Vídeo não encontrado para fallback');
-      const dl = await fetchNayan(s.data.url, 'mp3');
-      dlData = { title: dl.title, thumb: dl.thumb, url: s.data.url };
-      buffer = dl.buffer;
+      const { data } = await api.get('https://apisnodz.com.br/api/downloads/youtube/audio', { params: { url: urlToUse } });
+      if (!data?.success || !data?.resultado?.url) throw new Error('Apisnodz falhou');
+      buffer = await fetchBuffer(data.resultado.url);
+      title = data.resultado.titulo || fallbackTitle;
+      thumbnail = fallbackThumb;
+      quality = data.resultado.qualidade || '128 kbps';
+      filename = data.resultado.filename || `${title.replace(/[^\w\s]/gi, '')}.mp3`;
+      source = 'apisnodz';
+    } catch (e1) {
+      console.warn('Apisnodz falhou para mp3, tentando System Zero...', e1.message);
+      // 2: System Zero
+      try {
+        const dl = await fetchSystemZero(urlToUse, 'mp3');
+        buffer = await fetchBuffer(dl.url);
+        title = dl.title || fallbackTitle;
+        thumbnail = dl.thumb || fallbackThumb;
+        quality = '128 kbps';
+        filename = `${title.replace(/[^\w\s]/gi, '')}.mp3`;
+        source = 'systemzero';
+      } catch (e2) {
+        console.warn('System Zero falhou para mp3, tentando Nayan...', e2.message);
+        // 3: Nayan
+        try {
+          const dl = await fetchNayan(urlToUse, 'mp3');
+          buffer = await fetchBuffer(dl.url, 'https://nayan-video-downloader.vercel.app/');
+          title = dl.title || fallbackTitle;
+          thumbnail = dl.thumb || fallbackThumb;
+          quality = '128 kbps';
+          filename = `${title.replace(/[^\w\s]/gi, '')}.mp3`;
+          source = 'nayan';
+        } catch (e3) {
+          throw new Error('Todas as APIs de download falharam para o áudio.');
+        }
+      }
     }
 
-    const { title, thumb } = dlData;
     try { buffer = await convertToMp3(buffer); } catch { }
 
     return {
       ok: true,
       buffer,
-      title: title || 'Audio',
-      thumbnail: thumb || `https://i.ytimg.com/vi/${getVideoId(dlData.url || query) || 'default'}/maxresdefault.jpg`,
-      quality: '128 kbps',
-      filename: `${(title || 'audio').replace(/[^\w\s]/gi, '')}.mp3`,
-      source: source,
+      title,
+      thumbnail,
+      quality,
+      filename,
+      source,
       tempo: preInfo?.seconds || 0
     };
   } catch (e) {
@@ -225,34 +293,62 @@ async function convertToMp4(inputBuffer) {
 
 async function mp4(query, qualidade = '360p', preInfo = null) {
   try {
-    let dlData;
-    let source = 'nayan';
-    let buffer;
+    const s = await search(query);
+    if (!s.ok) throw new Error(s.msg);
+    const urlToUse = s.data.url;
+    const fallbackTitle = s.data.title || 'Video';
+    const fallbackThumb = s.data.thumbnail || `https://i.ytimg.com/vi/${getVideoId(urlToUse) || 'default'}/maxresdefault.jpg`;
 
+    let buffer, title, thumbnail, filename, source;
+
+    // 1: Apisnodz
     try {
-      const s = await search(query);
-      if (!s.ok) throw new Error('Vídeo não encontrado');
-      
-      const dl = await fetchNayan(s.data.url, 'mp4');
-      dlData = { title: dl.title, thumb: dl.thumb, url: s.data.url };
-      buffer = dl.buffer;
-      
-      // Se Nayan não mandar MP4, converte para garantir compatibilidade
-      if (!isRealMp4(buffer)) {
-        try { buffer = await convertToMp4(buffer); } catch { /* mantém buffer original se falhar */ }
+      const { data } = await api.get('https://apisnodz.com.br/api/downloads/youtube/video', { params: { url: urlToUse } });
+      if (!data?.success || !data?.resultado?.url) throw new Error('Apisnodz falhou');
+      buffer = await fetchBuffer(data.resultado.url);
+      title = data.resultado.titulo || fallbackTitle;
+      thumbnail = fallbackThumb;
+      qualidade = data.resultado.qualidade || qualidade;
+      filename = data.resultado.filename || `${title.replace(/[^\w\s]/gi, '')}.mp4`;
+      source = 'apisnodz';
+    } catch (e1) {
+      console.warn('Apisnodz falhou para mp4, tentando System Zero...', e1.message);
+      // 2: System Zero
+      try {
+        const dl = await fetchSystemZero(urlToUse, 'mp4');
+        buffer = await fetchBuffer(dl.url);
+        title = dl.title || fallbackTitle;
+        thumbnail = dl.thumb || fallbackThumb;
+        filename = `${title.replace(/[^\w\s]/gi, '')}.mp4`;
+        source = 'systemzero';
+      } catch (e2) {
+        console.warn('System Zero falhou para mp4, tentando Nayan...', e2.message);
+        // 3: Nayan
+        try {
+          const dl = await fetchNayan(urlToUse, 'mp4');
+          buffer = await fetchBuffer(dl.url, 'https://nayan-video-downloader.vercel.app/');
+          title = dl.title || fallbackTitle;
+          thumbnail = dl.thumb || fallbackThumb;
+          filename = `${title.replace(/[^\w\s]/gi, '')}.mp4`;
+          source = 'nayan';
+        } catch (e3) {
+          throw new Error('Todas as APIs de download falharam para o vídeo.');
+        }
       }
-    } catch (e) {
-      throw e;
+    }
+    
+    if (!isRealMp4(buffer)) {
+      try { buffer = await convertToMp4(buffer); } catch { /* mantém buffer original se falhar */ }
     }
 
     return {
       ok: true,
       buffer,
-      title: dlData.title || 'Video',
-      thumbnail: dlData.thumb || `https://i.ytimg.com/vi/${getVideoId(dlData.url || query) || 'default'}/maxresdefault.jpg`,
+      title,
+      thumbnail,
       quality: qualidade,
-      filename: `${(dlData.title || 'video').replace(/[^\w\s]/gi, '')}.mp4`,
-      source: source,
+      filename,
+      source,
       tempo: preInfo?.seconds || 0
     };
   } catch (e) {
