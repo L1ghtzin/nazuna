@@ -42,7 +42,10 @@ let captchaIndex = new Map(), isInitialized = false, saveTimeout = null;
  * Inicializa o índice de captcha
  * Carrega do arquivo ou reconstrói a partir dos grupos
  */
+let cleanupCallback = null;
+
 async function initCaptchaIndex(cb) {
+   cleanupCallback = cb;
    if (isInitialized) return;
    try {
       // Tenta carregar do arquivo de índice
@@ -65,7 +68,7 @@ async function initCaptchaIndex(cb) {
    } finally {
       // Inicia limpeza periódica de captchas expirados (a cada 5 minutos)
       isInitialized = true;
-      setInterval(() => cleanupExpired(cb), 5 * 60 * 1000);
+      setInterval(() => cleanupExpired((...args) => cleanupCallback && cleanupCallback(...args)), 5 * 60 * 1000);
    }
 }
 /**

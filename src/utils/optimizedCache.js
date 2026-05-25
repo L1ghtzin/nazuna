@@ -94,6 +94,16 @@ class OptimizedCacheManager {
             forceString: false
         }));
 
+        // Cache para chamadas de memoize (funções de banco/json rápidas)
+        this.caches.set('memoize', new NodeCache({
+            stdTTL: 60, // 1 minuto padrão
+            checkperiod: 30, // Verifica a cada 30 segundos
+            useClones: false,
+            maxKeys: 5000,
+            deleteOnExpire: true,
+            forceString: false
+        }));
+
         for (const [type, cache] of this.caches.entries()) {
             this.setupCacheEvents(type, cache);
         }

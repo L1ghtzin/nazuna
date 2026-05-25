@@ -115,7 +115,7 @@ const setupMessagesCacheCleanup = () => {
     if (cacheCleanupInterval) clearInterval(cacheCleanupInterval);
     
     cacheCleanupInterval = setInterval(() => {
-    if (!messagesCache || messagesCache.size <= 3000) return;
+    if (!messagesCache || messagesCache.size <= 500) return;
     
     const keysToDelete = Math.floor(messagesCache.size * 0.4); // Remove 40% dos mais antigos
     const keys = Array.from(messagesCache.keys()).slice(0, keysToDelete);
@@ -344,7 +344,7 @@ async function createBotSocket(authDir) {
     // Cache da mensagem para uso posterior no processamento (anti-delete, resumirchat, etc)
     if (messagesCache && info.key?.id && info.key?.remoteJid) {
     // Adicionar limite de inserção
-    if (messagesCache.size >= 3000) {
+    if (messagesCache.size >= 500) {
       const keysToDelete = Math.floor(messagesCache.size * 0.3);
       const keys = Array.from(messagesCache.keys()).slice(0, keysToDelete);
       keys.forEach(key => messagesCache.delete(key));
