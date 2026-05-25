@@ -60,6 +60,9 @@ export const getMessageText = (message) => {
          message.viewOnceMessageV2?.message?.videoMessage?.caption || 
          message.editedMessage?.message?.protocolMessage?.editedMessage?.extendedTextMessage?.text || 
          message.editedMessage?.message?.protocolMessage?.editedMessage?.imageMessage?.caption || 
+         message.requestPaymentMessage?.noteMessage?.extendedTextMessage?.text ||
+         message.groupStatusMessage?.message?.extendedTextMessage?.text ||
+         message.groupStatusMessageV2?.message?.extendedTextMessage?.text ||
          '';
 };
 

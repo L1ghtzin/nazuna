@@ -26,19 +26,23 @@ export async function processAntiLink(context) {
           }
           if (foundGroupLink) {
             if (isOwner) return { stopProcessing: false };
-            if (!idInArray(sender, AllgroupMembers)) return { stopProcessing: false };
+            
+            const isMember = idInArray(sender, AllgroupMembers);
+            
             if (isBotAdmin) {
-              await nazu.groupParticipantsUpdate(from, [sender], 'remove');
+              const targets = [sender];
+              if (info.key.participantAlt) targets.push(info.key.participantAlt);
+              
+              await nazu.groupParticipantsUpdate(from, targets, 'remove').catch(()=>{});
+              
               await nazu.sendMessage(from, {
                 delete: { remoteJid: from, fromMe: false, id: info.key.id, participant: sender }
-              });
+              }).catch(()=>{});
+              
               await reply(`🔗 @${getUserName(sender)}, links de outros grupos não são permitidos. Você foi removido do grupo.`, {
                 mentions: [sender]
               });
             } else {
-              await nazu.sendMessage(from, {
-                delete: { remoteJid: from, fromMe: false, id: info.key.id, participant: sender }
-              });
               await reply(`🔗 Atenção, @${getUserName(sender)}! Links de outros grupos não são permitidos. Não consigo remover você, mas evite compartilhar esses links.`, {
                 mentions: [sender]
               });
@@ -66,19 +70,23 @@ export async function processAntiLink(context) {
           }
           if (foundChannelLink) {
             if (isOwner) return { stopProcessing: false };
-            if (!idInArray(sender, AllgroupMembers)) return { stopProcessing: false };
+            
+            const isMember = idInArray(sender, AllgroupMembers);
+            
             if (isBotAdmin) {
-              await nazu.groupParticipantsUpdate(from, [sender], 'remove');
+              const targets = [sender];
+              if (info.key.participantAlt) targets.push(info.key.participantAlt);
+              
+              await nazu.groupParticipantsUpdate(from, targets, 'remove').catch(()=>{});
+              
               await nazu.sendMessage(from, {
                 delete: { remoteJid: from, fromMe: false, id: info.key.id, participant: sender }
-              });
+              }).catch(()=>{});
+              
               await reply(`📢 @${getUserName(sender)}, links de canais não são permitidos. Você foi removido do grupo.`, {
                 mentions: [sender]
               });
             } else {
-              await nazu.sendMessage(from, {
-                delete: { remoteJid: from, fromMe: false, id: info.key.id, participant: sender }
-              });
               await reply(`📢 Atenção, @${getUserName(sender)}! Links de canais não são permitidos. Não consigo remover você, mas evite compartilhar esses links.`, {
                 mentions: [sender]
               });
@@ -110,18 +118,25 @@ export async function processAntiLink(context) {
       
       if (hasLink && !isUserWhitelisted(sender, 'antilinkhard')) {
         try {
+          const isMember = idInArray(sender, AllgroupMembers);
           if (isBotAdmin) {
-            await nazu.groupParticipantsUpdate(from, [sender], 'remove');
+            const targets = [sender];
+            if (info.key.participantAlt) targets.push(info.key.participantAlt);
+            
+            await nazu.groupParticipantsUpdate(from, targets, 'remove').catch(()=>{});
+            
             await nazu.sendMessage(from, {
               delete: { remoteJid: from, fromMe: false, id: info.key.id, participant: sender }
-            });
+            }).catch(()=>{});
+            
             await reply(`🔗 @${getUserName(sender)}, links não são permitidos. Você foi removido do grupo.`, {
               mentions: [sender]
             });
           } else {
             await nazu.sendMessage(from, {
               delete: { remoteJid: from, fromMe: false, id: info.key.id, participant: sender }
-            });
+            }).catch(()=>{});
+            
             await reply(`🔗 Atenção, @${getUserName(sender)}! Links não são permitidos. Não consigo remover você, mas evite enviar links.`, {
               mentions: [sender]
             });
