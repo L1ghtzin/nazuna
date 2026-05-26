@@ -502,6 +502,19 @@ const JSON_CACHE_TTL = 30000; // 30 segundos
 
 const loadJsonFile = (path, defaultValue = {}, useCache = false) => {
   try {
+    // Verifica dados pendentes (debouncedSaveJson)
+    if (pendingData.has(path)) {
+      try {
+        const data = JSON.parse(pendingData.get(path));
+        if (useCache) {
+          jsonFileCache.set(path, { data, timestamp: Date.now() });
+        }
+        return data;
+      } catch (e) {
+        console.error(`Erro ao parsear pendingData para ${path}:`, e);
+      }
+    }
+
     // Verifica cache se ativado
     if (useCache && jsonFileCache.has(path)) {
       const cached = jsonFileCache.get(path);
@@ -692,6 +705,9 @@ function validateAndRepairData(data, expectedStructure) {
   return result;
 }
 
+const pendingData = new Map();
+const saveTimers = new Map();
+
 /**
  * Carrega arquivo JSON com múltiplas camadas de proteção
  */
@@ -700,11 +716,20 @@ function loadJsonFileSafe(filePath, defaultValue = {}, expectedStructure = null)
   let recovered = false;
   
   try {
-    // Verifica se arquivo existe
-    if (!fs.existsSync(filePath)) {
-      ensureJsonFileExists(filePath, defaultValue);
-      return defaultValue;
+    if (pendingData.has(filePath)) {
+      try {
+        data = JSON.parse(pendingData.get(filePath));
+      } catch (e) {
+        console.error(`Erro ao fazer parse do pendingData de ${filePath}`, e);
+      }
     }
+
+    if (!data) {
+      // Verifica se arquivo existe
+      if (!fs.existsSync(filePath)) {
+        ensureJsonFileExists(filePath, defaultValue);
+        return defaultValue;
+      }
     
     // Lê conteúdo do arquivo
     let content = fs.readFileSync(filePath, 'utf-8');
@@ -743,6 +768,8 @@ function loadJsonFileSafe(filePath, defaultValue = {}, expectedStructure = null)
         }
       }
     }
+    
+    } // Fecha bloco if (!data)
     
     // Valida e repara estrutura se especificada
     if (expectedStructure && data) {
@@ -875,9 +902,6 @@ async function saveJsonFileAsync(filePath, data, createBackupFile = true) {
 /**
  * Sistema de Debounce Global para não floodar o disco com operações pesadas (RPG, Leveling)
  */
-const saveTimers = new Map();
-const pendingData = new Map();
-
 function debouncedSaveJson(filePath, data, delayMs = 3000) {
   // Atualiza a memória instantaneamente para quem ler depois
   pendingData.set(filePath, JSON.stringify(data, null, 2));
