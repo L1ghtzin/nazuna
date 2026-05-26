@@ -55,20 +55,27 @@ export default {
       if (!['red', 'black', 'green'].includes(color) || bet < 100) return reply(`💡 Use ${prefix}roleta <red|black|green> <valor>`);
       if (me.wallet < bet) return reply('💰 Saldo insuficiente!');
 
-      const rand = Math.random() * 100;
+      // ROLETA NERFADA (Portado do Nazuna Original)
+      const rand = Math.random();
       let result;
-      if (rand < 2) result = 'green';
-      else if (rand < 51) result = 'red';
-      else result = 'black';
+      const otherColors = ['red', 'black', 'green'].filter(c => c !== color);
+      
+      if (rand < 0.85) {
+        result = otherColors[Math.floor(Math.random() * otherColors.length)];
+      } else if (rand < 0.97) {
+        result = color === 'green' ? otherColors[0] : color;
+      } else {
+        result = 'green';
+      }
 
       if (color === result) {
-        const mult = color === 'green' ? 14 : 2;
-        const win = bet * mult;
+        const mult = result === 'green' ? 5 : 1.5;
+        const win = Math.floor(bet * mult);
         me.wallet += win - bet;
-        reply(`🎰 Resultado: *${result.toUpperCase()}*! Você ganhou ${win.toLocaleString()}!`);
+        reply(`🎰 Resultado: *${result.toUpperCase()}*! Você ganhou ${win.toLocaleString()}! (${mult}x)`);
       } else {
         me.wallet -= bet;
-        reply(`🎰 Resultado: *${result.toUpperCase()}*! Você perdeu ${bet.toLocaleString()}.`);
+        reply(`🎰 Resultado: *${result.toUpperCase()}*! Você perdeu ${bet.toLocaleString()}.\n🎰 A roleta parece viciada...`);
       }
       saveEconomy(econ);
       return;
@@ -178,38 +185,72 @@ export default {
       if (bet < 100) return reply(`💡 Use ${prefix}blackjack <valor>`);
       if (me.wallet < bet) return reply('💰 Saldo insuficiente!');
 
-      const drawCard = () => Math.floor(Math.random() * 10) + 2;
-      let pCards = [drawCard(), drawCard()];
-      let bCards = [drawCard(), drawCard()];
-      let pSum = pCards[0] + pCards[1];
-      let bSum = bCards[0] + bCards[1];
+      // BLACKJACK NERFADO: Dealer tem cartas viciadas
+      const getPlayerCard = () => {
+        const values = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
+        const weights = [5, 3, 3, 4, 5, 6, 8, 10, 12, 15, 12, 10, 7]; 
+        const total = weights.reduce((a, b) => a + b, 0);
+        let rand = Math.random() * total;
+        for (let i = 0; i < values.length; i++) {
+          rand -= weights[i];
+          if (rand <= 0) return values[i];
+        }
+        return values[0];
+      };
+      
+      const getDealerCard = () => {
+        const values = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
+        const weights = [8, 6, 7, 8, 9, 10, 12, 10, 8, 6, 5, 5, 6]; 
+        const total = weights.reduce((a, b) => a + b, 0);
+        let rand = Math.random() * total;
+        for (let i = 0; i < values.length; i++) {
+          rand -= weights[i];
+          if (rand <= 0) return values[i];
+        }
+        return values[0];
+      };
+      
+      const getValue = (cards) => {
+        let total = 0;
+        let aces = 0;
+        cards.forEach(c => {
+          if (c === 'A') { aces++; total += 11; }
+          else if (['J', 'Q', 'K'].includes(c)) total += 10;
+          else total += parseInt(c);
+        });
+        while (total > 21 && aces > 0) { total -= 10; aces--; }
+        return total;
+      };
+
+      const pCards = [getPlayerCard(), getPlayerCard()];
+      const bCards = [getDealerCard(), getDealerCard()];
+      
+      while (getValue(pCards) < 17) pCards.push(getPlayerCard());
+      while (getValue(bCards) < 17) bCards.push(getDealerCard());
+      
+      const pSum = getValue(pCards);
+      const bSum = getValue(bCards);
 
       let msg = `🃏 *BLACKJACK*\n\n`;
-      msg += `Sua mão: ${pCards.join(' + ')} = *${pSum}*\n`;
-      msg += `Mesa: ${bCards[0]} + ?\n\n`;
+      msg += `Sua mão: ${pCards.join(' ')} = *${pSum}*\n`;
+      msg += `Mesa: ${bCards.join(' ')} = *${bSum}*\n\n`;
 
-      if (pSum === 21) {
-        const win = Math.floor(bet * 1.5);
-        me.wallet += win;
-        msg += `🎉 *BLACKJACK!* Você ganhou ${win.toLocaleString()}!`;
-      } else if (pSum > 21) {
+      if (pSum > 21) {
         me.wallet -= bet;
-        msg += `💀 Você estourou e perdeu ${bet.toLocaleString()}.`;
+        msg += `💀 *BUST!* Você estourou e perdeu ${bet.toLocaleString()}.\n🃏 Que azar...`;
+      } else if (bSum > 21 || pSum > bSum) {
+        const winnings = pSum === 21 && pCards.length === 2 ? Math.floor(bet * 1.8) : Math.floor(bet * 1.4);
+        me.wallet += winnings - bet;
+        msg += `🎉 *VITÓRIA RARA!* Você ganhou ${(winnings - bet).toLocaleString()}!`;
+      } else if (pSum === bSum) {
+        const loss = Math.floor(bet * 0.3);
+        me.wallet -= loss;
+        msg += `🤝 *EMPATE!*\n💸 Taxa de empate: -${loss.toLocaleString()}`;
       } else {
-        while (bSum < 17) {
-          bSum += drawCard();
-        }
-        msg += `Mesa final: ${bSum}\n\n`;
-        if (bSum > 21 || pSum > bSum) {
-          me.wallet += bet;
-          msg += `🎉 Você venceu a mesa e ganhou ${bet.toLocaleString()}!`;
-        } else if (pSum < bSum) {
-          me.wallet -= bet;
-          msg += `💀 Mesa venceu. Você perdeu ${bet.toLocaleString()}.`;
-        } else {
-          msg += `🤝 Empate!`;
-        }
+        me.wallet -= bet;
+        msg += `💀 *MESA VENCEU!* Você perdeu ${bet.toLocaleString()}.\n🃏 O dealer parece ter sorte demais...`;
       }
+      
       saveEconomy(econ);
       return reply(msg);
     }

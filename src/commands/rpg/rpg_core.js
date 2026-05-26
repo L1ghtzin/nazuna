@@ -21,7 +21,9 @@ import {
     findKeyIgnoringAccents,
     normalizeParam,
     updateQuestProgress,
-    checkEcoLevelUp
+    checkEcoLevelUp,
+    giveMaterial,
+    PICKAXE_TIER_MULT
 } from "../../utils/database.js";
 
 export default {
@@ -256,23 +258,44 @@ export default {
         }
 
         if (sub === 'minerar' || sub === 'mine') {
-            const pk = me.tools?.pickaxe;
-            if (!pk || pk.dur <= 0) return reply(`╭━━━⊱ 💔 *ERRO* 💔 ⊱━━━╮\n│\n│ ⚠️ Você não tem uma picareta\n│ ou ela quebrou!\n│\n│ 💡 Compre uma na loja.\n│\n╰━━━━━━━━━━━━━━━━━━╯`);
             const cd = me.cooldowns?.mine || 0;
-            if (Date.now() < cd) return reply(`╭━━━⊱ ⏳ *COOLDOWN* ⏳ ⊱━━━╮\n│\n│ ⚠️ Você está cansado!\n│ ⏰ Aguarde: ${timeLeft(cd)}\n│\n╰━━━━━━━━━━━━━━━━━━━━━╯`);
-            
-            const base = 150 + Math.floor(Math.random() * 201);
+            if (Date.now() < cd) return reply(`⏳ Aguarde ${timeLeft(cd)} para minerar novamente.`);
+            const pk = getActivePickaxe(me);
+            if (!pk) return reply(`⛏️ Você precisa de uma picareta para minerar. Compre na ${prefix}loja (ex: ${prefix}comprar pickaxe_bronze) ou repare com ${prefix}reparar.`);
+            // Cálculo de ouro com base na picareta e bônus (BALANCEADO)
+            const tierMult = PICKAXE_TIER_MULT[pk.tier] || 1.0;
+            const base = 100 + Math.floor(Math.random() * 101); // 100-200
             const skillB = getSkillBonus(me, 'mining');
-            const total = Math.floor(base * (1 + (mineBonus || 0) + skillB));
-            me.wallet += total; me.cooldowns.mine = Date.now() + 15 * 60 * 1000; pk.dur--;
-            me.exp = (me.exp || 0) + 30;
-            addSkillXP(me, 'mining', 1);
-            updateQuestProgress(me, 'gather', 1);
-            const levelUpRes = checkEcoLevelUp(me);
+            const raw = Math.floor(base * tierMult);
+            const bonus = Math.floor(raw * ((mineBonus || 0) + skillB));
+            const total = raw + bonus;
+            me.wallet += total;
+            // Quedas de materiais (chances balanceadas)
+            let drops = { pedra: 2 + Math.floor(Math.random() * 3) }; // 2-4
+            if (pk.tier === 'ferro' || pk.tier === 'diamante') {
+                drops.ferro = (drops.ferro || 0) + 1 + Math.floor(Math.random() * 2); // 1-2
+                drops.carvao = (drops.carvao || 0) + (Math.random() < 0.4 ? 1 : 0); // 40% chance
+            }
+            if (pk.tier === 'diamante') {
+                drops.ferro = (drops.ferro || 0) + (Math.random() < 0.7 ? 1 : 0); // 70% chance de +1
+                drops.ouro = (drops.ouro || 0) + (Math.random() < 0.3 ? 1 : 0); // 30% chance
+                drops.carvao = (drops.carvao || 0) + (Math.random() < 0.6 ? 1 : 0); // 60% chance
+                if (Math.random() < 0.1) drops.diamante = (drops.diamante || 0) + 1; // 10% chance
+            }
+            for (const [mk, mq] of Object.entries(drops)) if (mq > 0) giveMaterial(me, mk, mq);
+            // Durabilidade
+            const before = pk.dur; pk.dur = Math.max(0, pk.dur - 1);
+            me.tools.pickaxe = { ...pk, max: pk.max ?? (pk.tier === 'bronze' ? 20 : pk.tier === 'ferro' ? 60 : pk.tier === 'diamante' ? 150 : pk.dur) };
+            me.cooldowns.mine = Date.now() + 10 * 60 * 1000; // 10 min
+            addSkillXP(me, 'mining', 1); updateChallenge(me, 'mine', 1, true); updatePeriodChallenge(me, 'mine', 1, true);
+            // Rastrear stats
+            if (!me.stats) me.stats = {};
+            me.stats.totalMine = (me.stats.totalMine || 0) + 1;
+            me.stats.mineCount = (me.stats.mineCount || 0) + 1;
             saveEconomy(econ);
-            let msg = `╭━━━⊱ ⛏️ *MINERAÇÃO* ⛏️ ⊱━━━╮\n│\n│ ✅ Minerado com sucesso!\n│\n│ 💎 Minérios: ${fmt(total)}\n│ 🛠️ Picareta: ${pk.dur}/${pk.max}\n│ ✨ +30 XP\n│\n╰━━━━━━━━━━━━━━━━━━━━━━━╯`;
-            if (levelUpRes.leveledUp) msg += `\n\n🌟 *LEVEL UP!* Você agora é nível ${levelUpRes.newLevel}!`;
-            return reply(msg);
+            let dropTxt = Object.entries(drops).filter(([, q]) => q > 0).map(([k, q]) => `${k} x${q}`).join(', ');
+            const broke = pk.dur === 0 && before > 0;
+            return reply(`⛏️ Você minerou e ganhou ${fmt(total)} ${bonus > 0 ? `(bônus ${fmt(bonus)})` : ''}!\n📦 Drops: ${dropTxt || '—'}\n🛠️ Picareta: ${pk.dur}/${me.tools.pickaxe.max}${broke ? ' — quebrou!' : ''}`);
         }
 
         if (sub === 'trabalhar' || sub === 'work') {
@@ -284,6 +307,10 @@ export default {
             me.wallet += (gain + bonus);
             me.exp = (me.exp || 0) + 20;
             me.cooldowns.work = Date.now() + 20 * 60 * 1000;
+            // Rastrear stats
+            if (!me.stats) me.stats = {};
+            me.stats.totalWork = (me.stats.totalWork || 0) + 1;
+            me.stats.workCount = (me.stats.workCount || 0) + 1;
             const levelUpRes = checkEcoLevelUp(me);
             saveEconomy(econ);
             let msg = `╭━━━⊱ 💼 *TRABALHO* 💼 ⊱━━━╮\n│\n│ ✅ Turno finalizado!\n│\n│ 💰 Salário: ${fmt(gain)}\n│ 📈 Bônus: ${fmt(bonus)}\n│ 💵 Total: ${fmt(gain + bonus)}\n│ ✨ +20 XP\n│\n╰━━━━━━━━━━━━━━━━━━━━━╯`;
@@ -382,65 +409,119 @@ export default {
 
         if (sub === 'pescar' || sub === 'fish') {
             const cd = me.cooldowns?.fish || 0;
-            if (Date.now() < cd) return reply(`╭━━━⊱ ⏳ *COOLDOWN* ⏳ ⊱━━━╮\n│\n│ ⚠️ Sem peixes por perto!\n│ ⏰ Aguarde: ${timeLeft(cd)}\n│\n╰━━━━━━━━━━━━━━━━━━━━━╯`);
-            const base = 80 + Math.floor(Math.random() * 121);
+            if (Date.now() < cd) return reply(`⏳ Aguarde ${timeLeft(cd)} para pescar novamente.`);
+            const base = 80 + Math.floor(Math.random() * 121); // 80-200 (BALANCEADO)
             const skillB = getSkillBonus(me, 'fishing');
             const bonus = Math.floor(base * ((fishBonus || 0) + skillB));
             const total = base + bonus;
             me.wallet += total;
-            me.exp = (me.exp || 0) + 25;
-            me.cooldowns.fish = Date.now() + 12 * 60 * 1000;
-            addSkillXP(me, 'fishing', 1);
-            updateChallenge(me, 'fish', 1, true);
-            updatePeriodChallenge(me, 'fish', 1, true);
-            updateQuestProgress(me, 'gather', 1);
-            const levelUpRes = checkEcoLevelUp(me);
+            me.cooldowns.fish = Date.now() + 12 * 60 * 1000; // 12 min
+            addSkillXP(me, 'fishing', 1); updateChallenge(me, 'fish', 1, true); updatePeriodChallenge(me, 'fish', 1, true);
+            
+            // Adiciona peixe como ingrediente
+            me.ingredients = me.ingredients || {};
+            const fishQty = 2 + Math.floor(Math.random() * 3); // 2-4 peixes
+            me.ingredients.peixe = (me.ingredients.peixe || 0) + fishQty;
+            
+            // Rastrear stats
+            if (!me.stats) me.stats = {};
+            me.stats.totalFish = (me.stats.totalFish || 0) + 1;
+            me.stats.fishCount = (me.stats.fishCount || 0) + 1;
+            
             saveEconomy(econ);
-            let msg = `╭━━━⊱ 🎣 *PESCARIA* 🎣 ⊱━━━╮\n│\n│ ✅ Peixe fisgado!\n│\n│ 🐟 Lucro: ${fmt(total)}\n│ ✨ +25 XP\n│\n╰━━━━━━━━━━━━━━━━━━━━━╯`;
-            if (levelUpRes.leveledUp) msg += `\n\n🌟 *LEVEL UP!* Você agora é nível ${levelUpRes.newLevel}!`;
-            return reply(msg);
+            
+            let fishText = `╭━━━⊱ 🎣 *PESCOU!* 🎣 ⊱━━━╮\n`;
+            fishText += `│\n`;
+            fishText += `│ 💰 Ganhou: *${fmt(total)}*\n`;
+            if (bonus > 0) {
+                fishText += `│ ✨ Bônus: *+${fmt(bonus)}*\n`;
+            }
+            fishText += `│ 🐟 Peixe: *+${fishQty}*\n`;
+            fishText += `│\n`;
+            fishText += `╰━━━━━━━━━━━━━━━━━━━━━╯`;
+            
+            return reply(fishText);
         }
 
         if (sub === 'explorar' || sub === 'explore') {
             const cd = me.cooldowns?.explore || 0;
-            if (Date.now() < cd) return reply(`╭━━━⊱ ⏳ *COOLDOWN* ⏳ ⊱━━━╮\n│\n│ ⚠️ Você está exausto!\n│ ⏰ Aguarde: ${timeLeft(cd)}\n│\n╰━━━━━━━━━━━━━━━━━━━━━╯`);
-            const base = 100 + Math.floor(Math.random() * 151);
+            if (Date.now() < cd) return reply(`⏳ Aguarde ${timeLeft(cd)} para explorar novamente.`);
+            const base = 100 + Math.floor(Math.random() * 151); // 100-250 (BALANCEADO)
             const skillB = getSkillBonus(me, 'exploring');
             const bonus = Math.floor(base * ((exploreBonus || 0) + skillB));
             const total = base + bonus;
             me.wallet += total;
-            me.exp = (me.exp || 0) + 35;
-            me.cooldowns.explore = Date.now() + 15 * 60 * 1000;
-            addSkillXP(me, 'exploring', 1);
-            updateChallenge(me, 'explore', 1, true);
-            updatePeriodChallenge(me, 'explore', 1, true);
-            updateQuestProgress(me, 'gather', 1);
-            const levelUpRes = checkEcoLevelUp(me);
+            me.cooldowns.explore = Date.now() + 15 * 60 * 1000; // 15 min
+            addSkillXP(me, 'exploring', 1); updateChallenge(me, 'explore', 1, true); updatePeriodChallenge(me, 'explore', 1, true);
+            // Rastrear stats
+            if (!me.stats) me.stats = {};
+            me.stats.totalExplore = (me.stats.totalExplore || 0) + 1;
+            me.stats.exploreCount = (me.stats.exploreCount || 0) + 1;
+            
+            // Adiciona materiais da exploração
+            const matsGain = {};
+            if (Math.random() < 0.6) matsGain.madeira = 1 + Math.floor(Math.random() * 3); // 60% chance, 1-3 madeira
+            if (Math.random() < 0.3) matsGain.corda = 1; // 30% chance, 1 corda
+            if (Math.random() < 0.4) matsGain.linha = 1 + Math.floor(Math.random() * 2); // 40% chance, 1-2 linha
+            if (Math.random() < 0.2) matsGain.cristal = 1; // 20% chance, 1 cristal (raro)
+            
+            for (const [mk, mq] of Object.entries(matsGain)) giveMaterial(me, mk, mq);
+            
             saveEconomy(econ);
-            let msg = `╭━━━⊱ 🧭 *EXPLORAÇÃO* 🧭 ⊱━━━╮\n│\n│ ✅ Expedição concluída!\n│\n│ 🗺️ Tesouros: ${fmt(total)}\n│ ✨ +35 XP\n│\n╰━━━━━━━━━━━━━━━━━━━━━━━╯`;
-            if (levelUpRes.leveledUp) msg += `\n\n🌟 *LEVEL UP!* Você agora é nível ${levelUpRes.newLevel}!`;
-            return reply(msg);
+            
+            let exploreText = `╭━━━⊱ 🧭 *EXPLOROU!* 🧭 ⊱━━━╮\n`;
+            exploreText += `│\n`;
+            exploreText += `│ 💰 Ganhou: *${fmt(total)}*\n`;
+            if (bonus > 0) {
+                exploreText += `│ ✨ Bônus: *+${fmt(bonus)}*\n`;
+            }
+            if (Object.keys(matsGain).length > 0) {
+                exploreText += `│ 📦 Materiais: ` + Object.entries(matsGain).map(([k, q]) => `${k} x${q}`).join(', ') + `\n`;
+            }
+            exploreText += `│\n`;
+            exploreText += `╰━━━━━━━━━━━━━━━━━━━━━╯`;
+            
+            return reply(exploreText);
         }
 
         if (sub === 'cacar' || sub === 'caçar' || sub === 'hunt') {
             const cd = me.cooldowns?.hunt || 0;
-            if (Date.now() < cd) return reply(`╭━━━⊱ ⏳ *COOLDOWN* ⏳ ⊱━━━╮\n│\n│ ⚠️ A floresta está vazia!\n│ ⏰ Aguarde: ${timeLeft(cd)}\n│\n╰━━━━━━━━━━━━━━━━━━━━━╯`);
-            const base = 120 + Math.floor(Math.random() * 181);
+            if (Date.now() < cd) return reply(`⏳ Aguarde ${timeLeft(cd)} para caçar novamente.`);
+            const base = 22 + Math.floor(Math.random() * 34); // 22-55 (nerfado)
             const skillB = getSkillBonus(me, 'hunting');
-            const bonus = Math.floor(base * ((huntBonus || 0) + skillB));
+            const bonus = Math.floor(base * ((huntBonus || 0) + skillB) * 0.4); // bônus reduzido 60%
             const total = base + bonus;
             me.wallet += total;
-            me.exp = (me.exp || 0) + 40;
-            me.cooldowns.hunt = Date.now() + 18 * 60 * 1000;
-            addSkillXP(me, 'hunting', 1);
-            updateChallenge(me, 'hunt', 1, true);
-            updatePeriodChallenge(me, 'hunt', 1, true);
-            updateQuestProgress(me, 'gather', 1);
-            const levelUpRes = checkEcoLevelUp(me);
+            me.cooldowns.hunt = Date.now() + 22 * 60 * 1000; // 22 min
+            addSkillXP(me, 'hunting', 1); updateChallenge(me, 'hunt', 1, true); updatePeriodChallenge(me, 'hunt', 1, true);
+            
+            // Adiciona carne como ingrediente
+            me.ingredients = me.ingredients || {};
+            const meatQty = 1 + (Math.random() < 0.25 ? 1 : 0); // 1-2 carnes (25% chance de pegar 2)
+            me.ingredients.carne = (me.ingredients.carne || 0) + meatQty;
+            
+            // Adiciona materiais da caça
+            const huntMats = {};
+            if (Math.random() < 0.5) huntMats.couro = 1 + Math.floor(Math.random() * 2); // 50% chance, 1-2 couro
+            
+            for (const [mk, mq] of Object.entries(huntMats)) giveMaterial(me, mk, mq);
+            
             saveEconomy(econ);
-            let msg = `╭━━━⊱ 🏹 *CAÇADA* 🏹 ⊱━━━╮\n│\n│ ✅ Abate bem-sucedido!\n│\n│ 🍖 Loot obtido: ${fmt(total)}\n│ ✨ +40 XP\n│\n╰━━━━━━━━━━━━━━━━━━━━━╯`;
-            if (levelUpRes.leveledUp) msg += `\n\n🌟 *LEVEL UP!* Você agora é nível ${levelUpRes.newLevel}!`;
-            return reply(msg);
+            
+            let huntText = `╭━━━⊱ 🏹 *CAÇOU!* 🏹 ⊱━━━╮\n`;
+            huntText += `│\n`;
+            huntText += `│ 💰 Ganhou: *${fmt(total)}*\n`;
+            if (bonus > 0) {
+                huntText += `│ ✨ Bônus: *+${fmt(bonus)}*\n`;
+            }
+            huntText += `│ 🥩 Carne: *+${meatQty}*\n`;
+            if (Object.keys(huntMats).length > 0) {
+                huntText += `│ 📦 Materiais: ` + Object.entries(huntMats).map(([k, q]) => `${k} x${q}`).join(', ') + `\n`;
+            }
+            huntText += `│\n`;
+            huntText += `╰━━━━━━━━━━━━━━━━━━━━━╯`;
+            
+            return reply(huntText);
         }
 
         if (sub === 'resetrpg' && isOwner) {

@@ -77,6 +77,9 @@ export default {
                 addSkillXP(me, 'crime', 1);
                 updateChallenge(me, 'crimeSuccess', 1, true);
                 updatePeriodChallenge(me, 'crimeSuccess', 1, true);
+                // Rastrear stats
+                if (!me.stats) me.stats = {};
+                me.stats.totalCrimes = (me.stats.totalCrimes || 0) + 1;
                 saveEconomy(econ);
                 return reply(`╭━━━⊱ 🕵️ *CRIME* 🕵️ ⊱━━━╮\n│ ✅ Crime bem-sucedido!\n│ 💰 Lucrou: ${fmt(totalGain)}\n╰━━━━━━━━━━━━━━━━━━━━━╯`);
             } else {

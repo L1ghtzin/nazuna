@@ -101,35 +101,56 @@ export default {
       const bosses = [
         { name: 'Dragão Ancião', emoji: '🐉', hp: 1000, attack: 80, defense: 50, reward: 15000, xp: 500 },
         { name: 'Golem de Pedra', emoji: '🗿', hp: 1500, attack: 60, defense: 80, reward: 12000, xp: 400 },
-        { name: 'Hidra Venenosa', emoji: '🐍', hp: 800, attack: 100, defense: 30, reward: 18000, xp: 600 }
+        { name: 'Hidra Venenosa', emoji: '🐍', hp: 800, attack: 100, defense: 30, reward: 18000, xp: 600 },
+        { name: 'Fênix Sombria', emoji: '🔥', hp: 700, attack: 90, defense: 40, reward: 20000, xp: 700 },
+        { name: 'Kraken Abissal', emoji: '🦑', hp: 1200, attack: 70, defense: 60, reward: 16000, xp: 550 }
       ];
       
       const boss = bosses[Math.floor(Math.random() * bosses.length)];
-      let bossHp = boss.hp;
-      let playerHp = 100 + (me.level || 1) * 10;
-      let playerPower = (me.power || 100) + (me.attackBonus || 0);
+      const playerPower = (me.power || 100) + (me.level || 1) * 10;
       
-      while (bossHp > 0 && playerHp > 0) {
-        bossHp -= Math.max(10, Math.floor(playerPower * 0.3 + Math.random() * 30 - boss.defense * 0.2));
-        if (bossHp <= 0) break;
-        playerHp -= Math.max(5, boss.attack - Math.floor(playerPower * 0.1) + Math.floor(Math.random() * 20));
+      let bossHp = boss.hp;
+      let playerHp = 100 + (me.level || 1) * 5;
+      let turns = 0;
+      const maxTurns = 15;
+      
+      let battleLog = `╭━━━⊱ 👹 *BOSS FIGHT!* ⊱━━━╮\n\n${boss.emoji} *${boss.name}*\n❤️ HP: ${boss.hp} | ⚔️ ATK: ${boss.attack} | 🛡️ DEF: ${boss.defense}\n\nVS\n\n⚔️ *${pushname}* (Poder: ${playerPower})\n\n╰━━━━━━━━━━━━━━━━━━━━╯\n\n`;
+      
+      while (bossHp > 0 && playerHp > 0 && turns < maxTurns) {
+        const playerDmg = Math.max(10, Math.floor(playerPower * 0.3 + Math.random() * 30 - boss.defense * 0.2));
+        bossHp -= playerDmg;
+        
+        if (bossHp <= 0) {
+          battleLog += `⚔️ Você desferiu o golpe final! (-${playerDmg} HP)\n`;
+          break;
+        }
+        
+        const bossDmg = Math.max(5, boss.attack - Math.floor(playerPower * 0.1) + Math.floor(Math.random() * 20));
+        playerHp -= bossDmg;
+        turns++;
       }
       
       me.lastBoss = now;
+      if (!me.stats) me.stats = {};
+      
       if (bossHp <= 0) {
         me.wallet += boss.reward;
         me.exp = (me.exp || 0) + boss.xp;
+        me.stats.bossesDefeated = (me.stats.bossesDefeated || 0) + 1;
         
         const levelUpRes = checkEcoLevelUp(me);
-        if (levelUpRes.leveledUp) {
-          reply(`🌟 *LEVEL UP!* Você agora é nível ${levelUpRes.newLevel}!`);
-        }
-
         saveEconomy(econ);
-        return reply(`🏆 *VITÓRIA!* Você derrotou o ${boss.emoji} *${boss.name}*!\n💰 +${boss.reward.toLocaleString()} moedas\n✨ +${boss.xp} XP`);
+        
+        battleLog += `\n╭━━━⊱ 🏆 *VITÓRIA!* ⊱━━━╮\n│ Você derrotou ${boss.emoji} *${boss.name}*!\n│\n│ 💰 Recompensa: +${boss.reward.toLocaleString()}\n│ ✨ XP: +${boss.xp}\n│ 🏅 Bosses derrotados: ${me.stats.bossesDefeated}\n╰━━━━━━━━━━━━━━━━━━━━╯`;
+        
+        if (levelUpRes.leveledUp) {
+          battleLog += `\n\n🌟 *LEVEL UP!* Você agora é nível ${levelUpRes.newLevel}!`;
+        }
+        return reply(battleLog);
       } else {
         saveEconomy(econ);
-        return reply(`💀 *DERROTA!* O ${boss.emoji} *${boss.name}* te massacrou...`);
+        battleLog += `\n╭━━━⊱ 💀 *DERROTA!* ⊱━━━╮\n│ ${boss.emoji} *${boss.name}* foi mais forte!\n│\n│ 💡 Fique mais forte e tente novamente!\n│ 📈 Use ${prefix}equipar ou ${prefix}encantar para melhorar\n╰━━━━━━━━━━━━━━━━━━━━╯`;
+        return reply(battleLog);
       }
     }
 

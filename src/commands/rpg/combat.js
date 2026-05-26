@@ -50,13 +50,26 @@ export default {
       const myPower = (me.power || 100) + (me.attackBonus || 0);
       const oppPower = (opponent.power || 100) + (opponent.attackBonus || 0);
       
+      const myDefense = (me.defenseBonus || 0) + 50;
+      const oppDefense = (opponent.defenseBonus || 0) + 50;
+      
       let myHp = 200 + ((me.level || 1) * 10);
       let oppHp = 200 + ((opponent.level || 1) * 10);
       
-      while (myHp > 0 && oppHp > 0) {
-        oppHp -= Math.max(5, myPower - Math.floor(Math.random() * 50));
+      let text = `╭━━━⊱ ⚔️ *DUELO* ⊱━━━╮\n│ ${pushname} VS @${target.split('@')[0]}\n╰━━━━━━━━━━━━━━━━━━━━╯\n\n`;
+      let turn = 0;
+      let battle = '';
+
+      while (myHp > 0 && oppHp > 0 && turn < 10) {
+        turn++;
+        const myDmg = Math.max(5, myPower - Math.floor(Math.random() * oppDefense));
+        oppHp -= myDmg;
+        battle += `⚔️ ${pushname}: -${myDmg} HP\n`;
         if (oppHp <= 0) break;
-        myHp -= Math.max(5, oppPower - Math.floor(Math.random() * 50));
+        
+        const oppDmg = Math.max(5, oppPower - Math.floor(Math.random() * myDefense));
+        myHp -= oppDmg;
+        battle += `🛡️ Oponente: -${oppDmg} HP\n\n`;
       }
       
       me.lastDuel = now;
@@ -68,19 +81,41 @@ export default {
         opponent.wallet = Math.max(0, opponent.wallet - reward);
         me.exp = (me.exp || 0) + 150;
         
+        // Incrementar estatísticas de batalha
+        if (!me.battlesWon) me.battlesWon = 0;
+        if (!opponent.battlesLost) opponent.battlesLost = 0;
+        me.battlesWon++;
+        opponent.battlesLost++;
+        
         const levelUpRes = checkEcoLevelUp(me);
-        if (levelUpRes.leveledUp) {
-          reply(`🌟 *LEVEL UP!* Você agora é nível ${levelUpRes.newLevel}!`);
-        }
-
         saveEconomy(econ);
-        return reply(`🏆 *VITÓRIA!* Você venceu o duelo contra @${target.split('@')[0]}!\n💰 Ganhou: +${reward.toLocaleString()} | ✨ +150 XP`, { mentions: [target] });
+        
+        text += battle;
+        text += `\n╭━━━⊱ 🏆 *VITÓRIA!* 🏆 ⊱━━━╮\n│\n│ 💰 Recompensa: *+${reward.toLocaleString()}*\n│ ✨ EXP: *+150*\n`;
+        if (levelUpRes.leveledUp) {
+          text += `│\n╰━━━━━━━━━━━━━━━━━━━━━╯\n\n╭━━━⊱   *LEVEL UP!* 🌟 ⊱━━━╮\n│\n│ 📊 Nível atual: *${levelUpRes.newLevel}*\n│ ❤️ HP restante: *${Math.max(0, myHp)}*\n│\n╰━━━━━━━━━━━━━━━━━━━━━╯`;
+        } else {
+          text += `│ ❤️ HP restante: *${Math.max(0, myHp)}*\n│\n╰━━━━━━━━━━━━━━━━━━━━━╯`;
+        }
+        
+        return reply(text, { mentions: [target] });
       } else {
         const loss = Math.floor(me.wallet * 0.05);
         me.wallet -= loss;
         opponent.wallet += loss;
+        
+        // Incrementar estatísticas de batalha
+        if (!me.battlesLost) me.battlesLost = 0;
+        if (!opponent.battlesWon) opponent.battlesWon = 0;
+        me.battlesLost++;
+        opponent.battlesWon++;
+        
         saveEconomy(econ);
-        return reply(`💀 *DERROTA!* Você perdeu o duelo para @${target.split('@')[0]}...\n💸 Perdeu: -${loss.toLocaleString()} moedas`, { mentions: [target] });
+        
+        text += battle;
+        text += `\n╭━━━⊱ 💀 *DERROTA!* 💀 ⊱━━━╮\n│\n│ 💸 Perdeu: *-${loss.toLocaleString()}*\n│ ❤️ HP restante: *0*\n│\n╰━━━━━━━━━━━━━━━━━━━━━╯`;
+        
+        return reply(text, { mentions: [target] });
       }
     }
 
