@@ -281,23 +281,23 @@ export async function buildMessageContext(nazu, info, store, messagesCache, rent
     10000, // 10 segundos
     (path) => loadJsonFile(path, {})
   );
-  
+
   // Verificação e correção do prefixo reservado $ ao inicializar
   if (config.prefixo === '$') {
     config.prefixo = '/';
     writeJsonFile(CONFIG_FILE, config);
-    
+
     // Notifica o dono sobre a mudança automática
     const ownerJid = `${config.numerodono}@s.whatsapp.net`;
     try {
       await nazu.sendMessage(ownerJid, {
-    text: `⚠️ *PREFIXO AUTOMÁTICO CORRIGIDO*\n\n❌ O símbolo "$" é reservado e não pode ser usado como prefixo.\n\n✅ O prefixo foi alterado automaticamente para "/" ao iniciar o bot.\n\n💡 Use ${config.prefixo}prefix para alterar para outro símbolo válido.`
+        text: `⚠️ *PREFIXO AUTOMÁTICO CORRIGIDO*\n\n❌ O símbolo "$" é reservado e não pode ser usado como prefixo.\n\n✅ O prefixo foi alterado automaticamente para "/" ao iniciar o bot.\n\n💡 Use ${config.prefixo}prefix para alterar para outro símbolo válido.`
       });
     } catch (notifyError) {
       console.log('Aviso: Não foi possível notificar o dono sobre a mudança de prefixo:', notifyError.message);
     }
   }
-  
+
   // Log de debug aprimorado para rastreamento de IDs
   const debugLog = (msg, data = null) => {
     if (config?.debug) {
@@ -331,8 +331,8 @@ export async function buildMessageContext(nazu, info, store, messagesCache, rent
       if (!ts) continue;
 
       if (!lastMsg || ts > lastTimestamp) {
-    lastMsg = cachedMsg;
-    lastTimestamp = ts;
+        lastMsg = cachedMsg;
+        lastTimestamp = ts;
       }
     }
 
@@ -349,13 +349,13 @@ export async function buildMessageContext(nazu, info, store, messagesCache, rent
     const lastMsgInChat = getLastMessageInChat(jid);
     if (lastMsgInChat?.key && lastMsgInChat?.messageTimestamp) {
       await nazu.chatModify({
-    delete: true,
-    lastMessages: [
-    {
-      key: lastMsgInChat.key,
-      messageTimestamp: lastMsgInChat.messageTimestamp
-    }
-    ]
+        delete: true,
+        lastMessages: [
+          {
+            key: lastMsgInChat.key,
+            messageTimestamp: lastMsgInChat.messageTimestamp
+          }
+        ]
       }, jid);
       return true;
     }
@@ -371,25 +371,25 @@ export async function buildMessageContext(nazu, info, store, messagesCache, rent
       return true;
     } catch (e) {
       if (typeof e?.message === 'string' && e.message.toLowerCase().includes('not supported')) {
-    await deleteChatByLastMessage(jid);
-    return true;
+        await deleteChatByLastMessage(jid);
+        return true;
       }
       throw e;
     }
   };
-  
+
   async function getCachedGroupMetadata(groupId) {
     try {
       const optimizer = await initializePerformanceOptimizer();
       if (optimizer?.modules?.cacheManager) {
-    const cached = await optimizer.modules.cacheManager.getIndexGroupMeta(groupId);
-    if  (cached) {
-    return cached;
-    }
+        const cached = await optimizer.modules.cacheManager.getIndexGroupMeta(groupId);
+        if (cached) {
+          return cached;
+        }
 
-    const freshData = await nazu.groupMetadata(groupId).catch(() => ({}));
-    await optimizer.modules.cacheManager.setIndexGroupMeta(groupId, freshData);
-    return freshData;
+        const freshData = await nazu.groupMetadata(groupId).catch(() => ({}));
+        await optimizer.modules.cacheManager.setIndexGroupMeta(groupId, freshData);
+        return freshData;
       }
 
       return await nazu.groupMetadata(groupId).catch(() => ({}));
@@ -415,7 +415,7 @@ export async function buildMessageContext(nazu, info, store, messagesCache, rent
   } = menus;
   const prefix = prefixo;
   const numerodonoStr = String(numerodono);
-  
+
   const {
     youtube, tiktok, pinterest, igdl, kwai, sendSticker, Dicionary, styleText,
     Logos, Logos2, emojiMix, upload, mcPlugin, tictactoe, toolsJson, vabJson,
@@ -426,9 +426,9 @@ export async function buildMessageContext(nazu, info, store, messagesCache, rent
     calculator, audioEdit, antitoxic, antipalavra, antistickerplus, transmissao
   } = modulesExport;
   // Otimização: Cache de dados estáticos com TTL
-  
+
   const modoLiteFile = DATABASE_DIR + '/modolite.json';
-  
+
   const [
     antipvData,
     premiumListaZinha,
@@ -454,55 +454,55 @@ export async function buildMessageContext(nazu, info, store, messagesCache, rent
     }
     modoLiteFileChecked = true;
   }
-  
+
   if (typeof global.autoStickerMode === 'undefined') {
     global.autoStickerMode = 'default';
   }
   try {
     let from = info.key.remoteJid;
     const isGroup = from?.endsWith('@g.us') || false;
-    
+
 
     if (!info.key.participant && !info.key.remoteJid) return;
     let sender;
     if (isGroup) {
       // Prioriza participant, depois busca por LID, com fallback para JID
       sender = info.key.participant || info.message?.participant;
-      
+
       if (!sender) {
-    const participants = Object.keys(info.key).filter(k => k.startsWith("participant")).map(k => info.key[k]).filter(Boolean);
-    if  (participants.length) {
-    sender = participants.find(p => p.includes("@lid")) || participants.find(p => p.includes("@s.whatsapp.net")) || participants[0];
-    }
+        const participants = Object.keys(info.key).filter(k => k.startsWith("participant")).map(k => info.key[k]).filter(Boolean);
+        if (participants.length) {
+          sender = participants.find(p => p.includes("@lid")) || participants.find(p => p.includes("@s.whatsapp.net")) || participants[0];
+        }
       }
-      
+
       // Se ainda não encontrou, tenta extrair do contextInfo
       if (!sender && info.message?.extendedTextMessage?.contextInfo?.participant) {
-    sender = info.message.extendedTextMessage.contextInfo.participant;
+        sender = info.message.extendedTextMessage.contextInfo.participant;
       }
-      
+
       // Se for JID, converte para LID usando cache
       if (sender && isValidJid(sender)) {
-    sender = await getLidFromJidCached(nazu, sender);
+        sender = await getLidFromJidCached(nazu, sender);
       }
     } else {
       sender = info.key.remoteJid;
-      
+
       // Se for JID no PV, converte para LID usando cache
       if (sender && isValidJid(sender)) {
-    sender = await getLidFromJidCached(nazu, sender);
+        sender = await getLidFromJidCached(nazu, sender);
       }
     }
-    
+
     // Debug: log do sender identificado
     debugLog('Sender identificado:', { sender, isGroup, from: from?.substring(0, 20) });
-    
+
     // Se sender ainda for undefined, ignora a mensagem (ex: mensagens de sistema, stubs, etc)
     if (!sender) {
       debugLog('Sender não identificado, ignorando mensagem');
       return;
     }
-    
+
     const pushname = info.pushName || '';
     const isStatus = from?.endsWith('@broadcast') || false;
     const nmrdn = buildUserId(numerodono, config);
@@ -511,42 +511,29 @@ export async function buildMessageContext(nazu, info, store, messagesCache, rent
     const ownerJid = `${numerodono}@s.whatsapp.net`;
     const botId = getBotId(nazu);
     const isBotSender = sender === botId || sender === nazu.user?.id?.split(':')[0] + '@s.whatsapp.net' || sender === nazu.user?.id?.split(':')[0] + '@lid';
-    
+
     const senderBase = sender.split('@')[0];
     const ownerBase = String(numerodono);
     const lidOwnerBase = lidowner ? lidowner.split('@')[0] : null;
-    
-    const isRealOwner = senderBase === ownerBase || 
-    sender === nmrdn || 
-    sender === ownerJid || 
-    (lidowner && sender === lidowner) || 
-    (lidOwnerBase && senderBase === lidOwnerBase);
+
+    const isRealOwner = senderBase === ownerBase ||
+      sender === nmrdn ||
+      sender === ownerJid ||
+      (lidowner && sender === lidowner) ||
+      (lidOwnerBase && senderBase === lidOwnerBase);
 
     const isOwner = isRealOwner || info.key.fromMe || isBotSender || isSubOwner;
-    
+
     const isOwnerOrSub = isOwner;
-    
-    // Auto-cura de sessão para o dono (resolve problemas de criptografia/Closing session)
-    if (isOwner && !isGroup) {
-      try {
-        const { badMacHandler } = await import('./badMacHandler.js');
-        const AUTH_DIR = pathz.join(__dirname, '..', '..', 'dados', 'database', 'qr-code');
-        // Limpa chaves do remetente e do destinatário (que é o mesmo no PV)
-        await badMacHandler.clearProblematicSessionFiles(AUTH_DIR, sender);
-        if (from !== sender) {
-          await badMacHandler.clearProblematicSessionFiles(AUTH_DIR, from);
-        }
-      } catch (e) {
-      }
-    }
-    
+
+
     const type = getContentType(info.message);
-    
+
     // ==================== PROCESSAMENTO DE SOLICITAÇÕES DE ENTRADA NO GRUPO ====================
     const joinRequestHandled = await handleJoinRequest(nazu, info, from, isGroup, GRUPOS_DIR, debug);
     if (joinRequestHandled) return;
     // ==================== FIM: PROCESSAMENTO DE SOLICITAÇÕES ====================
-    
+
     const isMedia = ["imageMessage", "videoMessage", "audioMessage"].includes(type);
     const isImage = type === 'imageMessage';
     const isVideo = type === 'videoMessage';
@@ -579,21 +566,21 @@ export async function buildMessageContext(nazu, info, store, messagesCache, rent
         10000 // 10 segundos
       );
     }
-    
+
     // Wrappers para usar groupData no escopo atual
     const persistGroupDataLocal = () => persistGroupData(isGroup, from, groupFile, groupData, optimizer);
     const isUserWhitelisted = (userId, antiType) => isUserWhitelistedCore(groupData, userId, antiType);
-    
+
     const groupPrefix = groupData.customPrefix || prefixo;
-    
+
     const isCmd = body.trim().startsWith(groupPrefix);
-    
+
     // Suporte para "! comando" (com espaço após o prefixo)
     const bodyWithoutPrefix = body.trim().slice(groupPrefix.length).trimStart();
-    
+
     const aliases = await optimizer.memoize('aliases:global', () => Promise.resolve(loadCommandAliases()), 30000);
     const matchedAlias = aliases.find(item => normalizar(bodyWithoutPrefix.split(/ +/).shift().trim()) === item.alias);
-    
+
     // Se encontrou um alias, aplicar parâmetros fixos
     if (matchedAlias && matchedAlias.fixedParams) {
       const userArgs = bodyWithoutPrefix.split(/ +/).slice(1).join(' ');
@@ -602,9 +589,9 @@ export async function buildMessageContext(nazu, info, store, messagesCache, rent
       args.length = 0;
       args.push(...combinedParams.split(/ +/));
     }
-    
+
     const command = isCmd ? matchedAlias ? matchedAlias.command : normalizar(bodyWithoutPrefix.split(/ +/).shift().trim()).replace(/\s+/g, '') : null;
-    
+
     // Recalcular args usando bodyWithoutPrefix para suportar "! comando" (com espaço)
     if (isCmd && !matchedAlias) {
       const newArgs = bodyWithoutPrefix.split(/ +/).slice(1);
@@ -612,7 +599,7 @@ export async function buildMessageContext(nazu, info, store, messagesCache, rent
       args.push(...newArgs);
       q = newArgs.join(' ');
     }
-    
+
     const isPremium = premiumListaZinha[sender] || premiumListaZinha[from] || isOwner;
 
     async function reply(text, options = {}) {
@@ -697,7 +684,7 @@ export async function buildMessageContext(nazu, info, store, messagesCache, rent
       }
     };
     nazu.react = reagir;
-    
+
     // Verificação de captcha para solicitações de entrada em grupos (DEVE vir ANTES de antipv)
     const captchaHandled = await handleCaptchaResponse(nazu, sender, body, isGroup, info, reply, GRUPOS_DIR, debug);
     if (captchaHandled) return;
@@ -714,7 +701,7 @@ export async function buildMessageContext(nazu, info, store, messagesCache, rent
     // Extrai IDs dos membros (pode estar em JID)
     const rawMembers = !isGroup ? [] :
       groupMetadata.participants?.map(extractParticipantId).filter(Boolean) || [];
-    
+
     // Extrai IDs dos admins (pode estar em JID)
     const rawAdmins = !isGroup ? [] :
       groupMetadata.participants?.filter(p => p.admin === 'admin' || p.admin === 'superadmin').map(extractParticipantId).filter(Boolean) || [];
@@ -733,7 +720,7 @@ export async function buildMessageContext(nazu, info, store, messagesCache, rent
         convertIdsToLid(nazu, rawAdmins)
       ]);
     }
-    
+
     // Debug log
     debugLog('Membros e Admins convertidos:', {
       totalMembros: AllgroupMembers.length,
@@ -742,45 +729,45 @@ export async function buildMessageContext(nazu, info, store, messagesCache, rent
     });
 
     const botNumber = getBotNumber(nazu);
-    
+
     // Converte o botNumber para LID se for JID
-    const botNumberLid = botNumber && isValidJid(botNumber) 
-      ? await getLidFromJidCached(nazu, botNumber) 
+    const botNumberLid = botNumber && isValidJid(botNumber)
+      ? await getLidFromJidCached(nazu, botNumber)
       : botNumber;
-    
+
     const isBotAdmin = !isGroup || !botNumberLid ? false : idInArray(botNumberLid, groupAdmins);
-    
+
     let isGroupAdmin = false;
     if (isGroup) {
       const isModeratorActionAllowed = groupData.moderators?.includes(sender) && groupData.allowedModCommands?.includes(command);
-      
+
       // Usa a função idsMatch para comparação robusta
       const isAdminMatch = idInArray(sender, groupAdmins);
-      
+
       isGroupAdmin = isAdminMatch || isOwner || isModeratorActionAllowed;
-      
+
       // Debug: log das verificações de admin
-      debugLog('Verificação de admin:', { 
-    sender: sender?.substring(0, 30),
-    senderBase: sender?.split('@')[0],
-    groupAdminsCount: groupAdmins.length,
-    groupAdmins: groupAdmins.map(a => a?.substring(0, 20)),
-    isAdminMatch,
-    isGroupAdmin,
-    isModerator: isModeratorActionAllowed,
-    isBotAdmin,
-    botNumber: botNumberLid?.substring(0, 30)
+      debugLog('Verificação de admin:', {
+        sender: sender?.substring(0, 30),
+        senderBase: sender?.split('@')[0],
+        groupAdminsCount: groupAdmins.length,
+        groupAdmins: groupAdmins.map(a => a?.substring(0, 20)),
+        isAdminMatch,
+        isGroupAdmin,
+        isModerator: isModeratorActionAllowed,
+        isBotAdmin,
+        botNumber: botNumberLid?.substring(0, 30)
       });
     }
     const isModoBn = groupData.modobrincadeira;
     const isOnlyAdmin = groupData.soadm;
     const soadmBypassCommands = ['suporte', 'ticketsuporte', 'suporteticket', 'ticket'];
-    
+
     // Se modo soadm ativo e não é admin, ignorar aliases silenciosamente
     if (isGroup && isOnlyAdmin && !isGroupAdmin && !isOwner && matchedAlias) {
       return; // Ignora silenciosamente o alias para não-admins
     }
-    
+
     const isAntiPorn = groupData.antiporn;
     const isMuted = isUserInMap(groupData.mutedUsers, sender);
     const isMuted2 = isUserInMap(groupData.mutedUsers2, sender);
@@ -793,15 +780,15 @@ export async function buildMessageContext(nazu, info, store, messagesCache, rent
     const isAutoRepo = groupData.autorepo;
     const isAssistente = groupData.assistente;
     const isModoLite = isGroup && isModoLiteActive(groupData, modoLiteGlobal);
-    
+
     if (type === 'reactionMessage') {
       await processReactionMessage(nazu, info, isGroup, sender, groupData, groupPrefix, from, persistGroupDataLocal);
       return;
     }
-    
+
     const securityResult = await processGroupSecurity({
-      nazu, info, isGroup, sender, groupData, command, isCmd, isImage, isVideo, 
-      isVisuU, isVisuU2, isBotAdmin, isGroupAdmin, isOwner, isStatusMention, isButtonMessage, 
+      nazu, info, isGroup, sender, groupData, command, isCmd, isImage, isVideo,
+      isVisuU, isVisuU2, isBotAdmin, isGroupAdmin, isOwner, isStatusMention, isButtonMessage,
       from, pushname, reply, messagesCache, type, body, isOwnerOrSub, antiSpamGlobal, writeJsonFile,
       DATABASE_DIR, optimizer, groupFile, getUserName, isUserWhitelisted, getGroupRentalStatus,
       isRentalModeActive, validateActivationCode, useActivationCode, isMuted, isMuted2
@@ -811,17 +798,17 @@ export async function buildMessageContext(nazu, info, store, messagesCache, rent
     }
     // Stats em fire-and-forget: não bloqueia o pipeline do comando
     processStats({
-      nazu, info, isGroup, sender, groupData, isCmd, type, pushname, 
+      nazu, info, isGroup, sender, groupData, isCmd, type, pushname,
       writeJsonFile, groupFile, optimizer, from
     }).catch(e => console.error('❌ Erro no processStats:', e.message));
 
 
 
-    
+
 
     const automationResult = await processAutomation({
-      nazu, info, isGroup, sender, groupData, type, budy2, body, isCmd, isGroupAdmin, isBotAdmin, 
-      from, getUserName, isUserWhitelisted, reply, getMediaInfo, getFileBuffer, upload, 
+      nazu, info, isGroup, sender, groupData, type, budy2, body, isCmd, isGroupAdmin, isBotAdmin,
+      from, getUserName, isUserWhitelisted, reply, getMediaInfo, getFileBuffer, upload,
       handleAutoDownload, youtube, tiktok, igdl, kwai, facebook, pinterest, spotify, soundcloud,
       sendSticker, pushname, nomebot, nomedono, antifloodData
     });
@@ -844,83 +831,83 @@ export async function buildMessageContext(nazu, info, store, messagesCache, rent
     const isQuotedLocation = !!quotedMessageContent?.locationMessage;
     const isQuotedProduct = !!quotedMessageContent?.productMessage;
 
-  // Retorna o objeto de contexto completo
-  return {
-    // Core
-    nazu, info, store, messagesCache, rentalExpirationManager,
-    from, isGroup, sender, pushname, type, body, budy2, args, q,
-    // Permissões
-    isOwner, isRealOwner, isOwnerOrSub, isSubOwner, isGroupAdmin, isBotAdmin, isPremium, isBotSender,
-    // Config
-    config, prefix, prefixo, groupPrefix, numerodono, nomedono, nomebot, lidowner, debug,
-    nmrdn, ownerJid, botNumber, botNumberLid, botId, botVersion,
-    // Grupo
-    groupData, groupFile, groupName, groupMetadata, groupAdmins, AllgroupMembers,
-    parceriasData, isOnlyAdmin, isModoBn, isModoLite,
-    // Flags de mídia
-    isMedia, isImage, isVideo, isAudio, isVisuU, isVisuU2, isButtonMessage, isStatusMention,
-    isQuotedMsg, isQuotedMsg2, isQuotedImage, isQuotedVisuU, isQuotedVisuU2,
-    isQuotedVideo, isQuotedDocument, isQuotedDocW, isQuotedAudio, isQuotedSticker,
-    isQuotedContact, isQuotedLocation, isQuotedProduct, quotedMessageContent,
-    // Flags de proteção
-    isAntiPorn, isAntiLinkGp, isAntiLinkCanal, isAntiLinkSoft,
-    isAntiDel, isAntiBtn, isAntiStatus, isAutoRepo, isAssistente,
-    isMuted, isMuted2,
-    // Funções
-    reply, reagir, debugLog, persistGroupDataLocal, isUserWhitelisted,
-    getCachedGroupMetadata, deleteChatByLastMessage, clearChatHistorySafe,
-    // Módulos
-    menus, modules: modulesExport, optimizer,
-    youtube, tiktok, pinterest, igdl, kwai, sendSticker, Dicionary, styleText,
-    Logos, Logos2, emojiMix, upload, mcPlugin, tictactoe, toolsJson, vabJson,
-    Lyrics, commandStats, VerifyUpdate, temuScammer, relationshipManager,
-    spotify, soundcloud, facebook, twitter, gdrive, mediafire,
-    connect4, uno, memoria, achievements, gifts, reputation, qrcode, notes,
-    calculator, audioEdit, antitoxic, antipalavra, antistickerplus, transmissao,
-    // Dados de cache
-    antipvData, premiumListaZinha, banGpIds, antifloodData, antiSpamGlobal,
-    globalBlocks, botState, modoLiteGlobal,
-    // Variáveis de mensagem
-    isCmd, command, menc_prt, menc_jid2, menc_os2, mentioned: menc_os2, sender_ou_n, msgString,
-    matchedAlias,
-    // Handlers
-    handleAutoDownload, getFileBuffer, getMediaInfo, processImageForProfile,
-    // Utilitários (re-export para ctx)
-    writeJsonFile, getUserName, extractReason, normalizeCommand, normalizar, fs, pathz,
-    buildGroupFilePath, OWNER_ONLY_MESSAGE, MESSAGES,
-    DATABASE_DIR, GRUPOS_DIR, USERS_DIR, DONO_DIR, PARCERIAS_DIR, TMP_DIR,
-    CONFIG_FILE, ECONOMY_FILE, LEVELING_FILE,
-    // Database functions
-    loadEconomy, saveEconomy, getEcoUser, parseAmount, fmt, timeLeft, checkEcoLevelUp, updateQuestProgress,
-    loadReminders, saveReminders, formatUptime, getTotalCommands,
-    loadRentalData, saveRentalData, setGroupRental, extendGroupRental,
-    setRentalMode, generateActivationCode, loadActivationCodes, saveActivationCodes,
-    addAutoResponse, loadCustomAutoResponses, saveCustomAutoResponses,
-    loadGroupAutoResponses, saveGroupAutoResponses,
-    loadCustomCommands, saveCustomCommands, removeCustomCommand, findCustomCommand,
-    addAlias, listAliases, removeAlias,
-    addNoPrefix, removeNoPrefix, listNoPrefix,
-    addSubdono, removeSubdono, getSubdonos, isSubdono,
-    addGlobalBlacklist, removeGlobalBlacklist, getGlobalBlacklist,
-    loadGlobalBlacklist, loadNoPrefixCommands, loadCommandAliases,
-    parseCustomCommandMeta, buildUsageFromParams, normalizeUserId, removeUserFromMap,
-    isValidJid, isValidLid, buildUserId, getLidFromJidCached, convertIdsToLid, idsMatch, idInArray,
-    setSupportMode, createSupportTicket, acceptSupportTicket, findSupportTicketById, listSupportTickets,
-    loadMassMentionConfig, saveMassMentionConfig, MASS_MENTION_MAX_USES, MASS_MENTION_THRESHOLD, loadMassMentionLimit, registerMassMentionUse, checkMassMentionLimit,
-    getGroupCustomization, isGroupCustomizationEnabled, getMenuDesignWithDefaults, loadMenuDesign, saveMenuDesign,
-    getMenuLerMaisText, isMenuAudioEnabled, getMenuAudioPath, formatAIResponse,
-    saveParceriasData, isRentalModeActive, getGroupRentalStatus, validateActivationCode, useActivationCode,
-    vipCommandsManager, spotifyModule, gdriveGetInfo, mediafireGetInfo, twitterGetInfo,
-    removeBg, upscale, search, searchNews,
-    setMenuAudio, removeMenuAudio,
-    isParceiro: parceriasData?.parceiros?.[sender] || false,
-    // Middleware results (pre-computed)
-    joinRequestHandled: false, captchaHandled: false, pvBlocked: false,
-    // Extras
-    subDonoList,
-    __dirname: indexDir,
-    MODO_LITE_FILE
-  };
+    // Retorna o objeto de contexto completo
+    return {
+      // Core
+      nazu, info, store, messagesCache, rentalExpirationManager,
+      from, isGroup, sender, pushname, type, body, budy2, args, q,
+      // Permissões
+      isOwner, isRealOwner, isOwnerOrSub, isSubOwner, isGroupAdmin, isBotAdmin, isPremium, isBotSender,
+      // Config
+      config, prefix, prefixo, groupPrefix, numerodono, nomedono, nomebot, lidowner, debug,
+      nmrdn, ownerJid, botNumber, botNumberLid, botId, botVersion,
+      // Grupo
+      groupData, groupFile, groupName, groupMetadata, groupAdmins, AllgroupMembers,
+      parceriasData, isOnlyAdmin, isModoBn, isModoLite,
+      // Flags de mídia
+      isMedia, isImage, isVideo, isAudio, isVisuU, isVisuU2, isButtonMessage, isStatusMention,
+      isQuotedMsg, isQuotedMsg2, isQuotedImage, isQuotedVisuU, isQuotedVisuU2,
+      isQuotedVideo, isQuotedDocument, isQuotedDocW, isQuotedAudio, isQuotedSticker,
+      isQuotedContact, isQuotedLocation, isQuotedProduct, quotedMessageContent,
+      // Flags de proteção
+      isAntiPorn, isAntiLinkGp, isAntiLinkCanal, isAntiLinkSoft,
+      isAntiDel, isAntiBtn, isAntiStatus, isAutoRepo, isAssistente,
+      isMuted, isMuted2,
+      // Funções
+      reply, reagir, debugLog, persistGroupDataLocal, isUserWhitelisted,
+      getCachedGroupMetadata, deleteChatByLastMessage, clearChatHistorySafe,
+      // Módulos
+      menus, modules: modulesExport, optimizer,
+      youtube, tiktok, pinterest, igdl, kwai, sendSticker, Dicionary, styleText,
+      Logos, Logos2, emojiMix, upload, mcPlugin, tictactoe, toolsJson, vabJson,
+      Lyrics, commandStats, VerifyUpdate, temuScammer, relationshipManager,
+      spotify, soundcloud, facebook, twitter, gdrive, mediafire,
+      connect4, uno, memoria, achievements, gifts, reputation, qrcode, notes,
+      calculator, audioEdit, antitoxic, antipalavra, antistickerplus, transmissao,
+      // Dados de cache
+      antipvData, premiumListaZinha, banGpIds, antifloodData, antiSpamGlobal,
+      globalBlocks, botState, modoLiteGlobal,
+      // Variáveis de mensagem
+      isCmd, command, menc_prt, menc_jid2, menc_os2, mentioned: menc_os2, sender_ou_n, msgString,
+      matchedAlias,
+      // Handlers
+      handleAutoDownload, getFileBuffer, getMediaInfo, processImageForProfile,
+      // Utilitários (re-export para ctx)
+      writeJsonFile, getUserName, extractReason, normalizeCommand, normalizar, fs, pathz,
+      buildGroupFilePath, OWNER_ONLY_MESSAGE, MESSAGES,
+      DATABASE_DIR, GRUPOS_DIR, USERS_DIR, DONO_DIR, PARCERIAS_DIR, TMP_DIR,
+      CONFIG_FILE, ECONOMY_FILE, LEVELING_FILE,
+      // Database functions
+      loadEconomy, saveEconomy, getEcoUser, parseAmount, fmt, timeLeft, checkEcoLevelUp, updateQuestProgress,
+      loadReminders, saveReminders, formatUptime, getTotalCommands,
+      loadRentalData, saveRentalData, setGroupRental, extendGroupRental,
+      setRentalMode, generateActivationCode, loadActivationCodes, saveActivationCodes,
+      addAutoResponse, loadCustomAutoResponses, saveCustomAutoResponses,
+      loadGroupAutoResponses, saveGroupAutoResponses,
+      loadCustomCommands, saveCustomCommands, removeCustomCommand, findCustomCommand,
+      addAlias, listAliases, removeAlias,
+      addNoPrefix, removeNoPrefix, listNoPrefix,
+      addSubdono, removeSubdono, getSubdonos, isSubdono,
+      addGlobalBlacklist, removeGlobalBlacklist, getGlobalBlacklist,
+      loadGlobalBlacklist, loadNoPrefixCommands, loadCommandAliases,
+      parseCustomCommandMeta, buildUsageFromParams, normalizeUserId, removeUserFromMap,
+      isValidJid, isValidLid, buildUserId, getLidFromJidCached, convertIdsToLid, idsMatch, idInArray,
+      setSupportMode, createSupportTicket, acceptSupportTicket, findSupportTicketById, listSupportTickets,
+      loadMassMentionConfig, saveMassMentionConfig, MASS_MENTION_MAX_USES, MASS_MENTION_THRESHOLD, loadMassMentionLimit, registerMassMentionUse, checkMassMentionLimit,
+      getGroupCustomization, isGroupCustomizationEnabled, getMenuDesignWithDefaults, loadMenuDesign, saveMenuDesign,
+      getMenuLerMaisText, isMenuAudioEnabled, getMenuAudioPath, formatAIResponse,
+      saveParceriasData, isRentalModeActive, getGroupRentalStatus, validateActivationCode, useActivationCode,
+      vipCommandsManager, spotifyModule, gdriveGetInfo, mediafireGetInfo, twitterGetInfo,
+      removeBg, upscale, search, searchNews,
+      setMenuAudio, removeMenuAudio,
+      isParceiro: parceriasData?.parceiros?.[sender] || false,
+      // Middleware results (pre-computed)
+      joinRequestHandled: false, captchaHandled: false, pvBlocked: false,
+      // Extras
+      subDonoList,
+      __dirname: indexDir,
+      MODO_LITE_FILE
+    };
   } catch (error) {
     console.error('❌ Erro crítico ao construir contexto da mensagem:', error);
     return null;
