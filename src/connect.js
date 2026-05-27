@@ -482,8 +482,11 @@ async function createBotSocket(authDir) {
     }
     }
     if (connection === 'close') {
-    const reason = new Boom(lastDisconnect?.error)?.output?.statusCode;
+    // Se não houver erro, foi um fechamento intencional (ex: Ctrl+C)
+    const isIntentional = !lastDisconnect?.error;
+    const reason = isIntentional ? 200 : new Boom(lastDisconnect.error)?.output?.statusCode;
     const reasonMessage = {
+        200: 'Fechamento intencional',
         [DisconnectReason.loggedOut]: 'Deslogado do WhatsApp',
         401: 'Sessão expirada',
         403: 'Acesso proibido (Forbidden)',
