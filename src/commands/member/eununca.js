@@ -21,7 +21,7 @@ export default {
           ],
           selectableCount: 1  
         }
-      });
+      }, { quoted: info });
     } catch (e) {
       console.error('Erro no comando eununca:', e);
       await reply(MESSAGES.error.general);
