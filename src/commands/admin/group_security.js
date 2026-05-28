@@ -245,14 +245,32 @@ export default {
         return reply("📋 BLACKLIST:\n" + keys.map(u => `@${getUserName(u)}`).join('\n'), { mentions: keys });
       }
 
-      if (!menc_os2) return reply(MESSAGES.error.missing('alguém'));
+      let target = menc_os2;
+      let reason = q ? q.trim() : "Sem motivo";
+
+      if (!target && q) {
+        const parts = q.split(' ');
+        target = parts[0];
+        reason = parts.slice(1).join(' ').trim() || "Sem motivo";
+      }
+
+      if (menc_os2 && q) {
+        reason = q.trim() || "Sem motivo";
+      }
+
+      if (!target) return reply(MESSAGES.error.missing('alguém'));
+
+      if (target && !target.includes('@')) {
+        target = buildUserId(target, config);
+      }
+
       if (['delblacklist', 'unblacklist'].includes(cmd)) {
-        delete groupData.blacklist[menc_os2];
+        delete groupData.blacklist[target];
         await optimizer.saveJsonWithCache(groupFile, groupData);
         return reply("✅ Removido.");
       }
 
-      groupData.blacklist[menc_os2] = { reason: q || "Sem motivo", date: Date.now() };
+      groupData.blacklist[target] = { reason: reason, date: Date.now() };
       await optimizer.saveJsonWithCache(groupFile, groupData);
       return reply("✅ Adicionado.");
     }
