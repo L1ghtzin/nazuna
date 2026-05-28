@@ -307,6 +307,7 @@ export default {
             me.wallet += (gain + bonus);
             me.exp = (me.exp || 0) + 20;
             me.cooldowns.work = Date.now() + 20 * 60 * 1000;
+            addSkillXP(me, 'working', 1); updateChallenge(me, 'work', 1, true); updatePeriodChallenge(me, 'work', 1, true);
             // Rastrear stats
             if (!me.stats) me.stats = {};
             me.stats.totalWork = (me.stats.totalWork || 0) + 1;
