@@ -11,6 +11,7 @@ export default {
     sender, 
     prefix, 
     pushname, 
+    args,
     loadEconomy, 
     saveEconomy, 
     getEcoUser,
@@ -19,6 +20,8 @@ export default {
     if (!isGroup) return reply('⚔️ Este comando funciona apenas em grupos com Modo RPG ativo.');
     if (!groupData.modorpg) return reply(`⚔️ Modo RPG desativado! Use ${prefix}modorpg para ativar.`);
     
+    const q = args ? args.join(" ").toLowerCase() : "";
+
     const econ = loadEconomy();
     const me = getEcoUser(econ, sender);
     
