@@ -19,6 +19,8 @@ import CaptchaIndex from './utils/captchaIndex.js';
 import MessageQueue from './utils/messageQueue.js';
 import { performMigration, updateOwnerLid } from './utils/migration.js';
 import { handleGroupParticipantsUpdate, handleGroupJoinRequest } from './handlers/groupEvents.js';
+import { loadGroupData } from './utils/groupManager.js';
+import { processAntiStealth } from './middleware/antiStealth.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -171,10 +173,6 @@ async function clearAuthDir(dirToRemove = AUTH_DIR) {
     console.error(`❌ Erro ao excluir pasta de autenticação (${dirToRemove}): ${err.message}`);
     }
 }
-
-// Funções de eventos de grupo foram movidas para src/handlers/groupEvents.js
-
-// Funções de migração e LID removidas para utils/migration.js
 
 // Variáveis de controle de reconexão (declaradas aqui para evitar temporal dead zone)
 let reconnectAttempts = 0;
@@ -368,6 +366,10 @@ async function createBotSocket(authDir) {
 
     NazunaSock.ev.on('messages.upsert', async (m) => {
     if (!m.messages || !Array.isArray(m.messages)) return;
+    
+    // --- ANTI-STEALTH (Anti Msg Criptografada) ---
+    await processAntiStealth(NazunaSock, m, performanceOptimizer).catch(e => console.error('[ANTI-STEALTH] Erro crítico no módulo:', e));
+    // ---------------------------------------------
     
     // Se for 'append', só processa se for solicitação de entrada (messageStubType 172)
     if (m.type === 'append') {

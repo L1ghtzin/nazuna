@@ -8,6 +8,7 @@ import pathz from 'path';
  * @returns {Promise<boolean>}
  */
 export const writeJsonFileAsync = async (filePath, data) => {
+  let tempPath = null;
   try {
     if (data === undefined || data === null) {
       console.error(`❌ writeJsonFileAsync: Tentativa de salvar dados nulos em ${filePath}`);
@@ -33,7 +34,7 @@ export const writeJsonFileAsync = async (filePath, data) => {
     await fsPromises.mkdir(pathz.dirname(filePath), { recursive: true });
     
     // Escreve em arquivo temporário primeiro (operação atômica)
-    const tempPath = filePath + '.tmp';
+    tempPath = `${filePath}.${Date.now()}.${Math.random().toString(36).substring(2, 7)}.tmp`;
     await fsPromises.writeFile(tempPath, jsonString, 'utf-8');
     
     // Verifica integridade
@@ -42,7 +43,11 @@ export const writeJsonFileAsync = async (filePath, data) => {
       JSON.parse(writtenContent);
     } catch (verifyError) {
       console.error(`❌ writeJsonFileAsync: Verificação falhou para ${filePath}`);
-      try { await fsPromises.unlink(tempPath); } catch (e) { console.error('Error cleaning up temp file:', e); }
+      try { 
+        await fsPromises.unlink(tempPath); 
+      } catch (e) { 
+        if (e.code !== 'ENOENT') console.error('Error cleaning up temp file:', e); 
+      }
       return false;
     }
     
@@ -51,10 +56,13 @@ export const writeJsonFileAsync = async (filePath, data) => {
     return true;
   } catch (error) {
     console.error(`❌ Erro ao escrever JSON async em ${filePath}:`, error.message);
-    try {
-      const tempPath = filePath + '.tmp';
-      await fsPromises.unlink(tempPath).catch(() => {});
-    } catch (e) { console.error('Error checking file existance:', e); }
+    if (tempPath) {
+      try {
+        await fsPromises.unlink(tempPath).catch(() => {});
+      } catch (e) { 
+        if (e && e.code !== 'ENOENT') console.error('Error checking file existance:', e); 
+      }
+    }
     return false;
   }
 };

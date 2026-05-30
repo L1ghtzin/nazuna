@@ -1020,6 +1020,7 @@ function validateGroupData(data) {
     goodbyeMsg: '',
     antilink: false,
     antifake: false,
+    antistealth: false,
     modorpg: false,
     leveling: false
   };
@@ -1035,6 +1036,7 @@ function validateGroupData(data) {
     goodbye: typeof data.goodbye === 'boolean' ? data.goodbye : false,
     antilink: typeof data.antilink === 'boolean' ? data.antilink : false,
     antifake: typeof data.antifake === 'boolean' ? data.antifake : false,
+    antistealth: typeof data.antistealth === 'boolean' ? data.antistealth : false,
     modorpg: typeof data.modorpg === 'boolean' ? data.modorpg : false,
     leveling: typeof data.leveling === 'boolean' ? data.leveling : false
   };

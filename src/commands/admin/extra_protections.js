@@ -1,12 +1,13 @@
 import pathz from 'path';
+import { handleAntistealthCommand } from '../../middleware/antiStealth.js';
 
 export default {
   name: "extra_protections",
-  description: "Proteções adicionais (Anti-Link, Anti-Porn, Anti-Gore)",
-  commands: ["antilinkgp", "antilinkcanal", "antilinkch", "antilinksoft", "antiporn", "antigore"],
+  description: "Proteções adicionais (Anti-Link, Anti-Porn, Anti-Gore, Anti-Stealth)",
+  commands: ["antilinkgp", "antilinkcanal", "antilinkch", "antilinksoft", "antiporn", "antigore", "antistealth"],
   handle: async ({ 
     reply, command, isGroup, isGroupAdmin, isBotAdmin, from, 
-    groupData, DATABASE_DIR, optimizer, MESSAGES
+    groupData, DATABASE_DIR, optimizer, MESSAGES, args, prefix, nazu
   }) => {
     if (!isGroup) return reply(MESSAGES.permission.groupOnly);
     if (!isGroupAdmin) return reply(MESSAGES.permission.userAdminOnly);
@@ -32,6 +33,14 @@ export default {
       return reply(groupData.antigore 
         ? "🩸 *ANTI-GORE ATIVADO*\n\nQualquer conteúdo de violência extrema ou gore enviado neste grupo causará o banimento automático do membro." 
         : "✅ *ANTI-GORE DESATIVADO*\n\nA detecção de violência/gore foi desligada.");
+    }
+
+    // --- ANTI-STEALTH (configurável) ---
+    if (cmd === 'antistealth') {
+      return handleAntistealthCommand({ 
+        reply, args, isGroup, isGroupAdmin, isBotAdmin, from, 
+        groupData, DATABASE_DIR, optimizer, MESSAGES, prefix, NazunaSock: nazu 
+      });
     }
 
     // --- ANTILINK GP/CANAL ---
