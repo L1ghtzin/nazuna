@@ -40,7 +40,8 @@ export default {
                       removeUserFromMap(groupData.mutedUsers, menc_os2);
       
       if (removed) {
-        writeJsonFile(groupFilePath, groupData);
+        await optimizer.saveJsonWithCache(groupFilePath, groupData);
+        optimizer.invalidateGroup(from);
         await nazu.sendMessage(from, {
           text: `✅ @${getUserName(menc_os2)} foi desmutado e pode enviar mensagens novamente.`,
           mentions: [menc_os2]

@@ -42,7 +42,8 @@ export default {
         groupData.mutedUsers2[menc_os2] = true;
       }
       
-      writeJsonFile(groupFilePath, groupData);
+      await optimizer.saveJsonWithCache(groupFilePath, groupData);
+      optimizer.invalidateGroup(from);
       
       await nazu.sendMessage(from, {
         text: `✅ @${getUserName(menc_os2)} foi mutado. Suas mensagens serão apagadas automaticamente.`,
