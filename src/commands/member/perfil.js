@@ -32,14 +32,14 @@ export default {
       const seed = target.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
       
       const levels = {
-        puta: Math.floor(((Math.sin(seed * 1) * 50 + 50)) % 101),
-        gado: Math.floor(((Math.cos(seed * 2) * 50 + 50)) % 101),
-        corno: Math.floor(((Math.tan(seed * 3) * 50 + 50)) % 101),
-        sortudo: Math.floor(((Math.sin(seed * 4) * 50 + 50)) % 101),
-        carisma: Math.floor(((Math.cos(seed * 5) * 50 + 50)) % 101),
-        rico: Math.floor(((Math.tan(seed * 6) * 50 + 50)) % 101),
-        gostosa: Math.floor(((Math.sin(seed * 7) * 50 + 50)) % 101),
-        feio: Math.floor(((Math.cos(seed * 8) * 50 + 50)) % 101)
+        puta: Math.floor(Math.abs(Math.sin(seed * 1)) * 100),
+        gado: Math.floor(Math.abs(Math.cos(seed * 2)) * 100),
+        corno: Math.floor(Math.abs(Math.tan(seed * 3) % 1) * 100),
+        sortudo: Math.floor(Math.abs(Math.sin(seed * 4)) * 100),
+        carisma: Math.floor(Math.abs(Math.cos(seed * 5)) * 100),
+        rico: Math.floor(Math.abs(Math.tan(seed * 6) % 1) * 100),
+        gostosa: Math.floor(Math.abs(Math.sin(seed * 7)) * 100),
+        feio: Math.floor(Math.abs(Math.cos(seed * 8)) * 100)
       };
       
       const pacoteValue = `R$ ${(Math.random() * 10000 + 1).toFixed(2).replace('.', ',')}`;
@@ -57,19 +57,48 @@ export default {
       let profilePic = 'https://raw.githubusercontent.com/nazuninha/uploads/main/outros/1747053564257_bzswae.bin';
       try {
         profilePic = await nazu.profilePictureUrl(target, 'image');
-      } catch (error) { console.error('Error fetching PP URL for sender:', error); }
+      } catch (error) { 
+        if (error.message !== 'not-authorized' && !error.message.includes('not-authorized')) {
+          console.error(`Erro ao buscar foto de perfil de ${target}:`, error.message);
+        }
+      }
       
       let bio = 'Sem bio disponível';
       let bioSetAt = '';
       try {
         const statusData = await nazu.fetchStatus(target);
-        if (statusData?.[0]?.status) {
-          bio = statusData[0].status;
-          bioSetAt = new Date(statusData[0].setAt).toLocaleString('pt-BR', {
-            dateStyle: 'short', timeStyle: 'short', timeZone: 'America/Sao_Paulo'
-          });
+        if (statusData) {
+          let statusStr = '';
+          let setAtDate = null;
+          
+          if (typeof statusData === 'string') {
+            statusStr = statusData;
+          } else if (Array.isArray(statusData)) {
+            statusStr = statusData[0]?.status;
+            setAtDate = statusData[0]?.setAt;
+          } else if (typeof statusData === 'object') {
+            statusStr = statusData.status;
+            setAtDate = statusData.setAt;
+          }
+          
+          if (typeof statusStr === 'object' && statusStr !== null) {
+            statusStr = statusStr.text || statusStr.status || JSON.stringify(statusStr);
+          }
+          
+          if (statusStr && String(statusStr).trim() !== '' && statusStr !== '[object Object]') {
+            bio = String(statusStr).trim();
+          }
+          
+          if (setAtDate) {
+            const dateObj = new Date(setAtDate);
+            if (!isNaN(dateObj.getTime())) {
+              bioSetAt = dateObj.toLocaleString('pt-BR', {
+                dateStyle: 'short', timeStyle: 'short', timeZone: 'America/Sao_Paulo'
+              });
+            }
+          }
         }
-      } catch (error) { console.error('Error handling PP URL stream:', error); }
+      } catch (error) { console.error('Erro ao buscar bio:', error); }
       
       const createProgressBar = (percent, size = 10) => {
         const filled = Math.min(size, Math.max(0, Math.round((percent / 100) * size)));

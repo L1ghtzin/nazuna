@@ -143,32 +143,45 @@ async function convertIdsToLid(nazu, ids) {
 // Verifica se dois IDs são equivalentes (ignora sufixo @lid/@s.whatsapp.net e :XX)
 function idsMatch(id1, id2) {
   if (!id1 || !id2) return false;
+  if (id1 === id2) return true;
   
-  // Remove :XX se existir (ex: 267955023654984:13@lid -> 267955023654984@lid)
+  // Remove :XX se existir
   const clean1 = id1.includes(':') ? id1.split(':')[0] + (id1.includes('@lid') ? '@lid' : '@s.whatsapp.net') : id1;
   const clean2 = id2.includes(':') ? id2.split(':')[0] + (id2.includes('@lid') ? '@lid' : '@s.whatsapp.net') : id2;
   
-  const base1 = clean1.split('@')[0];
-  const base2 = clean2.split('@')[0];
+  if (clean1 === clean2) return true;
   
-  return base1 === base2;
+  const isLid1 = clean1.includes('@lid');
+  const isLid2 = clean2.includes('@lid');
+  
+  // Se forem do mesmo tipo, a base precisa ser igual
+  if (isLid1 === isLid2) {
+    return clean1.split('@')[0] === clean2.split('@')[0];
+  }
+  
+  // Tipos diferentes: resolve pelo cache de LID <-> JID
+  const lid = isLid1 ? clean1 : clean2;
+  const jid = isLid1 ? clean2 : clean1;
+  
+  if (jidLidMemoryCache.has(jid)) {
+    const cachedLid = jidLidMemoryCache.get(jid);
+    const cleanCachedLid = cachedLid.includes(':') ? cachedLid.split(':')[0] + '@lid' : cachedLid;
+    if (cleanCachedLid.split('@')[0] === lid.split('@')[0]) return true;
+  }
+  
+  const cachedJid = getJidFromLid(lid);
+  if (cachedJid) {
+    const cleanCachedJid = cachedJid.includes(':') ? cachedJid.split(':')[0] + '@s.whatsapp.net' : cachedJid;
+    if (cleanCachedJid.split('@')[0] === jid.split('@')[0]) return true;
+  }
+  
+  return false;
 }
 
 // Verifica se um ID está presente em um array (comparação por base, ignora :XX)
 function idInArray(id, array) {
   if (!id || !Array.isArray(array)) return false;
-  
-  // Remove :XX se existir
-  const cleanId = id.includes(':') ? id.split(':')[0] + (id.includes('@lid') ? '@lid' : '@s.whatsapp.net') : id;
-  const baseId = cleanId.split('@')[0];
-  
-  return array.some(item => {
-    if (!item) return false;
-    // Remove :XX do item também
-    const cleanItem = item.includes(':') ? item.split(':')[0] + (item.includes('@lid') ? '@lid' : '@s.whatsapp.net') : item;
-    const baseItem = cleanItem.split('@')[0];
-    return baseItem === baseId;
-  });
+  return array.some(item => idsMatch(id, item));
 }
 
 // Converte qualquer ID (JID ou LID) para o formato unificado (preferencialmente LID)
