@@ -235,7 +235,7 @@ export default {
     // ═══════════════════════════════════════════════════════════════
     // 📋 BLACKLIST DO GRUPO
     // ═══════════════════════════════════════════════════════════════
-    if (['blacklist', 'addblacklist', 'delblacklist', 'listblacklist', 'listablacklist', 'listblacklistgp', 'listblacklistgrupal', 'blacklistlista', 'blacklista'].includes(cmd)) {
+    if (['blacklist', 'addblacklist', 'delblacklist', 'unblacklist', 'listblacklist', 'listablacklist', 'listblacklistgp', 'listblacklistgrupal', 'blacklistlista', 'blacklista'].includes(cmd)) {
       if (!isGroup || !isGroupAdmin) return reply(MESSAGES.permission.adminOnly);
       groupData.blacklist = groupData.blacklist || {};
 
@@ -264,10 +264,29 @@ export default {
         target = buildUserId(target, config);
       }
 
+      const searchTarget = target.split('@')[0];
+
       if (['delblacklist', 'unblacklist'].includes(cmd)) {
-        delete groupData.blacklist[target];
-        await optimizer.saveJsonWithCache(groupFile, groupData);
-        return reply("✅ Removido.");
+        let removido = false;
+        for (const k of Object.keys(groupData.blacklist)) {
+           if (k === target || k.startsWith(searchTarget) || k.includes(searchTarget)) {
+              delete groupData.blacklist[k];
+              removido = true;
+           }
+        }
+        
+        if (removido) {
+           await optimizer.saveJsonWithCache(groupFile, groupData);
+           return reply("✅ Removido.");
+        } else {
+           return reply("❌ Este usuário não está na blacklist.");
+        }
+      }
+
+      for (const k of Object.keys(groupData.blacklist)) {
+         if (k === target || k.startsWith(searchTarget) || k.includes(searchTarget)) {
+            return reply("❌ Este usuário já está na blacklist.");
+         }
       }
 
       groupData.blacklist[target] = { reason: reason, date: Date.now() };

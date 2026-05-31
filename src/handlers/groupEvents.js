@@ -138,24 +138,26 @@ export async function handleGroupParticipantsUpdate(NazunaSock, inf) {
                 const entradaPorLink = !inf.author || inf.participants.includes(inf.author);
 
                 for (const participant of inf.participants) {
-                    const userId = participant.split('@')[0];
-
-                    if (globalBlacklist?.[participant]) {
-                        membersToRemove.push(participant);
-                        removalReasons.push(`@${userId} (blacklist global)`);
-                        continue;
-                    }
-
-                    if (groupSettings.blacklist?.[participant]) {
-                        membersToRemove.push(participant);
-                        removalReasons.push(`@${userId} (blacklist grupo)`);
-                        continue;
-                    }
-
-                    const resolved = await resolveParticipant(participant, NazunaSock);
+                    const resolved = await resolveParticipant(participant, NazunaSock, groupMetadata);
                     const participantNumber = resolved.number;
                     const participantStripped = participant.replace(/@.*/, '');
                     const isLid = resolved.isLid;
+                    const jid = resolved.jid || `${participantNumber}@s.whatsapp.net`;
+                    const lid = resolved.lid || (isLid ? participant : null);
+
+                    const inGlobalBlacklist = globalBlacklist?.[participant] || globalBlacklist?.[jid] || (lid && globalBlacklist?.[lid]);
+                    if (inGlobalBlacklist) {
+                        membersToRemove.push(participant);
+                        removalReasons.push(`@${participantNumber} (blacklist global)`);
+                        continue;
+                    }
+
+                    const inGroupBlacklist = groupSettings.blacklist?.[participant] || groupSettings.blacklist?.[jid] || (lid && groupSettings.blacklist?.[lid]);
+                    if (inGroupBlacklist) {
+                        membersToRemove.push(participant);
+                        removalReasons.push(`@${participantNumber} (blacklist grupo)`);
+                        continue;
+                    }
 
                     const antifakeResult = await checkAntifake(participant, groupSettings, NazunaSock);
                     if (!antifakeResult.allowed) {

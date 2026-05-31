@@ -101,10 +101,10 @@ export async function processGroupSecurity(context) {
       if (!isUserWhitelisted(sender, 'antibtn')) {
         if (isBotAdmin) {
           await nazu.groupParticipantsUpdate(from, [sender], 'remove');
-          await nazu.sendMessage(from, { delete: { remoteJid: from, fromMe: false, id: info.key.id, participant: sender } });
+          await nazu.sendMessage(from, { delete: info.key });
           await reply(`⚠️ @${getUserName(sender)}, Mensagens com botões não são permitidas neste grupo. Você foi removido.`, { mentions: [sender] });
         } else {
-          await nazu.sendMessage(from, { delete: { remoteJid: from, fromMe: false, id: info.key.id, participant: sender } });
+          await nazu.sendMessage(from, { delete: info.key });
           await reply(`⚠️ Atenção, @${getUserName(sender)}! Mensagens com botões não são permitidas. Não consigo remover você, mas evite usar esse tipo de mensagem.`, { mentions: [sender] });
         }
         return { stopProcessing: true };
@@ -215,7 +215,7 @@ export async function processGroupSecurity(context) {
       if (isMediaRestricted) {
         const mediaAction = groupData[mediaActionKey] || 'apagar';
         try {
-          await nazu.sendMessage(from, { delete: { remoteJid: from, fromMe: false, id: info.key.id, participant: sender } });
+          await nazu.sendMessage(from, { delete: info.key });
           if (mediaAction === 'banir' && isBotAdmin) {
             await nazu.groupParticipantsUpdate(from, [sender], 'remove');
             await reply(`🚫 @${getUserName(sender)}, o envio de *${restrictedTypeLabel}* é proibido neste grupo. Você foi removido!`, { mentions: [sender] });
@@ -387,7 +387,7 @@ export async function processGroupSecurity(context) {
     if (isGroup && isMuted && !isGroupAdmin && !isOwner) {
       try {
         await nazu.sendMessage(from, { text: `🤫 *Usuário mutado detectado*\n\n@${getUserName(sender)}, você está tentando falar enquanto está mutado neste grupo. Você será removido conforme as regras.`, mentions: [sender] }, { quoted: info });
-        await nazu.sendMessage(from, { delete: { remoteJid: from, fromMe: false, id: info.key.id, participant: sender } });
+        await nazu.sendMessage(from, { delete: info.key });
         if (isBotAdmin) {
           await nazu.groupParticipantsUpdate(from, [sender], 'remove');
         } else {
@@ -404,7 +404,7 @@ export async function processGroupSecurity(context) {
 
     if (isGroup && isMuted2 && !isGroupAdmin && !isOwner) {
       try {
-        await nazu.sendMessage(from, { delete: { remoteJid: from, fromMe: false, id: info.key.id, participant: sender } });
+        await nazu.sendMessage(from, { delete: info.key });
       } catch (error) {
         console.error("Erro ao deletar mensagem de usuário mutado 2:", error);
       }

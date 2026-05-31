@@ -153,6 +153,15 @@ export const getFileBuffer = async (mediakey, mediaType, options = {}) => {
     if (!mediakey) {
       throw new Error('Chave de mídia inválida');
     }
+
+    // Workaround for getaddrinfo ENOTFOUND a.whatsapp.net
+    if (mediakey.url && typeof mediakey.url === 'string') {
+      mediakey.url = mediakey.url.replace('a.whatsapp.net', 'mmg.whatsapp.net');
+    }
+    if (mediakey.directPath && typeof mediakey.directPath === 'string') {
+      mediakey.directPath = mediakey.directPath.replace('a.whatsapp.net', 'mmg.whatsapp.net');
+    }
+
     const stream = await downloadContentFromMessage(mediakey, mediaType);
     let buffer = Buffer.from([]);
     const MAX_BUFFER_SIZE = 50 * 1024 * 1024;
