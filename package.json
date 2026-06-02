@@ -9,7 +9,8 @@
         "dev": "nodemon src/.scripts/start.js",
         "config": "node src/.scripts/config.js",
         "config:install": "node src/.scripts/config.js --install",
-        "update": "node src/.scripts/update.js"
+        "update": "node src/.scripts/update.js",
+        "postinstall": "node src/.scripts/patch-baileys.js"
     },
     "repository": {
         "type": "git",

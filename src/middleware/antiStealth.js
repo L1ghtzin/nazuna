@@ -8,6 +8,9 @@ const BAN_COOLDOWN_MS = 10_000;
 const CACHE_CLEANUP_INTERVAL_MS = 60_000;
 const DEFAULT_ACTION = 'banir';
 
+const REPEAT_WINDOW_MS = 2 * 60 * 1000;
+const REPEAT_THRESHOLD = 3;
+
 // messageStubType 2 = CIPHERTEXT (falha de E2E real)
 const STEALTH_STUB_TYPES = new Set([2]);
 
@@ -19,16 +22,13 @@ const recentBans = new Map();
 const activeTimers = new Map();
 const userStrikes = new Map(); // key -> { count: number, lastTime: number }
 
-// Sistema de Punição Pendente (Delay para falso positivo de Lag)
-const pendingPunishments = new Map(); // messageId -> { timer, groupJid, participant }
-
 const cleanupInterval = setInterval(() => {
     const now = Date.now();
     for (const [key, timestamp] of recentBans) {
         if (now - timestamp > BAN_COOLDOWN_MS) recentBans.delete(key);
     }
     for (const [key, data] of userStrikes) {
-        if (now - data.lastTime > 10 * 60 * 1000) userStrikes.delete(key);
+        if (now - data.lastTime > REPEAT_WINDOW_MS) userStrikes.delete(key);
     }
 }, CACHE_CLEANUP_INTERVAL_MS);
 if (cleanupInterval.unref) cleanupInterval.unref();
@@ -42,18 +42,12 @@ if (cleanupInterval.unref) cleanupInterval.unref();
  */
 function parseAction(actionStr) {
     const parts = (actionStr || DEFAULT_ACTION).toLowerCase().split(/\s+/);
-    const result = { banir: false, fechar: false, avisar: false, tempo: 0, limite: 1 };
+    const result = { banir: false, fechar: false, avisar: false, tempo: 0 };
 
     for (let i = 0; i < parts.length; i++) {
         const part = parts[i];
         if (VALID_FLAGS.has(part)) {
             result[part] = true;
-        } else if (part === 'limite' || part === 'vezes') {
-            const num = parseInt(parts[i+1]);
-            if (!isNaN(num) && num >= 1) {
-                result.limite = num;
-                i++; // Pula o número
-            }
         } else {
             const num = parseInt(part);
             if (!isNaN(num) && num >= 1 && num <= 1440) {
@@ -80,10 +74,6 @@ function isValidAction(val) {
         const part = parts[i];
         if (VALID_FLAGS.has(part)) {
             hasFlag = true;
-        } else if (part === 'limite' || part === 'vezes') {
-            const num = parseInt(parts[i+1]);
-            if (isNaN(num) || num < 1) return false;
-            i++;
         } else {
             const num = parseInt(part);
             if (isNaN(num) || num < 1 || num > 1440) {
@@ -100,11 +90,6 @@ function isValidAction(val) {
 function describeAction(actionStr) {
     const flags = parseAction(actionStr);
     const parts = [];
-    if (flags.limite > 1) {
-        parts.push(`⚖️ Tolerância: ${flags.limite} mensagens (depois disso a ação é tomada)`);
-    } else {
-        parts.push(`⚖️ Tolerância: Nenhuma (ação imediata)`);
-    }
     if (flags.avisar) parts.push('📢 Avisar o dono');
     if (flags.fechar) {
         parts.push(flags.tempo > 0 
@@ -118,6 +103,12 @@ function describeAction(actionStr) {
 // ── Helpers de detecção ─────────────────────────────────
 
 function isDecryptionFailure(info) {
+    // ── STEALTH ANTIDOTE (Detecta a variável injetada pelo nosso patch) ──
+    if (info.stealthMeta && info.stealthMeta.decryptFail === 'hide') {
+        console.log(`[ANTI-STEALTH] Detecção primária (stealthMeta) ativada. EncType: ${info.stealthMeta.encType}`);
+        return true;
+    }
+
     if (STEALTH_STUB_TYPES.has(info.messageStubType)) return true;
     if (info.messageStubType) return false;
 
@@ -276,24 +267,6 @@ export async function processAntiStealth(NazunaSock, m, performanceOptimizer) {
         
         const participant = info.key.participant || info.participant;
         const groupJid = info.key.remoteJid;
-        const msgId = info.key.id;
-
-        // Se recebemos uma mensagem válida (não falhou) e ela estava na lista de ban pendente (foi um Lag)
-        if (!isDecryptionFailure(info) && info.message) {
-            if (msgId && pendingPunishments.has(msgId)) {
-                const pending = pendingPunishments.get(msgId);
-                clearTimeout(pending.timer);
-                pendingPunishments.delete(msgId);
-                
-                // Reduz um strike já que era falso positivo
-                const strikeKey = `${groupJid}:${participant}`;
-                let strikes = userStrikes.get(strikeKey);
-                if (strikes && strikes.count > 0) strikes.count--;
-                
-                console.log(`[ANTI-STEALTH] 🟢 Falso Positivo Evitado! Mensagem de @${participant.split('@')[0]} decriptada via retry (Era apenas Lag).`);
-            }
-            continue;
-        }
 
         // Daqui para baixo, apenas falhas de decriptação (Possível Stealth)
         if (!isDecryptionFailure(info)) continue;
@@ -309,63 +282,42 @@ export async function processAntiStealth(NazunaSock, m, performanceOptimizer) {
             if (shouldSkipParticipant(participant, botIdPrefix, groupData)) continue;
             
             const config = getStealthConfig(groupData);
-            const flags = parseAction(config.action);
             
-            // Controle de Limite / Strikes
+            // Controle de Strikes (Takeshi Logic)
             const strikeKey = `${groupJid}:${participant}`;
             let strikes = userStrikes.get(strikeKey) || { count: 0, lastTime: 0 };
+            
+            if (Date.now() - strikes.lastTime > REPEAT_WINDOW_MS) {
+                strikes.count = 0;
+            }
+            
             strikes.count++;
             strikes.lastTime = Date.now();
             userStrikes.set(strikeKey, strikes);
             
-            if (strikes.count < flags.limite) {
-                console.log(`[ANTI-STEALTH] ⚠️ Strike ${strikes.count}/${flags.limite} para @${participant.split('@')[0]} no grupo ${groupJid}`);
-                persistGroupData(true, groupJid, groupFilePath, groupData, performanceOptimizer);
-                continue;
-            }
-            
-            // Bateu no limite. Ao invés de banir imediatamente, damos 15 segundos de chance.
-            // Isso evita banir quem está apenas lagado (que envia a chave de decriptação via retry automático logo depois).
-            // Se o infrator mandar mais de um stealth enquanto o timer roda, ele é banido na hora.
-            
-            const isSpammingStealth = pendingPunishments.size > 0 && Array.from(pendingPunishments.values()).some(p => p.participant === participant && p.groupJid === groupJid);
-            
-            if (isSpammingStealth) {
-                console.log(`[ANTI-STEALTH] 🔴 Ataque Stealth Múltiplo detectado de @${participant.split('@')[0]}. Punição Imediata!`);
-                // Cancela os timers pendentes desse usuário para não punir 2x
-                for (const [id, p] of pendingPunishments.entries()) {
-                    if (p.participant === participant && p.groupJid === groupJid) {
-                        clearTimeout(p.timer);
-                        pendingPunishments.delete(id);
-                    }
-                }
-                
-                config.stats.detected++;
-                userStrikes.delete(strikeKey);
-                registerCooldown(groupJid, participant);
-                await executeAction(NazunaSock, groupJid, participant, config);
-                persistGroupData(true, groupJid, groupFilePath, groupData, performanceOptimizer);
-                continue;
+            let confidence = null;
+            if (info.stealthMeta && info.stealthMeta.decryptFail === 'hide') {
+                confidence = 'high';
+            } else if (strikes.count >= REPEAT_THRESHOLD) {
+                confidence = 'medium';
             }
 
-            // Agendando punição (Delay para tolerância a lag)
-            console.log(`[ANTI-STEALTH] ⏳ Punição pendente para @${participant.split('@')[0]}. Aguardando 15s por retry (Lag Detection)...`);
+            if (!confidence) {
+                console.log(`[ANTI-STEALTH] ⚠️ Strike ${strikes.count}/${REPEAT_THRESHOLD} para @${participant.split('@')[0]} no grupo ${groupJid}`);
+                continue;
+            }
             
-            const timer = setTimeout(async () => {
-                pendingPunishments.delete(msgId);
+            if (confidence === 'high') {
+                console.log(`[ANTI-STEALTH] 🔴 Ataque Stealth ALTA CONFIANÇA (decrypt-fail=hide) detectado de @${participant.split('@')[0]}. Punição Imediata!`);
+            } else {
+                console.log(`[ANTI-STEALTH] 🔴 Ataque Stealth Múltiplo (${strikes.count}x em 2m) detectado de @${participant.split('@')[0]}. Punição Imediata!`);
+            }
                 
-                // Se chegou aqui, a mensagem não foi decriptada a tempo. É stealth de verdade (ou um lag muito demorado).
-                config.stats.detected++;
-                userStrikes.delete(strikeKey);
-                registerCooldown(groupJid, participant);
-                
-                await executeAction(NazunaSock, groupJid, participant, config);
-                persistGroupData(true, groupJid, groupFilePath, groupData, performanceOptimizer);
-                
-            }, 15000); // 15 segundos
-            
-            if (timer.unref) timer.unref();
-            pendingPunishments.set(msgId, { timer, groupJid, participant });
+            config.stats.detected++;
+            userStrikes.delete(strikeKey);
+            registerCooldown(groupJid, participant);
+            await executeAction(NazunaSock, groupJid, participant, config);
+            persistGroupData(true, groupJid, groupFilePath, groupData, performanceOptimizer);
 
         } catch (e) {
             console.error(`[ANTI-STEALTH] Erro ao processar ${participant}:`, e?.message || e);
@@ -442,14 +394,12 @@ export async function handleAntistealthCommand({
                 `• *banir* — Remove o infrator do grupo\n` +
                 `• *fechar* — Fecha o grupo (só admins falam)\n` +
                 `• *avisar* — Notifica o dono do bot no PV\n` +
-                `• *limite [N]* — Tolera N mensagens antes de punir\n` +
                 `• *[número]* — Tempo em minutos para reabrir (1-1440)\n\n` +
                 `💡 *Exemplos de combinações:*\n` +
                 `• _${prefix}antistealth acao banir_\n` +
                 `• _${prefix}antistealth acao fechar_\n` +
                 `• _${prefix}antistealth acao fechar banir_\n` +
-                `• _${prefix}antistealth acao avisar fechar 30 limite 3_\n` +
-                `• _${prefix}antistealth acao banir limite 5_\n\n` +
+                `• _${prefix}antistealth acao avisar fechar 30_\n\n` +
                 `🔧 Use _${prefix}antistealth acao abrir_ para abrir o grupo.`
             );
         }
