@@ -132,6 +132,10 @@ export async function handleGroupParticipantsUpdate(NazunaSock, inf) {
 
         switch (inf.action) {
             case 'add': {
+                performanceOptimizer.cache.del('memoize', `lid_admins:${from}`);
+                performanceOptimizer.cache.del('memoize', `lid_members:${from}`);
+                performanceOptimizer.cache.del('indexGroupMeta', from);
+
                 const membersToWelcome = [];
                 const membersToRemove = [];
                 const removalReasons = [];
@@ -259,6 +263,10 @@ export async function handleGroupParticipantsUpdate(NazunaSock, inf) {
             }
 
             case 'remove': {
+                performanceOptimizer.cache.del('memoize', `lid_admins:${from}`);
+                performanceOptimizer.cache.del('memoize', `lid_members:${from}`);
+                performanceOptimizer.cache.del('indexGroupMeta', from);
+
                 if (groupSettings.exit?.enabled) {
                     const message = await createGroupMessage(
                         NazunaSock,
@@ -274,6 +282,10 @@ export async function handleGroupParticipantsUpdate(NazunaSock, inf) {
 
             case 'promote':
             case 'demote': {
+                performanceOptimizer.cache.del('memoize', `lid_admins:${from}`);
+                performanceOptimizer.cache.del('memoize', `lid_members:${from}`);
+                performanceOptimizer.cache.del('indexGroupMeta', from);
+
                 if (!groupSettings?.x9) return;
                 const autor = inf.author || '';
 

@@ -119,17 +119,18 @@ export function normalizeCommand(cmd) {
  */
 export const getBotNumber = (nazu) => {
   try {
-    // Tenta pegar LID primeiro
-    if (nazu.user?.lid) {
+    // Tenta pegar LID primeiro do user ou do authState
+    const lid = nazu.user?.lid || nazu.authState?.creds?.me?.lid;
+    if (lid) {
       // Remove o sufixo `:XX` se existir
-      const lid = nazu.user.lid;
       const cleanLid = lid.includes(':') ? lid.split(':')[0] + '@lid' : lid;
       return cleanLid;
     }
     
     // Fallback para ID padrão
-    if (nazu.user?.id) {
-      const botId = nazu.user.id.split(':')[0];
+    const jid = nazu.user?.id || nazu.authState?.creds?.me?.id;
+    if (jid) {
+      const botId = jid.split(':')[0];
       return `${botId}@s.whatsapp.net`;
     }
 

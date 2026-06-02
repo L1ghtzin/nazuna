@@ -383,12 +383,14 @@ export async function buildMessageContext(nazu, info, store, messagesCache, rent
       const optimizer = await initializePerformanceOptimizer();
       if (optimizer?.modules?.cacheManager) {
         const cached = await optimizer.modules.cacheManager.getIndexGroupMeta(groupId);
-        if (cached) {
+        if (cached && Object.keys(cached).length > 0) {
           return cached;
         }
 
         const freshData = await nazu.groupMetadata(groupId).catch(() => ({}));
-        await optimizer.modules.cacheManager.setIndexGroupMeta(groupId, freshData);
+        if (freshData && Object.keys(freshData).length > 0) {
+          await optimizer.modules.cacheManager.setIndexGroupMeta(groupId, freshData);
+        }
         return freshData;
       }
 
