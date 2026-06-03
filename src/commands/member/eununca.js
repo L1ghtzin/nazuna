@@ -3,7 +3,7 @@ export default {
   description: "Cria uma enquete de Eu Nunca",
   commands: ["eununca"],
   usage: `${global.prefix}eununca`,
-  handle: async ({  reply, isGroup, isModoBn, nazu, from, toolsJson , MESSAGES }) => {
+  handle: async ({  reply, isGroup, isModoBn, nazu, from, toolsJson , MESSAGES, info }) => {
     try {
       if (!isGroup) return reply(`💔 Isso só pode ser usado em grupo 💔`);
       if (!isModoBn) return reply(`💔 O modo brincadeira não está ativo nesse grupo`);
