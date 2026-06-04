@@ -265,6 +265,11 @@ async function main() {
     setupGracefulShutdown();
     await displayHeader();
     await checkPrerequisites();
+
+    // 🛡️ Garante que o patch Anti-Stealth sempre esteja aplicado antes de rodar o bot
+    info('🛡️ Verificando sistema Anti-Stealth...');
+    await import('./patch-baileys.js');
+
     await setupTermuxAutostart();
 
     const hasSession = await checkAutoConnect();
