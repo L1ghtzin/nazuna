@@ -383,14 +383,12 @@ export async function buildMessageContext(nazu, info, store, messagesCache, rent
       const optimizer = await initializePerformanceOptimizer();
       if (optimizer?.modules?.cacheManager) {
         const cached = await optimizer.modules.cacheManager.getIndexGroupMeta(groupId);
-        if (cached && Object.keys(cached).length > 0) {
+        if (cached) {
           return cached;
         }
 
         const freshData = await nazu.groupMetadata(groupId).catch(() => ({}));
-        if (freshData && Object.keys(freshData).length > 0) {
-          await optimizer.modules.cacheManager.setIndexGroupMeta(groupId, freshData);
-        }
+        await optimizer.modules.cacheManager.setIndexGroupMeta(groupId, freshData);
         return freshData;
       }
 
@@ -708,20 +706,9 @@ export async function buildMessageContext(nazu, info, store, messagesCache, rent
     const rawAdmins = !isGroup ? [] :
       groupMetadata.participants?.filter(p => p.admin === 'admin' || p.admin === 'superadmin').map(extractParticipantId).filter(Boolean) || [];
 
-    // Converte todos os membros e admins para LID (com cache per-group otimizado 1 min)
-    let AllgroupMembers = [];
-    let groupAdmins = [];
-    if (isGroup && rawMembers.length > 0) {
-      [AllgroupMembers, groupAdmins] = await Promise.all([
-        optimizer.memoize(`lid_members:${from}`, () => convertIdsToLid(nazu, rawMembers), 120000),
-        optimizer.memoize(`lid_admins:${from}`, () => convertIdsToLid(nazu, rawAdmins), 120000)
-      ]);
-    } else {
-      [AllgroupMembers, groupAdmins] = await Promise.all([
-        convertIdsToLid(nazu, rawMembers),
-        convertIdsToLid(nazu, rawAdmins)
-      ]);
-    }
+    // Converte todos os membros e admins para LID (usando cache)
+    const AllgroupMembers = await convertIdsToLid(nazu, rawMembers);
+    const groupAdmins = await convertIdsToLid(nazu, rawAdmins);
 
     // Debug log
     debugLog('Membros e Admins convertidos:', {
