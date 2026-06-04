@@ -8,15 +8,24 @@ const __dirname = path.dirname(__filename);
 // Caminho para o arquivo alvo dentro do node_modules local
 const TARGET_FILE = path.join(__dirname, '..', '..', 'node_modules', 'baileys', 'lib', 'Socket', 'messages-recv.js');
 
-const INJECTION_MARKER = '// ── STEALTH ANTIDOTE (patch automáticizado) ──';
+const INJECTION_MARKER = '// ── STEALTH ANTIDOTE (anti-payment evasion detection) ──';
 
 const INJECTION_CODE = `
                 ${INJECTION_MARKER}
-                if (node.attrs['decrypt-fail'] === 'hide' || msg.messageStubType === 2) {
-                    msg.stealthMeta = {
-                        decryptFail: node.attrs['decrypt-fail'],
-                        encType: node.content?.[0]?.attrs?.type
-                    };
+                try {
+                    const stealthDecryptFail = node.attrs?.['decrypt-fail'] || null;
+                    const stealthFailedToDecrypt = msg.messageStubType === proto.WebMessageInfo.StubType.CIPHERTEXT;
+                    if (stealthDecryptFail || stealthFailedToDecrypt) {
+                        msg.stealthMeta = {
+                            decryptFail: stealthDecryptFail,
+                            encType: encNode?.attrs?.type || null,
+                            failedToDecrypt: stealthFailedToDecrypt,
+                            stubReason: msg.messageStubParameters?.[0] || null,
+                        };
+                    }
+                }
+                catch (stealthErr) {
+                    logger.debug({ stealthErr }, 'stealth meta capture failed');
                 }
 `;
 
