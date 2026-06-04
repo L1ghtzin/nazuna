@@ -54,31 +54,42 @@ export default {
       if (!q) return reply(`💔 Informe o comando a bloquear! Ex.: ${prefix}blockcmdg sticker`);
       const cmdToBlock = q.toLowerCase().split(' ')[0];
       if (!cmdToBlock) return reply(`💔 Informe o comando a bloquear! Ex.: ${prefix}blockcmdg sticker`);
-      globalBlocks.commands = globalBlocks.commands || {};
-      globalBlocks.commands[cmdToBlock] = { reason: q.split(' ').slice(1).join(' ') || 'Sem motivo', timestamp: Date.now() };
-      await optimizer.saveJsonWithCache(pathz.join(DATABASE_DIR, 'globalBlocks.json'), globalBlocks);
-      return reply(`✅ Comando *${cmdToBlock}* bloqueado globalmente!\nMotivo: ${globalBlocks.commands[cmdToBlock].reason}`);
+      
+      const blockFile = pathz.join(DATABASE_DIR, 'globalBlocks.json');
+      const loadedBlocks = await optimizer.loadJsonWithCache(blockFile, { users: {}, commands: {} });
+      loadedBlocks.commands = loadedBlocks.commands || {};
+      loadedBlocks.commands[cmdToBlock] = { reason: q.split(' ').slice(1).join(' ') || 'Sem motivo', timestamp: Date.now() };
+      
+      await optimizer.saveJsonWithCache(blockFile, loadedBlocks);
+      return reply(`✅ Comando *${cmdToBlock}* bloqueado globalmente!\nMotivo: ${loadedBlocks.commands[cmdToBlock].reason}`);
     }
 
     if (cmd === 'unblockcmdg') {
       if (!q) return reply(`💔 Informe o comando a desbloquear! Ex.: ${prefix}unblockcmdg sticker`);
       const cmdToUnblock = q.toLowerCase().split(' ')[0];
       if (!cmdToUnblock) return reply(`💔 Informe o comando a desbloquear! Ex.: ${prefix}unblockcmdg sticker`);
-      globalBlocks.commands = globalBlocks.commands || {};
-      if (!globalBlocks.commands[cmdToUnblock]) {
+      
+      const blockFile = pathz.join(DATABASE_DIR, 'globalBlocks.json');
+      const loadedBlocks = await optimizer.loadJsonWithCache(blockFile, { users: {}, commands: {} });
+      loadedBlocks.commands = loadedBlocks.commands || {};
+      
+      if (!loadedBlocks.commands[cmdToUnblock]) {
         return reply(`❌ O comando *${cmdToUnblock}* não está bloqueado!`);
       }
-      delete globalBlocks.commands[cmdToUnblock];
-      await optimizer.saveJsonWithCache(pathz.join(DATABASE_DIR, 'globalBlocks.json'), globalBlocks);
+      delete loadedBlocks.commands[cmdToUnblock];
+      await optimizer.saveJsonWithCache(blockFile, loadedBlocks);
       return reply(`✅ Comando *${cmdToUnblock}* desbloqueado globalmente!`);
     }
 
     if (cmd === 'listblocks') {
-      const blockedCommands = globalBlocks.commands && Object.keys(globalBlocks.commands).length > 0
-        ? Object.entries(globalBlocks.commands).map(([cmd, data]) => `🔧 *${cmd}* - Motivo: ${data.reason}`).join('\n')
+      const blockFile = pathz.join(DATABASE_DIR, 'globalBlocks.json');
+      const loadedBlocks = await optimizer.loadJsonWithCache(blockFile, { users: {}, commands: {} });
+      
+      const blockedCommands = loadedBlocks.commands && Object.keys(loadedBlocks.commands).length > 0
+        ? Object.entries(loadedBlocks.commands).map(([cmd, data]) => `🔧 *${cmd}* - Motivo: ${data.reason}`).join('\n')
         : 'Nenhum comando bloqueado.';
-      const blockedUsers = globalBlocks.users && Object.keys(globalBlocks.users).length > 0
-        ? Object.entries(globalBlocks.users).map(([user, data]) => `👤 *${user.split('@')[0]}* - Motivo: ${data.reason}`).join('\n')
+      const blockedUsers = loadedBlocks.users && Object.keys(loadedBlocks.users).length > 0
+        ? Object.entries(loadedBlocks.users).map(([user, data]) => `👤 *${user.split('@')[0]}* - Motivo: ${data.reason}`).join('\n')
         : 'Nenhum usuário bloqueado.';
       return reply(`🔒 *Bloqueios Globais* 🔒\n\n📜 *Comandos Bloqueados*:\n${blockedCommands}\n\n👥 *Usuários Bloqueados*:\n${blockedUsers}`);
     }
