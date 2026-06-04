@@ -171,8 +171,8 @@ export default {
       try {
         const prompt = `Qual o horóscopo de hoje para o signo de ${queryNormalizada}? Por favor, responda de forma mística e focada na previsão para o dia.`;
         const res = await axios.get(`https://systemzone.store/api/systemai?q=${encodeURIComponent(prompt)}`);
-        if (!res.data?.result) return reply(MESSAGES.error.general);
-        const previsao = res.data.result;
+        if (!res.data?.response) return reply(MESSAGES.error.general);
+        const previsao = res.data.response;
         const emojis = { aries: "♈", touro: "♉", gemeos: "♊", cancer: "♋", leao: "♌", virgem: "♍", libra: "♎", escorpiao: "♏", sagitario: "♐", capricornio: "♑", aquario: "♒", peixes: "♓" };
         const legenda = `🔮 *HORÓSCOPO* 🔮\n\n${emojis[queryNormalizada] || "🔮"} *Signo:* ${queryNormalizada.toUpperCase()}\n✨ *Previsão do Dia:*\n${previsao}`;
         return reply(legenda);
