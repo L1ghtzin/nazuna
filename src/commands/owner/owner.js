@@ -1,5 +1,6 @@
 import fs from 'fs';
 import pathz from 'path';
+import { getAllCommandList } from '../../utils/dynamicCommand.js';
 
 export default {
   name: "owner",
@@ -54,6 +55,11 @@ export default {
       if (!q) return reply(`💔 Informe o comando a bloquear! Ex.: ${prefix}blockcmdg sticker`);
       const cmdToBlock = q.toLowerCase().split(' ')[0];
       if (!cmdToBlock) return reply(`💔 Informe o comando a bloquear! Ex.: ${prefix}blockcmdg sticker`);
+      
+      const allCommands = await getAllCommandList();
+      if (!allCommands.includes(cmdToBlock)) {
+        return reply(`❌ O comando *${cmdToBlock}* não existe e não pode ser bloqueado!`);
+      }
       
       const blockFile = pathz.join(DATABASE_DIR, 'globalBlocks.json');
       const loadedBlocks = await optimizer.loadJsonWithCache(blockFile, { users: {}, commands: {} });
