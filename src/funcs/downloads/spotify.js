@@ -1,13 +1,12 @@
 /**
- * Spotify Download - Implementação direta sem API externa
- * Usa api. vrenden.my.id para busca e spotisaver.net para download
+ * Spotify Download - Implementação via System Zone API
  */
 
 import axios from 'axios';
 import SimpleCache from '../../utils/simpleCache.js';
 
-const SEARCH_BASE_URL = 'https://api.siputzx.my.id';
-const DOWNLOAD_BASE_URL = 'https://spotisaver.net';
+const SYSTEM_ZONE_URL = 'https://systemzone.store';
+const API_KEY = 'freekey';
 
 // Cache simples
 const CACHE_TTL = 30 * 60 * 1000;
@@ -21,25 +20,6 @@ function setCache(key, val) {
   cache.set(key, val, CACHE_TTL);
 }
 
-// Headers para spotisaver
-const SPOTISAVER_HEADERS = {
-  'accept': '*/*',
-  'accept-language': 'pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7',
-  'sec-fetch-dest': 'empty',
-  'sec-fetch-mode': 'cors',
-  'sec-fetch-site': 'same-origin',
-  'user-agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 Mobile/15E148 Safari/604.1'
-};
-
-/**
- * Extrair ID da track do Spotify de uma URL
- */
-function extractTrackId(url) {
-  if (!url) return null;
-  const trackMatch = url.match(/track\/([a-zA-Z0-9]+)/);
-  return trackMatch ? trackMatch[1] : null;
-}
-
 /**
  * Valida se é uma URL válida do Spotify
  */
@@ -51,47 +31,37 @@ function isValidSpotifyUrl(url) {
 /**
  * Busca músicas no Spotify
  * @param {string} query - Nome da música ou artista
- * @param {number} limit - Número de resultados
  * @returns {Promise<Object>} Resultados da busca
  */
 async function search(query) {
   try {
     if (!query || typeof query !== 'string') {
-      return {
-        ok: false,
-        msg: 'Query inválida'
-      };
+      return { ok: false, msg: 'Query inválida' };
     }
 
     const cached = getCached(`search:${query}`);
     if (cached) return cached;
 
-    // Busca usando a API da SiputZX
-    const response = await axios.get(`${SEARCH_BASE_URL}/api/s/spotify`, {
-      params: {
-        query: query,
-      },
+    // Busca usando a API da System Zone
+    const response = await axios.get(`${SYSTEM_ZONE_URL}/api/search/spotify`, {
+      params: { q: query },
       timeout: 120000
     });
 
     if (!response.data || !response.data.status) {
-      console.log('[Spotify] Erro na resposta da SiputZX:', response.data);
-      return {
-        ok: false,
-        msg: 'Erro ao buscar no Spotify pela SiputZX'
-      };
+      console.log('[Spotify] Erro na resposta da System Zone:', response.data);
+      return { ok: false, msg: 'Erro ao buscar no Spotify pela System Zone' };
     }
 
-    // A SiputZX costuma retornar um array dentro de response.data.data
-    const searchData = response.data.data || [];
+    const searchData = response.data.result || [];
     
-    // Mapeia para o formato que a função searchDownload e o Spotisaver esperam
+    // Mapeia para o formato esperado
     const mappedResults = searchData.map(item => ({
-      name: item.title || item.name || 'Desconhecido',
-      artists: item.artist ? [item.artist] : ['Desconhecido'],
-      song_link: item.url || item.link,
-      link: item.url || item.link,
-      duration_ms: item.duration || item.duration_ms || 0
+      name: item.title || 'Desconhecido',
+      artists: item.artists ? [item.artists] : ['Desconhecido'],
+      song_link: item.url,
+      link: item.url,
+      duration_ms: item.duration || 0
     }));
 
     const result = {
@@ -104,11 +74,8 @@ async function search(query) {
     setCache(`search:${query}`, result);
     return result;
   } catch (error) {
-    console.error('Erro na busca do Spotify (SiputZX):', error.message);
-    return {
-      ok: false,
-      msg: 'Erro ao buscar no Spotify: ' + error.message
-    };
+    console.error('Erro na busca do Spotify (System Zone):', error.message);
+    return { ok: false, msg: 'Erro ao buscar no Spotify: ' + error.message };
   }
 }
 
@@ -119,137 +86,57 @@ async function search(query) {
  */
 async function download(url) {
   try {
-    // Validação melhorada da URL
     if (!isValidSpotifyUrl(url)) {
       console.log('[Spotify] URL inválida:', url);
-      return {
-        ok: false,
-        msg: 'URL inválida do Spotify. Certifique-se de usar uma URL do Spotify válida.'
-      };
+      return { ok: false, msg: 'URL inválida do Spotify.' };
     }
 
-    // Verificar cache
     const cached = getCached(`download:${url}`);
     if (cached) return cached;
 
-    // Extrair ID da track
-    const trackId = extractTrackId(url);
-    if (!trackId) {
-      console.log('[Spotify] Não foi possível extrair ID da URL:', url);
-      return {
-        ok: false,
-        msg: 'Não foi possível extrair o ID da música. Verifique se a URL está correta.'
-      };
-    }
-
-    console.log(`[Spotify] Processando track ID: ${trackId}`);
-
-    // Etapa 1: Obter informações da faixa
-    const infoResponse = await axios.get(`${DOWNLOAD_BASE_URL}/api/get_playlist.php`, {
+    console.log(`[Spotify] Extraindo dados via System Zone: ${url}`);
+    
+    // Etapa 1: Obter a URL de download da System Zone
+    const { data } = await axios.get(`${SYSTEM_ZONE_URL}/api/v1/spotify`, {
       params: {
-        id: trackId,
-        type: 'track',
-        lang: 'en'
-      },
-      headers: {
-        ...SPOTISAVER_HEADERS,
-        'referer': `${DOWNLOAD_BASE_URL}/en/track/${trackId}/`
+        text: url,
+        apikey: API_KEY
       },
       timeout: 120000
     });
 
-    const trackData = infoResponse.data?.tracks?.[0];
-    
-    if (!trackData) {
-      return {
-        ok: false,
-        msg: 'Informações da música não encontradas'
-      };
+    if (!data || !data.status || !data.download_url) {
+      console.log('[Spotify] Erro na resposta da System Zone:', data);
+      return { ok: false, msg: 'Erro ao extrair informações da música ou API Key inválida' };
     }
 
-    console.log(`[Spotify] 🎵 Música: ${trackData.name}`);
-    console.log(`[Spotify] 🎤 Artista: ${trackData.artists?.[0]}`);
+    console.log(`[Spotify] 🎵 Música: ${data.title}`);
+    console.log(`[Spotify] ⬇️ Iniciando download do MP3...`);
 
-    // Etapa 2: Preparar payload para download
-    const payload = {
-      track: {
-        name: trackData.name,
-        artists: trackData.artists || [],
-        album: trackData.album,
-        image: {
-          url: trackData.image?.url,
-          width: trackData.image?.width || 640,
-          height: trackData.image?.height || 640
-        },
-        id: trackId,
-        external_url: trackData.external_url,
-        duration_ms: trackData.duration_ms,
-        preview_url: trackData.preview_url || null,
-        explicit: trackData.explicit || false,
-        release_date: trackData.release_date
-      },
-      download_dir: 'downloads',
-      filename_tag: 'SPOTISAVER',
-      user_ip: '138.118.236.9',
-      is_premium: false
-    };
-
-    // Etapa 3: Baixar a música
-    console.log(`[Spotify] ⬇️  Iniciando download...`);
-    
-    const downloadResponse = await axios.post(
-      `${DOWNLOAD_BASE_URL}/api/download_track.php`,
-      payload,
-      {
-        headers: {
-          ...SPOTISAVER_HEADERS,
-          'content-type': 'application/json',
-          'origin': DOWNLOAD_BASE_URL,
-          'referer': `${DOWNLOAD_BASE_URL}/en/track/${trackId}/`
-        },
-        timeout: 120000,
-        responseType: 'arraybuffer'
-      }
-    );
+    // Etapa 2: Baixar o buffer do MP3
+    const dlResponse = await axios.get(data.download_url, {
+      responseType: 'arraybuffer',
+      timeout: 120000
+    });
 
     console.log(`[Spotify] ✅ Download concluído`);
 
-    const artists = Array.isArray(trackData.artists) ? trackData.artists : [trackData.artists];
-
     const result = {
       ok: true,
-      buffer: Buffer.from(downloadResponse.data),
-      title: trackData.name,
-      artists: artists,
-      albumImage: trackData.image?.url,
-      year: trackData.release_date?.split('-')[0],
-      duration: trackData.duration_ms,
-      filename: `${artists.join(', ')} - ${trackData.name}.mp3`
+      buffer: Buffer.from(dlResponse.data),
+      title: data.title,
+      artists: [data.artists],
+      albumImage: data.thumbnail,
+      year: new Date().getFullYear().toString(),
+      duration: data.duration,
+      filename: `${data.artists} - ${data.title}.mp3`
     };
 
     setCache(`download:${url}`, result);
     return result;
   } catch (error) {
     console.error('Erro no download do Spotify:', error.message);
-    
-    if (error.response?.status === 404) {
-      return {
-        ok: false,
-        msg: 'Música não encontrada no Spotify'
-      };
-    }
-    
-    if (error.code === 'ECONNABORTED' || error.code === 'ETIMEDOUT') {
-      return {
-        ok: false,
-        msg: 'Timeout ao baixar a música. Tente novamente.'
-      };
-    }
-
-    return {
-      ok: false,
-      msg: error.message || 'Erro ao baixar do Spotify'
-    };
+    return { ok: false, msg: 'Erro ao baixar do Spotify: ' + error.message };
   }
 }
 
@@ -264,22 +151,16 @@ async function searchDownload(query) {
     const searchResult = await search(query);
     
     if (!searchResult.ok || !searchResult.results?.length) {
-      return {
-        ok: false,
-        msg: 'Nenhuma música encontrada com esse nome'
-      };
+      return { ok: false, msg: 'Nenhuma música encontrada com esse nome' };
     }
 
     const track = searchResult.results[0];
     
     if (!track.song_link) {
-      return {
-        ok: false,
-        msg: 'Link da música não encontrado'
-      };
+      return { ok: false, msg: 'Link da música não encontrado' };
     }
 
-    // Fazer download
+    // Fazer download direto via URL
     const downloadResult = await download(track.song_link);
     
     if (!downloadResult.ok) {
@@ -304,10 +185,7 @@ async function searchDownload(query) {
     };
   } catch (error) {
     console.error('Erro na busca/download do Spotify:', error.message);
-    return {
-      ok: false,
-      msg: error.message || 'Erro ao buscar no Spotify'
-    };
+    return { ok: false, msg: error.message || 'Erro ao buscar no Spotify' };
   }
 }
 
