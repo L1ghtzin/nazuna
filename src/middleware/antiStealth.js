@@ -1,10 +1,12 @@
 import { join } from 'path';
 import { loadGroupData, persistGroupData } from '../utils/groupManager.js';
 import { GRUPOS_DIR } from '../utils/paths.js';
-import { NUMERODONO } from '../config.js';
+import config, { NUMERODONO } from '../config.js';
+import { idsMatch } from '../utils/helpers.js';
+import { getBotNumber } from '../utils/messageHelpers.js';
 
 // ── Constantes ──────────────────────────────────────────
-const BAN_COOLDOWN_MS = 10_000;
+const BAN_COOLDOWN_MS = 5 * 60 * 1000;
 const CACHE_CLEANUP_INTERVAL_MS = 60_000;
 const DEFAULT_ACTION = 'banir';
 
@@ -122,11 +124,75 @@ function isDecryptionFailure(info) {
     return false;
 }
 
-function shouldSkipParticipant(participant, botIdPrefix, groupData) {
+function cleanUserId(id) {
+    if (!id || typeof id !== 'string') return null;
+    if (!id.includes(':')) return id;
+
+    const suffix = id.includes('@lid') ? '@lid' : '@s.whatsapp.net';
+    return `${id.split(':')[0]}${suffix}`;
+}
+
+function sameUser(idA, idB) {
+    const cleanA = cleanUserId(idA);
+    const cleanB = cleanUserId(idB);
+    if (!cleanA || !cleanB) return false;
+    return cleanA === cleanB || idsMatch(cleanA, cleanB);
+}
+
+function getParticipantId(participant) {
+    return cleanUserId(participant?.lid || participant?.id || participant);
+}
+
+function isWhitelistedParticipant(participant, groupData) {
+    const whitelist = groupData?.adminWhitelist;
+    if (!whitelist || typeof whitelist !== 'object') return false;
+
+    return Object.keys(whitelist).some(whitelistedId => sameUser(whitelistedId, participant));
+}
+
+function isBotOrOwner(NazunaSock, participant, botIdPrefix) {
     if (!participant) return true;
     if (botIdPrefix && participant.startsWith(botIdPrefix)) return true;
-    if (groupData?.adminWhitelist?.[participant]) return true;
+
+    const ownerJid = NUMERODONO ? `${NUMERODONO}@s.whatsapp.net` : null;
+    const candidates = [
+        getBotNumber(NazunaSock),
+        NazunaSock.user?.id,
+        NazunaSock.user?.lid,
+        NazunaSock.authState?.creds?.me?.id,
+        NazunaSock.authState?.creds?.me?.lid,
+        ownerJid,
+        config?.lidowner
+    ].filter(Boolean);
+
+    return candidates.some(candidate => sameUser(candidate, participant));
+}
+
+function shouldSkipParticipant(NazunaSock, participant, botIdPrefix, groupData) {
+    if (!participant) return true;
+    if (isBotOrOwner(NazunaSock, participant, botIdPrefix)) return true;
+    if (isWhitelistedParticipant(participant, groupData)) return true;
     return false;
+}
+
+async function isProtectedGroupAdmin(NazunaSock, groupJid, participant) {
+    try {
+        const metadata = await NazunaSock.groupMetadata(groupJid);
+        const groupOwner = getParticipantId(metadata?.owner);
+        if (groupOwner && sameUser(groupOwner, participant)) return true;
+
+        const member = metadata?.participants?.find(p => sameUser(getParticipantId(p), participant));
+        return member?.admin === 'admin' || member?.admin === 'superadmin';
+    } catch (e) {
+        console.warn('[ANTI-STEALTH] Falha ao buscar metadata para isencao:', e.message);
+        return false;
+    }
+}
+
+function classifyConfidence(info, repeatCount) {
+    if (info.stealthMeta?.decryptFail === 'hide') return 'high';
+    if (repeatCount >= REPEAT_THRESHOLD) return 'medium';
+    return null;
 }
 
 function isOnCooldown(groupJid, participant) {
@@ -142,12 +208,21 @@ function registerCooldown(groupJid, participant) {
 // ── Configuração ────────────────────────────────────────
 
 function getStealthConfig(groupData) {
-    if (!groupData.antistealthConfig) {
+    if (!groupData.antistealthConfig || typeof groupData.antistealthConfig !== 'object') {
         groupData.antistealthConfig = {
             action: DEFAULT_ACTION,
             stats: { detected: 0, banned: 0, closed: 0 }
         };
     }
+    if (!groupData.antistealthConfig.action) {
+        groupData.antistealthConfig.action = DEFAULT_ACTION;
+    }
+    if (!groupData.antistealthConfig.stats || typeof groupData.antistealthConfig.stats !== 'object') {
+        groupData.antistealthConfig.stats = { detected: 0, banned: 0, closed: 0 };
+    }
+    groupData.antistealthConfig.stats.detected ??= 0;
+    groupData.antistealthConfig.stats.banned ??= 0;
+    groupData.antistealthConfig.stats.closed ??= 0;
     return groupData.antistealthConfig;
 }
 
@@ -272,14 +347,13 @@ export async function processAntiStealth(NazunaSock, m, performanceOptimizer) {
         if (!isDecryptionFailure(info)) continue;
 
         if (!participant || isOnCooldown(groupJid, participant)) continue;
-        if (botIdPrefix && participant.startsWith(botIdPrefix)) continue;
 
         try {
             const groupFilePath = join(GRUPOS_DIR, `${groupJid}.json`);
             const groupData = await loadGroupData(true, groupJid, groupFilePath, 'Grupo', performanceOptimizer);
             
             if (!groupData?.antistealth) continue;
-            if (shouldSkipParticipant(participant, botIdPrefix, groupData)) continue;
+            if (shouldSkipParticipant(NazunaSock, participant, botIdPrefix, groupData)) continue;
             
             const config = getStealthConfig(groupData);
             
@@ -295,18 +369,18 @@ export async function processAntiStealth(NazunaSock, m, performanceOptimizer) {
             strikes.lastTime = Date.now();
             userStrikes.set(strikeKey, strikes);
             
-            let confidence = null;
-            if (info.stealthMeta && info.stealthMeta.decryptFail === 'hide') {
-                confidence = 'high';
-            } else if (strikes.count >= REPEAT_THRESHOLD) {
-                confidence = 'medium';
-            }
+            const confidence = classifyConfidence(info, strikes.count);
 
             if (!confidence) {
                 console.log(`[ANTI-STEALTH] ⚠️ Strike ${strikes.count}/${REPEAT_THRESHOLD} para @${participant.split('@')[0]} no grupo ${groupJid}`);
                 continue;
             }
             
+            if (await isProtectedGroupAdmin(NazunaSock, groupJid, participant)) {
+                console.log(`[ANTI-STEALTH] Isencao aplicada para admin/dono @${participant.split('@')[0]} no grupo ${groupJid}`);
+                continue;
+            }
+
             if (confidence === 'high') {
                 console.log(`[ANTI-STEALTH] 🔴 Ataque Stealth ALTA CONFIANÇA (decrypt-fail=hide) detectado de @${participant.split('@')[0]}. Punição Imediata!`);
             } else {
