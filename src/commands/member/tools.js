@@ -169,12 +169,13 @@ export default {
       }
 
       try {
-        const res = await axios.get(`https://apisnodz.com.br/api/pesquisas/horoscopo?query=${queryNormalizada}`);
-        if (!res.data?.resultado) return reply(MESSAGES.error.general);
-        const r = res.data.resultado;
+        const prompt = `Qual o horóscopo de hoje para o signo de ${queryNormalizada}? Por favor, responda de forma mística e focada na previsão para o dia.`;
+        const res = await axios.get(`https://systemzone.store/api/systemai?q=${encodeURIComponent(prompt)}`);
+        if (!res.data?.result) return reply(MESSAGES.error.general);
+        const previsao = res.data.result;
         const emojis = { aries: "♈", touro: "♉", gemeos: "♊", cancer: "♋", leao: "♌", virgem: "♍", libra: "♎", escorpiao: "♏", sagitario: "♐", capricornio: "♑", aquario: "♒", peixes: "♓" };
-        const legenda = `🔮 *HORÓSCOPO* 🔮\n\n${emojis[queryNormalizada] || "🔮"} *Signo:* ${r.signo.toUpperCase()}\n📅 *Data:* ${r.dia}\n✨ *Previsão do Dia:*\n${r.previsao}`;
-        return nazu.sendMessage(from, { image: { url: r.imagem }, caption: legenda }, { quoted: info });
+        const legenda = `🔮 *HORÓSCOPO* 🔮\n\n${emojis[queryNormalizada] || "🔮"} *Signo:* ${queryNormalizada.toUpperCase()}\n✨ *Previsão do Dia:*\n${previsao}`;
+        return reply(legenda);
       } catch (e) {
         return reply(MESSAGES.error.general);
       }

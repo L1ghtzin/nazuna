@@ -5,7 +5,6 @@ import axios from 'axios';
 
 const SYSZONE = 'https://systemzone.store/api';
 const SIPUTZX = 'https://api.siputzx.my.id/api';
-const NODZ = 'https://apisnodz.com.br/api';
 const CACHE_TTL = 30 * 60 * 1000;
 const cache = new Map();
 const PIN_REGEX = /^https?:\/\/(?:(?:[a-zA-Z0-9-]+\.)?pinterest\.\w{2,6}(?:\.\w{2})?\/pin\/\d+|pin\.it\/[a-zA-Z0-9]+)/;
@@ -37,7 +36,7 @@ async function search(query) {
 
     // 1. SystemZone API (múltiplos resultados, qualidade original)
     try {
-      const { data } = await axios.get(`${SYSZONE}/pinterest`, { params: { q: query, limit: 10 }, timeout: 15000 });
+      const { data } = await axios.get(`${SYSZONE}/pinterest`, { params: { q: query, limit: 10, apikey: 'freekey' }, timeout: 15000 });
       if (data?.status && data.results?.length) {
         const urls = data.results.map(r => r.image_url).filter(Boolean);
         if (urls.length) {
@@ -61,16 +60,6 @@ async function search(query) {
       }
     } catch {}
 
-    // 3. apisnodz
-    try {
-      const { data } = await axios.get(`${NODZ}/pesquisas/pinterest`, { params: { query }, timeout: 15000 });
-      if (data?.success && data.resultado?.imagem) {
-        const result = { type: 'image', mime: 'image/jpeg', query, count: 1, urls: [data.resultado.imagem] };
-        setCache(key, result);
-        return { ok: true, ...result };
-      }
-    } catch {}
-
     return { ok: false, msg: 'Nenhuma imagem encontrada' };
   } catch (e) {
     console.error('[Pinterest] search:', e.message);
@@ -90,24 +79,10 @@ async function dl(url) {
 
     // 1. SystemZone API
     try {
-      const { data } = await axios.get(`${SYSZONE}/v2/pinterest`, { params: { url }, timeout: 15000 });
+      const { data } = await axios.get(`${SYSZONE}/v2/pinterest`, { params: { url, apikey: 'freekey' }, timeout: 15000 });
       if (data?.status && data.data) {
         const r = data.data;
         const urls = [r.url, r.image, r.video, ...(r.medias || []).map(m => m.url)].filter(Boolean);
-        if (urls.length) {
-          const result = { pin_id: pinId, type: r.video ? 'video' : 'image', mime: r.video ? 'video/mp4' : 'image/jpeg', title: r.title || '', description: r.description || '', urls };
-          setCache(key, result);
-          return { ok: true, ...result };
-        }
-      }
-    } catch {}
-
-    // 2. apisnodz API
-    try {
-      const { data } = await axios.get(`${NODZ}/downloads/pinterest`, { params: { url }, timeout: 15000 });
-      if (data?.success && data.resultado && !data.resultado.msg) {
-        const r = data.resultado;
-        const urls = [r.url, r.imagem, r.video, ...(r.urls || [])].filter(Boolean);
         if (urls.length) {
           const result = { pin_id: pinId, type: r.video ? 'video' : 'image', mime: r.video ? 'video/mp4' : 'image/jpeg', title: r.title || '', description: r.description || '', urls };
           setCache(key, result);

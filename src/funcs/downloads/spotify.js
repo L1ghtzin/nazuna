@@ -6,7 +6,7 @@
 import axios from 'axios';
 import SimpleCache from '../../utils/simpleCache.js';
 
-const SEARCH_BASE_URL = 'https://api.vreden.my.id';
+const SEARCH_BASE_URL = 'https://api.siputzx.my.id';
 const DOWNLOAD_BASE_URL = 'https://spotisaver.net';
 
 // Cache simples
@@ -66,31 +66,45 @@ async function search(query) {
     const cached = getCached(`search:${query}`);
     if (cached) return cached;
 
-    const response = await axios.get(`${SEARCH_BASE_URL}/api/v2/search/spotify`, {
+    // Busca usando a API da SiputZX
+    const response = await axios.get(`${SEARCH_BASE_URL}/api/s/spotify`, {
       params: {
         query: query,
       },
       timeout: 120000
     });
 
-    if (!response.data || response.data.status_code !== 200) {
+    if (!response.data || !response.data.status) {
+      console.log('[Spotify] Erro na resposta da SiputZX:', response.data);
       return {
         ok: false,
-        msg: 'Erro ao buscar no Spotify'
+        msg: 'Erro ao buscar no Spotify pela SiputZX'
       };
     }
+
+    // A SiputZX costuma retornar um array dentro de response.data.data
+    const searchData = response.data.data || [];
+    
+    // Mapeia para o formato que a função searchDownload e o Spotisaver esperam
+    const mappedResults = searchData.map(item => ({
+      name: item.title || item.name || 'Desconhecido',
+      artists: item.artist ? [item.artist] : ['Desconhecido'],
+      song_link: item.url || item.link,
+      link: item.url || item.link,
+      duration_ms: item.duration || item.duration_ms || 0
+    }));
 
     const result = {
       ok: true,
       query,
-      total: response.data.result?.length || 0,
-      results: response.data.result.search_data || []
+      total: mappedResults.length,
+      results: mappedResults
     };
 
     setCache(`search:${query}`, result);
     return result;
   } catch (error) {
-    console.error('Erro na busca do Spotify:', error.message);
+    console.error('Erro na busca do Spotify (SiputZX):', error.message);
     return {
       ok: false,
       msg: 'Erro ao buscar no Spotify: ' + error.message
