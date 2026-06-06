@@ -16,6 +16,42 @@ const REPEAT_THRESHOLD = 3;
 // messageStubType 2 = CIPHERTEXT (falha de E2E real)
 const STEALTH_STUB_TYPES = new Set([2]);
 
+// Stubs que são ações legítimas do WhatsApp e NUNCA devem ser confundidos com stealth
+// Ref: WebMessageInfo.StubType no protobuf do Baileys
+const SAFE_STUB_TYPES = new Set([
+    1,   // REVOKE (mensagem apagada)
+    12,  // GROUP_PARTICIPANT_ADD
+    13,  // GROUP_PARTICIPANT_REMOVE
+    14,  // GROUP_PARTICIPANT_PROMOTE
+    15,  // GROUP_PARTICIPANT_DEMOTE
+    20,  // GROUP_CHANGE_SUBJECT
+    21,  // GROUP_CHANGE_ICON
+    22,  // GROUP_CHANGE_INVITE_LINK
+    24,  // GROUP_CHANGE_ANNOUNCE
+    25,  // GROUP_CHANGE_RESTRICT
+    27,  // GROUP_PARTICIPANT_LEAVE
+    28,  // GROUP_CREATE
+    32,  // E2E_IDENTITY_CHANGED
+    33,  // BROADCAST_CREATE
+    34,  // BROADCAST_ADD
+    35,  // BROADCAST_REMOVE
+    36,  // GENERIC_NOTIFICATION
+    39,  // E2E_ENCRYPTED
+    40,  // CALL_MISSED_VOICE
+    41,  // CALL_MISSED_VIDEO
+    46,  // INDIVIDUAL_CHANGE_NUMBER
+    54,  // GROUP_PARTICIPANT_LINKED_GROUP_JOIN
+    60,  // EPHEMERAL_SETTING
+    67,  // GROUP_MEMBER_ADD_MODE
+    71,  // GROUP_MEMBERSHIP_JOIN_APPROVAL_MODE
+    72,  // GROUP_MEMBERSHIP_JOIN_APPROVAL_REQUEST
+    78,  // COMMUNITY_LINK_PARENT_GROUP
+    79,  // COMMUNITY_UNLINK_PARENT_GROUP
+    80,  // COMMUNITY_PARENT_GROUP_SUBJECT
+    83,  // PINNED_MESSAGE_IN_CHAT
+    87,  // LID_MIGRATION_NOTIFICATION
+]);
+
 // Flags de ação válidas (qualquer combinação dessas)
 const VALID_FLAGS = new Set(['banir', 'fechar', 'avisar']);
 
@@ -105,9 +141,23 @@ function describeAction(actionStr) {
 // ── Helpers de detecção ─────────────────────────────────
 
 function isDecryptionFailure(info) {
+    // ── Filtros de Falso Positivo ──
+    
+    // Se tem um stub legítimo do WhatsApp (reações, saídas, promoções, etc.), NUNCA é stealth
+    if (info.messageStubType && SAFE_STUB_TYPES.has(info.messageStubType)) return false;
+    
+    // Reações são mensagens legítimas — o Baileys às vezes não descriptografa o conteúdo mas é normal
+    if (info.message?.reactionMessage || info.message?.protocolMessage || info.message?.senderKeyDistributionMessage) return false;
+    
+    // Poll updates e ephemeral settings são legítimos
+    if (info.message?.pollUpdateMessage || info.message?.pollCreationMessage) return false;
+
+    // Messages com key.id que começam com "status" ou de @broadcast são atualizações de status
+    if (info.key?.remoteJid === 'status@broadcast') return false;
+
     // ── STEALTH ANTIDOTE (Detecta a variável injetada pelo nosso patch) ──
-    if (info.stealthMeta && info.stealthMeta.decryptFail === 'hide') {
-        console.log(`[ANTI-STEALTH] Detecção primária (stealthMeta) ativada. EncType: ${info.stealthMeta.encType}`);
+    if (info.stealthMeta) {
+        // Se a meta foi injetada, é falha de decriptação (independentemente do decryptFail ser 'hide' ou não)
         return true;
     }
 
@@ -189,9 +239,26 @@ async function isProtectedGroupAdmin(NazunaSock, groupJid, participant) {
     }
 }
 
-function classifyConfidence(info, repeatCount) {
-    if (info.stealthMeta?.decryptFail === 'hide') return 'high';
-    if (repeatCount >= REPEAT_THRESHOLD) return 'medium';
+function classifyConfidence(info, strikesCount) {
+    // Se stealthMeta for diretamente a string 'hide', ou tiver a propriedade decryptFail === 'hide'
+    const isHide = info.stealthMeta === 'hide' || info.stealthMeta?.decryptFail === 'hide';
+    
+    // Análise de atributos e childTags injetados pelo nosso patch-baileys
+    const nodeType = info.stealthMeta?.rawNodeAttrs?.type;
+    const childTags = info.stealthMeta?.childTags || [];
+    
+    // Detecta se a mensagem possui tags comuns de pagamento (mesmo que corrompida)
+    const isPayment = nodeType === 'payment' || 
+                      nodeType === 'request_payment' || 
+                      nodeType === 'send_payment' || 
+                      childTags.includes('pay') || 
+                      childTags.includes('payment');
+
+    // Confiança ALTA (baniu direto): se a lib explicitamente injetou decryptFail = 'hide' ou detectou XML de pagamento
+    if (isHide || isPayment) return 'high';
+
+    // Confiança MÉDIA: Não tem flag 'hide', mas falhou e acumulou X strikes
+    if (strikesCount >= REPEAT_THRESHOLD) return 'medium';
     return null;
 }
 
@@ -340,6 +407,9 @@ export async function processAntiStealth(NazunaSock, m, performanceOptimizer) {
     for (const info of m.messages) {
         if (info.key?.fromMe || !info.key?.remoteJid?.endsWith('@g.us')) continue;
         
+        // Ignora mensagens de status/broadcast
+        if (info.key?.remoteJid === 'status@broadcast') continue;
+        
         const participant = info.key.participant || info.participant;
         const groupJid = info.key.remoteJid;
 
@@ -369,6 +439,16 @@ export async function processAntiStealth(NazunaSock, m, performanceOptimizer) {
             strikes.lastTime = Date.now();
             userStrikes.set(strikeKey, strikes);
             
+            // Log detalhado para debug de detecção stealth
+            console.log(`[ANTI-STEALTH DEBUG] Analisando @${participant.split('@')[0]} - Strikes: ${strikes.count}`);
+            if (info.stealthMeta) {
+                console.log(`[ANTI-STEALTH DEBUG] StealthMeta encontrada: tipo=${typeof info.stealthMeta}, isArray=${Array.isArray(info.stealthMeta)}, keys=${Object.keys(info.stealthMeta).join(',')}`);
+                console.log(`[ANTI-STEALTH DEBUG] json:`, JSON.stringify(info.stealthMeta));
+                console.log(`[ANTI-STEALTH DEBUG] decryptFail=${info.stealthMeta.decryptFail}, encType=${info.stealthMeta.encType}, failedToDecrypt=${info.stealthMeta.failedToDecrypt}`);
+            } else {
+                console.log(`[ANTI-STEALTH DEBUG] Sem StealthMeta. StubType: ${info.messageStubType}`);
+            }
+
             const confidence = classifyConfidence(info, strikes.count);
 
             if (!confidence) {
@@ -382,7 +462,9 @@ export async function processAntiStealth(NazunaSock, m, performanceOptimizer) {
             }
 
             if (confidence === 'high') {
-                console.log(`[ANTI-STEALTH] 🔴 Ataque Stealth ALTA CONFIANÇA (decrypt-fail=hide) detectado de @${participant.split('@')[0]}. Punição Imediata!`);
+                const isHide = info.stealthMeta === 'hide' || info.stealthMeta?.decryptFail === 'hide';
+                const reason = isHide ? '(decrypt-fail=hide)' : '(Trava de Pagamento Oculta)';
+                console.log(`[ANTI-STEALTH] 🔴 Ataque Stealth ALTA CONFIANÇA ${reason} detectado de @${participant.split('@')[0]}. Punição Imediata!`);
             } else {
                 console.log(`[ANTI-STEALTH] 🔴 Ataque Stealth Múltiplo (${strikes.count}x em 2m) detectado de @${participant.split('@')[0]}. Punição Imediata!`);
             }
