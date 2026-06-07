@@ -29,9 +29,15 @@ if (cleanupInterval.unref) cleanupInterval.unref();
 
 // ── Parsers e Validadores ──────────────────────────────────────
 
-function parseAction(actionStr) {
+function parseAction(actionStr, limitVal) {
     const action = (actionStr || DEFAULT_ACTION).toLowerCase();
-    const result = { banir: false, fechar: false, avisar: false, tempo: 0, limite: 1 };
+    const result = { 
+        banir: false, 
+        fechar: false, 
+        avisar: false, 
+        tempo: 0, 
+        limite: typeof limitVal === 'number' && limitVal > 0 ? limitVal : 1 
+    };
 
     if (action === 'fechar' || action === '2') {
         result.fechar = true;
@@ -60,8 +66,11 @@ function getStealthConfig(groupData) {
     if (!groupData.antistealthConfig) {
         groupData.antistealthConfig = {
             action: DEFAULT_ACTION,
+            limit: 1,
             stats: { detected: 0, banned: 0, closed: 0 }
         };
+    } else if (groupData.antistealthConfig.limit === undefined) {
+        groupData.antistealthConfig.limit = 1;
     }
     return groupData.antistealthConfig;
 }
@@ -181,7 +190,7 @@ function scheduleGroupReopening(NazunaSock, groupJid, flags, groupName) {
 }
 
 async function executeAction(NazunaSock, groupJid, participant, config) {
-    const flags = parseAction(config.action);
+    const flags = parseAction(config.action, config.limit);
     const userName = participant.split('@')[0];
     
     const { groupName, groupOwner } = await fetchGroupMetadata(NazunaSock, groupJid);
@@ -223,7 +232,7 @@ function handleResolvedLag(msgId, groupJid, participant) {
 }
 
 async function processStealthDetection(NazunaSock, msgId, groupJid, participant, config, groupData, groupFilePath, performanceOptimizer) {
-    const flags = parseAction(config.action);
+    const flags = parseAction(config.action, config.limit);
     const strikeKey = `${groupJid}:${participant}`;
     const userName = participant.split('@')[0];
     
@@ -334,7 +343,8 @@ function showAntiStealthStatus(groupData, config, from, reply) {
     return reply(
         `🛡️ *ANTI-STEALTH — STATUS*\n\n` +
         `📌 Status: ${status}\n` +
-        `⚡ Ação: ${config.action}${timerAtivo}\n\n` +
+        `⚡ Ação: ${config.action}${timerAtivo}\n` +
+        `🎯 Limite de Strikes: ${config.limit || 1}\n\n` +
         `📋 *O que vai acontecer:*\n${describeAction(config.action)}\n\n` +
         `📊 *Estatísticas:*\n` +
         `• Detectadas: ${config.stats.detected}\n` +
@@ -382,6 +392,29 @@ async function configureAntiStealthAction(val, from, groupData, groupFilePath, o
     );
 }
 
+async function configureAntiStealthStrikes(val, groupData, groupFilePath, optimizer, reply, prefix, config) {
+    const num = parseInt(val, 10);
+    if (isNaN(num) || num < 1 || num > 10) {
+        return reply(
+            `🛡️ *ANTI-STEALTH — CONFIGURAR STRIKES*\n\n` +
+            `Defina a quantidade de mensagens Stealth/Ciphertext que um usuário pode enviar antes de ser punido (entre 1 e 10).\n\n` +
+            `💡 *Como usar:*\n` +
+            `• _${prefix}antistealth strikes 3_\n` +
+            `• _${prefix}antistealth strikes 1_ (punição imediata, padrão)\n\n` +
+            `📌 *Limite atual:* ${config.limit || 1} strike(s)`
+        );
+    }
+
+    config.limit = num;
+    await optimizer.saveJsonWithCache(groupFilePath, groupData);
+
+    return reply(
+        `🛡️ *ANTI-STEALTH — STRIKES CONFIGURADOS*\n\n` +
+        `🎯 Limite de strikes definido para: *${num}*\n` +
+        `O usuário será punido na *${num}ª* ocorrência de stealth.`
+    );
+}
+
 export async function handleAntistealthCommand({ 
     reply, args, isGroup, isGroupAdmin, isBotAdmin, from, 
     groupData, DATABASE_DIR, optimizer, MESSAGES, prefix, NazunaSock 
@@ -409,12 +442,17 @@ export async function handleAntistealthCommand({
         return await configureAntiStealthAction(val, from, groupData, groupFilePath, optimizer, reply, NazunaSock, prefix, config);
     }
 
+    if (sub === 'strikes' || sub === 'limite' || sub === 'limit') {
+        return await configureAntiStealthStrikes(val, groupData, groupFilePath, optimizer, reply, prefix, config);
+    }
+
     return reply(
         `🛡️ *ANTI-STEALTH — COMANDOS*\n\n` +
         `• _${prefix}antistealth_ — Ativar/desativar\n` +
         `• _${prefix}antistealth on/off_ — Ativar/desativar\n` +
         `• _${prefix}antistealth status_ — Ver status e estatísticas\n` +
         `• _${prefix}antistealth acao_ — Configurar ação\n` +
+        `• _${prefix}antistealth strikes_ — Configurar limite de strikes\n` +
         `• _${prefix}antistealth acao abrir_ — Abre o grupo`
     );
 }
