@@ -7,7 +7,7 @@ import { NUMERODONO } from '../config.js';
 
 const BAN_COOLDOWN_MS = 10_000;
 const CACHE_CLEANUP_INTERVAL_MS = 60_000;
-const DEFAULT_ACTION = 'banir';
+const DEFAULT_ACTION = 'avisar';
 const STEALTH_STUB_TYPES = new Set([2]); // messageStubType 2 = CIPHERTEXT
 
 const recentBans = new Map();
@@ -36,7 +36,7 @@ function parseAction(actionStr, limitVal) {
         fechar: false, 
         avisar: false, 
         tempo: 0, 
-        limite: typeof limitVal === 'number' && limitVal > 0 ? limitVal : 1 
+        limite: typeof limitVal === 'number' && limitVal > 0 ? limitVal : 3 
     };
 
     if (action === 'fechar' || action === '2') {
@@ -66,11 +66,11 @@ function getStealthConfig(groupData) {
     if (!groupData.antistealthConfig) {
         groupData.antistealthConfig = {
             action: DEFAULT_ACTION,
-            limit: 1,
+            limit: 3,
             stats: { detected: 0, banned: 0, closed: 0 }
         };
     } else if (groupData.antistealthConfig.limit === undefined) {
-        groupData.antistealthConfig.limit = 1;
+        groupData.antistealthConfig.limit = 3;
     }
     return groupData.antistealthConfig;
 }
@@ -399,9 +399,9 @@ async function configureAntiStealthStrikes(val, groupData, groupFilePath, optimi
             `🛡️ *ANTI-STEALTH — CONFIGURAR STRIKES*\n\n` +
             `Defina a quantidade de mensagens Stealth/Ciphertext que um usuário pode enviar antes de ser punido (entre 1 e 10).\n\n` +
             `💡 *Como usar:*\n` +
-            `• _${prefix}antistealth strikes 3_\n` +
-            `• _${prefix}antistealth strikes 1_ (punição imediata, padrão)\n\n` +
-            `📌 *Limite atual:* ${config.limit || 1} strike(s)`
+            `• _${prefix}antistealth strikes 3_ (padrão)\n` +
+            `• _${prefix}antistealth strikes 1_ (punição imediata)\n\n` +
+            `📌 *Limite atual:* ${config.limit || 3} strike(s)`
         );
     }
 
