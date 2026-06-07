@@ -14,7 +14,7 @@ const INJECTION_MARKER_END = '// ── STEALTH ANTIDOTE END ──';
 const INJECTION_CODE = `
                 ${INJECTION_MARKER_START}
                 try {
-                    const stealthDecryptFail = node.attrs?.['decrypt-fail'] || encNode?.attrs?.['decrypt-fail'] || null;
+                    const stealthDecryptFail = node.attrs?.['decrypt-fail'] || null;
                     const stealthFailedToDecrypt = msg.messageStubType === proto.WebMessageInfo.StubType.CIPHERTEXT;
                     if (stealthDecryptFail || stealthFailedToDecrypt) {
                         msg.stealthMeta = {
@@ -22,9 +22,6 @@ const INJECTION_CODE = `
                             encType: encNode?.attrs?.type || null,
                             failedToDecrypt: stealthFailedToDecrypt,
                             stubReason: msg.messageStubParameters?.[0] || null,
-                            rawNodeAttrs: node.attrs || {},
-                            rawEncAttrs: encNode?.attrs || {},
-                            childTags: Array.isArray(node.content) ? node.content.filter(c => typeof c === 'object' && c && c.tag).map(c => c.tag) : []
                         };
                     }
                 }
@@ -63,7 +60,7 @@ async function applyPatch() {
     const after = code.substring(endIndex);
 
     // Verifica se já está 100% atualizado e sem sujeiras
-    if (middle.includes(INJECTION_MARKER_START) && middle.includes('encNode?.attrs?.[\'decrypt-fail\']') && !middle.includes('stealth meta capture failed\');')) {
+    if (middle.includes(INJECTION_MARKER_START) && middle.includes('const stealthDecryptFail = node.attrs?.[\'decrypt-fail\'] || null;') && middle.includes('stealth meta capture failed')) {
         console.log('✅  [Anti-Stealth] Patch já está na versão mais recente e perfeitamente limpo.');
         return;
     }
