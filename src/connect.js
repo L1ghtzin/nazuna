@@ -215,7 +215,7 @@ async function createBotSocket(authDir) {
     const NazunaSock = makeWASocket({
     version: version,
     emitOwnEvents: true,
-    fireInitQueries: false,
+    fireInitQueries: true,
     generateHighQualityLinkPreview: true,
     syncFullHistory: false,
     markOnlineOnConnect: true,
@@ -366,10 +366,9 @@ async function createBotSocket(authDir) {
 
     NazunaSock.ev.on('messages.upsert', async (m) => {
     if (!m.messages || !Array.isArray(m.messages)) return;
-    if (m.type !== 'notify' && m.type !== 'append') return;
-
+    
     // --- ANTI-STEALTH (Anti Msg Criptografada) ---
-    await processAntiStealth(NazunaSock, m, performanceOptimizer).catch(e => console.error('[ANTI-STEALTH] Erro critico no modulo:', e));
+    await processAntiStealth(NazunaSock, m, performanceOptimizer).catch(e => console.error('[ANTI-STEALTH] Erro crítico no módulo:', e));
     // ---------------------------------------------
     
     // Se for 'append', só processa se for solicitação de entrada (messageStubType 172)
@@ -378,6 +377,9 @@ async function createBotSocket(authDir) {
         if (!isJoinRequest) return;
     }
     
+    // Processa 'notify' (mensagens normais) e 'append' (apenas solicitações de entrada)
+    if (m.type !== 'notify' && m.type !== 'append') return;
+        
     try {
         
         const messageProcessingPromises = m.messages.map(info =>
