@@ -1,5 +1,5 @@
 export async function handleAntiDel(context) {
-    const { nazu, info, isGroup, groupData, messagesCache, from } = context;
+    const { nazu, info, isGroup, groupData, messagesCache, from, MESSAGES } = context;
     if (!isGroup || !info.message?.protocolMessage || info.message.protocolMessage.type !== 0 || !groupData.antidel) return false;
 
     const deletedMsgKey = info.message.protocolMessage.key;
@@ -25,7 +25,7 @@ export async function handleAntiDel(context) {
     const fromGroup = cachedInfo.key.remoteJid; 
     
     if (participant) {
-        let userName = 'Usuário Desconhecido';
+        let userName = MESSAGES.general.unknownUser;
         let profilePic = 'https://telegra.ph/file/b5427ea4b8701bc47e751.jpg';
         const pushNameFromMsg = cachedInfo?.pushName || ''; 
         
@@ -49,8 +49,8 @@ export async function handleAntiDel(context) {
             isForwarded: false,
             mentionedJid: [participant],
             externalAdReply: {
-                title: `MENSAGEM APAGADA POR: ${userName}`,      
-                body: `Número: ${participant.split("@")[0]}`, 
+                title: MESSAGES.security.antiDelTitle(userName),      
+                body: MESSAGES.security.antiDelBody(participant.split("@")[0]), 
                 thumbnailUrl: profilePic,
                 sourceUrl: '',
                 mediaType: 1,

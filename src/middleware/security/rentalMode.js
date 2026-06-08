@@ -1,5 +1,5 @@
 export async function handleRentalMode(context) {
-    const { isGroup, isRentalModeActive, getGroupRentalStatus, from, isCmd, isOwnerOrSub, command, reply } = context;
+    const { isGroup, isRentalModeActive, getGroupRentalStatus, from, isCmd, isOwnerOrSub, command, reply, MESSAGES } = context;
     if (!isGroup || !isRentalModeActive || !isRentalModeActive()) return false;
 
     const rentalStatus = getGroupRentalStatus(from);
@@ -7,7 +7,7 @@ export async function handleRentalMode(context) {
     const allowedCommandsBypass = ['modoaluguel', 'addaluguel', 'gerarcodigo', 'gerarcod', 'gerarcodigobr', 'geraraluguel', 'addsubdono', 'remsubdono', 'listasubdonos'];
     
     if (!groupHasActiveRental && isCmd && !isOwnerOrSub && !allowedCommandsBypass.includes(command)) {
-        await reply("⏳ O aluguel deste grupo expirou ou não está ativo. Para usar os comandos, ative com um código ou solicite ao dono a renovação.");
+        await reply(MESSAGES.security.rentalExpired);
         return true;
     }
     return false;

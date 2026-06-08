@@ -1,5 +1,5 @@
 export async function handleAFK(context) {
-    const { isGroup, groupData, sender, writeJsonFile, groupFile, optimizer, from, reply } = context;
+    const { isGroup, groupData, sender, writeJsonFile, groupFile, optimizer, from, reply, MESSAGES } = context;
     if (!isGroup || !groupData.afkUsers || !groupData.afkUsers[sender]) return false;
 
     try {
@@ -7,7 +7,7 @@ export async function handleAFK(context) {
         delete groupData.afkUsers[sender];
         if (writeJsonFile && groupFile) writeJsonFile(groupFile, groupData);
         if (optimizer) optimizer.invalidateGroup(from);
-        await reply(`👋 *Bem-vindo(a) de volta!*\nSeu status AFK foi removido.\nVocê estava ausente desde: ${afkSince}`);
+        await reply(MESSAGES.security.afkWelcome(afkSince));
     } catch (error) {
         console.error("Erro ao processar remoção de AFK:", error);
     }
@@ -15,7 +15,7 @@ export async function handleAFK(context) {
 }
 
 export async function handleAFKMention(context) {
-    const { isGroup, groupData, info, reply, getUserName } = context;
+    const { isGroup, groupData, info, reply, getUserName, MESSAGES } = context;
     if (!isGroup || !groupData.afkUsers || !info.message?.extendedTextMessage?.contextInfo?.mentionedJid) return false;
 
     try {
@@ -24,9 +24,7 @@ export async function handleAFKMention(context) {
             if (groupData.afkUsers[jid]) {
                 const afkData = groupData.afkUsers[jid];
                 const afkSince = new Date(afkData.since).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });
-                let afkMsg = `😴 @${getUserName(jid)} está AFK desde ${afkSince}.`;
-                if (afkData.reason) afkMsg += `\nMotivo: ${afkData.reason}`;
-                await reply(afkMsg, { mentions: [jid] });
+                await reply(MESSAGES.security.afkUser(getUserName(jid), afkSince, afkData.reason), { mentions: [jid] });
             }
         }
     } catch (error) {

@@ -1,5 +1,5 @@
 export async function handleAntiStatus(context) {
-    const { nazu, info, isGroup, sender, groupData, isStatusMention, isGroupAdmin, from, reply, getUserName, isUserWhitelisted, isBotAdmin } = context;
+    const { nazu, info, isGroup, sender, groupData, isStatusMention, isGroupAdmin, from, reply, getUserName, isUserWhitelisted, isBotAdmin, MESSAGES } = context;
     if (!isGroup || !isStatusMention || !groupData.antistatus || isGroupAdmin || isUserWhitelisted(sender, 'antistatus')) return false;
 
     const statusAction = groupData.antistatus_action || 'banir';
@@ -7,10 +7,10 @@ export async function handleAntiStatus(context) {
         await nazu.sendMessage(from, { delete: info.key });
         if (statusAction === 'banir' && isBotAdmin) {
             await nazu.groupParticipantsUpdate(from, [sender], 'remove');
-            await reply(`🚫 @${getUserName(sender)}, Status não são permitidos neste grupo. Você foi removido.`, { mentions: [sender] });
+            await reply(MESSAGES.security.antiStatusAdmin(getUserName(sender)), { mentions: [sender] });
         } else {
-            const extraMsg = (statusAction === 'banir' && !isBotAdmin) ? ' (não sou admin para remover)' : '';
-            await reply(`🚫 @${getUserName(sender)}, Status não são permitidos neste grupo!${extraMsg}`, { mentions: [sender] });
+            const extraMsg = (statusAction === 'banir' && !isBotAdmin) ? MESSAGES.security.cantRemoveAdminSuffix : '';
+            await reply(MESSAGES.security.antiStatusUser(getUserName(sender), extraMsg), { mentions: [sender] });
         }
     } catch (error) {
         console.error('Erro no AntiStatus:', error);

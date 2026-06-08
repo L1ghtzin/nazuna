@@ -1,15 +1,15 @@
 export async function handleMutedUsers(context) {
-    const { isGroup, isMuted, isMuted2, isGroupAdmin, isOwner, nazu, from, sender, reply, info, groupData, writeJsonFile, groupFile, optimizer, getUserName, isBotAdmin } = context;
+    const { isGroup, isMuted, isMuted2, isGroupAdmin, isOwner, nazu, from, sender, reply, info, groupData, writeJsonFile, groupFile, optimizer, getUserName, isBotAdmin, MESSAGES } = context;
     if (!isGroup || isGroupAdmin || isOwner) return false;
 
     if (isMuted) {
         try {
-            await nazu.sendMessage(from, { text: `🤫 *Usuário mutado detectado*\n\n@${getUserName(sender)}, você está tentando falar enquanto está mutado neste grupo. Você será removido conforme as regras.`, mentions: [sender] }, { quoted: info });
+            await nazu.sendMessage(from, { text: MESSAGES.security.mutedUserAdmin(getUserName(sender)), mentions: [sender] }, { quoted: info });
             await nazu.sendMessage(from, { delete: info.key });
             if (isBotAdmin) {
                 await nazu.groupParticipantsUpdate(from, [sender], 'remove');
             } else {
-                await reply("⚠️ Não posso remover o usuário porque não sou administrador.");
+                await reply(MESSAGES.security.mutedUserCantRemove);
             }
             delete groupData.mutedUsers[sender];
             if (writeJsonFile && groupFile) writeJsonFile(groupFile, groupData);

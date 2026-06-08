@@ -1,5 +1,5 @@
 export async function handleAntiMedia(context) {
-    const { nazu, info, isGroup, sender, groupData, isGroupAdmin, isOwner, type, from, reply, getUserName, isBotAdmin } = context;
+    const { nazu, info, isGroup, sender, groupData, isGroupAdmin, isOwner, type, from, reply, getUserName, isBotAdmin, MESSAGES } = context;
     if (!isGroup || isGroupAdmin || isOwner) return false;
 
     const isViewOnce = info.message?.viewOnceMessage?.message || info.message?.viewOnceMessageV2?.message || info.message?.viewOnceMessageV2Extension?.message;
@@ -18,17 +18,17 @@ export async function handleAntiMedia(context) {
     let mediaActionKey = '';
 
     if (groupData.antiimage && (hasNormalImage || (groupData.antiimage_vizu && hasViewOnceImage))) {
-        isMediaRestricted = true; restrictedTypeLabel = hasViewOnceImage ? 'Imagens (Vizu Única)' : 'Imagens'; mediaActionKey = 'antiimage_action';
+        isMediaRestricted = true; restrictedTypeLabel = hasViewOnceImage ? MESSAGES.security.mediaTypes.imageViewOnce : MESSAGES.security.mediaTypes.image; mediaActionKey = 'antiimage_action';
     } else if (groupData.antivideo && (hasNormalVideo || (groupData.antivideo_vizu && hasViewOnceVideo))) {
-        isMediaRestricted = true; restrictedTypeLabel = hasViewOnceVideo ? 'Vídeos (Vizu Única)' : 'Vídeos'; mediaActionKey = 'antivideo_action';
+        isMediaRestricted = true; restrictedTypeLabel = hasViewOnceVideo ? MESSAGES.security.mediaTypes.videoViewOnce : MESSAGES.security.mediaTypes.video; mediaActionKey = 'antivideo_action';
     } else if (groupData.antiaudio && (hasNormalAudio || (groupData.antiaudio_vizu && hasViewOnceAudio))) {
-        isMediaRestricted = true; restrictedTypeLabel = hasViewOnceAudio ? 'Áudios (Vizu Única)' : 'Áudios'; mediaActionKey = 'antiaudio_action';
+        isMediaRestricted = true; restrictedTypeLabel = hasViewOnceAudio ? MESSAGES.security.mediaTypes.audioViewOnce : MESSAGES.security.mediaTypes.audio; mediaActionKey = 'antiaudio_action';
     } else if (groupData.antidoc && hasDoc) {
-        isMediaRestricted = true; restrictedTypeLabel = 'Documentos'; mediaActionKey = 'antidoc_action';
+        isMediaRestricted = true; restrictedTypeLabel = MESSAGES.security.mediaTypes.document; mediaActionKey = 'antidoc_action';
     } else if (groupData.antievento && hasEvent) {
-        isMediaRestricted = true; restrictedTypeLabel = 'Eventos'; mediaActionKey = 'antievento_action';
+        isMediaRestricted = true; restrictedTypeLabel = MESSAGES.security.mediaTypes.event; mediaActionKey = 'antievento_action';
     } else if (groupData.antiproduto && hasProduct) {
-        isMediaRestricted = true; restrictedTypeLabel = 'Produtos/Catálogos'; mediaActionKey = 'antiproduto_action';
+        isMediaRestricted = true; restrictedTypeLabel = MESSAGES.security.mediaTypes.product; mediaActionKey = 'antiproduto_action';
     }
 
     if (!isMediaRestricted) return false;
@@ -38,10 +38,10 @@ export async function handleAntiMedia(context) {
         await nazu.sendMessage(from, { delete: info.key });
         if (mediaAction === 'banir' && isBotAdmin) {
             await nazu.groupParticipantsUpdate(from, [sender], 'remove');
-            await reply(`🚫 @${getUserName(sender)}, o envio de *${restrictedTypeLabel}* é proibido neste grupo. Você foi removido!`, { mentions: [sender] });
+            await reply(MESSAGES.security.antiMediaAdmin(getUserName(sender), restrictedTypeLabel), { mentions: [sender] });
         } else {
-            const extraMsg = (mediaAction === 'banir' && !isBotAdmin) ? ' (não sou admin para remover)' : '';
-            await reply(`⚠️ @${getUserName(sender)}, o envio de *${restrictedTypeLabel}* está proibido neste grupo!${extraMsg}`, { mentions: [sender] });
+            const extraMsg = (mediaAction === 'banir' && !isBotAdmin) ? MESSAGES.security.cantRemoveAdminSuffix : '';
+            await reply(MESSAGES.security.antiMediaUser(getUserName(sender), restrictedTypeLabel, extraMsg), { mentions: [sender] });
         }
     } catch (error) {
         console.error(`Erro ao deletar mídia restrita (${restrictedTypeLabel}):`, error);

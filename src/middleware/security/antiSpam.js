@@ -18,7 +18,7 @@ function debouncedAntiSpamWrite(filePath, data, writeJsonFile) {
 }
 
 export async function handleAntiSpam(context) {
-    const { isCmd, antiSpamGlobal, isOwnerOrSub, sender, reply, writeJsonFile, DATABASE_DIR } = context;
+    const { isCmd, antiSpamGlobal, isOwnerOrSub, sender, reply, writeJsonFile, DATABASE_DIR, MESSAGES } = context;
     if (!isCmd || !antiSpamGlobal?.enabled || isOwnerOrSub) return false;
 
     try {
@@ -32,7 +32,7 @@ export async function handleAntiSpam(context) {
             const msLeft = blockInfo.until - now;
             const secs = Math.ceil(msLeft / 1000);
             const m = Math.floor(secs / 60), s = secs % 60;
-            await reply(`🚫 Você está temporariamente bloqueado de usar comandos por anti-spam.\n⏳ Aguarde ${m > 0 ? `${m}m ${s}s` : `${secs}s`}.`);
+            await reply(MESSAGES.security.antiSpamWarn(m > 0 ? `${m}m ${s}s` : `${secs}s`));
             return true;
         } else if (blockInfo && blockInfo.until && now >= blockInfo.until) {
             delete cfg.blocks[sender];
@@ -48,7 +48,7 @@ export async function handleAntiSpam(context) {
             const blockMs = Math.max(1, parseInt(cfg.blockTime || 600)) * 1000;
             cfg.blocks[sender] = { until: now + blockMs, at: new Date().toISOString(), count: arr.length };
             if (writeJsonFile && DATABASE_DIR) writeJsonFile(DATABASE_DIR + '/antispam.json', cfg);
-            await reply(`🚫 Anti-spam: você excedeu o limite de ${limit} comandos em ${cfg.interval}s.\n🔒 Bloqueado por ${Math.floor(blockMs/60000)} min.`);
+            await reply(MESSAGES.security.antiSpamBlocked(limit, cfg.interval, Math.floor(blockMs / 60000)));
             return true;
         }
         if (writeJsonFile && DATABASE_DIR) debouncedAntiSpamWrite(DATABASE_DIR + '/antispam.json', cfg, writeJsonFile);

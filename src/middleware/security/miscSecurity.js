@@ -1,7 +1,7 @@
 const soadmBypassCommands = ['suporte', 'ticketsuporte', 'suporteticket', 'ticket'];
 
 export async function handleMinMessage(context) {
-    const { nazu, info, isGroup, sender, groupData, isImage, isVideo, isVisuU, isVisuU2, isBotAdmin, isGroupAdmin, isOwner, from, reply } = context;
+    const { nazu, info, isGroup, sender, groupData, isImage, isVideo, isVisuU, isVisuU2, isBotAdmin, isGroupAdmin, isOwner, from, reply, MESSAGES } = context;
     if (!isGroup || !groupData.minMessage || (!isImage && !isVideo && !isVisuU && !isVisuU2) || isGroupAdmin || isOwner) return false;
 
     let caption = '';
@@ -16,12 +16,12 @@ export async function handleMinMessage(context) {
             if (groupData.minMessage.action === 'ban') {
                 if (isBotAdmin) {
                     await nazu.groupParticipantsUpdate(from, [sender], 'remove');
-                    await reply(`🚫 Usuário removido por enviar mídia sem legenda suficiente (mínimo: ${groupData.minMessage.minDigits} caracteres).`);
+                    await reply(MESSAGES.security.minMessageAdmin(groupData.minMessage.minDigits));
                 } else {
-                    await reply(`⚠️ Mídia sem legenda suficiente detectada, mas não sou admin para remover o usuário.`);
+                    await reply(MESSAGES.security.minMessageUser);
                 }
             } else {
-                await reply(`⚠️ Advertência: Envie mídias com pelo menos ${groupData.minMessage.minDigits} caracteres na legenda para evitar remoção.`);
+                await reply(MESSAGES.security.minMessageWarn(groupData.minMessage.minDigits));
             }
         } catch (error) {
             console.error('Erro ao processar minMessage:', error);
@@ -31,16 +31,16 @@ export async function handleMinMessage(context) {
 }
 
 export async function handleAntiBtn(context) {
-    const { nazu, info, isGroup, sender, groupData, isButtonMessage, isGroupAdmin, from, reply, getUserName, isUserWhitelisted, isBotAdmin } = context;
+    const { nazu, info, isGroup, sender, groupData, isButtonMessage, isGroupAdmin, from, reply, getUserName, isUserWhitelisted, isBotAdmin, MESSAGES } = context;
     if (!isGroup || !isButtonMessage || !groupData.antibtn || isGroupAdmin || isUserWhitelisted(sender, 'antibtn')) return false;
 
     try {
         await nazu.sendMessage(from, { delete: info.key });
         if (isBotAdmin) {
             await nazu.groupParticipantsUpdate(from, [sender], 'remove');
-            await reply(`⚠️ @${getUserName(sender)}, Mensagens com botões não são permitidas neste grupo. Você foi removido.`, { mentions: [sender] });
+            await reply(MESSAGES.security.antiBtnAdmin(getUserName(sender)), { mentions: [sender] });
         } else {
-            await reply(`⚠️ Atenção, @${getUserName(sender)}! Mensagens com botões não são permitidas. Não consigo remover você, mas evite usar esse tipo de mensagem.`, { mentions: [sender] });
+            await reply(MESSAGES.security.antiBtnUser(getUserName(sender)), { mentions: [sender] });
         }
     } catch (error) {
         console.error('Erro no AntiBtn:', error);
@@ -55,9 +55,9 @@ export function handleSoAdmBypass(context) {
 }
 
 export async function handleBlockedCommands(context) {
-    const { isGroup, isCmd, isGroupAdmin, groupData, command, reply } = context;
+    const { isGroup, isCmd, isGroupAdmin, groupData, command, reply, MESSAGES } = context;
     if (isGroup && isCmd && !isGroupAdmin && groupData.blockedCommands && groupData.blockedCommands[command]) {
-        await reply('⛔ Este comando foi bloqueado pelos administradores do grupo.');
+        await reply(MESSAGES.security.blockedCommand);
         return true;
     }
     return false;
