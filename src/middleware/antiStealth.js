@@ -430,29 +430,30 @@ export async function handleAntistealthCommand({
     // Ensure config exists before reading/writing
     const config = getStealthConfig(groupData);
 
-    if (!sub || sub === 'on' || sub === 'off') {
-        return await toggleAntiStealthStatus(sub, groupData, groupFilePath, optimizer, reply, prefix, config);
+    switch (sub) {
+        case '':
+        case 'on':
+        case 'off':
+            return await toggleAntiStealthStatus(sub, groupData, groupFilePath, optimizer, reply, prefix, config);
+        case 'status':
+            return showAntiStealthStatus(groupData, config, from, reply);
+        case 'acao':
+        case 'ação':
+        case 'action':
+            return await configureAntiStealthAction(val, from, groupData, groupFilePath, optimizer, reply, NazunaSock, prefix, config);
+        case 'strikes':
+        case 'limite':
+        case 'limit':
+            return await configureAntiStealthStrikes(val, groupData, groupFilePath, optimizer, reply, prefix, config);
+        default:
+            return reply(
+                `🛡️ *ANTI-STEALTH — COMANDOS*\n\n` +
+                `• _${prefix}antistealth_ — Ativar/desativar\n` +
+                `• _${prefix}antistealth on/off_ — Ativar/desativar\n` +
+                `• _${prefix}antistealth status_ — Ver status e estatísticas\n` +
+                `• _${prefix}antistealth acao_ — Configurar ação\n` +
+                `• _${prefix}antistealth strikes_ — Configurar limite de strikes\n` +
+                `• _${prefix}antistealth acao abrir_ — Abre o grupo`
+            );
     }
-
-    if (sub === 'status') {
-        return showAntiStealthStatus(groupData, config, from, reply);
-    }
-
-    if (sub === 'acao' || sub === 'ação' || sub === 'action') {
-        return await configureAntiStealthAction(val, from, groupData, groupFilePath, optimizer, reply, NazunaSock, prefix, config);
-    }
-
-    if (sub === 'strikes' || sub === 'limite' || sub === 'limit') {
-        return await configureAntiStealthStrikes(val, groupData, groupFilePath, optimizer, reply, prefix, config);
-    }
-
-    return reply(
-        `🛡️ *ANTI-STEALTH — COMANDOS*\n\n` +
-        `• _${prefix}antistealth_ — Ativar/desativar\n` +
-        `• _${prefix}antistealth on/off_ — Ativar/desativar\n` +
-        `• _${prefix}antistealth status_ — Ver status e estatísticas\n` +
-        `• _${prefix}antistealth acao_ — Configurar ação\n` +
-        `• _${prefix}antistealth strikes_ — Configurar limite de strikes\n` +
-        `• _${prefix}antistealth acao abrir_ — Abre o grupo`
-    );
 }

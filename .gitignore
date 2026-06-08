@@ -13,3 +13,6 @@ dados/config.json
 # Logs
 dados/logs/*.log
 dados/logs/
+
+# Agents
+.agents

@@ -1,0 +1,19 @@
+export async function handleAntiStatus(context) {
+    const { nazu, info, isGroup, sender, groupData, isStatusMention, isGroupAdmin, from, reply, getUserName, isUserWhitelisted, isBotAdmin } = context;
+    if (!isGroup || !isStatusMention || !groupData.antistatus || isGroupAdmin || isUserWhitelisted(sender, 'antistatus')) return false;
+
+    const statusAction = groupData.antistatus_action || 'banir';
+    try {
+        await nazu.sendMessage(from, { delete: info.key });
+        if (statusAction === 'banir' && isBotAdmin) {
+            await nazu.groupParticipantsUpdate(from, [sender], 'remove');
+            await reply(`🚫 @${getUserName(sender)}, Status não são permitidos neste grupo. Você foi removido.`, { mentions: [sender] });
+        } else {
+            const extraMsg = (statusAction === 'banir' && !isBotAdmin) ? ' (não sou admin para remover)' : '';
+            await reply(`🚫 @${getUserName(sender)}, Status não são permitidos neste grupo!${extraMsg}`, { mentions: [sender] });
+        }
+    } catch (error) {
+        console.error('Erro no AntiStatus:', error);
+    }
+    return true;
+}
