@@ -268,7 +268,7 @@ const buildGroupFilePath = (groupId) => pathz.join(GRUPOS_DIR, `${groupId}.json`
  * Constrói o contexto completo para processamento de uma mensagem.
  * @returns {object|null} ctx - Objeto com todas as variáveis necessárias, ou null se mensagem inválida.
  */
-export async function buildMessageContext(nazu, info, store, messagesCache, rentalExpirationManager, topLevel) {
+export async function buildMessageContext(bot, info, store, messagesCache, rentalExpirationManager, topLevel) {
   const { initializePerformanceOptimizer, ensureDatabaseIntegrity, botVersion, __dirname: indexDir } = topLevel;
 
   // Log de início de processamento para debug paralelo
@@ -290,7 +290,7 @@ export async function buildMessageContext(nazu, info, store, messagesCache, rent
     // Notifica o dono sobre a mudança automática
     const ownerJid = `${config.numerodono}@s.whatsapp.net`;
     try {
-      await nazu.sendMessage(ownerJid, {
+      await bot.sendMessage(ownerJid, {
         text: `⚠️ *PREFIXO AUTOMÁTICO CORRIGIDO*\n\n❌ O símbolo "$" é reservado e não pode ser usado como prefixo.\n\n✅ O prefixo foi alterado automaticamente para "/" ao iniciar o bot.\n\n💡 Use ${config.prefixo}prefix para alterar para outro símbolo válido.`
       });
     } catch (notifyError) {
@@ -344,11 +344,11 @@ export async function buildMessageContext(nazu, info, store, messagesCache, rent
   };
 
   const deleteChatByLastMessage = async (jid) => {
-    if (!nazu?.chatModify) return false;
+    if (!bot?.chatModify) return false;
 
     const lastMsgInChat = getLastMessageInChat(jid);
     if (lastMsgInChat?.key && lastMsgInChat?.messageTimestamp) {
-      await nazu.chatModify({
+      await bot.chatModify({
         delete: true,
         lastMessages: [
           {
@@ -360,14 +360,14 @@ export async function buildMessageContext(nazu, info, store, messagesCache, rent
       return true;
     }
 
-    await nazu.chatModify({ delete: true }, jid);
+    await bot.chatModify({ delete: true }, jid);
     return true;
   };
 
   const clearChatHistorySafe = async (jid) => {
-    if (!nazu?.chatModify) return false;
+    if (!bot?.chatModify) return false;
     try {
-      await nazu.chatModify({ clear: 'all' }, jid);
+      await bot.chatModify({ clear: 'all' }, jid);
       return true;
     } catch (e) {
       if (typeof e?.message === 'string' && e.message.toLowerCase().includes('not supported')) {
@@ -387,14 +387,14 @@ export async function buildMessageContext(nazu, info, store, messagesCache, rent
           return cached;
         }
 
-        const freshData = await nazu.groupMetadata(groupId).catch(() => ({}));
+        const freshData = await bot.groupMetadata(groupId).catch(() => ({}));
         await optimizer.modules.cacheManager.setIndexGroupMeta(groupId, freshData);
         return freshData;
       }
 
-      return await nazu.groupMetadata(groupId).catch(() => ({}));
+      return await bot.groupMetadata(groupId).catch(() => ({}));
     } catch (error) {
-      return await nazu.groupMetadata(groupId).catch(() => ({}));
+      return await bot.groupMetadata(groupId).catch(() => ({}));
     }
   }
 
@@ -483,14 +483,14 @@ export async function buildMessageContext(nazu, info, store, messagesCache, rent
 
       // Se for JID, converte para LID usando cache
       if (sender && isValidJid(sender)) {
-        sender = await getLidFromJidCached(nazu, sender);
+        sender = await getLidFromJidCached(bot, sender);
       }
     } else {
       sender = info.key.remoteJid;
 
       // Se for JID no PV, converte para LID usando cache
       if (sender && isValidJid(sender)) {
-        sender = await getLidFromJidCached(nazu, sender);
+        sender = await getLidFromJidCached(bot, sender);
       }
     }
 
@@ -509,8 +509,8 @@ export async function buildMessageContext(nazu, info, store, messagesCache, rent
     const subDonoList = await optimizer.memoize('subdonos:global', () => Promise.resolve(loadSubdonos()), 30000);
     const isSubOwner = isSubdono(sender);
     const ownerJid = `${numerodono}@s.whatsapp.net`;
-    const botId = getBotId(nazu);
-    const isBotSender = sender === botId || sender === nazu.user?.id?.split(':')[0] + '@s.whatsapp.net' || sender === nazu.user?.id?.split(':')[0] + '@lid';
+    const botId = getBotId(bot);
+    const isBotSender = sender === botId || sender === bot.user?.id?.split(':')[0] + '@s.whatsapp.net' || sender === bot.user?.id?.split(':')[0] + '@lid';
 
     const senderBase = sender.split('@')[0];
     const ownerBase = String(numerodono);
@@ -530,7 +530,7 @@ export async function buildMessageContext(nazu, info, store, messagesCache, rent
     const type = getContentType(info.message);
 
     // ==================== PROCESSAMENTO DE SOLICITAÇÕES DE ENTRADA NO GRUPO ====================
-    const joinRequestHandled = await handleJoinRequest(nazu, info, from, isGroup, GRUPOS_DIR, debug);
+    const joinRequestHandled = await handleJoinRequest(bot, info, from, isGroup, GRUPOS_DIR, debug);
     if (joinRequestHandled) return;
     // ==================== FIM: PROCESSAMENTO DE SOLICITAÇÕES ====================
 
@@ -631,13 +631,13 @@ export async function buildMessageContext(nazu, info, store, messagesCache, rent
           quotedMessage.key = { ...info.key, remoteJid: from };
           sendOptions.quoted = quotedMessage;
         }
-        const result = await nazu.sendMessage(from, messageContent, sendOptions);
+        const result = await bot.sendMessage(from, messageContent, sendOptions);
         return result;
       } catch (error) {
         return null;
       }
     }
-    // nazu.reply fica apenas no ctx — não mutar o socket para evitar race conditions
+    // bot.reply fica apenas no ctx — não mutar o socket para evitar race conditions
 
     const reagir = async (emj, options = {}) => {
       try {
@@ -652,7 +652,7 @@ export async function buildMessageContext(nazu, info, store, messagesCache, rent
             console.warn("Emoji inválido para reação:", emj);
             return false;
           }
-          await nazu.sendMessage(from, {
+          await bot.sendMessage(from, {
             react: {
               text: emj,
               key: messageKey
@@ -665,7 +665,7 @@ export async function buildMessageContext(nazu, info, store, messagesCache, rent
               console.warn("Emoji inválido na sequência:", emoji);
               continue;
             }
-            await nazu.sendMessage(from, {
+            await bot.sendMessage(from, {
               react: {
                 text: emoji,
                 key: messageKey
@@ -683,14 +683,14 @@ export async function buildMessageContext(nazu, info, store, messagesCache, rent
         return false;
       }
     };
-    nazu.react = reagir;
+    bot.react = reagir;
 
     // Verificação de captcha para solicitações de entrada em grupos (DEVE vir ANTES de antipv)
-    const captchaHandled = await handleCaptchaResponse(nazu, sender, body, isGroup, info, reply, GRUPOS_DIR, debug);
+    const captchaHandled = await handleCaptchaResponse(bot, sender, body, isGroup, info, reply, GRUPOS_DIR, debug);
     if (captchaHandled) return;
 
     // Proteo Anti-PV
-    const pvBlocked = await handleAntiPV(nazu, sender, command, isGroup, isCmd, isOwner, isPremium, antipvData, reply);
+    const pvBlocked = await handleAntiPV(bot, sender, command, isGroup, isCmd, isOwner, isPremium, antipvData, reply);
     if (pvBlocked) {
       return;
     }
@@ -707,8 +707,8 @@ export async function buildMessageContext(nazu, info, store, messagesCache, rent
       groupMetadata.participants?.filter(p => p.admin === 'admin' || p.admin === 'superadmin').map(extractParticipantId).filter(Boolean) || [];
 
     // Converte todos os membros e admins para LID (usando cache)
-    const AllgroupMembers = await convertIdsToLid(nazu, rawMembers);
-    const groupAdmins = await convertIdsToLid(nazu, rawAdmins);
+    const AllgroupMembers = await convertIdsToLid(bot, rawMembers);
+    const groupAdmins = await convertIdsToLid(bot, rawAdmins);
 
     // Debug log
     debugLog('Membros e Admins convertidos:', {
@@ -717,11 +717,11 @@ export async function buildMessageContext(nazu, info, store, messagesCache, rent
       admins: groupAdmins.map(a => a?.substring(0, 20))
     });
 
-    const botNumber = getBotNumber(nazu);
+    const botNumber = getBotNumber(bot);
 
     // Converte o botNumber para LID se for JID
     const botNumberLid = botNumber && isValidJid(botNumber)
-      ? await getLidFromJidCached(nazu, botNumber)
+      ? await getLidFromJidCached(bot, botNumber)
       : botNumber;
 
     const isBotAdmin = !isGroup || !botNumberLid ? false : idInArray(botNumberLid, groupAdmins);
@@ -771,12 +771,12 @@ export async function buildMessageContext(nazu, info, store, messagesCache, rent
     const isModoLite = isGroup && isModoLiteActive(groupData, modoLiteGlobal);
 
     if (type === 'reactionMessage') {
-      await processReactionMessage(nazu, info, isGroup, sender, groupData, groupPrefix, from, persistGroupDataLocal);
+      await processReactionMessage(bot, info, isGroup, sender, groupData, groupPrefix, from, persistGroupDataLocal);
       return;
     }
 
     const securityResult = await processGroupSecurity({
-      nazu, info, isGroup, sender, groupData, command, isCmd, isImage, isVideo,
+      bot, info, isGroup, sender, groupData, command, isCmd, isImage, isVideo,
       isVisuU, isVisuU2, isBotAdmin, isGroupAdmin, isOwner, isStatusMention, isButtonMessage,
       from, pushname, reply, messagesCache, type, body, isOwnerOrSub, antiSpamGlobal, writeJsonFile,
       DATABASE_DIR, optimizer, groupFile, getUserName, isUserWhitelisted, getGroupRentalStatus,
@@ -787,7 +787,7 @@ export async function buildMessageContext(nazu, info, store, messagesCache, rent
     }
     // Stats em fire-and-forget: não bloqueia o pipeline do comando
     processStats({
-      nazu, info, isGroup, sender, groupData, isCmd, type, pushname,
+      bot, info, isGroup, sender, groupData, isCmd, type, pushname,
       writeJsonFile, groupFile, optimizer, from
     }).catch(e => console.error('❌ Erro no processStats:', e.message));
 
@@ -796,7 +796,7 @@ export async function buildMessageContext(nazu, info, store, messagesCache, rent
 
 
     const automationResult = await processAutomation({
-      nazu, info, isGroup, sender, groupData, type, budy2, body, isCmd, isGroupAdmin, isBotAdmin,
+      bot, info, isGroup, sender, groupData, type, budy2, body, isCmd, isGroupAdmin, isBotAdmin,
       from, getUserName, isUserWhitelisted, reply, getMediaInfo, getFileBuffer, upload,
       handleAutoDownload, youtube, tiktok, igdl, kwai, facebook, pinterest, spotify, soundcloud,
       sendSticker, pushname, nomebot, nomedono, antifloodData
@@ -823,7 +823,7 @@ export async function buildMessageContext(nazu, info, store, messagesCache, rent
     // Retorna o objeto de contexto completo
     return {
       // Core
-      nazu, info, store, messagesCache, rentalExpirationManager,
+      bot, info, store, messagesCache, rentalExpirationManager,
       from, isGroup, sender, pushname, type, body, budy2, args, q,
       // Permissões
       isOwner, isRealOwner, isOwnerOrSub, isSubOwner, isGroupAdmin, isBotAdmin, isPremium, isBotSender,

@@ -4,7 +4,7 @@ export default {
   commands: ["linkgp", "linkgroup", "link"],
   usage: `${global.prefixo}linkgp`,
   handle: async ({ 
-    nazu,
+    bot,
     from,
     reply,
     isGroup,
@@ -17,10 +17,10 @@ export default {
       if (!isGroupAdmin) return reply(MESSAGES.permission.adminOnly);
       if (!isBotAdmin) return reply(MESSAGES.permission.botAdminOnly);
       
-      const linkgc = await nazu.groupInviteCode(from);
+      const linkgc = await bot.groupInviteCode(from);
       const linkCompleto = 'https://chat.whatsapp.com/' + linkgc;
       
-      const groupMetadata = await nazu.groupMetadata(from);
+      const groupMetadata = await bot.groupMetadata(from);
       const groupName = groupMetadata.subject;
       const participantCount = groupMetadata.participants.length;
       const adminCount = groupMetadata.participants.filter(p => p.admin === 'admin' || p.admin === 'superadmin').length;
@@ -38,7 +38,7 @@ export default {
       mensagem += `  Administradores podem revogar o link nas configurações do grupo\n`;
       mensagem += `_📱 *Compartilhe com responsabilidade!* 📱_`;
   
-      await nazu.sendMessage(from, {
+      await bot.sendMessage(from, {
         text: mensagem,
         mentions: [sender]
       });

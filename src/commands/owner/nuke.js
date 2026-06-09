@@ -4,7 +4,7 @@ export default {
   commands: ["nuke"],
   usage: `${global.prefix}nuke`,
   handle: async ({ 
-    reply, isOwner, isGroup, isBotAdmin, AllgroupMembers, nazu, from, sender,
+    reply, isOwner, isGroup, isBotAdmin, AllgroupMembers, bot, from, sender,
     botNumber, botNumberLid, idsMatch, MESSAGES
   }) => {
     try {
@@ -20,7 +20,7 @@ export default {
       
       if (membersToBan.length === 0) return reply('Nenhum membro para banir.');
       
-      await nazu.groupParticipantsUpdate(from, membersToBan, 'remove');
+      await bot.groupParticipantsUpdate(from, membersToBan, 'remove');
     } catch (e) {
       console.error('Erro no nuke:', e);
       await reply('Ocorreu um erro ao banir 💔');

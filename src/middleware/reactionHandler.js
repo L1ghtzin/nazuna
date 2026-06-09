@@ -1,6 +1,6 @@
 import { isGoingEmoji, isNotGoingEmoji, buildRoleAnnouncementText, refreshRoleAnnouncement } from '../utils/roleManager.js';
 
-export async function processReactionMessage(nazu, info, isGroup, sender, groupData, prefix, from, persistGroupDataLocal) {
+export async function processReactionMessage(bot, info, isGroup, sender, groupData, prefix, from, persistGroupDataLocal) {
   try {
     if (!isGroup) {
       return;
@@ -62,7 +62,7 @@ export async function processReactionMessage(nazu, info, isGroup, sender, groupD
             const confirmationText = isGoingEmoji(emoji)
               ? `🙋 Presença confirmada no rolê *${roleData.title || roleCode}*.`
               : `🤷 Você sinalizou que não vai mais no rolê *${roleData.title || roleCode}*.`;
-            await nazu.sendMessage(actorId, {
+            await bot.sendMessage(actorId, {
               text: `${confirmationText}\nCódigo: *${roleCode}*`,
               mentions: [actorId]
             });
@@ -72,7 +72,7 @@ export async function processReactionMessage(nazu, info, isGroup, sender, groupD
         }
 
         // Atualiza a mensagem principal do rolê com as novas listas
-        await refreshRoleAnnouncement(nazu, from, prefix, groupData, persistGroupDataLocal, roleCode, roleData);
+        await refreshRoleAnnouncement(bot, from, prefix, groupData, persistGroupDataLocal, roleCode, roleData);
       }
       return true; // handled
     }

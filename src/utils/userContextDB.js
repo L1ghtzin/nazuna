@@ -35,7 +35,32 @@ class UserContextDB {
       if (fs.existsSync(DB_PATH)) {
         const content = fs.readFileSync(DB_PATH, 'utf-8');
         if (content.trim()) {
-          return JSON.parse(content);
+          const data = JSON.parse(content);
+          let modified = false;
+
+          for (const userId in data) {
+            const user = data[userId];
+            if (user && user.relacionamento_nazuna) {
+              user.relacionamento_chainy = user.relacionamento_nazuna;
+              delete user.relacionamento_nazuna;
+              modified = true;
+
+              if (user.relacionamento_chainy && user.relacionamento_chainy.apelido_nazuna !== undefined) {
+                user.relacionamento_chainy.apelido_chainy = user.relacionamento_chainy.apelido_nazuna;
+                delete user.relacionamento_chainy.apelido_nazuna;
+              }
+            }
+          }
+
+          if (modified) {
+            try {
+              fs.writeFileSync(DB_PATH, JSON.stringify(data, null, 2), 'utf-8');
+              console.log('✅ [Migration] Chaves do banco de dados de contexto migradas (nazuna -> chainy) com sucesso!');
+            } catch (writeError) {
+              console.error('❌ [Migration] Erro ao salvar chaves migradas no arquivo:', writeError);
+            }
+          }
+          return data;
         }
       }
       return {};
@@ -127,9 +152,9 @@ class UserContextDB {
           comandos: 0
         }
       },
-      relacionamento_nazuna: {
+      relacionamento_chainy: {
         nivel_intimidade: 1,
-        apelido_nazuna: null,
+        apelido_chainy: null,
         memorias_especiais: [],
         conversas_marcantes: [],
         sentimento: 'neutro'
@@ -288,13 +313,13 @@ class UserContextDB {
   }
 
   /**
-   * Atualiza o relacionamento com Nazuna
+   * Atualiza o relacionamento com Chainy
    */
   updateRelationship(userId, campo, valor) {
     const context = this.getUserContext(userId);
     
-    if (context.relacionamento_nazuna.hasOwnProperty(campo)) {
-      context.relacionamento_nazuna[campo] = valor;
+    if (context.relacionamento_chainy.hasOwnProperty(campo)) {
+      context.relacionamento_chainy[campo] = valor;
       context.ultima_atualizacao = getBrazilDateTime();
       this.saveDatabase();
     }
@@ -312,12 +337,12 @@ class UserContextDB {
       importancia: 'alta'
     };
     
-    context.relacionamento_nazuna.memorias_especiais.push(novaMemoria);
+    context.relacionamento_chainy.memorias_especiais.push(novaMemoria);
     
     // Manter apenas as 30 memórias mais especiais
-    if (context.relacionamento_nazuna.memorias_especiais.length > 30) {
-      context.relacionamento_nazuna.memorias_especiais = 
-        context.relacionamento_nazuna.memorias_especiais.slice(-30);
+    if (context.relacionamento_chainy.memorias_especiais.length > 30) {
+      context.relacionamento_chainy.memorias_especiais = 
+        context.relacionamento_chainy.memorias_especiais.slice(-30);
     }
     
     context.ultima_atualizacao = getBrazilDateTime();
@@ -414,12 +439,12 @@ class UserContextDB {
         
       case 'memoria_especial':
       case 'memória':
-        const indexMemoria = context.relacionamento_nazuna.memorias_especiais.findIndex(
+        const indexMemoria = context.relacionamento_chainy.memorias_especiais.findIndex(
           m => m.texto === valorAntigo
         );
         if (indexMemoria !== -1) {
-          context.relacionamento_nazuna.memorias_especiais[indexMemoria].texto = valorNovo;
-          context.relacionamento_nazuna.memorias_especiais[indexMemoria].data = getBrazilDateTime();
+          context.relacionamento_chainy.memorias_especiais[indexMemoria].texto = valorNovo;
+          context.relacionamento_chainy.memorias_especiais[indexMemoria].data = getBrazilDateTime();
           atualizado = true;
         }
         break;
@@ -530,11 +555,11 @@ class UserContextDB {
         
       case 'memoria_especial':
       case 'memória':
-        const indexMemoria = context.relacionamento_nazuna.memorias_especiais.findIndex(
+        const indexMemoria = context.relacionamento_chainy.memorias_especiais.findIndex(
           m => m.texto === valor
         );
         if (indexMemoria !== -1) {
-          context.relacionamento_nazuna.memorias_especiais.splice(indexMemoria, 1);
+          context.relacionamento_chainy.memorias_especiais.splice(indexMemoria, 1);
           removido = true;
         }
         break;
@@ -572,10 +597,10 @@ class UserContextDB {
       assuntos_favoritos: context.preferencias.assuntos_favoritos.slice(-5).join(', ') || 'Não definido',
       total_conversas: context.historico_conversa.total_mensagens,
       frequencia: context.historico_conversa.frequencia_interacao,
-      nivel_intimidade: context.relacionamento_nazuna.nivel_intimidade,
+      nivel_intimidade: context.relacionamento_chainy.nivel_intimidade,
       topicos_recentes: context.historico_conversa.topicos_recentes.slice(-5).join(', ') || 'Nenhum',
       notas_importantes: context.notas_importantes.slice(-10).map(n => n.texto).join('\n- ') || 'Nenhuma',
-      memorias_especiais: context.relacionamento_nazuna.memorias_especiais.slice(-5).map(m => m.texto).join('\n- ') || 'Nenhuma'
+      memorias_especiais: context.relacionamento_chainy.memorias_especiais.slice(-5).map(m => m.texto).join('\n- ') || 'Nenhuma'
     };
     
     return summary;

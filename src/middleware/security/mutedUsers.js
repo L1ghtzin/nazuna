@@ -1,13 +1,13 @@
 export async function handleMutedUsers(context) {
-    const { isGroup, isMuted, isMuted2, isGroupAdmin, isOwner, nazu, from, sender, reply, info, groupData, writeJsonFile, groupFile, optimizer, getUserName, isBotAdmin, MESSAGES } = context;
+    const { isGroup, isMuted, isMuted2, isGroupAdmin, isOwner, bot, from, sender, reply, info, groupData, writeJsonFile, groupFile, optimizer, getUserName, isBotAdmin, MESSAGES } = context;
     if (!isGroup || isGroupAdmin || isOwner) return false;
 
     if (isMuted) {
         try {
-            await nazu.sendMessage(from, { text: MESSAGES.security.mutedUserAdmin(getUserName(sender)), mentions: [sender] }, { quoted: info });
-            await nazu.sendMessage(from, { delete: info.key });
+            await bot.sendMessage(from, { text: MESSAGES.security.mutedUserAdmin(getUserName(sender)), mentions: [sender] }, { quoted: info });
+            await bot.sendMessage(from, { delete: info.key });
             if (isBotAdmin) {
-                await nazu.groupParticipantsUpdate(from, [sender], 'remove');
+                await bot.groupParticipantsUpdate(from, [sender], 'remove');
             } else {
                 await reply(MESSAGES.security.mutedUserCantRemove);
             }
@@ -22,7 +22,7 @@ export async function handleMutedUsers(context) {
 
     if (isMuted2) {
         try {
-            await nazu.sendMessage(from, { delete: info.key });
+            await bot.sendMessage(from, { delete: info.key });
         } catch (error) {
             console.error("Erro ao deletar mensagem de usuário mutado 2:", error);
         }

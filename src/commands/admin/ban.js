@@ -4,7 +4,7 @@ export default {
   commands: ["banir", "ban", "b", "kick"],
   usage: `${global.prefixo}ban @usuario`,
   handle: async ({ 
-    nazu,
+    bot,
     from,
     reply,
     isGroup,
@@ -45,13 +45,13 @@ export default {
          }
       }
       
-      await nazu.groupParticipantsUpdate(from, [targetId], 'remove');
+      await bot.groupParticipantsUpdate(from, [targetId], 'remove');
       
       const banReason = extractReason(q, menc_jid2);
       // Notificação X9 para banimento
       if (groupData?.x9) {
         const reasonText = `\n📝 Motivo: ${banReason}`;
-        await nazu.sendMessage(from, {
+        await bot.sendMessage(from, {
           text: `🚪 *X9 Report:* @${menc_os2.split('@')[0]} foi removido(a) do grupo por @${sender.split('@')[0]}.${reasonText}`,
           mentions: [menc_os2, sender],
         }).catch(err => console.error(`❌ Erro ao enviar X9: ${err.message}`));

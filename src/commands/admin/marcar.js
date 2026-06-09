@@ -7,7 +7,7 @@ export default {
   commands: ["adm", "admin", "admins", "adms", "marcar", "mark"],
   usage: "{prefix}marcar <mensagem>",
   handle: async ({  
-    nazu, from, info, command, args, reply, pushname, isGroup, isGroupAdmin, isBotAdmin, 
+    bot, from, info, command, args, reply, pushname, isGroup, isGroupAdmin, isBotAdmin, 
     AllgroupMembers, groupAdmins, q, getUserName,
     checkMassMentionLimit, loadMassMentionConfig, registerMassMentionUse,
     MASS_MENTION_THRESHOLD, optimizer, buildGroupFilePath,
@@ -45,7 +45,7 @@ export default {
       }
 
       let msg = `📢 *Membros mencionados:* ${q ? `\n💬 *Mensagem:* ${q}` : ''}\n\n`;
-      return await nazu.sendMessage(from, { 
+      return await bot.sendMessage(from, { 
         text: msg + membros.map(m => `👉 @${getUserName(m)}`).join('\n'), 
         mentions: membros 
       });
@@ -60,7 +60,7 @@ export default {
         text += `• @${adm.split('@')[0]}\n`;
       }
       text += `\n📊 *Total:* ${groupAdmins.length}`;
-      return await nazu.sendMessage(from, { text, mentions: groupAdmins });
+      return await bot.sendMessage(from, { text, mentions: groupAdmins });
     }
   }
 };

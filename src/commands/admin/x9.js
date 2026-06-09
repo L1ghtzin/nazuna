@@ -11,7 +11,7 @@ export default {
   commands: ["x9"],
   usage: `${global.prefixo}x9`,
   handle: async ({ 
-    nazu,
+    bot,
     from,
     reply,
     isGroup,

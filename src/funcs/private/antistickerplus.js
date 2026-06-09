@@ -51,7 +51,7 @@ const saveGroupData = (groupId, data) => {
 /**
  * Verifica se a mensagem contém figurinhas Lottie e aplica a punição
  */
-export const checkSticker = async (nazu, from, info, groupData, { isGroupAdmin, isOwner, isParceiro, isBotAdmin, reply, getUserName }) => {
+export const checkSticker = async (bot, from, info, groupData, { isGroupAdmin, isOwner, isParceiro, isBotAdmin, reply, getUserName }) => {
     if (!groupData.antistickerplus || isGroupAdmin || isOwner || isParceiro || !info?.message) {
         return;
     }
@@ -69,13 +69,13 @@ export const checkSticker = async (nazu, from, info, groupData, { isGroupAdmin, 
 
         if (stickerMsg && stickerMsg?.isLottie === true) {
             // Ação: Apagar mensagem (sempre)
-            await nazu.sendMessage(from, {
+            await bot.sendMessage(from, {
                 delete: info.key
             });
 
             // Ação: Remover usuário (se configurado)
             if (groupData.antistickerplus_remover && isBotAdmin) {
-                await nazu.groupParticipantsUpdate(from, [sender], 'remove');
+                await bot.groupParticipantsUpdate(from, [sender], 'remove');
                 await reply(
                     `🚫 @${getUserName(sender)}, figurinhas Lottie (WhatsApp Plus) não são permitidas neste grupo. Você foi removido!`,
                     { mentions: [sender] }
@@ -97,7 +97,7 @@ export const checkSticker = async (nazu, from, info, groupData, { isGroupAdmin, 
 /**
  * Lida com o comando antistickerplus
  */
-export const handleCommand = async (nazu, from, args, groupData, { reply, prefix }) => {
+export const handleCommand = async (bot, from, args, groupData, { reply, prefix }) => {
     const arg = args[0] ? args[0].toLowerCase() : '';
 
     if (!arg) {

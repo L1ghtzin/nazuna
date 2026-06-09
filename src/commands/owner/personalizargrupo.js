@@ -5,7 +5,7 @@ export default {
   description: "Sistema de personalização de grupo (Dono e Admins)",
   commands: ["ativarperso", "fotomenugrupo", "infoperso", "nomebotgrupo", "nomegrupo", "personalizacao", "personalizargrupo", "removerfotomenu", "removernome", "resetfotomenu", "resetnome", "setbotname", "setmenupic"],
   handle: async ({ 
-    nazu, from, info, command, q, reply, isOwner, isGroup, isGroupAdmin, prefix,
+    bot, from, info, command, q, reply, isOwner, isGroup, isGroupAdmin, prefix,
     isQuotedImage, isImage, getFileBuffer, upload
   , MESSAGES }) => {
     const cmd = command.toLowerCase();

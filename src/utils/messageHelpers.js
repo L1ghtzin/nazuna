@@ -117,10 +117,10 @@ export function normalizeCommand(cmd) {
 /**
  * Robust bot ID extraction with multiple fallback mechanisms
  */
-export const getBotNumber = (nazu) => {
+export const getBotNumber = (bot) => {
   try {
     // Tenta pegar LID primeiro do user ou do authState
-    const lid = nazu.user?.lid || nazu.authState?.creds?.me?.lid;
+    const lid = bot.user?.lid || bot.authState?.creds?.me?.lid;
     if (lid) {
       // Remove o sufixo `:XX` se existir
       const cleanLid = lid.includes(':') ? lid.split(':')[0] + '@lid' : lid;
@@ -128,7 +128,7 @@ export const getBotNumber = (nazu) => {
     }
     
     // Fallback para ID padrão
-    const jid = nazu.user?.id || nazu.authState?.creds?.me?.id;
+    const jid = bot.user?.id || bot.authState?.creds?.me?.id;
     if (jid) {
       const botId = jid.split(':')[0];
       return `${botId}@s.whatsapp.net`;
@@ -136,10 +136,10 @@ export const getBotNumber = (nazu) => {
 
     // Usa helper se disponível
     if (typeof getBotId === 'function') {
-      return getBotId(nazu);
+      return getBotId(bot);
     }
 
-    console.warn('Unable to determine bot number - user object:', nazu.user);
+    console.warn('Unable to determine bot number - user object:', bot.user);
     return null;
   } catch (error) {
     console.error('Error extracting bot number:', error);

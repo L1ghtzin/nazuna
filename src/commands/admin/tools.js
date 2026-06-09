@@ -6,7 +6,7 @@ export default {
   commands: ["add", "blockuser", "buscar", "criar", "d", "del", "deletar", "delete", "fixar", "mention", "nota", "note", "pin", "remover", "search", "unblockuser", "ver", "view"],
   usage: "{prefix}mention Olá grupo!",
   handle: async ({  
-    nazu, 
+    bot, 
     from, 
     info, 
     command,
@@ -60,13 +60,13 @@ export default {
       
       const key = {
         remoteJid: from,
-        fromMe: info.message.extendedTextMessage.contextInfo.participant === nazu.user.id.split(':')[0] + '@s.whatsapp.net',
+        fromMe: info.message.extendedTextMessage.contextInfo.participant === bot.user.id.split(':')[0] + '@s.whatsapp.net',
         id: info.message.extendedTextMessage.contextInfo.stanzaId,
         participant: info.message.extendedTextMessage.contextInfo.participant
       };
 
       try {
-        await nazu.sendMessage(from, { delete: key });
+        await bot.sendMessage(from, { delete: key });
       } catch (e) {
         return reply("❌ Não consegui deletar a mensagem. Verifique se sou administrador.");
       }
@@ -80,10 +80,10 @@ export default {
       
       try {
         if (command === 'blockuser') {
-          await nazu.updateBlockStatus(target, "block");
+          await bot.updateBlockStatus(target, "block");
           return reply("✅ Usuário bloqueado com sucesso!");
         } else {
-          await nazu.updateBlockStatus(target, "unblock");
+          await bot.updateBlockStatus(target, "unblock");
           return reply("✅ Usuário desbloqueado com sucesso!");
         }
       } catch (e) {

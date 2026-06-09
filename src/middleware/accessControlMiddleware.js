@@ -4,7 +4,7 @@ import { isUserInMap } from '../utils/groupManager.js';
  * Middleware para sistemas de controle de acesso, blacklists e limites
  */
 export async function processAccessControl({
-  nazu,
+  bot,
   from,
   sender,
   isGroup,
@@ -75,7 +75,7 @@ export async function processAccessControl({
 
       if (userData.count > groupData.messageLimit.limit) {
         if (groupData.messageLimit.action === 'ban' && isBotAdmin) {
-          await nazu.groupParticipantsUpdate(from, [sender], 'remove');
+          await bot.groupParticipantsUpdate(from, [sender], 'remove');
           await reply(`🚨 @${getUserName(sender)} foi banido por exceder o limite de ${groupData.messageLimit.limit} mensagens em ${groupData.messageLimit.interval}s!`, {
             mentions: [sender]
           });
@@ -85,7 +85,7 @@ export async function processAccessControl({
           groupData.messageLimit.warnings[sender] = (groupData.messageLimit.warnings[sender] || 0) + 1;
           const warnings = groupData.messageLimit.warnings[sender];
           if (warnings >= 3 && isBotAdmin) {
-            await nazu.groupParticipantsUpdate(from, [sender], 'remove');
+            await bot.groupParticipantsUpdate(from, [sender], 'remove');
             await reply(`🚨 @${getUserName(sender)} foi banido por exceder o limite de mensagens (${groupData.messageLimit.limit} em ${groupData.messageLimit.interval}s) 3 vezes!`, {
               mentions: [sender]
             });

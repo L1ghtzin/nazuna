@@ -5,7 +5,7 @@ export default {
   description: "Sistema de Banimento Fake (BAM)",
   commands: ["ban2", "banir2", "bam", "banfake", "setbammsg", "editarbam", "verbammsg", "verbam", "resetbammsg", "resetarbam"],
   handle: async ({ 
-    nazu, from, info, command, reply, isOwner, isGroupAdmin, isGroup, menc_os2, 
+    bot, from, info, command, reply, isOwner, isGroupAdmin, isGroup, menc_os2, 
     groupData, DATABASE_DIR, optimizer, nomedono, q, prefix, MESSAGES,
     isBotAdmin, idsMatch, ownerJid, lidowner, botNumber, botNumberLid, idInArray, groupAdmins, AllgroupMembers
   }) => {
@@ -31,7 +31,7 @@ export default {
         return reply(MESSAGES.permission.cantBanRole('administrador do grupo'));
       }
       
-      await nazu.sendMessage(from, {
+      await bot.sendMessage(from, {
         text: `⚠️ *ÚLTIMAS PALAVRAS!*\n\n@${menc_os2.split('@')[0]}, você tem *10 segundos* para dizer suas últimas palavras antes de ser banido! ⏰`,
         mentions: [menc_os2]
       }, { quoted: info });
@@ -49,8 +49,8 @@ export default {
          }
       }
 
-      await nazu.groupParticipantsUpdate(from, [targetId], 'remove');
-      return nazu.sendMessage(from, {
+      await bot.groupParticipantsUpdate(from, [targetId], 'remove');
+      return bot.sendMessage(from, {
         text: `👋 @${menc_os2.split('@')[0]} foi banido! Adeus! 🚪\n\n📝 Motivo: Banimento com aviso.`,
         mentions: [menc_os2]
       }, { quoted: info });
@@ -60,7 +60,7 @@ export default {
     if (['bam', 'banfake'].includes(cmd)) {
       if (!menc_os2) return reply(MESSAGES.error.missing('alguém'));
       
-      await nazu.sendMessage(from, {
+      await bot.sendMessage(from, {
         text: `⏳ *ÚLTIMAS PALAVRAS!*\n\n@${menc_os2.split('@')[0]}, você tem *10 segundos* para dizer suas últimas palavras antes de ser banido! 🔨`,
         mentions: [menc_os2]
       }, { quoted: info });
@@ -70,7 +70,7 @@ export default {
       const defaultMsg = `🎭 *ERA MEME!*\n\n@${menc_os2.split('@')[0]}, relaxa, era só uma brincadeira! 😂\n\nVocê não vai ser banido... dessa vez! 🥳`;
       const msg = groupData.bamMessage || defaultMsg;
 
-      return nazu.sendMessage(from, {
+      return bot.sendMessage(from, {
         text: msg.replace('#numerodele#', `@${menc_os2.split('@')[0]}`),
         mentions: [menc_os2]
       }, { quoted: info });

@@ -308,6 +308,8 @@ class AutoRestarter {
                 stdio: ['ignore', 'inherit', 'inherit'],
                 env: {
                     ...process.env,
+                    CHAINY_RESTARTED: 'true',
+                    CHAINY_RESTART_COUNT: this.restartCount.toString(),
                     NAZUNA_RESTARTED: 'true',
                     NAZUNA_RESTART_COUNT: this.restartCount.toString()
                 }
@@ -416,9 +418,9 @@ class AutoRestarter {
             });
 
             // Verifica se foi reiniciado
-            if (process.env.NAZUNA_RESTARTED === 'true') {
+            if (process.env.CHAINY_RESTARTED === 'true' || process.env.NAZUNA_RESTARTED === 'true') {
                 await this.logEvent('restart_success', {
-                    previousRestartCount: process.env.NAZUNA_RESTART_COUNT || 'unknown'
+                    previousRestartCount: process.env.CHAINY_RESTART_COUNT || process.env.NAZUNA_RESTART_COUNT || 'unknown'
                 });
             }
         } catch (error) {

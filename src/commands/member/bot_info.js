@@ -71,7 +71,7 @@ export default {
   description: "Informações detalhadas sobre o bot e o servidor",
   commands: ["infobot", "statusbot", "botinfo", "infoserver", "meustatus", "topcmd", "topcmds", "comandosmaisusados", "cmdinfo", "comandoinfo", "statusgp", "dadosgp", "horariomundial"],
   handle: async ({ 
-    nazu, from, reply, formatUptime, getTotalCommands, pushname, nomebot, botVersion,
+    bot, from, reply, formatUptime, getTotalCommands, pushname, nomebot, botVersion,
     isGroup, groupMetadata, sender, command, isOwner, info, MESSAGES,
     botState, isRentalModeActive, premiumListaZinha, globalBlocks, nomedono
   }) => {
@@ -80,7 +80,7 @@ export default {
     // --- INFO DO GRUPO ---
     if (['statusgp', 'dadosgp'].includes(cmd)) {
       if (!isGroup) return reply(MESSAGES.permission.groupOnly);
-      const metadata = await nazu.groupMetadata(from);
+      const metadata = await bot.groupMetadata(from);
       let teks = `🏢 *DADOS DO GRUPO*\n\n`;
       teks += `📌 *Nome:* ${metadata.subject}\n`;
       teks += `👥 *Membros:* ${metadata.participants.length}\n`;
@@ -241,7 +241,7 @@ export default {
       const memUsed = (botMemUsage.heapUsed / 1024 / 1024).toFixed(2);
       const memTotal = (botMemUsage.heapTotal / 1024 / 1024).toFixed(2);
       
-      const allGroups = await nazu.groupFetchAllParticipating();
+      const allGroups = await bot.groupFetchAllParticipating();
       const totalGroups = Object.keys(allGroups).length;
       let totalUsers = 0;
       Object.values(allGroups).forEach(group => {

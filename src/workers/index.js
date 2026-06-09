@@ -15,18 +15,18 @@ const gpCronJobs = {};
 const autoMsgCronJobs = {};
 let donoDivulgacaoCronJob = null;
 
-export function startAllWorkers(nazuInstance) {
+export function startAllWorkers(bot) {
   if (workersStarted) return;
   workersStarted = true;
 
-  startRemindersWorker(nazuInstance);
-  startGpScheduleWorker(nazuInstance);
-  startAutoHorariosWorker(nazuInstance);
-  startAutoMensagensWorker(nazuInstance);
-  startDonoDivulgacaoWorker(nazuInstance);
+  startRemindersWorker(bot);
+  startGpScheduleWorker(bot);
+  startAutoHorariosWorker(bot);
+  startAutoMensagensWorker(bot);
+  startDonoDivulgacaoWorker(bot);
 }
 
-const startRemindersWorker = (nazuInstance) => {
+const startRemindersWorker = (bot) => {
   try {
     setInterval(async () => {
       try {
@@ -45,10 +45,10 @@ const startRemindersWorker = (nazuInstance) => {
             const textMsg = `⏰ Lembrete${r.createdByName ? ` de ${r.createdByName}` : ''}: ${r.message}`;
             try {
               if (r.chatId && String(r.chatId).endsWith('@g.us')) {
-                await nazuInstance.sendMessage(r.chatId, { text: textMsg, mentions: r.userId ? [r.userId] : [] });
+                await bot.sendMessage(r.chatId, { text: textMsg, mentions: r.userId ? [r.userId] : [] });
               } else {
                 const dest = r.chatId || r.userId;
-                if (dest) await nazuInstance.sendMessage(dest, { text: textMsg });
+                if (dest) await bot.sendMessage(dest, { text: textMsg });
               }
               r.status = 'sent';
               r.sentAt = new Date().toISOString();
@@ -80,7 +80,7 @@ export const unscheduleGroupJob = (groupId, type) => {
   delete gpCronJobs[key];
 };
 
-export const scheduleGroupJob = (groupId, type, timeStr, nazuInstance) => {
+export const scheduleGroupJob = (groupId, type, timeStr, bot) => {
   if (!groupId || !timeStr) return;
   const normalized = normalizeScheduleTime(timeStr);
   if (!normalized) return;
@@ -102,8 +102,8 @@ export const scheduleGroupJob = (groupId, type, timeStr, nazuInstance) => {
 
         if (type === 'open') {
           try {
-            await nazuInstance.groupSettingUpdate(groupId, 'not_announcement');
-            await nazuInstance.sendMessage(groupId, { text: '🔓 Grupo aberto automaticamente pelo agendamento diário.' });
+            await bot.groupSettingUpdate(groupId, 'not_announcement');
+            await bot.sendMessage(groupId, { text: '🔓 Grupo aberto automaticamente pelo agendamento diário.' });
             console.log(`[Cron] ✅ Grupo ABERTO automaticamente: ${groupId.substring(0, 15)}... às ${normalized}`);
           } catch (e) {
             console.error(`[Cron Error] open ${groupId}:`, e.message || e);
@@ -114,8 +114,8 @@ export const scheduleGroupJob = (groupId, type, timeStr, nazuInstance) => {
           }
         } else {
           try {
-            await nazuInstance.groupSettingUpdate(groupId, 'announcement');
-            await nazuInstance.sendMessage(groupId, { text: '🔒 Grupo fechado automaticamente pelo agendamento diário.' });
+            await bot.groupSettingUpdate(groupId, 'announcement');
+            await bot.sendMessage(groupId, { text: '🔒 Grupo fechado automaticamente pelo agendamento diário.' });
             console.log(`[Cron] ✅ Grupo FECHADO automaticamente: ${groupId.substring(0, 15)}... às ${normalized}`);
           } catch (e) {
             console.error(`[Cron Error] close ${groupId}:`, e.message || e);
@@ -140,7 +140,7 @@ export const scheduleGroupJob = (groupId, type, timeStr, nazuInstance) => {
   }
 };
 
-const loadAllGroupSchedules = async (nazuInstance) => {
+const loadAllGroupSchedules = async (bot) => {
   try {
     if (!ensureDirectoryExists(GRUPOS_DIR)) return;
     const files = await fs.promises.readdir(GRUPOS_DIR);
@@ -158,12 +158,12 @@ const loadAllGroupSchedules = async (nazuInstance) => {
       } catch (e) { return; }
       const schedule = data.schedule && typeof data.schedule === 'object' ? data.schedule : {};
       if (schedule.openTime) {
-        scheduleGroupJob(groupId, 'open', schedule.openTime, nazuInstance);
+        scheduleGroupJob(groupId, 'open', schedule.openTime, bot);
         console.log(`[Cron] ✅ Agendamento ABRIR carregado: Grupo ${groupId.substring(0, 15)}... às ${schedule.openTime}`);
         loadedCount++;
       }
       if (schedule.closeTime) {
-        scheduleGroupJob(groupId, 'close', schedule.closeTime, nazuInstance);
+        scheduleGroupJob(groupId, 'close', schedule.closeTime, bot);
         console.log(`[Cron] ✅ Agendamento FECHAR carregado: Grupo ${groupId.substring(0, 15)}... às ${schedule.closeTime}`);
         loadedCount++;
       }
@@ -176,15 +176,15 @@ const loadAllGroupSchedules = async (nazuInstance) => {
   }
 };
 
-const startGpScheduleWorker = (nazuInstance) => {
+const startGpScheduleWorker = (bot) => {
   try {
-    loadAllGroupSchedules(nazuInstance);
+    loadAllGroupSchedules(bot);
   } catch (e) {
     console.error('[Cron] startGpScheduleWorker error:', e);
   }
 };
 
-const startAutoHorariosWorker = (nazuInstance) => {
+const startAutoHorariosWorker = (bot) => {
   try {
     setInterval(async () => {
       try {
@@ -276,7 +276,7 @@ const startAutoHorariosWorker = (nazuInstance) => {
             responseText += `┃     *CONSCIENTEMENTE!* 🍀  ┃\n`;
             responseText += `┗━━━━━━━━━━━━━━━━━━━━━━━━┛`;
             
-            await nazuInstance.sendMessage(chatId, { text: responseText });
+            await bot.sendMessage(chatId, { text: responseText });
             
             config.lastSent = Date.now();
             
@@ -314,7 +314,7 @@ const unscheduleAutoMessage = (groupId, msgId) => {
   delete autoMsgCronJobs[key];
 };
 
-const scheduleAutoMessage = (groupId, msgConfig, nazuInstance) => {
+const scheduleAutoMessage = (groupId, msgConfig, bot) => {
   if (!groupId || !msgConfig || !msgConfig.id || !msgConfig.time) return;
   
   const normalized = normalizeScheduleTime(msgConfig.time);
@@ -380,7 +380,7 @@ const scheduleAutoMessage = (groupId, msgConfig, nazuInstance) => {
           messageContent.mimetype = 'audio/mp4';
         }
         
-        await nazuInstance.sendMessage(groupId, messageContent);
+        await bot.sendMessage(groupId, messageContent);
         console.log(`[AutoMsg] ✅ Mensagem enviada automaticamente: Grupo ${groupId.substring(0, 15)}... ID ${msgConfig.id} às ${normalized}`);
         
       } catch (e) {
@@ -403,7 +403,7 @@ const scheduleAutoMessage = (groupId, msgConfig, nazuInstance) => {
   }
 };
 
-const loadAllAutoMessages = async (nazuInstance) => {
+const loadAllAutoMessages = async (bot) => {
   try {
     if (!ensureDirectoryExists(GRUPOS_DIR)) return;
     const files = await fs.promises.readdir(GRUPOS_DIR);
@@ -425,7 +425,7 @@ const loadAllAutoMessages = async (nazuInstance) => {
       
       for (const msgConfig of autoMessages) {
         if (msgConfig.enabled && msgConfig.time) {
-          scheduleAutoMessage(groupId, msgConfig, nazuInstance);
+          scheduleAutoMessage(groupId, msgConfig, bot);
           console.log(`[AutoMsg] ✅ Mensagem agendada: Grupo ${groupId.substring(0, 15)}... ID ${msgConfig.id} às ${msgConfig.time}`);
           loadedCount++;
         }
@@ -440,13 +440,13 @@ const loadAllAutoMessages = async (nazuInstance) => {
   }
 };
 
-const startAutoMensagensWorker = (nazuInstance) => {
+const startAutoMensagensWorker = (bot) => {
   try {
-    loadAllAutoMessages(nazuInstance);
+    loadAllAutoMessages(bot);
 
     setInterval(() => {
       try {
-        loadAllAutoMessages(nazuInstance);
+        loadAllAutoMessages(bot);
       } catch (e) {
         console.error('[AutoMsg] refresh error:', e);
       }
@@ -463,7 +463,7 @@ const unscheduleDonoDivulgacaoJob = () => {
   donoDivulgacaoCronJob = null;
 };
 
-const runDonoDivulgacaoSend = async (nazuInstance, messageText, source = 'manual') => {
+const runDonoDivulgacaoSend = async (bot, messageText, source = 'manual') => {
   const config = loadDonoDivulgacao();
   const groups = Array.isArray(config.groups) ? config.groups : [];
   const text = (messageText || config.message || '').trim();
@@ -484,7 +484,7 @@ const runDonoDivulgacaoSend = async (nazuInstance, messageText, source = 'manual
       continue;
     }
     try {
-      await nazuInstance.sendMessage(groupId, { text });
+      await bot.sendMessage(groupId, { text });
       sent++;
     } catch (e) {
       failed++;
@@ -504,7 +504,7 @@ const runDonoDivulgacaoSend = async (nazuInstance, messageText, source = 'manual
   return { success: true, sent, failed };
 };
 
-const scheduleDonoDivulgacaoJob = (timeStr, nazuInstance) => {
+const scheduleDonoDivulgacaoJob = (timeStr, bot) => {
   const normalized = normalizeScheduleTime(timeStr);
   if (!normalized) return false;
   const [hh, mm] = normalized.split(':');
@@ -526,7 +526,7 @@ const scheduleDonoDivulgacaoJob = (timeStr, nazuInstance) => {
         const today = getTodayStr();
         if (hasRunForScheduleToday(schedule.lastRun, today, targetTime)) return;
 
-        const result = await runDonoDivulgacaoSend(nazuInstance, null, 'auto');
+        const result = await runDonoDivulgacaoSend(bot, null, 'auto');
         if (result.success) {
           schedule.lastRun = { date: today, time: targetTime };
           config.schedule = schedule;
@@ -546,11 +546,11 @@ const scheduleDonoDivulgacaoJob = (timeStr, nazuInstance) => {
   }
 };
 
-const startDonoDivulgacaoWorker = (nazuInstance) => {
+const startDonoDivulgacaoWorker = (bot) => {
   try {
     const config = loadDonoDivulgacao();
     if (config.schedule?.enabled && config.schedule?.time) {
-      scheduleDonoDivulgacaoJob(config.schedule.time, nazuInstance);
+      scheduleDonoDivulgacaoJob(config.schedule.time, bot);
     }
   } catch (e) {
     console.error('[DivDono] Erro ao iniciar worker:', e);

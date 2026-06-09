@@ -2,7 +2,7 @@ import axios from 'axios';
 
 export async function processAutomation(context) {
     const { 
-        nazu, info, isGroup, sender, groupData, type, budy2, body, isCmd, isGroupAdmin, isBotAdmin, 
+        bot, info, isGroup, sender, groupData, type, budy2, body, isCmd, isGroupAdmin, isBotAdmin, 
         from, getUserName, isUserWhitelisted, reply, getMediaInfo, getFileBuffer, upload, 
         handleAutoDownload, youtube, tiktok, igdl, kwai, facebook, pinterest, spotify, soundcloud,
         sendSticker, pushname, nomebot, nomedono, antifloodData
@@ -39,8 +39,8 @@ export async function processAutomation(context) {
                 await reply(`🚨 Conteúdo impróprio detectado! (${reason})`);
                 if (isBotAdmin) {
                   try {
-                    await nazu.sendMessage(from, { delete: info.key });
-                    await nazu.groupParticipantsUpdate(from, [sender], 'remove');
+                    await bot.sendMessage(from, { delete: info.key });
+                    await bot.groupParticipantsUpdate(from, [sender], 'remove');
                     await reply(`🔞 @${getUserName(sender)}, conteúdo impróprio detectado. Você foi removido do grupo.`, { mentions: [sender] });
                   } catch (adminError) {
                     console.error(`Erro ao remover usuário por anti-porn: ${adminError}`);
@@ -63,8 +63,8 @@ export async function processAutomation(context) {
     if (isGroup && groupData.antiloc && !isGroupAdmin && type === 'locationMessage') {
       if (!isUserWhitelisted(sender, 'antiloc')) {
         try {
-          await nazu.sendMessage(from, { delete: { remoteJid: from, fromMe: false, id: info.key.id, participant: sender } });
-          await nazu.groupParticipantsUpdate(from, [sender], 'remove');
+          await bot.sendMessage(from, { delete: { remoteJid: from, fromMe: false, id: info.key.id, participant: sender } });
+          await bot.groupParticipantsUpdate(from, [sender], 'remove');
           await reply(`🗺️ @${getUserName(sender)}, localização não permitida. Você foi removido do grupo.`, { mentions: [sender] });
           return { stopProcessing: true };
         } catch (e) {
@@ -90,8 +90,8 @@ export async function processAutomation(context) {
     if (isGroup && groupData.antidoc && !isGroupAdmin && (type === 'documentMessage' || type === 'documentWithCaptionMessage')) {
       if (!isUserWhitelisted(sender, 'antidoc')) {
         try {
-          await nazu.sendMessage(from, { delete: { remoteJid: from, fromMe: false, id: info.key.id, participant: sender } });
-          await nazu.groupParticipantsUpdate(from, [sender], 'remove');
+          await bot.sendMessage(from, { delete: { remoteJid: from, fromMe: false, id: info.key.id, participant: sender } });
+          await bot.groupParticipantsUpdate(from, [sender], 'remove');
           await reply(`📄 @${getUserName(sender)}, documentos não são permitidos. Você foi removido do grupo.`, { mentions: [sender] });
           return { stopProcessing: true };
         } catch (e) {
@@ -105,7 +105,7 @@ export async function processAutomation(context) {
       const urlMatch = body.match(/(https?:\/\/[^\s]+)/g);
       if (urlMatch && urlMatch.length > 0) {
         try {
-          handleAutoDownload(nazu, from, urlMatch[0], info, { youtube, tiktok, igdl, kwai, facebook, pinterest, spotify, soundcloud })
+          handleAutoDownload(bot, from, urlMatch[0], info, { youtube, tiktok, igdl, kwai, facebook, pinterest, spotify, soundcloud })
             .catch((e) => console.error('Erro no autodl promise:', e));
         } catch (e) {
           console.error('Erro no autodl:', e);
@@ -124,7 +124,7 @@ export async function processAutomation(context) {
           
           const buffer = await getFileBuffer(isVid ? mediaVideo : mediaImage, isVid ? 'video' : 'image');
           const shouldForceSquare = global.autoStickerMode === 'square';
-          await sendSticker(nazu, from, {
+          await sendSticker(bot, from, {
             sticker: buffer,
             author: pushname,
             packname: nomebot,

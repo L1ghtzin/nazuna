@@ -4,7 +4,7 @@ export default {
   commands: ["rebaixar", "demote"],
   usage: `${global.prefixo}rebaixar @usuario`,
   handle: async ({ 
-    nazu,
+    bot,
     from,
     reply,
     isGroup,
@@ -33,11 +33,11 @@ export default {
          }
       }
       
-      await nazu.groupParticipantsUpdate(from, [targetId], 'demote');
+      await bot.groupParticipantsUpdate(from, [targetId], 'demote');
       
       // Notificação X9 para rebaixamento
       if (groupData?.x9) {
-        await nazu.sendMessage(from, {
+        await bot.sendMessage(from, {
           text: `⬇️ *X9 Report:* @${menc_os2.split('@')[0]} foi rebaixado(a) de ADM por @${sender.split('@')[0]}.`,
           mentions: [menc_os2, sender],
         }).catch(err => console.error(`❌ Erro ao enviar X9: ${err.message}`));

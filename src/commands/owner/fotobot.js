@@ -4,7 +4,7 @@ export default {
   commands: ["fotobot", "fotoperfil", "setppbot", "perfilbot", "avatarbot"],
   usage: `${global.prefixo}fotobot (marcando ou enviando imagem)`,
   handle: async ({ 
-    nazu,
+    bot,
     reply,
     isOwner,
     isQuotedImage,
@@ -29,7 +29,7 @@ export default {
       try {
         // Processa a imagem com ffmpeg antes de atualizar
         const processedBuffer = await processImageForProfile(imageBuffer);
-        await nazu.updateProfilePicture(nazu.user.id, processedBuffer);
+        await bot.updateProfilePicture(bot.user.id, processedBuffer);
         reply('✅ Foto de perfil do bot alterada com sucesso!');
       } catch (updateError) {
         console.error('Erro ao alterar foto de perfil:', updateError);

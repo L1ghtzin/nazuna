@@ -2,7 +2,7 @@ import { loadLevelingSafe, getLevelingUser, checkLevelUp, saveLevelingSafe } fro
 
 export async function processStats(context) {
     const { 
-        nazu, info, isGroup, sender, groupData, isCmd, type, pushname, 
+        bot, info, isGroup, sender, groupData, isCmd, type, pushname, 
         writeJsonFile, groupFile, optimizer, from
     } = context;
 
@@ -64,7 +64,7 @@ export async function processStats(context) {
         userData.lastMessage = Date.now();
         
         // Verifica level up e salva
-        checkLevelUp(sender, userData, levelingData, nazu, from);
+        checkLevelUp(sender, userData, levelingData, bot, from);
         saveLevelingSafe(levelingData);
       } catch (levelingError) {
         console.error('❌ Erro no sistema de leveling:', levelingError.message);

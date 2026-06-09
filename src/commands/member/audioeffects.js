@@ -20,7 +20,7 @@ export default {
   ],
   usage: "{prefix}speedup (responda a um áudio)",
   handle: async ({  
-    nazu, 
+    bot, 
     from, 
     info, 
     reply, 
@@ -95,7 +95,7 @@ export default {
           
           if (fs.existsSync(ran)) {
             const hah = fs.readFileSync(ran);
-            await nazu.sendMessage(from, {
+            await bot.sendMessage(from, {
               audio: hah,
               mimetype: 'audio/mpeg'
             }, {

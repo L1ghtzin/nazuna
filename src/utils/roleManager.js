@@ -63,12 +63,12 @@ export function buildRoleAnnouncementText(code, roleData, groupPrefix) {
   return lines.join('\n');
 }
 
-export async function refreshRoleAnnouncement(nazu, from, prefix, groupData, persistGroupData, code, roleData) {
+export async function refreshRoleAnnouncement(bot, from, prefix, groupData, persistGroupData, code, roleData) {
   try {
     if (!roleData || !roleData.announcementKey || !roleData.announcementKey.id) return;
     
     try {
-      await nazu.sendMessage(from, {
+      await bot.sendMessage(from, {
         delete: {
           remoteJid: from,
           fromMe: roleData.announcementKey.fromMe !== undefined ? roleData.announcementKey.fromMe : true,
@@ -88,7 +88,7 @@ export async function refreshRoleAnnouncement(nazu, from, prefix, groupData, per
       ...notGoingList.slice(0, MAX_MENTIONS_IN_ANNOUNCE)
     ];
     
-    const sentMessage = await nazu.sendMessage(from, { text: announcementText, mentions });
+    const sentMessage = await bot.sendMessage(from, { text: announcementText, mentions });
     
     if (sentMessage?.key?.id) {
       if (!groupData.roleMessages || typeof groupData.roleMessages !== 'object') {

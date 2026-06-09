@@ -1,6 +1,6 @@
 /**
  * Utilitário de limpeza real do chat via botInvokeMessage.
- * Portado e adaptado do Takeshi Bot para o Nazuna Modularizado.
+ * Portado e adaptado do Takeshi Bot para o Chainy Modularizado.
  * 
  * Utiliza relayMessage com payload botInvokeMessage para efetivamente
  * limpar o histórico visual do chat, ao invés de apenas enviar emojis.
@@ -68,21 +68,21 @@ function generateScrollText() {
  * 3. Faz relay da mensagem especial botInvokeMessage
  * 
  * @param {object} options
- * @param {object} options.nazu - Instância do socket WhatsApp (baileys)
+ * @param {object} options.bot - Instância do socket WhatsApp (baileys)
  * @param {string} options.from - JID do grupo
  * @param {Function} [options.reply] - Função de reply (opcional, para mensagem de sucesso)
  * @param {string} [options.successMessage] - Mensagem de sucesso opcional
  */
-export async function sendCleanChat({ nazu, from, reply, successMessage }) {
+export async function sendCleanChat({ bot, from, reply, successMessage }) {
     // Envia texto de scroll para empurrar visualmente o chat
-    await nazu.sendMessage(from, {
+    await bot.sendMessage(from, {
         text: `${BOT_CLEAN_EMOJI} \n\n${generateScrollText()}`,
     });
 
     await delay(2000);
 
     // Relay da mensagem especial que efetivamente limpa o chat
-    await nazu.relayMessage(from, buildCleanChatMessage(), {});
+    await bot.relayMessage(from, buildCleanChatMessage(), {});
 
     if (!successMessage) {
         return;
@@ -95,7 +95,7 @@ export async function sendCleanChat({ nazu, from, reply, successMessage }) {
         return;
     }
 
-    await nazu.sendMessage(from, {
+    await bot.sendMessage(from, {
         text: `${BOT_CLEAN_EMOJI} ✅ ${successMessage}`,
     });
 }

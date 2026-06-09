@@ -1,5 +1,5 @@
 export async function handleAntiMedia(context) {
-    const { nazu, info, isGroup, sender, groupData, isGroupAdmin, isOwner, type, from, reply, getUserName, isBotAdmin, MESSAGES } = context;
+    const { bot, info, isGroup, sender, groupData, isGroupAdmin, isOwner, type, from, reply, getUserName, isBotAdmin, MESSAGES } = context;
     if (!isGroup || isGroupAdmin || isOwner) return false;
 
     const isViewOnce = info.message?.viewOnceMessage?.message || info.message?.viewOnceMessageV2?.message || info.message?.viewOnceMessageV2Extension?.message;
@@ -35,9 +35,9 @@ export async function handleAntiMedia(context) {
 
     const mediaAction = groupData[mediaActionKey] || 'apagar';
     try {
-        await nazu.sendMessage(from, { delete: info.key });
+        await bot.sendMessage(from, { delete: info.key });
         if (mediaAction === 'banir' && isBotAdmin) {
-            await nazu.groupParticipantsUpdate(from, [sender], 'remove');
+            await bot.groupParticipantsUpdate(from, [sender], 'remove');
             await reply(MESSAGES.security.antiMediaAdmin(getUserName(sender), restrictedTypeLabel), { mentions: [sender] });
         } else {
             const extraMsg = (mediaAction === 'banir' && !isBotAdmin) ? MESSAGES.security.cantRemoveAdminSuffix : '';

@@ -55,7 +55,7 @@ export default {
       if (!['red', 'black', 'green'].includes(color) || bet < 100) return reply(`💡 Use ${prefix}roleta <red|black|green> <valor>`);
       if (me.wallet < bet) return reply('💰 Saldo insuficiente!');
 
-      // ROLETA NERFADA (Portado do Nazuna Original)
+      // ROLETA NERFADA (Portado do Chainy Original)
       const rand = Math.random();
       let result;
       const otherColors = ['red', 'black', 'green'].filter(c => c !== color);

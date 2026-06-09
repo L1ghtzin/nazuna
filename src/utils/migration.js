@@ -6,10 +6,10 @@ const isValidJid = (str) => /^\d+@s\.whatsapp\.net$/.test(str);
 /**
  * Busca LID de um JID com tentativas
  */
-export async function fetchLidWithRetry(NazunaSock, jid, retries = 2) {
+export async function fetchLidWithRetry(ChainySock, jid, retries = 2) {
     for (let i = 0; i < retries; i++) {
         try {
-            const result = await NazunaSock.onWhatsApp(jid);
+            const result = await ChainySock.onWhatsApp(jid);
             if (result && result[0] && result[0].lid) {
                 return { jid, lid: result[0].lid };
             }
@@ -208,11 +208,11 @@ async function handleJidFiles(jidFiles, jidToLidMap, orphanJidsSet) {
 }
 
 
-async function fetchLidsInBatches(NazunaSock, uniqueJids, batchSize = 5) {
+async function fetchLidsInBatches(ChainySock, uniqueJids, batchSize = 5) {
     const jidToLidMap = new Map();
     for (let i = 0; i < uniqueJids.length; i += batchSize) {
         const batch = uniqueJids.slice(i, i + batchSize);
-        const batchPromises = batch.map(jid => fetchLidWithRetry(NazunaSock, jid));
+        const batchPromises = batch.map(jid => fetchLidWithRetry(ChainySock, jid));
         const batchResults = await Promise.allSettled(batchPromises);
         batchResults.forEach((result) => {
             if (result.status === 'fulfilled' && result.value) {
@@ -227,7 +227,7 @@ async function fetchLidsInBatches(NazunaSock, uniqueJids, batchSize = 5) {
 /**
  * Executa a migração completa
  */
-export async function performMigration(NazunaSock, databaseDir, configPath) {
+export async function performMigration(ChainySock, databaseDir, configPath) {
     // Flag de migração completa para evitar scans repetidos
     const migrationFlagFile = path.join(databaseDir, '.migration_complete');
     try {
@@ -244,7 +244,7 @@ export async function performMigration(NazunaSock, databaseDir, configPath) {
             return;
         }
 
-        const { jidToLidMap } = await fetchLidsInBatches(NazunaSock, uniqueJids);
+        const { jidToLidMap } = await fetchLidsInBatches(ChainySock, uniqueJids);
         const orphanJidsSet = new Set(uniqueJids.filter(jid => !jidToLidMap.has(jid)));
 
         if (jidToLidMap.size > 0) {
@@ -263,10 +263,10 @@ export async function performMigration(NazunaSock, databaseDir, configPath) {
 /**
  * Atualiza o LID do dono no config.json
  */
-export async function updateOwnerLid(NazunaSock, numerodono, config, configPath) {
+export async function updateOwnerLid(ChainySock, numerodono, config, configPath) {
     const ownerJid = `${numerodono}@s.whatsapp.net`;
     try {
-        const result = await fetchLidWithRetry(NazunaSock, ownerJid);
+        const result = await fetchLidWithRetry(ChainySock, ownerJid);
         if (result) {
             config.lidowner = result.lid;
             await fs.writeFile(configPath, JSON.stringify(config, null, 2), 'utf-8');
@@ -277,3 +277,5 @@ export async function updateOwnerLid(NazunaSock, numerodono, config, configPath)
     }
     return null;
 }
+
+

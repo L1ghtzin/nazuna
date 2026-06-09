@@ -88,7 +88,7 @@ export const deleteAutoResponse = (groupId, responseId, isGlobal = false) => {
   }
 };
 
-export const processAutoResponse = async (nazu, from, triggerText, info) => {
+export const processAutoResponse = async (bot, from, triggerText, info) => {
   try {
     const normalizedTrigger = normalizar(triggerText);
     
@@ -96,7 +96,7 @@ export const processAutoResponse = async (nazu, from, triggerText, info) => {
     const globalResponses = loadCustomAutoResponses();
     for (const response of globalResponses) {
       if (normalizedTrigger.includes(response.trigger || response.received)) {
-        await sendAutoResponse(nazu, from, response, info);
+        await sendAutoResponse(bot, from, response, info);
         return true;
       }
     }
@@ -106,7 +106,7 @@ export const processAutoResponse = async (nazu, from, triggerText, info) => {
       const groupResponses = loadGroupAutoResponses(from);
       for (const response of groupResponses) {
         if (normalizedTrigger.includes(response.trigger)) {
-          await sendAutoResponse(nazu, from, response, info);
+          await sendAutoResponse(bot, from, response, info);
           return true;
         }
       }
@@ -119,13 +119,13 @@ export const processAutoResponse = async (nazu, from, triggerText, info) => {
   }
 };
 
-export const sendAutoResponse = async (nazu, from, response, quotedMessage) => {
+export const sendAutoResponse = async (bot, from, response, quotedMessage) => {
   try {
     const responseData = response.response || response;
     
     // Compatibilidade com sistema antigo (apenas texto)
     if (typeof responseData === 'string') {
-      await nazu.sendMessage(from, { text: responseData }, { quoted: quotedMessage });
+      await bot.sendMessage(from, { text: responseData }, { quoted: quotedMessage });
       return;
     }
 
@@ -182,7 +182,7 @@ export const sendAutoResponse = async (nazu, from, response, quotedMessage) => {
         messageContent.text = responseData.content || 'Resposta automática';
     }
 
-    await nazu.sendMessage(from, messageContent, sendOptions);
+    await bot.sendMessage(from, messageContent, sendOptions);
   } catch (error) {
     console.error('❌ Erro ao enviar auto-resposta:', error);
   }

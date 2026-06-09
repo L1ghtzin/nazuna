@@ -7,8 +7,8 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 class RentalExpirationManager {
-  constructor(nazu, config = {}) {
-    this.nazu = nazu;
+  constructor(bot, config = {}) {
+    this.bot = bot;
     this.ownerNumber = config.ownerNumber || null;
     this.ownerName = config.ownerName || 'Dono do Bot';
     this.config = {
@@ -163,7 +163,7 @@ class RentalExpirationManager {
 
   async processExpiredRental(groupId, groupInfo, rentalData) {
     try {
-      const groupMetadata = await this.nazu.groupMetadata(groupId).catch(() => null);
+      const groupMetadata = await this.bot.groupMetadata(groupId).catch(() => null);
       
       if (!groupMetadata) {
         await this.log(`Group ${groupId} not found, removing from rental data`);
@@ -192,7 +192,7 @@ class RentalExpirationManager {
 
   async sendExpirationNotification(groupId, type, daysUntilExpiry) {
     try {
-      const groupMetadata = await this.nazu.groupMetadata(groupId).catch(() => null);
+      const groupMetadata = await this.bot.groupMetadata(groupId).catch(() => null);
       if (!groupMetadata) return;
 
       const ownerInfo = await this.getOwnerInfo();
@@ -203,7 +203,7 @@ class RentalExpirationManager {
 
       // Send to group
       if (target === 'grupo' || target === 'ambos') {
-        await this.nazu.sendMessage(groupId, {
+        await this.bot.sendMessage(groupId, {
           text: message
         }).catch(error => {
           console.error(`❌ Failed to send message to group ${groupId}:`, error);
@@ -216,7 +216,7 @@ class RentalExpirationManager {
         const admins = participants.filter(p => p.admin === 'admin' || p.admin === 'superadmin');
         
         for (const admin of admins) {
-          await this.nazu.sendMessage(admin.id, {
+          await this.bot.sendMessage(admin.id, {
             text: message
           }).catch(error => {
             console.error(`❌ Failed to send message to admin ${admin.id}:`, error);
@@ -306,12 +306,12 @@ O aluguel deste grupo expirou e o bot está saindo agora. Para voltar a usar o b
 
 🤖 *Obrigado por usar nossos serviços! Até breve!*`;
 
-      await this.nazu.sendMessage(groupId, {
+      await this.bot.sendMessage(groupId, {
         text: goodbyeMessage
       });
 
       // Leave the group
-      await this.nazu.groupLeave(groupId);
+      await this.bot.groupLeave(groupId);
       
       // Remove from rental data
       const rentalData = await this.loadRentalData();
@@ -334,11 +334,11 @@ O aluguel deste grupo expirou e o bot está saindo agora. Para voltar a usar o b
       const number = this.ownerNumber || process.env.OWNER_NUMBER || '5511999999999';
       let contact = `${number}@s.whatsapp.net`;
 
-      // If nazu and helpers available, try to normalize contact to LID
-      if (this.nazu && typeof this.nazu.onWhatsApp === 'function') {
+      // If bot and helpers available, try to normalize contact to LID
+      if (this.bot && typeof this.bot.onWhatsApp === 'function') {
         try {
           const cleanNumber = number.toString().replace(/\D/g, '');
-          const [res] = await this.nazu.onWhatsApp(cleanNumber);
+          const [res] = await this.bot.onWhatsApp(cleanNumber);
           if (res && res.jid) {
             contact = res.jid;
           }

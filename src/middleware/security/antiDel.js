@@ -1,5 +1,5 @@
 export async function handleAntiDel(context) {
-    const { nazu, info, isGroup, groupData, messagesCache, from, MESSAGES } = context;
+    const { bot, info, isGroup, groupData, messagesCache, from, MESSAGES } = context;
     if (!isGroup || !info.message?.protocolMessage || info.message.protocolMessage.type !== 0 || !groupData.antidel) return false;
 
     const deletedMsgKey = info.message.protocolMessage.key;
@@ -33,7 +33,7 @@ export async function handleAntiDel(context) {
             userName = pushNameFromMsg;
         } else {
             try {
-                const fetchedName = await nazu.getName(fromGroup, participant); 
+                const fetchedName = await bot.getName(fromGroup, participant); 
                 const numeroLimpoFallback = participant.split('@')[0];
                 userName = (fetchedName && fetchedName !== numeroLimpoFallback) ? fetchedName : numeroLimpoFallback;
             } catch (e) {
@@ -42,7 +42,7 @@ export async function handleAntiDel(context) {
         }
         
         try {
-            profilePic = await nazu.profilePictureUrl(participant, 'image');
+            profilePic = await bot.profilePictureUrl(participant, 'image');
         } catch (e) {}
         
         clone.contextInfo = {
@@ -59,7 +59,7 @@ export async function handleAntiDel(context) {
         };
         
         try {
-            await nazu.sendMessage(fromGroup, clone);
+            await bot.sendMessage(fromGroup, clone);
         } catch (err) {
             console.error('ERRO CRÍTICO AO REENVIAR MENSAGEM:', err);
         }

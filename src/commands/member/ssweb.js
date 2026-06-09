@@ -4,7 +4,7 @@ export default {
   commands: ["printsite", "ssweb"],
   usage: `${global.prefixo}ssweb <link>`,
   handle: async ({ 
-    nazu,
+    bot,
     from,
     reply,
     q,
@@ -13,7 +13,7 @@ export default {
     try {
       if (!q) return reply(`Cade o link?`);
       
-      await nazu.sendMessage(from, {
+      await bot.sendMessage(from, {
         image: {
           url: `https://image.thum.io/get/fullpage/${q}`
         }

@@ -13,7 +13,7 @@ export default {
   commands: ["desmutar", "desmute", "unmute"],
   usage: `${global.prefixo}unmute @usuario`,
   handle: async ({ 
-    nazu,
+    bot,
     from,
     reply,
     isGroup,
@@ -34,7 +34,7 @@ export default {
       let groupData = await optimizer.loadJsonWithCache(groupFilePath, { mutedUsers: {} });
       
       groupData.mutedUsers = groupData.mutedUsers || {};
-      const targetId = await normalizeUserId(nazu, menc_os2);
+      const targetId = await normalizeUserId(bot, menc_os2);
       
       const removed = removeUserFromMap(groupData.mutedUsers, targetId) || 
                       removeUserFromMap(groupData.mutedUsers, menc_os2);
@@ -42,7 +42,7 @@ export default {
       if (removed) {
         await optimizer.saveJsonWithCache(groupFilePath, groupData);
         optimizer.invalidateGroup(from);
-        await nazu.sendMessage(from, {
+        await bot.sendMessage(from, {
           text: `✅ @${getUserName(menc_os2)} foi desmutado e pode enviar mensagens novamente.`,
           mentions: [menc_os2]
         }, {

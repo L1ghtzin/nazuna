@@ -55,7 +55,7 @@ function formatMessageText(template, replacements) {
     return text;
 }
 
-async function createGroupMessage(NazunaSock, groupMetadata, participants, settings, isWelcome = true) {
+async function createGroupMessage(ChainySock, groupMetadata, participants, settings, isWelcome = true) {
     const jsonGp = await loadGroupSettings(groupMetadata.id);
     const mentions = participants.map(p => p);
     const replacements = {
@@ -74,7 +74,7 @@ async function createGroupMessage(NazunaSock, groupMetadata, participants, setti
     if (settings.image) {
         let profilePicUrl = 'https://raw.githubusercontent.com/nazuninha/uploads/main/outros/1747053564257_bzswae.bin';
         if (participants.length === 1 && isWelcome) {
-            profilePicUrl = await NazunaSock.profilePictureUrl(participants[0], 'image').catch(() => profilePicUrl);
+            profilePicUrl = await ChainySock.profilePictureUrl(participants[0], 'image').catch(() => profilePicUrl);
         }
            
         const image = settings.image !== 'banner' ? { url: settings.image } : null;
@@ -105,7 +105,7 @@ function isValidParticipant(participant) {
     return false;
 }
 
-export async function handleGroupParticipantsUpdate(NazunaSock, inf) {
+export async function handleGroupParticipantsUpdate(ChainySock, inf) {
     try {
         const from = inf.id || inf.jid || (inf.participants?.length ? inf.participants[0].split('@')[0] + '@s.whatsapp.net' : null);
 
@@ -118,12 +118,12 @@ export async function handleGroupParticipantsUpdate(NazunaSock, inf) {
         if (!from) return;
         if (!inf.participants?.length) return;
 
-        const botId = NazunaSock.user.id.split(':')[0];
+        const botId = ChainySock.user.id.split(':')[0];
 
         inf.participants = inf.participants.map(isValidParticipant).filter(Boolean);
         if (inf.participants.some(p => p.startsWith(botId))) return;
 
-        const groupMetadata = await NazunaSock.groupMetadata(from).catch(() => null);
+        const groupMetadata = await ChainySock.groupMetadata(from).catch(() => null);
         if (!groupMetadata) return;
 
         const groupSettings = await loadGroupSettings(from);
@@ -138,7 +138,7 @@ export async function handleGroupParticipantsUpdate(NazunaSock, inf) {
                 const entradaPorLink = !inf.author || inf.participants.includes(inf.author);
 
                 for (const participant of inf.participants) {
-                    const resolved = await resolveParticipant(participant, NazunaSock, groupMetadata);
+                    const resolved = await resolveParticipant(participant, ChainySock, groupMetadata);
                     const participantNumber = resolved.number;
                     const participantStripped = participant.replace(/@.*/, '');
                     const isLid = resolved.isLid;
@@ -159,14 +159,14 @@ export async function handleGroupParticipantsUpdate(NazunaSock, inf) {
                         continue;
                     }
 
-                    const antifakeResult = await checkAntifake(participant, groupSettings, NazunaSock);
+                    const antifakeResult = await checkAntifake(participant, groupSettings, ChainySock);
                     if (!antifakeResult.allowed) {
                         membersToRemove.push(participant);
                         
                         // Se o grupo não tem modo de aprovação, envia uma mensagem direta
                         if (!groupMetadata.approveNewParticipants && !groupMetadata.joinApprovalMode) {
                             const msgAntiFake = `🚫 O usuário @${antifakeResult.number} foi removido pelo AntiFake.\nMotivo: Utilizando número estrangeiro (${antifakeResult.reason}).`;
-                            await NazunaSock.sendMessage(from, { 
+                            await ChainySock.sendMessage(from, { 
                                 text: msgAntiFake, 
                                 mentions: [participant] 
                             }).catch(() => {});
@@ -222,7 +222,7 @@ export async function handleGroupParticipantsUpdate(NazunaSock, inf) {
 
                         CaptchaIndex.add(typeIds, from, answer, expiresAt, participantNumber);
 
-                        await NazunaSock.sendMessage(from, {
+                        await ChainySock.sendMessage(from, {
                             text: `🔐 *VERIFICAÇÃO*\n\nOlá @${participantNumber}\n\n❓ ${num1} + ${num2} = ?\n\n⏱️ 5 minutos.`,
                             mentions: [`${participantNumber}@s.whatsapp.net`]
                         });
@@ -236,10 +236,10 @@ export async function handleGroupParticipantsUpdate(NazunaSock, inf) {
                 }
 
                 if (membersToRemove.length) {
-                    await NazunaSock.groupParticipantsUpdate(from, membersToRemove, 'remove').catch(() => {});
+                    await ChainySock.groupParticipantsUpdate(from, membersToRemove, 'remove').catch(() => {});
                     
                     if (removalReasons.length) {
-                        await NazunaSock.sendMessage(from, {
+                        await ChainySock.sendMessage(from, {
                             text: `🚫 Removidos:\n- ${removalReasons.join('\n- ')}`,
                             mentions: membersToRemove
                         }).catch(() => {});
@@ -248,12 +248,12 @@ export async function handleGroupParticipantsUpdate(NazunaSock, inf) {
 
                 if (membersToWelcome.length) {
                     const message = await createGroupMessage(
-                        NazunaSock,
+                        ChainySock,
                         groupMetadata,
                         membersToWelcome,
                         groupSettings.welcome || { text: groupSettings.textbv }
                     );
-                    await NazunaSock.sendMessage(from, message);
+                    await ChainySock.sendMessage(from, message);
                 }
                 break;
             }
@@ -261,13 +261,13 @@ export async function handleGroupParticipantsUpdate(NazunaSock, inf) {
             case 'remove': {
                 if (groupSettings.exit?.enabled) {
                     const message = await createGroupMessage(
-                        NazunaSock,
+                        ChainySock,
                         groupMetadata,
                         inf.participants,
                         groupSettings.exit,
                         false
                     );
-                    await NazunaSock.sendMessage(from, message).catch(err => console.log('❌ erro saída:', err.message));
+                    await ChainySock.sendMessage(from, message).catch(err => console.log('❌ erro saída:', err.message));
                 }
                 break;
             }
@@ -284,7 +284,7 @@ export async function handleGroupParticipantsUpdate(NazunaSock, inf) {
                         ? `⬆️ @${userNum} virou ADM por @${autorNum}`
                         : `⬇️ @${userNum} deixou de ser ADM por @${autorNum}`;
 
-                    await NazunaSock.sendMessage(from, {
+                    await ChainySock.sendMessage(from, {
                         text: texto,
                         mentions: autor ? [user, autor] : [user]
                     }).catch(() => { });
@@ -297,7 +297,7 @@ export async function handleGroupParticipantsUpdate(NazunaSock, inf) {
     }
 }
 
-export async function handleGroupJoinRequest(NazunaSock, inf) {
+export async function handleGroupJoinRequest(ChainySock, inf) {
     try {
         const typeIds = { id: '', lid: '', participant: '' };
         const from = inf.id;
@@ -337,11 +337,11 @@ export async function handleGroupJoinRequest(NazunaSock, inf) {
 
         const groupSettings = await loadGroupSettings(from);
 
-        const antifakeResult = await checkAntifake(participantJid, groupSettings, NazunaSock);
+        const antifakeResult = await checkAntifake(participantJid, groupSettings, ChainySock);
         if (!antifakeResult.allowed) {
             console.log(`🛡️ [AntiFake] Rejeitando: ${participantJid} (${antifakeResult.number})`);
             try {
-                await NazunaSock.groupRequestParticipantsUpdate(from, [participantJid], 'reject');
+                await ChainySock.groupRequestParticipantsUpdate(from, [participantJid], 'reject');
             } catch (err) {
                 console.error(`❌ [AntiFake] Erro ao rejeitar ${participantJid}:`, err.message);
             }
@@ -356,7 +356,7 @@ export async function handleGroupJoinRequest(NazunaSock, inf) {
 
         if (groupSettings.autoAcceptRequests) {
             if (DEBUG_MODE) console.log(`[Auto-Accept] Aceitando ${participantJid} no grupo ${from}`);
-            await NazunaSock.groupRequestParticipantsUpdate(from, [participantJid], 'approve');
+            await ChainySock.groupRequestParticipantsUpdate(from, [participantJid], 'approve');
             if (!groupSettings.captchaEnabled) return;
         }
 
@@ -370,12 +370,12 @@ export async function handleGroupJoinRequest(NazunaSock, inf) {
 
             let nome = inf.participant;
             try {
-                nome = await NazunaSock.getName(participantJid);
+                nome = await ChainySock.getName(participantJid);
             } catch { }
 
             CaptchaIndex.add(typeIds, from, answer, expiresAt, nome);
 
-            await NazunaSock.sendMessage(from, {
+            await ChainySock.sendMessage(from, {
                 text: `🔐 *VERIFICAÇÃO DE SEGURANÇA*\n\n👋 Olá @${numero}!\n\nPara garantir que você não é um bot, resolva:\n❓ *${num1} + ${num2} = ?*\n\n⏱️ Você tem 5 minutos ou será removido.`,
                 mentions: [participantJid]
             });

@@ -3,7 +3,7 @@ export default {
   description: "Comandos de Jogos",
   commands: ["c4", "connect4", "jogodavelha", "ligue4", "memoria", "memory", "tictactoe", "ttt", "uno"],
   handle: async ({ 
-    nazu, from, info, command, args, reply, prefix, pushname, sender, menc_os2,
+    bot, from, info, command, args, reply, prefix, pushname, sender, menc_os2,
     isGroup, isGroupAdmin, tictactoe, connect4, uno, memoria, normalizeCommand,
     MESSAGES
   }) => {
@@ -18,7 +18,7 @@ export default {
       if (!tictactoe) return reply("Sistema de Jogo da Velha indisponível.");
       if (!menc_os2) return reply(MESSAGES.error.missing('alguém'));
       const result = await tictactoe.invitePlayer(from, sender, menc_os2);
-      await nazu.sendMessage(from, { text: result.message, mentions: result.mentions });
+      await bot.sendMessage(from, { text: result.message, mentions: result.mentions });
       return;
     }
 
@@ -29,7 +29,7 @@ export default {
       if (!connect4) return reply("Sistema Connect4 indisponível.");
       if (!menc_os2) return reply(MESSAGES.error.missing('alguém'));
       const result = await connect4.invitePlayer(from, sender, menc_os2);
-      await nazu.sendMessage(from, { text: result.message, mentions: result.mentions });
+      await bot.sendMessage(from, { text: result.message, mentions: result.mentions });
       return;
     }
 
@@ -65,9 +65,9 @@ export default {
         const parts = arg.split(/\s+/);
         const res = uno.playCard(from, sender, parseInt(parts[0]), parts[1]);
         if (res.success) {
-          await nazu.sendMessage(from, { text: res.message, mentions: res.mentions || [] });
+          await bot.sendMessage(from, { text: res.message, mentions: res.mentions || [] });
           const hand = uno.getPlayerHand(from, sender);
-          if (hand) try { await nazu.sendMessage(sender, { text: `🎴 *Sua mão:*\n${hand}` }); } catch (e) { console.error('Error sending hand to player:', e); }
+          if (hand) try { await bot.sendMessage(sender, { text: `🎴 *Sua mão:*\n${hand}` }); } catch (e) { console.error('Error sending hand to player:', e); }
         } else reply(res.message);
         return;
       }
@@ -76,7 +76,7 @@ export default {
         const hand = uno.getPlayerHand(from, sender);
         if (hand) {
           try {
-            await nazu.sendMessage(sender, { text: `🎴 *Sua mão atual:*\n\n${hand}` });
+            await bot.sendMessage(sender, { text: `🎴 *Sua mão atual:*\n\n${hand}` });
             return reply('✅ Mão enviada no PV!');
           } catch (e) { return reply(`💔 Não consegui enviar no PV.`); }
         } else return reply(`💔 Você não está no jogo!`);
@@ -87,12 +87,12 @@ export default {
         if (subCmd === 'iniciar' && res.success) {
           await reply(res.message, res.mentions ? { mentions: res.mentions } : undefined);
           for (const [id, h] of Object.entries(res.hands)) {
-            try { await nazu.sendMessage(id, { text: `🎴 *Sua mão inicial:*\n${h}` }); } catch (e) { console.error('Error sending initial hand:', e); }
+            try { await bot.sendMessage(id, { text: `🎴 *Sua mão inicial:*\n${h}` }); } catch (e) { console.error('Error sending initial hand:', e); }
           }
         } else {
           reply(res.message, res.mentions ? { mentions: res.mentions } : undefined);
           if (subCmd === 'comprar' && res.newHand) {
-            try { await nazu.sendMessage(sender, { text: `🎴 *Sua mão:*\n${res.newHand}` }); } catch (e) { console.error('Error sending drawn hand:', e); }
+            try { await bot.sendMessage(sender, { text: `🎴 *Sua mão:*\n${res.newHand}` }); } catch (e) { console.error('Error sending drawn hand:', e); }
           }
         }
       }

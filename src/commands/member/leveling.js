@@ -3,7 +3,7 @@ export default {
   description: "Sistema de níveis e experiência por mensagens",
   commands: ["leveling", "level", "rank", "ranking", "addxp", "delxp", "setlevel"],
   handle: async ({ 
-    nazu, from, info, command, q, args, reply, prefix, pushname, sender, menc_os2,
+    bot, from, info, command, q, args, reply, prefix, pushname, sender, menc_os2,
     isGroup, isGroupAdmin, isOwner, groupData, groupFile, getUserName, optimizer,
     loadLevelingSafe, saveLevelingSafe, getLevelingUser, calculateNextLevelXp, checkLevelUp, checkLevelDown
   , MESSAGES }) => {
@@ -68,7 +68,7 @@ export default {
       
       if (cmd === 'addxp') {
         user.xp = (user.xp || 0) + val;
-        checkLevelUp(menc_os2, user, data, nazu, from);
+        checkLevelUp(menc_os2, user, data, bot, from);
       } else if (cmd === 'delxp') {
         user.xp = Math.max(0, (user.xp || 0) - val);
         checkLevelDown(menc_os2, user, data);

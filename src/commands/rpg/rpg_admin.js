@@ -13,7 +13,7 @@ export default {
         optimizer, 
         from, 
         command,
-        nazu 
+        bot 
     , MESSAGES }) => {
         const sub = command.toLowerCase();
 

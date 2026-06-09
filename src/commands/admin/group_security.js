@@ -6,7 +6,7 @@ export default {
   description: "Segurança e moderação avançada de grupos",
   commands: ["aceitarticket", "addblacklist", "addparceria", "addpartnership", "adv", "advertir", "antibanmarcar", "antifig", "antipalavra", "antisl", "antistatus", "antisticker+", "antistickerplus", "antistickerplusbot", "antitoxic", "antitóxico", "antiword", "banghost", "bemvindo", "blacklist", "boasvindas", "bv", "clean", "configsaida", "delblacklist", "delfotobv", "delfotosaiu", "delparceria", "delpartnership", "exit", "exitimg", "exitmsg", "fotobv", "fotosaida", "fotosaiu", "imgsaiu", "legendasaiu", "limpar", "listadv", "listblacklist", "modoparceria", "parcerias", "partnerships", "protecaomarcar", "removeradv", "removerfotobv", "removerfotosaiu", "rmadv", "rmexitimg", "rmfotobv", "rmfotosaiu", "rmwelcomeimg", "saida", "suporte", "suporteaceitar", "suporteticket", "textsaiu", "ticket", "ticket.aceitar", "ticketaceitar", "ticketsuporte", "unblacklist", "unwarning", "warning", "warninglist", "welcome", "welcomeimg", "antipayment", "antipagamento", "antiimagem", "antivideo", "antiaudio", "antidoc", "antievento", "antiproduto"],
   handle: async ({ 
-    nazu, from, info, command, args, reply, prefix, pushname, sender, q,
+    bot, from, info, command, args, reply, prefix, pushname, sender, q,
     isGroup, isGroupAdmin, isBotAdmin, isOwner, AllgroupMembers, groupData, groupFile,
     getUserName, optimizer, GRUPOS_DIR, DATABASE_DIR, buildGroupFilePath,
     isQuotedMsg, isQuotedImage, isImage, getFileBuffer, upload,
@@ -116,7 +116,7 @@ export default {
       });
 
       if (!ghosts.length) return reply("Nenhum fantasma encontrado.");
-      await nazu.groupParticipantsUpdate(from, ghosts, 'remove');
+      await bot.groupParticipantsUpdate(from, ghosts, 'remove');
       return reply(`✅ ${ghosts.length} fantasmas removidos!`);
     }
 
@@ -189,7 +189,7 @@ export default {
                }
            }
         }
-        if (isBotAdmin) await nazu.groupParticipantsUpdate(from, [targetId], 'remove');
+        if (isBotAdmin) await bot.groupParticipantsUpdate(from, [targetId], 'remove');
         delete groupData.warnings[menc_os2];
         await optimizer.saveJsonWithCache(groupFile, groupData);
         return reply(`🚫 @${getUserName(menc_os2)} recebeu 3 advertências e foi banido!\nÚltima advertência: ${reason}`, { mentions: [menc_os2] });
@@ -302,7 +302,7 @@ export default {
       if (!isGroupAdmin) return reply(MESSAGES.permission.adminOnly);
       if (!isBotAdmin) return reply(MESSAGES.permission.botAdminOnly);
       try {
-        await sendCleanChat({ nazu, from, reply, successMessage: 'Limpeza concluída!' });
+        await sendCleanChat({ bot, from, reply, successMessage: 'Limpeza concluída!' });
       } catch (error) {
         console.error('[CLEAN] Erro ao limpar chat:', error.message);
         // Fallback para limpeza simples se o relayMessage falhar
@@ -343,7 +343,7 @@ export default {
       if (!isGroup) return reply(MESSAGES.permission.groupOnly);
       if (!isGroupAdmin && !isOwner) return reply(MESSAGES.permission.adminOnly);
       if (!antistickerplus) return reply("❌ Sistema AntistickerPlus indisponível.");
-      await antistickerplus.handleCommand(nazu, from, args, groupData, { reply, prefix });
+      await antistickerplus.handleCommand(bot, from, args, groupData, { reply, prefix });
       return;
     }
 
@@ -351,7 +351,7 @@ export default {
       if (!isGroup) return reply(MESSAGES.permission.groupOnly);
       if (!isGroupAdmin && !isOwner) return reply(MESSAGES.permission.adminOnly);
       if (!antitoxic) return reply("❌ Sistema Antitoxic indisponível.");
-      await antitoxic.handleCommand(nazu, from, args, groupData, { reply, prefix });
+      await antitoxic.handleCommand(bot, from, args, groupData, { reply, prefix });
       return;
     }
 
@@ -359,7 +359,7 @@ export default {
       if (!isGroup) return reply(MESSAGES.permission.groupOnly);
       if (!isGroupAdmin && !isOwner) return reply(MESSAGES.permission.adminOnly);
       if (!antipalavra) return reply("❌ Sistema Antipalavra indisponível.");
-      await antipalavra.handleCommand(nazu, from, args, groupData, { reply, prefix });
+      await antipalavra.handleCommand(bot, from, args, groupData, { reply, prefix });
       return;
     }
 

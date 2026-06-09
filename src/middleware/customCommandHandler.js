@@ -10,7 +10,7 @@ export async function handleCustomCommand(ctx) {
     isGroup, isOwner, isGroupAdmin, isOnlyAdmin, body, budy2,
     from, groupPrefix, nomedono, numerodono, nomebot, pushname,
     groupName, groupMetadata, quotedMessageContent, menc_os2,
-    info, reply, nazu, getUserName, optimizer, args, q
+    info, reply, bot, getUserName, optimizer, args, q
   } = ctx;
   let { isCmd, command } = ctx;
 
@@ -122,13 +122,13 @@ export async function handleCustomCommand(ctx) {
       
       await reply(processedResponse, { mentions });
     } else if (processedResponse?.type === 'image' && processedResponse.buffer) {
-      await nazu.sendMessage(from, { image: Buffer.from(processedResponse.buffer, 'base64'), caption: processedResponse.caption || '' }, { quoted: info });
+      await bot.sendMessage(from, { image: Buffer.from(processedResponse.buffer, 'base64'), caption: processedResponse.caption || '' }, { quoted: info });
     } else if (processedResponse?.type === 'video' && processedResponse.buffer) {
-      await nazu.sendMessage(from, { video: Buffer.from(processedResponse.buffer, 'base64'), caption: processedResponse.caption || '' }, { quoted: info });
+      await bot.sendMessage(from, { video: Buffer.from(processedResponse.buffer, 'base64'), caption: processedResponse.caption || '' }, { quoted: info });
     } else if (processedResponse?.type === 'audio' && processedResponse.buffer) {
-      await nazu.sendMessage(from, { audio: Buffer.from(processedResponse.buffer, 'base64'), mimetype: 'audio/mp4', ptt: processedResponse.ptt || false }, { quoted: info });
+      await bot.sendMessage(from, { audio: Buffer.from(processedResponse.buffer, 'base64'), mimetype: 'audio/mp4', ptt: processedResponse.ptt || false }, { quoted: info });
     } else if (processedResponse?.type === 'sticker' && processedResponse.buffer) {
-      await nazu.sendMessage(from, { sticker: Buffer.from(processedResponse.buffer, 'base64') }, { quoted: info });
+      await bot.sendMessage(from, { sticker: Buffer.from(processedResponse.buffer, 'base64') }, { quoted: info });
     } else if (processedResponse?.type === 'text') {
       await reply(processedResponse.content || 'Resposta personalizada');
     }

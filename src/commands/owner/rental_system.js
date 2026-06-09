@@ -29,7 +29,7 @@ export default {
     "veraluguéis"
   ],
   handle: async ({
-    nazu,
+    bot,
     from,
     info,
     command,
@@ -282,7 +282,7 @@ export default {
         await reply(message);
 
         try {
-          await nazu.sendMessage(targetGroupId, {
+          await bot.sendMessage(targetGroupId, {
             text: "⚠️ *AVISO IMPORTANTE*\n\nO aluguel deste grupo foi removido pelo proprietário do bot.\n\n❌ O bot não funcionará mais neste grupo.\n\nPara mais informações, entre em contato com o dono."
           });
         } catch (error) {
@@ -352,7 +352,7 @@ export default {
         await reply(message);
 
         try {
-          await nazu.sendMessage(targetGroupId, {
+          await bot.sendMessage(targetGroupId, {
             text: `🎉 *BOA NOTÍCIA!*\n\nSeu aluguel foi estendido!\n\n➕ Dias adicionados: *${daysToAdd}*\n📅 Nova data de expiração: *${newExpirationDate}*\n⏳ Dias restantes: *${daysLeft}*\n\n✨ Continue aproveitando o bot!`
           });
         } catch (error) {
@@ -403,7 +403,7 @@ export default {
                 : "N/A";
 
               const msg = `🎉 Aténcao, ${groupMeta?.subject || "grupo"}! Adicionados ${extraDays} dias extras de aluguel.\nNova expiração: ${formattedDate}.\nMotivo: ${motivo}`;
-              await nazu.sendMessage(groupId, { text: msg });
+              await bot.sendMessage(groupId, { text: msg });
             } catch (error) {
               console.error(`Erro ao enviar mensagem para ${groupId}:`, error);
               summary += "   ⚠️ Falha ao avisar no grupo.\n";
@@ -569,7 +569,7 @@ export default {
         let adminsNotified = 0;
         const symbols = ["✨", "🌟", "⚡", "🔥", "🌈", "🍀", "💫", "🎉"];
 
-        const currentGroups = await nazu.groupFetchAllParticipating().catch(() => ({}));
+        const currentGroups = await bot.groupFetchAllParticipating().catch(() => ({}));
         const currentGroupIds = Object.keys(currentGroups);
         const rentalGroupIds = Object.keys(rentalData.groups || {});
 
@@ -598,7 +598,7 @@ export default {
             const currentTarget = rentalData.notificationTarget || 'ambos';
             
             if (currentTarget === 'grupo' || currentTarget === 'ambos') {
-              await nazu.sendMessage(groupId, {
+              await bot.sendMessage(groupId, {
                 text: `⏰ O aluguel deste grupo (${groupMetadata.subject}) expirou. Estou saindo, mas vocês podem renovar o aluguel entrando em contato com o dono! Até mais! 😊${symbols[Math.floor(Math.random() * symbols.length)]}`
               });
             }
@@ -609,7 +609,7 @@ export default {
                 const delay = Math.floor(Math.random() * (500 - 100 + 1)) + 100;
                 await new Promise(resolve => setTimeout(resolve, delay));
                 try {
-                  await nazu.sendMessage(admin, {
+                  await bot.sendMessage(admin, {
                     text: `⚠️ Olá, admin do grupo *${groupMetadata.subject}*! O aluguel do grupo expirou, e por isso saí. Para renovar, entre em contato com o dono. Obrigado! ${symbols[Math.floor(Math.random() * symbols.length)]}`
                   });
                   adminsNotified++;
@@ -619,9 +619,9 @@ export default {
               }
             }
 
-            await nazu.groupLeave(groupId);
+            await bot.groupLeave(groupId);
 
-            if (nazu.chatModify && typeof deleteChatByLastMessage === "function") {
+            if (bot.chatModify && typeof deleteChatByLastMessage === "function") {
               try {
                 await deleteChatByLastMessage(groupId);
                 chatsDeleted++;
@@ -630,7 +630,7 @@ export default {
               }
             }
 
-            if (nazu.chatModify && typeof clearChatHistorySafe === "function") {
+            if (bot.chatModify && typeof clearChatHistorySafe === "function") {
               try {
                 await clearChatHistorySafe(groupId);
                 groupConversationsCleared++;
@@ -652,13 +652,13 @@ export default {
           groupsLeft.push(groupId);
 
           try {
-            await nazu.sendMessage(groupId, {
+            await bot.sendMessage(groupId, {
               text: `👋 Este grupo não possui aluguel registrado. Estou saindo. Até mais! ${symbols[Math.floor(Math.random() * symbols.length)]}`
             });
 
-            await nazu.groupLeave(groupId);
+            await bot.groupLeave(groupId);
 
-            if (nazu.chatModify && typeof deleteChatByLastMessage === "function") {
+            if (bot.chatModify && typeof deleteChatByLastMessage === "function") {
               try {
                 await deleteChatByLastMessage(groupId);
                 chatsDeleted++;
@@ -667,7 +667,7 @@ export default {
               }
             }
 
-            if (nazu.chatModify && typeof clearChatHistorySafe === "function") {
+            if (bot.chatModify && typeof clearChatHistorySafe === "function") {
               try {
                 await clearChatHistorySafe(groupId);
                 groupConversationsCleared++;
@@ -682,9 +682,9 @@ export default {
           }
         }
 
-        if (nazu.chatModify && typeof clearChatHistorySafe === "function") {
+        if (bot.chatModify && typeof clearChatHistorySafe === "function") {
           try {
-            const remainingGroups = await nazu.groupFetchAllParticipating().catch(() => ({}));
+            const remainingGroups = await bot.groupFetchAllParticipating().catch(() => ({}));
             for (const groupId of Object.keys(remainingGroups)) {
               try {
                 await clearChatHistorySafe(groupId);

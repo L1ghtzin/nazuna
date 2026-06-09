@@ -14,19 +14,19 @@ async function runAntiPaymentStep(step, errorMessage) {
 }
 
 export async function handleAntiPayment(context) {
-    const { nazu, info, isGroup, sender, groupData, isGroupAdmin, isOwner, from, getUserName, isUserWhitelisted, isBotAdmin, MESSAGES } = context;
+    const { bot, info, isGroup, sender, groupData, isGroupAdmin, isOwner, from, getUserName, isUserWhitelisted, isBotAdmin, MESSAGES } = context;
     if (!isGroup || !groupData.antipayment || !info.message || isGroupAdmin || isOwner || isUserWhitelisted(sender, 'antipayment')) return false;
 
     if (!hasPaymentMessage(info.message)) return false;
 
     if (isBotAdmin) {
-        await runAntiPaymentStep(() => nazu.groupSettingUpdate(from, 'announcement'), 'Erro ao fechar o grupo.');
-        await runAntiPaymentStep(() => nazu.groupParticipantsUpdate(from, [sender], 'remove'), 'Erro ao banir membro.');
+        await runAntiPaymentStep(() => bot.groupSettingUpdate(from, 'announcement'), 'Erro ao fechar o grupo.');
+        await runAntiPaymentStep(() => bot.groupParticipantsUpdate(from, [sender], 'remove'), 'Erro ao banir membro.');
     }
-    await runAntiPaymentStep(() => sendCleanChat({ nazu, from }), 'Erro ao limpar o chat.');
-    await runAntiPaymentStep(() => nazu.sendMessage(from, { text: MESSAGES.security.antiPayment(getUserName(sender)), mentions: [sender] }), 'Erro ao enviar notificação.');
+    await runAntiPaymentStep(() => sendCleanChat({ bot, from }), 'Erro ao limpar o chat.');
+    await runAntiPaymentStep(() => bot.sendMessage(from, { text: MESSAGES.security.antiPayment(getUserName(sender)), mentions: [sender] }), 'Erro ao enviar notificação.');
     if (isBotAdmin) {
-        await runAntiPaymentStep(() => nazu.groupSettingUpdate(from, 'not_announcement'), 'Erro ao reabrir o grupo.');
+        await runAntiPaymentStep(() => bot.groupSettingUpdate(from, 'not_announcement'), 'Erro ao reabrir o grupo.');
     }
     return true;
 }

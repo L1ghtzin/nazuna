@@ -3,7 +3,7 @@ export default {
   description: "Comandos de download de mídia (YouTube, Spotify, etc)",
   commands: ["bot-zip", "botzip", "download-bot", "downloadbot", "drive", "facebook", "facebookdl", "fb", "fbdl", "gd", "gdrive", "git-bot", "git-hub", "gitbot", "github", "googledrive", "ig", "igdl", "igstory", "instagram", "instavideo", "kwai", "letra", "lyrics", "mcplugin", "mcplugins", "mediafire", "mf", "play", "play2", "play3", "playsoundcloud", "playspotify", "playvid", "repo", "repositorio", "soundcloud", "soundclouddl", "source", "source-code", "sourcecode", "spotify", "spotifydl", "tiktok", "tiktokaudio", "tiktoks", "tiktoksearch", "tiktokvideo", "tkk", "ttk", "twitter", "twitterdl", "twt", "x", "xdl", "ytmp3", "ytmp4", "zip-bot", "zipbot"],
   handle: async ({
-    nazu, from, info, command, q, reply, prefix,
+    bot, from, info, command, q, reply, prefix,
     youtube, spotifyModule, soundcloud, tiktok, igdl, facebook, kwai,
     twitterModule, twitterGetInfo, gdriveGetInfo, mediafireGetInfo,
     Lyrics: lyrics, mcPlugin,
@@ -16,11 +16,11 @@ export default {
     const sendAudio = async (dlRes) => {
       if (!dlRes.ok) return reply(MESSAGES.error.general);
       try {
-        await nazu.sendMessage(from, { audio: dlRes.buffer, mimetype: 'audio/mpeg' }, { quoted: info });
+        await bot.sendMessage(from, { audio: dlRes.buffer, mimetype: 'audio/mpeg' }, { quoted: info });
       } catch (e) {
         if (String(e).includes("ENOSPC") || String(e).includes("size")) {
           await reply('📦 Arquivo muito grande, enviando como documento...');
-          await nazu.sendMessage(from, { document: dlRes.buffer, fileName: dlRes.filename || 'audio.mp3', mimetype: 'audio/mpeg' }, { quoted: info });
+          await bot.sendMessage(from, { document: dlRes.buffer, fileName: dlRes.filename || 'audio.mp3', mimetype: 'audio/mpeg' }, { quoted: info });
         } else {
           reply(MESSAGES.error.general);
         }
@@ -54,7 +54,7 @@ export default {
           const views = typeof v.views === 'number' ? v.views.toLocaleString('pt-BR') : v.views;
           const caption = `🎵 *Música Encontrada* 🎵\n\n📌 *Título:* ${v.title}\n👤 *Artista/Canal:* ${v.author.name}\n⏱ *Duração:* ${v.timestamp} (${v.seconds} segundos)\n👀 *Visualizações:* ${views}\n🔗 *Link:* ${v.url}\n\n🎧 *Baixando e processando sua música, aguarde...*`;
 
-          nazu.sendMessage(from, { image: { url: v.thumbnail }, caption, footer: `${nomebot} • Versão ${botVersion}` }, { quoted: info }).catch(() => { });
+          bot.sendMessage(from, { image: { url: v.thumbnail }, caption, footer: `${nomebot} • Versão ${botVersion}` }, { quoted: info }).catch(() => { });
 
           // Download em background
           youtube.mp3(v.url, v).then(sendAudio).catch(e => {
@@ -93,7 +93,7 @@ export default {
             return reply('💔 Não foi possível baixar o vídeo. Tente novamente mais tarde.');
           }
 
-          await nazu.sendMessage(from, {
+          await bot.sendMessage(from, {
             video: dlRes.buffer,
             caption: `✨ *${dlRes.title || 'Vídeo baixado'}*\n\n📺 Qualidade: ${dlRes.quality || '360p'}\n🔗 Fonte: ${dlRes.source || 'Auto'}`,
             mimetype: 'video/mp4'
@@ -121,7 +121,7 @@ export default {
         const spotifyFn = q.includes('spotify.com') ? spotifyModule.download : spotifyModule.searchDownload;
         spotifyFn(q).then(async (dlRes) => {
           if (!dlRes.ok) return reply(MESSAGES.error.general);
-          await nazu.sendMessage(from, { audio: dlRes.buffer, mimetype: 'audio/mpeg' }, { quoted: info });
+          await bot.sendMessage(from, { audio: dlRes.buffer, mimetype: 'audio/mpeg' }, { quoted: info });
         }).catch(() => reply(MESSAGES.error.general));
       } catch (e) { reply(MESSAGES.error.general); }
       return;
@@ -137,7 +137,7 @@ export default {
         const scFn = q.includes('soundcloud.com') ? soundcloud.download : soundcloud.searchDownload;
         scFn(q).then(async (dlRes) => {
           if (!dlRes.ok) return reply(MESSAGES.error.general);
-          await nazu.sendMessage(from, { audio: dlRes.buffer, mimetype: 'audio/mpeg' }, { quoted: info });
+          await bot.sendMessage(from, { audio: dlRes.buffer, mimetype: 'audio/mpeg' }, { quoted: info });
         }).catch(() => reply(MESSAGES.error.general));
       } catch (e) { reply(MESSAGES.error.general); }
       return;
@@ -155,17 +155,17 @@ export default {
             if (!dlRes.ok) return reply(MESSAGES.error.general);
             if (cmd === 'tiktokaudio') {
               if (dlRes.audio) {
-                await nazu.sendMessage(from, { audio: { url: dlRes.audio }, mimetype: 'audio/mpeg' }, { quoted: info });
+                await bot.sendMessage(from, { audio: { url: dlRes.audio }, mimetype: 'audio/mpeg' }, { quoted: info });
               } else {
                 return reply(`💔 Áudio não encontrado no TikTok.`);
               }
             } else {
               if (dlRes.type === 'image' && dlRes.urls) {
                 for (let url of dlRes.urls) {
-                  await nazu.sendMessage(from, { image: { url }, caption: `✨ TikTok: *${dlRes.title || ''}*` }, { quoted: info });
+                  await bot.sendMessage(from, { image: { url }, caption: `✨ TikTok: *${dlRes.title || ''}*` }, { quoted: info });
                 }
               } else if (dlRes.urls && dlRes.urls.length > 0) {
-                await nazu.sendMessage(from, { video: { url: dlRes.urls[0] }, caption: `✨ TikTok: *${dlRes.title || ''}*` }, { quoted: info });
+                await bot.sendMessage(from, { video: { url: dlRes.urls[0] }, caption: `✨ TikTok: *${dlRes.title || ''}*` }, { quoted: info });
               } else {
                 return reply(`💔 Mídia não encontrada no TikTok.`);
               }
@@ -176,9 +176,9 @@ export default {
           const results = await tiktok.search(q);
           if (!results || !results.ok) return reply(`💔 Nenhum resultado encontrado.`);
           if (results.type === 'image' && results.urls) {
-            await nazu.sendMessage(from, { image: { url: results.urls[0] }, caption: `✨ *${results.title || ''}*` }, { quoted: info });
+            await bot.sendMessage(from, { image: { url: results.urls[0] }, caption: `✨ *${results.title || ''}*` }, { quoted: info });
           } else if (results.urls && results.urls.length > 0) {
-            await nazu.sendMessage(from, { video: { url: results.urls[0] }, caption: `✨ *${results.title || ''}*` }, { quoted: info });
+            await bot.sendMessage(from, { video: { url: results.urls[0] }, caption: `✨ *${results.title || ''}*` }, { quoted: info });
           }
         }
       } catch (e) { reply(MESSAGES.error.general); }
@@ -199,9 +199,9 @@ export default {
           }
           for (const item of dlRes.data) {
             if (item.type === 'image') {
-              await nazu.sendMessage(from, { image: item.buff || { url: item.url } }, { quoted: info });
+              await bot.sendMessage(from, { image: item.buff || { url: item.url } }, { quoted: info });
             } else {
-              await nazu.sendMessage(from, { video: item.buff || { url: item.url } }, { quoted: info });
+              await bot.sendMessage(from, { video: item.buff || { url: item.url } }, { quoted: info });
             }
           }
         }).catch((err) => {
@@ -218,7 +218,7 @@ export default {
         await reply('⏳ Baixando do Facebook...');
         facebook.downloadHD(q).then(async (dlRes) => {
           if (!dlRes.ok) return reply(MESSAGES.error.general);
-          await nazu.sendMessage(from, { video: dlRes.buffer, caption: `✨ Vídeo do Facebook (${dlRes.resolution || 'HD'})` }, { quoted: info });
+          await bot.sendMessage(from, { video: dlRes.buffer, caption: `✨ Vídeo do Facebook (${dlRes.resolution || 'HD'})` }, { quoted: info });
         }).catch(() => reply(MESSAGES.error.general));
       } catch (e) { reply(MESSAGES.error.general); }
       return;
@@ -234,8 +234,8 @@ export default {
           const caption = `🐦 *Twitter/X Download*\n\n👤 *${author?.name || 'Usuário'}*\n\n📝 ${text || ''}`;
           if (!hasMedia) return reply(`${caption}\n\n⚠️ Sem mídia.`);
           for (const item of media) {
-            if (item.type === 'video') await nazu.sendMessage(from, { video: { url: item.bestQuality?.url || item.url }, caption }, { quoted: info });
-            else await nazu.sendMessage(from, { image: { url: item.url }, caption }, { quoted: info });
+            if (item.type === 'video') await bot.sendMessage(from, { video: { url: item.bestQuality?.url || item.url }, caption }, { quoted: info });
+            else await bot.sendMessage(from, { image: { url: item.url }, caption }, { quoted: info });
           }
         }).catch(() => reply(MESSAGES.error.general));
       } catch (e) { reply(MESSAGES.error.general); }
@@ -247,7 +247,7 @@ export default {
       try {
         gdriveGetInfo(q).then(async (res) => {
           if (!res.ok) return reply(MESSAGES.error.general);
-          await nazu.sendMessage(from, { document: { url: res.downloadUrl }, fileName: res.name, mimetype: res.mimetype }, { quoted: info });
+          await bot.sendMessage(from, { document: { url: res.downloadUrl }, fileName: res.name, mimetype: res.mimetype }, { quoted: info });
         }).catch(() => reply(MESSAGES.error.general));
       } catch (e) { reply(MESSAGES.error.general); }
       return;
@@ -258,7 +258,7 @@ export default {
       try {
         mediafireGetInfo(q).then(async (res) => {
           if (!res.ok) return reply(MESSAGES.error.general);
-          await nazu.sendMessage(from, { document: { url: res.downloadUrl }, fileName: res.name, mimetype: res.mimetype }, { quoted: info });
+          await bot.sendMessage(from, { document: { url: res.downloadUrl }, fileName: res.name, mimetype: res.mimetype }, { quoted: info });
         }).catch(() => reply(MESSAGES.error.general));
       } catch (e) { reply(MESSAGES.error.general); }
       return;
@@ -283,7 +283,7 @@ export default {
         await reply('🔍 Buscando plugin...');
         mcPlugin(q).then(async (datz) => {
           if (!datz.ok) return reply(datz.msg);
-          await nazu.sendMessage(from, {
+          await bot.sendMessage(from, {
             image: { url: datz.image },
             caption: `🔍 Encontrei esse plugin aqui:\n\n*Nome*: _${datz.name}_\n*Publicado por*: _${datz.creator}_\n*Descrição*: _${datz.desc}_\n*Link para download*: _${datz.url}_\n\n> 💖 `
           }, { quoted: info });
@@ -301,7 +301,7 @@ export default {
         kwai.dl(q).then(async (res) => {
           if (!res.ok || !res.data || !res.data.length) return reply(MESSAGES.error.general);
           const item = res.data[0];
-          await nazu.sendMessage(from, { video: item.buff || { url: item.url }, caption: `✨ Kwai Video: ${item.metadata?.titulo || ''}` }, { quoted: info });
+          await bot.sendMessage(from, { video: item.buff || { url: item.url }, caption: `✨ Kwai Video: ${item.metadata?.titulo || ''}` }, { quoted: info });
         }).catch(() => reply(MESSAGES.error.general));
       } catch (e) { reply(MESSAGES.error.general); }
       return;
@@ -311,7 +311,7 @@ export default {
       try {
         await reply('📦 Baixando código-fonte...');
         const zipUrl = 'https://github.com/L1ghtzin/chainy/archive/refs/heads/main.zip';
-        await nazu.sendMessage(from, { document: { url: zipUrl }, fileName: 'chainy-bot.zip', mimetype: 'application/zip', caption: `📂 *Código-fonte*` }, { quoted: info });
+        await bot.sendMessage(from, { document: { url: zipUrl }, fileName: 'chainy-bot.zip', mimetype: 'application/zip', caption: `📂 *Código-fonte*` }, { quoted: info });
       } catch (e) { reply(MESSAGES.error.general); }
       return;
     }

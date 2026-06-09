@@ -7,7 +7,7 @@ export default {
   description: "Comandos exclusivos do dono do bot",
   commands: ["blockcmdg", "blockuserg", "botoff", "boton", "listblocks", "reviverqr", "seradm", "sermembro", "tm", "unblockcmdg", "unblockuserg"],
   handle: async ({ 
-    nazu, from, info, command, q, reply, prefix, sender, pushname,
+    bot, from, info, command, q, reply, prefix, sender, pushname,
     botState, globalBlocks, transmissao,
     isOwner, DATABASE_DIR, optimizer, getUserName, getFileBuffer,
     isImage, isVideo, isQuotedImage, isQuotedVideo, menc_os2, isGroup,
@@ -36,11 +36,11 @@ export default {
         baseMessage = { text: `${cabecalho}${q}` };
       }
 
-      const groups = await nazu.groupFetchAllParticipating();
+      const groups = await bot.groupFetchAllParticipating();
       let enviados = 0;
       for (const group of Object.values(groups)) {
         try {
-          await nazu.sendMessage(group.id, baseMessage);
+          await bot.sendMessage(group.id, baseMessage);
           enviados++;
           await new Promise(r => setTimeout(r, 1500));
         } catch (e) { console.error('Error fetching broadcast PP:', e); }
@@ -138,7 +138,7 @@ export default {
                }
            }
         }
-        await nazu.groupParticipantsUpdate(from, [targetId], action);
+        await bot.groupParticipantsUpdate(from, [targetId], action);
         return reply(`✅ O dono agora é ${cmd === 'seradm' ? 'Administrador' : 'Membro comum'}.`);
       } catch (e) {
         console.error("Erro no seradm/sermembro:", e);

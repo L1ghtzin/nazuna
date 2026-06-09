@@ -88,7 +88,7 @@ export function getLevelingUser(levelingData, userId) {
   }
 }
 
-export function checkLevelUp(userId, userData, levelingData, nazu, from) {
+export function checkLevelUp(userId, userData, levelingData, bot, from) {
   try {
     if (!userData || typeof userData !== 'object') return;
     if (!levelingData || typeof levelingData !== 'object') return;
@@ -110,8 +110,8 @@ export function checkLevelUp(userId, userData, levelingData, nazu, from) {
       levelUpText += `│\n`;
       levelUpText += `╰━━━━━━━━━━━━━━━━━━━━━━╯\n`;
       levelUpText += `\n🎊 *Parabéns pelo progresso!* 🎊`;
-      if (nazu && from) {
-        nazu.sendMessage(from, { text: levelUpText, mentions: [userId] }).catch(err => console.error('Erro ao enviar msg level up:', err.message));
+      if (bot && from) {
+        bot.sendMessage(from, { text: levelUpText, mentions: [userId] }).catch(err => console.error('Erro ao enviar msg level up:', err.message));
       }
     }
   } catch (error) {

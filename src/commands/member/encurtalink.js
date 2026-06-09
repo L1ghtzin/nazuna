@@ -16,7 +16,7 @@ export default {
       
       const shortResponse = await axios.post("https://spoo.me/api/v1/shorten", { 
         long_url: q, 
-        alias: `nazuna_${Math.floor(10000 + Math.random() * 90000)}` 
+        alias: `chainy_${Math.floor(10000 + Math.random() * 90000)}` 
       });
       
       reply(`✅ *Link encurtado com sucesso!*\n\n🔗 *Link curto:* ${shortResponse.data.short_url}\n📎 *Link original:* ${shortResponse.data.long_url}`);

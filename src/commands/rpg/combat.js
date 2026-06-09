@@ -21,7 +21,7 @@ export default {
     getEcoUser,
     checkEcoLevelUp,
     MESSAGES,
-    nazu, getLidFromJidCached, isValidJid
+    bot, getLidFromJidCached, isValidJid
   }) => {
     if (!isGroup) return reply('⚔️ Este comando funciona apenas em grupos com Modo RPG ativo.');
     if (!groupData.modorpg) return reply(`⚔️ Modo RPG desativado! Use ${prefix}modorpg para ativar.`);
@@ -36,7 +36,7 @@ export default {
       if (!target) return reply(`💔 Marque alguém para duelar!`);
       
       if (isValidJid(target)) {
-        target = await getLidFromJidCached(nazu, target) || target;
+        target = await getLidFromJidCached(bot, target) || target;
       }
       
       if (target === sender) return reply(`💔 Você não pode duelar consigo mesmo!`);

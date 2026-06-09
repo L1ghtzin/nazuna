@@ -5,7 +5,7 @@ export default {
   commands: ["brincadeira", "casais", "casamento", "casar", "couples", "divorciar", "divorcio", "historicodetraicao", "historicotraicao", "historicotraicoes", "listacasais", "namorar", "namoro", "relacionamento", "terminar", "terminarelacionamento", "termino", "traicao", "trair"],
   usage: "{prefix}casar @user",
   handle: async ({ 
-    nazu, 
+    bot, 
     from, 
     info, 
     command,
@@ -42,13 +42,13 @@ export default {
 
       const requestResult = relationshipManager.createRequest(type, from, sender, menc_os2);
       if (!requestResult.success) {
-        return nazu.sendMessage(from, {
+        return bot.sendMessage(from, {
           text: requestResult.message,
           mentions: requestResult.mentions || []
         }, { quoted: info });
       }
 
-      return nazu.sendMessage(from, {
+      return bot.sendMessage(from, {
         text: requestResult.message,
         mentions: requestResult.mentions || [sender, menc_os2]
       });
@@ -74,7 +74,7 @@ export default {
       if (userOne === userTwo) return reply(`💔 Selecione pessoas diferentes para consultar.`);
 
       const summary = relationshipManager.getRelationshipSummary(userOne, userTwo);
-      return nazu.sendMessage(from, {
+      return bot.sendMessage(from, {
         text: summary.message,
         mentions: summary.mentions || [userOne, userTwo]
       }, { quoted: info });
@@ -101,7 +101,7 @@ export default {
         mentions.push(couple.user1, couple.user2);
       });
       text += `╰━━━━━━━━━━━━━━━━━━━━━━╯\n\n💕 Total: ${groupCouples.length} casal(is)`;
-      return nazu.sendMessage(from, { text, mentions }, { quoted: info });
+      return bot.sendMessage(from, { text, mentions }, { quoted: info });
     }
 
     // --- TERMINAR / DIVORCIAR ---
@@ -129,7 +129,7 @@ export default {
       }
 
       const endResult = relationshipManager.endRelationship(userOne, userTwo, sender);
-      return nazu.sendMessage(from, {
+      return bot.sendMessage(from, {
         text: endResult.message,
         mentions: endResult.mentions || participants
       });
@@ -141,7 +141,7 @@ export default {
       if (menc_os2 === sender) return reply(`💔 Você não pode trair a si mesmo... isso não faz sentido! 🤨`);
 
       const betrayalResult = relationshipManager.createBetrayalRequest(sender, menc_os2, from, prefix);
-      return nazu.sendMessage(from, {
+      return bot.sendMessage(from, {
         text: betrayalResult.message,
         mentions: betrayalResult.mentions || [sender, menc_os2]
       });
@@ -165,7 +165,7 @@ export default {
       }
 
       const historyResult = relationshipManager.getBetrayalHistory(userOne, userTwo);
-      return nazu.sendMessage(from, {
+      return bot.sendMessage(from, {
         text: historyResult.message,
         mentions: historyResult.mentions || [userOne, userTwo]
       });

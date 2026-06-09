@@ -297,13 +297,13 @@ export const isSubdono = userId => {
   });
 };
 
-export const addSubdono = async (userId, numerodono, nazu = null) => {
+export const addSubdono = async (userId, numerodono, bot = null) => {
   if (!userId || typeof userId !== 'string' || (!isUserId(userId) && !isValidJid(userId))) {
     return { success: false, message: 'ID de usuário inválido. Use o LID ou marque o usuário.' };
   }
-  if (nazu && isValidJid(userId)) {
+  if (bot && isValidJid(userId)) {
     try {
-      const lid = await getLidFromJidCached(nazu, userId);
+      const lid = await getLidFromJidCached(bot, userId);
       if (lid && lid.includes('@lid')) userId = lid;
     } catch (e) {
       console.warn('Erro ao normalizar JID para LID em addSubdono:', e.message);
@@ -334,13 +334,13 @@ export const addSubdono = async (userId, numerodono, nazu = null) => {
   }
 };
 
-export const removeSubdono = async (userId, nazu = null) => {
+export const removeSubdono = async (userId, bot = null) => {
   if (!userId || typeof userId !== 'string' || (!isUserId(userId) && !isValidJid(userId))) {
     return { success: false, message: 'ID de usuário inválido. Use o LID ou marque o usuário.' };
   }
-  if (nazu && isValidJid(userId)) {
+  if (bot && isValidJid(userId)) {
     try {
-      const lid = await getLidFromJidCached(nazu, userId);
+      const lid = await getLidFromJidCached(bot, userId);
       if (lid && lid.includes('@lid')) userId = lid;
     } catch (e) {
       console.warn('Erro ao normalizar JID para LID em removeSubdono:', e.message);
@@ -391,14 +391,14 @@ export const saveGlobalBlacklist = data => {
   }
 };
 
-export const addGlobalBlacklist = async (userId, reason, addedBy, nazu = null) => {
+export const addGlobalBlacklist = async (userId, reason, addedBy, bot = null) => {
   if (!userId || typeof userId !== 'string' || (!isUserId(userId) && !isValidJid(userId))) {
     return { success: false, message: 'ID de usuário inválido. Use o LID ou marque o usuário.' };
   }
   const originalId = userId;
-  if (nazu && isValidJid(userId)) {
+  if (bot && isValidJid(userId)) {
     try {
-      const lid = await getLidFromJidCached(nazu, userId);
+      const lid = await getLidFromJidCached(bot, userId);
       if (lid && lid.includes('@lid')) userId = lid;
     } catch (e) {
       console.warn('Erro ao normalizar JID para LID em addGlobalBlacklist:', e.message);
@@ -421,14 +421,14 @@ export const addGlobalBlacklist = async (userId, reason, addedBy, nazu = null) =
   }
 };
 
-export const removeGlobalBlacklist = async (userId, nazu = null) => {
+export const removeGlobalBlacklist = async (userId, bot = null) => {
   if (!userId || typeof userId !== 'string' || (!isUserId(userId) && !isValidJid(userId))) {
     return { success: false, message: 'ID de usuário inválido. Use o LID ou marque o usuário.' };
   }
   const originalId = userId;
-  if (nazu && isValidJid(userId)) {
+  if (bot && isValidJid(userId)) {
     try {
-      const lid = await getLidFromJidCached(nazu, userId);
+      const lid = await getLidFromJidCached(bot, userId);
       if (lid && lid.includes('@lid')) userId = lid;
     } catch (e) {
       console.warn('Erro ao normalizar JID para LID em removeGlobalBlacklist:', e.message);

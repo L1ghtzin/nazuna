@@ -3,7 +3,7 @@ export default {
   description: "Gerenciamento avançado do sistema, subdonos e limites",
   commands: ["addblackglobal", "addsubdono", "atualizar", "atualizarbot", "cmddeslimitar", "cmdlimit", "cmdlimitar", "cmdlimites", "cmdlimits", "cmdremovelimit", "delsubdono", "limitarcmd", "listasubdonos", "listblackglobal", "listcmdlimites", "listsubdonos", "remsubdono", "rmblackglobal", "rmcmdlimit", "rmsubdono", "update", "updates", "viewmsg"],
   handle: async ({ 
-    nazu, from, info, command, reply, q, args, isOwner, isSubOwner, isOwnerOrSub, prefix, sender, numerodono, config,
+    bot, from, info, command, reply, q, args, isOwner, isSubOwner, isOwnerOrSub, prefix, sender, numerodono, config,
     addSubdono, removeSubdono, getSubdonos, addGlobalBlacklist, removeGlobalBlacklist, getGlobalBlacklist,
     isValidJid, isValidLid, buildUserId, getLidFromJidCached, groupMetadata, isGroup, pushname, menc_os2,
     MESSAGES
@@ -114,7 +114,7 @@ export default {
           target = buildUserId(target, config);
         }
         
-        const res = await addSubdono(target, numerodono, nazu);
+        const res = await addSubdono(target, numerodono, bot);
         return reply(res.message);
       }
       if (cmd.startsWith('rem') || cmd.startsWith('rm') || cmd.startsWith('del')) {
@@ -125,7 +125,7 @@ export default {
           target = buildUserId(target, config);
         }
 
-        const res = await removeSubdono(target, nazu);
+        const res = await removeSubdono(target, bot);
         return reply(res.message);
       }
       if (cmd.startsWith('list')) {
@@ -139,9 +139,9 @@ export default {
     // --- CMD LIMIT ---
     if (cmd.includes('cmdlimit')) {
       const { cmdLimitAdd, cmdLimitRemove, cmdLimitList } = await import('../../funcs/utils/cmdlimit.js');
-      if (cmd.includes('limitar') || cmd === 'cmdlimit') return cmdLimitAdd(nazu, from, q, reply, prefix, isOwnerOrSub);
-      if (cmd.includes('des') || cmd.includes('rem')) return cmdLimitRemove(nazu, from, q, reply, prefix, isOwnerOrSub);
-      return cmdLimitList(nazu, from, q, reply, prefix, isOwnerOrSub);
+      if (cmd.includes('limitar') || cmd === 'cmdlimit') return cmdLimitAdd(bot, from, q, reply, prefix, isOwnerOrSub);
+      if (cmd.includes('des') || cmd.includes('rem')) return cmdLimitRemove(bot, from, q, reply, prefix, isOwnerOrSub);
+      return cmdLimitList(bot, from, q, reply, prefix, isOwnerOrSub);
     }
 
     // --- GLOBAL BLACKLIST ---
@@ -168,7 +168,7 @@ export default {
           target = buildUserId(target, config);
         }
         
-        const res = await addGlobalBlacklist(target, reason || 'Não especificado', pushname, nazu);
+        const res = await addGlobalBlacklist(target, reason || 'Não especificado', pushname, bot);
         return reply(res.message, { mentions: [target] });
       }
       if (cmd.startsWith('rm')) {
@@ -180,7 +180,7 @@ export default {
           target = buildUserId(target, config);
         }
         
-        const res = await removeGlobalBlacklist(target, nazu);
+        const res = await removeGlobalBlacklist(target, bot);
         return reply(res.message, { mentions: [target] });
       }
       const list = getGlobalBlacklist();

@@ -1,7 +1,7 @@
 const soadmBypassCommands = ['suporte', 'ticketsuporte', 'suporteticket', 'ticket'];
 
 export async function handleMinMessage(context) {
-    const { nazu, info, isGroup, sender, groupData, isImage, isVideo, isVisuU, isVisuU2, isBotAdmin, isGroupAdmin, isOwner, from, reply, MESSAGES } = context;
+    const { bot, info, isGroup, sender, groupData, isImage, isVideo, isVisuU, isVisuU2, isBotAdmin, isGroupAdmin, isOwner, from, reply, MESSAGES } = context;
     if (!isGroup || !groupData.minMessage || (!isImage && !isVideo && !isVisuU && !isVisuU2) || isGroupAdmin || isOwner) return false;
 
     let caption = '';
@@ -12,10 +12,10 @@ export async function handleMinMessage(context) {
 
     if (caption.length < groupData.minMessage.minDigits) {
         try {
-            await nazu.sendMessage(from, { delete: info.key });
+            await bot.sendMessage(from, { delete: info.key });
             if (groupData.minMessage.action === 'ban') {
                 if (isBotAdmin) {
-                    await nazu.groupParticipantsUpdate(from, [sender], 'remove');
+                    await bot.groupParticipantsUpdate(from, [sender], 'remove');
                     await reply(MESSAGES.security.minMessageAdmin(groupData.minMessage.minDigits));
                 } else {
                     await reply(MESSAGES.security.minMessageUser);
@@ -31,13 +31,13 @@ export async function handleMinMessage(context) {
 }
 
 export async function handleAntiBtn(context) {
-    const { nazu, info, isGroup, sender, groupData, isButtonMessage, isGroupAdmin, from, reply, getUserName, isUserWhitelisted, isBotAdmin, MESSAGES } = context;
+    const { bot, info, isGroup, sender, groupData, isButtonMessage, isGroupAdmin, from, reply, getUserName, isUserWhitelisted, isBotAdmin, MESSAGES } = context;
     if (!isGroup || !isButtonMessage || !groupData.antibtn || isGroupAdmin || isUserWhitelisted(sender, 'antibtn')) return false;
 
     try {
-        await nazu.sendMessage(from, { delete: info.key });
+        await bot.sendMessage(from, { delete: info.key });
         if (isBotAdmin) {
-            await nazu.groupParticipantsUpdate(from, [sender], 'remove');
+            await bot.groupParticipantsUpdate(from, [sender], 'remove');
             await reply(MESSAGES.security.antiBtnAdmin(getUserName(sender)), { mentions: [sender] });
         } else {
             await reply(MESSAGES.security.antiBtnUser(getUserName(sender)), { mentions: [sender] });

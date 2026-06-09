@@ -10,12 +10,12 @@ export default {
   description: "Comandos de interação (brincadeiras) entre os membros",
   commands: ["chute", "chutar", "tapa", "soco", "socar", "beijo", "beijar", "beijob", "beijarb", "abraco", "abracar", "mata", "matar", "tapar", "goza", "gozar", "mamar", "mamada", "cafune", "morder", "mordida", "lamber", "lambida", "explodir", "sexo", "tomate", "fonfon", "piupiu", "pegarpau", "apalpar"],
   usage: `${global.prefix}chute @usuario`,
-  handle: async ({  nazu, reply, isGroup, command, menc_os2, prefix, info, getUserName, from, isModoLite, isModoBn , MESSAGES }) => {
+  handle: async ({  bot, reply, isGroup, command, menc_os2, prefix, info, getUserName, from, isModoLite, isModoBn , MESSAGES }) => {
     try {
       const comandosImpróprios = ['sexo', 'surubao', 'goza', 'gozar', 'mamar', 'mamada', 'beijob', 'beijarb', 'tapar'];
       
       if (isModoLite && comandosImpróprios.includes(command)) {
-        return nazu.react('❌', { key: info.key });
+        return bot.react('❌', { key: info.key });
       }
       
       if (!isGroup) return reply(MESSAGES.permission.groupOnly);
@@ -45,20 +45,20 @@ export default {
       let media = gamesData.games2?.[command];
       
       if (media?.image) {
-        await nazu.sendMessage(from, {
+        await bot.sendMessage(from, {
           image: media.image,
           caption: responseText,
           mentions: [menc_os2]
         });
       } else if (media?.video) {
-        await nazu.sendMessage(from, {
+        await bot.sendMessage(from, {
           video: media.video,
           caption: responseText,
           mentions: [menc_os2],
           gifPlayback: true
         });
       } else {
-        await nazu.sendMessage(from, {
+        await bot.sendMessage(from, {
           text: responseText,
           mentions: [menc_os2]
         });

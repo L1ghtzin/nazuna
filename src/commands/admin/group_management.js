@@ -6,7 +6,7 @@ export default {
   description: "Gerenciamento avançado de grupos",
   commands: ["abrirgp", "aceitar", "alterardesc", "alterarfoto", "alterarnome", "antibotao", "antibtn", "antidelete", "antidoc", "antifake", "antiflood", "antilinkhard", "antiloc", "approve", "aprovar", "autoacceptr", "autoaceitarsolic", "autoaprovar", "autodl", "autodown", "captcha", "captcharequests", "captchasolic", "cita", "closegp", "dellimitmessage", "descgrupo", "descricao", "expulsar", "familia", "family", "fechargp", "fotogp", "fotogrupo", "gamemode", "gp", "group", "grupo", "hidetag", "kickcla", "limitmessage", "modobn", "modobrincadeira", "modobrincadeiras", "mudardesc", "mudarfoto", "mudarnome", "nomegp", "onlyadm", "opengp", "pendentes", "recusarsolic", "recusarsolicitacao", "reject", "renomeargrupo", "requests", "setdesc", "setfoto", "setname", "setprefix", "soadm", "soadmin", "solicitacoes", "sorteio", "sorteionome", "totag"],
   handle: async ({ 
-    nazu, from, info, command, args, reply, prefix, pushname, sender, q,
+    bot, from, info, command, args, reply, prefix, pushname, sender, q,
     isGroup, isGroupAdmin, isBotAdmin, isOwner, AllgroupMembers, groupData, groupFile,
     getUserName, optimizer, GRUPOS_DIR, DATABASE_DIR, buildGroupFilePath,
     getFileBuffer, isQuotedMsg, isQuotedImage, isQuotedVideo, isQuotedAudio, 
@@ -115,7 +115,7 @@ export default {
           messageToSend = { text: q || 'Mencionando todos...', mentions };
         }
 
-        await nazu.sendMessage(from, messageToSend);
+        await bot.sendMessage(from, messageToSend);
         registerMassMentionUse(from);
       } catch (e) {
         console.error(e);
@@ -352,15 +352,15 @@ export default {
       const shouldClose = ['f', 'c', 'close', 'fechar'].includes(param);
 
       if (shouldOpen) {
-        await nazu.groupSettingUpdate(from, 'not_announcement');
+        await bot.groupSettingUpdate(from, 'not_announcement');
         if (groupData?.x9) {
-          await nazu.sendMessage(from, { text: `📢 *X9 Report:* Grupo aberto por @${sender.split('@')[0]}`, mentions: [sender] }).catch(e => {});
+          await bot.sendMessage(from, { text: `📢 *X9 Report:* Grupo aberto por @${sender.split('@')[0]}`, mentions: [sender] }).catch(e => {});
         }
         return reply('✅ Grupo aberto.');
       } else if (shouldClose) {
-        await nazu.groupSettingUpdate(from, 'announcement');
+        await bot.groupSettingUpdate(from, 'announcement');
         if (groupData?.x9) {
-          await nazu.sendMessage(from, { text: `📢 *X9 Report:* Grupo fechado por @${sender.split('@')[0]}`, mentions: [sender] }).catch(e => {});
+          await bot.sendMessage(from, { text: `📢 *X9 Report:* Grupo fechado por @${sender.split('@')[0]}`, mentions: [sender] }).catch(e => {});
         }
         return reply('✅ Grupo fechado.');
       }
@@ -411,7 +411,7 @@ export default {
       }
 
       await optimizer.saveJsonWithCache(groupFile, groupData);
-      try { scheduleGroupJob(from, 'open', normalizedTime, nazu); } catch (e) { console.error('Erro ao agendar open cron:', e); }
+      try { scheduleGroupJob(from, 'open', normalizedTime, bot); } catch (e) { console.error('Erro ao agendar open cron:', e); }
 
       let msg = `✅ Agendamento salvo! O grupo será ABERTO todos os dias às ${normalizedTime} (horário de São Paulo).`;
       if (!isBotAdmin) msg += '\n⚠️ Observação: Eu preciso ser administrador para efetivar a abertura no horário.';
@@ -462,7 +462,7 @@ export default {
       }
 
       await optimizer.saveJsonWithCache(groupFile, groupData);
-      try { scheduleGroupJob(from, 'close', normalizedTime, nazu); } catch (e) { console.error('Erro ao agendar close cron:', e); }
+      try { scheduleGroupJob(from, 'close', normalizedTime, bot); } catch (e) { console.error('Erro ao agendar close cron:', e); }
 
       let msg = `✅ Agendamento salvo! O grupo será FECHADO todos os dias às ${normalizedTime} (horário de São Paulo).`;
       if (!isBotAdmin) msg += '\n⚠️ Observação: Eu preciso ser administrador para efetivar o fechamento no horário.';
@@ -481,7 +481,7 @@ export default {
       try {
         const media = isQuotedImage ? info.message.extendedTextMessage.contextInfo.quotedMessage.imageMessage : info.message.imageMessage;
         const buffer = await getFileBuffer(media, 'image');
-        await nazu.updateProfilePicture(from, buffer);
+        await bot.updateProfilePicture(from, buffer);
         return reply("✅ Foto alterada.");
       } catch (e) { return reply("❌ Erro ao alterar foto."); }
     }
@@ -491,7 +491,7 @@ export default {
       if (!isGroupAdmin) return reply(MESSAGES.permission.adminOnly);
       if (!isBotAdmin) return reply(MESSAGES.permission.botAdminOnly);
       if (!q) return reply("Informe o nome.");
-      await nazu.groupUpdateSubject(from, q);
+      await bot.groupUpdateSubject(from, q);
       return reply("✅ Nome alterado.");
     }
 
@@ -499,7 +499,7 @@ export default {
       if (!isGroup) return reply(MESSAGES.permission.groupOnly);
       if (!isGroupAdmin) return reply(MESSAGES.permission.adminOnly);
       if (!isBotAdmin) return reply(MESSAGES.permission.botAdminOnly);
-      await nazu.groupUpdateDescription(from, q || '');
+      await bot.groupUpdateDescription(from, q || '');
       return reply("✅ Descrição alterada.");
     }
 
@@ -523,7 +523,7 @@ export default {
     if (['requests', 'solicitacoes', 'pendentes'].includes(cmd)) {
       if (!isGroupAdmin && !isOwner) return reply(MESSAGES.permission.adminOnly);
       try {
-        const requests = await nazu.groupRequestParticipantsList(from);
+        const requests = await bot.groupRequestParticipantsList(from);
         if (!requests || requests.length === 0) return reply("📭 Não há solicitações pendentes.");
         let msg = `📬 *SOLICITAÇÕES PENDENTES* (${requests.length})\n\n`;
         const mentions = [];
@@ -531,7 +531,7 @@ export default {
           msg += `${i + 1}. @${req.jid.split('@')[0]}\n`;
           mentions.push(req.jid);
         });
-        return nazu.sendMessage(from, { text: msg, mentions });
+        return bot.sendMessage(from, { text: msg, mentions });
       } catch (e) { return reply("❌ Erro ao buscar solicitações."); }
     }
 
@@ -541,7 +541,7 @@ export default {
       const target = menc_os2 || (args[0] && args[0].includes('@') ? args[0].replace('@', '') + '@s.whatsapp.net' : null);
       if (!target) return reply(MESSAGES.error.missing('alguém'));
       try {
-        await nazu.groupRequestParticipantsUpdate(from, [target], type);
+        await bot.groupRequestParticipantsUpdate(from, [target], type);
         return reply(`${type === 'approve' ? '✅ Aprovado!' : '❌ Recusado!'}`);
       } catch (e) { return reply("❌ Erro na operação."); }
     }

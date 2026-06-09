@@ -12,7 +12,7 @@ export default {
   commands: ["mute", "mutar"],
   usage: `${global.prefixo}mute @usuario`,
   handle: async ({ 
-    nazu,
+    bot,
     from,
     reply,
     isGroup,
@@ -35,7 +35,7 @@ export default {
       let groupData = await optimizer.loadJsonWithCache(groupFilePath, { mutedUsers: {} });
       
       groupData.mutedUsers = groupData.mutedUsers || {};
-      const targetId = await normalizeUserId(nazu, menc_os2);
+      const targetId = await normalizeUserId(bot, menc_os2);
       groupData.mutedUsers[targetId] = true;
       
       if (targetId !== menc_os2) {
@@ -45,7 +45,7 @@ export default {
       await optimizer.saveJsonWithCache(groupFilePath, groupData);
       optimizer.invalidateGroup(from);
       
-      await nazu.sendMessage(from, {
+      await bot.sendMessage(from, {
         text: `✅ @${getUserName(menc_os2)} foi mutado. Se enviar mensagens, será banido.`,
         mentions: [menc_os2]
       }, {

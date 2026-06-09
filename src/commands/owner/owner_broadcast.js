@@ -5,7 +5,7 @@ export default {
   description: "Comandos de divulgação e transmissão do dono",
   commands: ["antispamcmd", "div", "divdono", "divulgar", "setdiv", "tm2", "inscrevertm", "inscrevertm2", "desinscrever", "desinscrevertm", "cancelartm", "statustm", "statustm2"],
   handle: async ({ 
-    nazu, from, info, command, args, reply, prefix, sender, q,
+    bot, from, info, command, args, reply, prefix, sender, q,
     isGroup, isOwner, AllgroupMembers, optimizer, DATABASE_DIR,
     generateWAMessageFromContent, antiSpamGlobal,
     isImage, isVideo, isQuotedImage, isQuotedVideo, getFileBuffer
@@ -71,8 +71,8 @@ export default {
             expiryTimestamp: Math.floor(Date.now() / 1000) + 86400
           }
         };
-        const msg = await generateWAMessageFromContent(from, payment, { userJid: nazu?.user?.id });
-        await nazu.relayMessage(from, msg.message, { messageId: msg.key.id });
+        const msg = await generateWAMessageFromContent(from, payment, { userJid: bot?.user?.id });
+        await bot.relayMessage(from, msg.message, { messageId: msg.key.id });
         await new Promise(r => setTimeout(r, 500));
       }
       return reply("✅ Divulgação concluída.");
@@ -135,7 +135,7 @@ export default {
         for (let i = 0; i < groups.length; i++) {
           const id = groups[i];
           try {
-            const meta = await nazu.groupMetadata(id).catch(() => ({ subject: 'Desconhecido/Removido' }));
+            const meta = await bot.groupMetadata(id).catch(() => ({ subject: 'Desconhecido/Removido' }));
             text += `*${i + 1}.* ${meta.subject}\n   └ ID: ${id}\n`;
           } catch(e) {
             text += `*${i + 1}.* Desconhecido (ID: ${id})\n`;
@@ -184,7 +184,7 @@ export default {
         
         for (const id of groups) {
           try {
-            await nazu.sendMessage(id, { text: `[📡 MENSAGEM DO DONO]\n\n${messageText}` });
+            await bot.sendMessage(id, { text: `[📡 MENSAGEM DO DONO]\n\n${messageText}` });
             success++;
             await new Promise(r => setTimeout(r, 2000));
           } catch (e) {
@@ -279,7 +279,7 @@ export default {
       
       for (const id of subs.users) {
         try {
-          await nazu.sendMessage(id, baseMessage);
+          await bot.sendMessage(id, baseMessage);
           success++;
           await new Promise(r => setTimeout(r, 2000));
         } catch (e) {

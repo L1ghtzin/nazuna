@@ -17,7 +17,7 @@ export default {
     description: "Sistema de crimes e assaltos do RPG",
     commands: ["assaltar", "roubar", "crime"],
     handle: async ({ 
-    reply, isGroup, groupData, sender, prefix, command, args, menc_os2, nazu,
+    reply, isGroup, groupData, sender, prefix, command, args, menc_os2, bot,
     MESSAGES
   }) => {
         if (!isGroup) return reply('⚔️ Este comando funciona apenas em grupos com Modo RPG ativo.');

@@ -3,7 +3,7 @@ export default {
   description: "Remove você mesmo do grupo (brincadeira)",
   commands: ["suicidio"],
   usage: `${global.prefix}suicidio`,
-  handle: async ({  reply, isGroupAdmin, isBotAdmin, pushname, nazu, from, sender, isGroup, AllgroupMembers, idsMatch, MESSAGES }) => {
+  handle: async ({  reply, isGroupAdmin, isBotAdmin, pushname, bot, from, sender, isGroup, AllgroupMembers, idsMatch, MESSAGES }) => {
     try {
       if (!isGroup) return reply(MESSAGES.permission.groupOnly);
       if (isGroupAdmin) return reply(`💔 Awn, admin, você é precioso demais para isso. Fica aqui com a gente, tá? <3`);
@@ -21,7 +21,7 @@ export default {
                }
            }
         }
-        nazu.groupParticipantsUpdate(from, [targetId], "remove").then(() => {
+        bot.groupParticipantsUpdate(from, [targetId], "remove").then(() => {
           setTimeout(() => {
             reply(`*Ainda bem que morreu, não aguentava mais essa praga kkkkkk*`);
           }, 1000);

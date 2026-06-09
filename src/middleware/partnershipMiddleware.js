@@ -2,7 +2,7 @@
  * Middleware para sistemas de parceria e divulgação
  */
 export async function processPartnership({
-  nazu,
+  bot,
   from,
   sender,
   body,
@@ -22,7 +22,7 @@ export async function processPartnership({
         partnerData.count++;
         saveParceriasData(from, parceriasData);
       } else {
-        await nazu.sendMessage(from, {
+        await bot.sendMessage(from, {
           delete: info.key
         });
         await reply(`@${getUserName(sender)}, você atingiu o limite de ${partnerData.limit} links de grupos.`, {
@@ -31,7 +31,7 @@ export async function processPartnership({
         return true;
       }
     } else {
-      await nazu.sendMessage(from, {
+      await bot.sendMessage(from, {
         delete: info.key
       });
       await reply(`@${getUserName(sender)}, você não é um parceiro e não pode enviar links de grupos.`, {

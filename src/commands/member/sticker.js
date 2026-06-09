@@ -14,7 +14,7 @@ export default {
   description: "Comandos de figurinhas e stickers",
   commands: ["attp", "brat", "bratvid", "emojimix", "figualeatoria", "figurinhas", "mudarpack", "packfig", "qc", "randomsticker", "rename", "renomear", "rgtake", "s", "s2", "st", "st2", "sticker", "sticker2", "stickerpack", "stk", "stk2", "take", "ttp"],
   handle: async ({ 
-    nazu, from, info, command, q, reply, prefix, pushname,
+    bot, from, info, command, q, reply, prefix, pushname,
     sendSticker, getFileBuffer, isQuotedSticker, isQuotedImage, isQuotedVideo,
     isImage, isVideo, nomebot, sender, USERS_DIR, optimizer, isGroup,
     MESSAGES
@@ -32,7 +32,7 @@ export default {
       
       await reply(MESSAGES.general.wait);
       try {
-        return await sendSticker(nazu, from, { 
+        return await sendSticker(bot, from, { 
           sticker: { url: apiUrl }, 
           packname: nomebot, 
           author: pushname,
@@ -52,7 +52,7 @@ export default {
       const url = `https://api.siputzx.my.id/api/m/emojimix?emo=${encodeURIComponent(q)}`;
       try {
         const buffer = await axios.get(url, { responseType: 'arraybuffer' }).then(res => Buffer.from(res.data));
-        return await sendSticker(nazu, from, { sticker: buffer, packname: nomebot, author: pushname });
+        return await sendSticker(bot, from, { sticker: buffer, packname: nomebot, author: pushname });
       } catch (e) {
         return reply(MESSAGES.error.general);
       }
@@ -67,7 +67,7 @@ export default {
       try {
         let ppimg;
         try {
-          ppimg = await nazu.profilePictureUrl(sender, 'image');
+          ppimg = await bot.profilePictureUrl(sender, 'image');
         } catch {
           ppimg = 'https://telegra.ph/file/b5427ea4b8701bc47e751.jpg';
         }
@@ -99,7 +99,7 @@ export default {
         });
 
         const buffer = Buffer.from(res.data.result.image, 'base64');
-        return await sendSticker(nazu, from, { 
+        return await sendSticker(bot, from, { 
           sticker: buffer, 
           packname: nomebot, 
           author: pushname 
@@ -128,7 +128,7 @@ export default {
         
         const isS2 = ['s2', 'sticker2', 'st2', 'stk2'].includes(cmd);
         
-        await sendSticker(nazu, from, {
+        await sendSticker(bot, from, {
           sticker: buffer,
           author: pushname,
           packname: nomebot, 
@@ -147,7 +147,7 @@ export default {
     // ═══════════════════════════════════════════════════════════════
     if (['figualeatoria', 'randomsticker'].includes(cmd)) {
       try {
-        await nazu.sendMessage(from, {
+        await bot.sendMessage(from, {
           sticker: { url: `https://raw.githubusercontent.com/badDevelopper/Testfigu/main/fig (${Math.floor(Math.random() * 8051)}).webp` }
         }, { quoted: info });
       } catch (e) {
@@ -177,7 +177,7 @@ export default {
         if (!packname) return reply(`Formato errado, utilize:\n${prefix}${command} Autor/Pack\nEx: ${prefix}${command} By:/Hiudy`);
         
         const encmediats = await getFileBuffer(info.message.extendedTextMessage.contextInfo.quotedMessage.stickerMessage, 'sticker');
-        await sendSticker(nazu, from, {
+        await sendSticker(bot, from, {
           sticker: `data:image/jpeg;base64,${encmediats.toString('base64')}`,
           author: author,
           packname: packname,
@@ -234,7 +234,7 @@ export default {
         const { author, pack } = dataTake[sender];
         const encmediats = await getFileBuffer(info.message.extendedTextMessage.contextInfo.quotedMessage.stickerMessage, 'sticker');
         
-        await sendSticker(nazu, from, {
+        await sendSticker(bot, from, {
           sticker: `data:image/jpeg;base64,${encmediats.toString('base64')}`,
           author: author,
           packname: pack,
@@ -275,7 +275,7 @@ export default {
             const stickerUrl = `https://raw.githubusercontent.com/badDevelopper/Testfigu/main/fig (${randomNum}).webp`;
             const stickerResponse = await axios.get(stickerUrl, { responseType: 'arraybuffer', timeout: 120000 });
             
-            await nazu.sendMessage(destino, { sticker: Buffer.from(stickerResponse.data) });
+            await bot.sendMessage(destino, { sticker: Buffer.from(stickerResponse.data) });
             successCount++;
             await new Promise(resolve => setTimeout(resolve, 800));
           } catch (stickerError) {
@@ -284,7 +284,7 @@ export default {
           }
         }
         
-        await nazu.sendMessage(destino, { text: `✅ Pronto!\n\n📊 *Resultado:*\n• Enviadas: ${successCount} figurinha${successCount !== 1 ? 's' : ''}\n${failCount > 0 ? `• Falhas: ${failCount}\n` : ''}` });
+        await bot.sendMessage(destino, { text: `✅ Pronto!\n\n📊 *Resultado:*\n• Enviadas: ${successCount} figurinha${successCount !== 1 ? 's' : ''}\n${failCount > 0 ? `• Falhas: ${failCount}\n` : ''}` });
       } catch (e) {
         console.error(e);
         await reply(MESSAGES.error.general);
@@ -352,7 +352,7 @@ export default {
         
         await execAsync(webpCmd);
         
-        await sendSticker(nazu, from, {
+        await sendSticker(bot, from, {
           sticker: fs.readFileSync(outputWebp),
           author: pushname,
           packname: nomebot, 

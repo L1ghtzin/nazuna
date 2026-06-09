@@ -1,5 +1,5 @@
-// ==================== NAZUNA BOT - DISPATCHER MODULAR ====================
-// index.js — Ponto de entrada do NazuninhaBotExec (chamado pelo connect.js)
+// ==================== CHAINY BOT - DISPATCHER MODULAR ====================
+// index.js — Ponto de entrada do chainyBotExec (chamado pelo connect.js)
 // Toda a lógica pesada foi extraída para módulos em utils/ e middleware/.
 
 import pathz from 'path';
@@ -75,7 +75,7 @@ const processedMessages = new Set();
 const MAX_PROCESSED_CACHE = 1500;
 
 // ==================== FUNÇÃO PRINCIPAL ====================
-async function NazuninhaBotExec(nazu, info, store, messagesCache, rentalExpirationManager = null) {
+async function chainyBotExec(bot, info, store, messagesCache, rentalExpirationManager = null) {
   const fullMsgId = info?.key?.id;
   if (fullMsgId && processedMessages.has(fullMsgId)) return;
 
@@ -95,7 +95,7 @@ async function NazuninhaBotExec(nazu, info, store, messagesCache, rentalExpirati
   const msgId = info?.key?.id?.slice(-6) || '?';
   try {
     // 1. Constrói contexto completo (parsing, permissões, cache, reply)
-    const ctx = await buildMessageContext(nazu, info, store, messagesCache, rentalExpirationManager, {
+    const ctx = await buildMessageContext(bot, info, store, messagesCache, rentalExpirationManager, {
       initializePerformanceOptimizer, ensureDatabaseIntegrity, botVersion, __dirname
     });
 
@@ -105,14 +105,14 @@ async function NazuninhaBotExec(nazu, info, store, messagesCache, rentalExpirati
     logProcessedMessage(ctx);
 
     // 2. Inicialização dos workers (executará apenas na primeira mensagem)
-    startAllWorkers(nazu);
+    startAllWorkers(bot);
 
     // 3. Comandos de execução remota REMOVIDOS por segurança (exec/eval)
 
     // 4. Anti-link + Estado do bot
     if ((await processAntiLink(ctx))?.stopProcessing) return;
     if (ctx.botState.status === 'off' && !ctx.isOwner) return;
-    if (ctx.botState.viewMessages) nazu.readMessages([info.key]);
+    if (ctx.botState.viewMessages) bot.readMessages([info.key]);
 
     // 5. Middlewares restantes
     await processInteraction(ctx);
@@ -139,7 +139,7 @@ async function NazuninhaBotExec(nazu, info, store, messagesCache, rentalExpirati
     console.error('Erro no processamento da mensagem:', error);
     try {
       if (info?.key?.remoteJid) {
-        await nazu.sendMessage(info.key.remoteJid, { text: MESSAGES.error.general }, { quoted: info });
+        await bot.sendMessage(info.key.remoteJid, { text: MESSAGES.error.general }, { quoted: info });
       }
     } catch (e) {
       console.error('Falha ao enviar mensagem de erro:', e);
@@ -147,4 +147,4 @@ async function NazuninhaBotExec(nazu, info, store, messagesCache, rentalExpirati
   }
 }
 
-export default NazuninhaBotExec;
+export default chainyBotExec;

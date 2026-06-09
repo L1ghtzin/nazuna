@@ -11,7 +11,7 @@ export default {
     "apostarpet", "petbet"
   ],
   handle: async ({ 
-    nazu, from, reply, isOwner, command, DATABASE_DIR, optimizer, nomedono,
+    bot, from, reply, isOwner, command, DATABASE_DIR, optimizer, nomedono,
     sender, loadEconomy, getEcoUser, saveEconomy, prefix,
     info, q, args, isGroup, groupData,
     MESSAGES
@@ -93,7 +93,7 @@ export default {
     // --- LIMPEZA DE GRUPOS ---
     if (cmd === 'limpardb') {
       try {
-        const allGroups = await nazu.groupFetchAllParticipating();
+        const allGroups = await bot.groupFetchAllParticipating();
         const currentGroupIds = Object.keys(allGroups);
         const gruposDir = pathz.join(DATABASE_DIR, 'grupos');
         

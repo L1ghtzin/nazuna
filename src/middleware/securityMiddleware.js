@@ -2,7 +2,7 @@
  * Middleware para sistemas de proteção e moderação de conteúdo
  */
 export async function processSecurity({
-  nazu,
+  bot,
   from,
   sender,
   body,
@@ -23,18 +23,18 @@ export async function processSecurity({
         const warningData = antitoxic.generateWarningMessage(sender, toxicResult);
         if (warningData) {
           if (toxicResult.action === 'apagar') {
-            nazu.sendMessage(from, { delete: info.key }).then(() => {
-              nazu.sendMessage(from, warningData).catch(() => {});
+            bot.sendMessage(from, { delete: info.key }).then(() => {
+              bot.sendMessage(from, warningData).catch(() => {});
             }).catch(() => {});
           } else if (toxicResult.action === 'avisar') {
-            nazu.sendMessage(from, warningData).catch(() => {});
+            bot.sendMessage(from, warningData).catch(() => {});
           } else if (toxicResult.action === 'mute') {
             if (groupData && optimizer && groupFile) {
               groupData.mutedUsers = groupData.mutedUsers || {};
               groupData.mutedUsers[sender] = true;
               optimizer.saveJsonWithCache(groupFile, groupData).catch(() => {});
             }
-            nazu.sendMessage(from, warningData).catch(() => {});
+            bot.sendMessage(from, warningData).catch(() => {});
           }
         }
       }
@@ -53,7 +53,7 @@ export async function processSecurity({
           console.log(`[ANTIPALAVRA] Palavra detectada: "${detectionResult.palavra}" de @${sender.split('@')[0]}`);
           
           if (!isBotAdmin) {
-            await nazu.sendMessage(from, {
+            await bot.sendMessage(from, {
               text: `⚠️ *ANTIPALAVRA - DETECÇÃO*\n\n` +
                 `👤 @${sender.split('@')[0]} usou uma palavra proibida!\n` +
                 `⚠️ Palavra: "${detectionResult.palavra}"\n\n` +
@@ -63,17 +63,17 @@ export async function processSecurity({
             return true;
           }
           
-          await nazu.sendMessage(from, { delete: info.key }).catch(err => 
+          await bot.sendMessage(from, { delete: info.key }).catch(err => 
             console.error('[ANTIPALAVRA] Erro ao deletar mensagem:', err.message)
           );
           
-          await nazu.groupParticipantsUpdate(from, [sender], 'remove').catch(err => 
+          await bot.groupParticipantsUpdate(from, [sender], 'remove').catch(err => 
             console.error('[ANTIPALAVRA] Erro ao remover usuário:', err.message)
           );
           
           antipalavra.registerBan(from, sender, detectionResult.palavra);
           
-          await nazu.sendMessage(from, {
+          await bot.sendMessage(from, {
             text: `🚫 *ANTIPALAVRA - BANIMENTO AUTOMÁTICO*\n\n` +
             `👤 Usuário: @${sender.split('@')[0]}\n` +
             `⚠️ Palavra detectada: "${detectionResult.palavra}"\n` +

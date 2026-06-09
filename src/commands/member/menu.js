@@ -6,7 +6,7 @@ export default {
   description: "Menus e guias do bot",
   commands: ["admmenu", "alteradores", "changers", "changersmenu", "comandos", "commands", "downloadmenu", "downmenu", "ferramentas", "gamemenu", "help", "membermenu", "membmenu", "menu", "menuadm", "menuadmin", "menuadmins", "menualterador", "menualteradores", "menubn", "menubrincadeira", "menubrincadeiras", "menudono", "menudown", "menudownload", "menudownloads", "menuferramenta", "menuferramentas", "menufig", "menugeral", "menulogo", "menulogos", "menumemb", "menumembros", "menurpg", "menusticker", "menuvip", "ownermenu", "stickermenu", "tools", "toolsmenu"],
   handle: async ({ 
-    nazu, from, info, command, reply, prefix, pushname, isGroup,
+    bot, from, info, command, reply, prefix, pushname, isGroup,
     nomebot, menus, getGroupCustomization, isGroupCustomizationEnabled,
     getMenuDesignWithDefaults, getMenuLerMaisText, isMenuAudioEnabled,
     getMenuAudioPath, isOwner
@@ -49,11 +49,11 @@ export default {
         const audioPath = getMenuAudioPath();
         if (audioPath && fs.existsSync(audioPath)) {
           const audioBuffer = fs.readFileSync(audioPath);
-          await nazu.sendMessage(from, { audio: audioBuffer, mimetype: 'audio/mpeg', ptt: false }, { quoted: info });
+          await bot.sendMessage(from, { audio: audioBuffer, mimetype: 'audio/mpeg', ptt: false }, { quoted: info });
         }
       }
       
-      await nazu.sendMessage(from, {
+      await bot.sendMessage(from, {
         [useVideo ? 'video' : 'image']: mediaBuffer,
         caption: lerMaisPrefix + menuText,
         gifPlayback: useVideo,

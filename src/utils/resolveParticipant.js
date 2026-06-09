@@ -2,7 +2,7 @@
  * Utilitário centralizado para resolução de participantes (LID → JID).
  */
 
-export async function resolveParticipant(identifier, NazunaSock, groupMetadata = null) {
+export async function resolveParticipant(identifier, ChainySock, groupMetadata = null) {
     if (!identifier) {
         return { jid: '', number: '', lid: null, isLid: false, resolved: false };
     }
@@ -28,9 +28,9 @@ export async function resolveParticipant(identifier, NazunaSock, groupMetadata =
         }
 
         // Fallback: resolver via onWhatsApp
-        if (!resolved && NazunaSock) {
+        if (!resolved && ChainySock) {
             try {
-                const results = await NazunaSock.onWhatsApp(identifier);
+                const results = await ChainySock.onWhatsApp(identifier);
                 if (results?.[0]?.jid) {
                     jid = results[0].jid;
                     number = results[0].jid.replace(/@.*/, '');
@@ -44,7 +44,7 @@ export async function resolveParticipant(identifier, NazunaSock, groupMetadata =
     return { jid, number, lid, isLid, resolved };
 }
 
-export async function resolveNumber(identifier, NazunaSock) {
-    const { number, isLid, resolved } = await resolveParticipant(identifier, NazunaSock);
+export async function resolveNumber(identifier, ChainySock) {
+    const { number, isLid, resolved } = await resolveParticipant(identifier, ChainySock);
     return { number, isLid, resolved };
 }

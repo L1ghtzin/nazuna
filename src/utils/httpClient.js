@@ -45,7 +45,7 @@ const apiClient = axios.create({
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json',
-    'User-Agent': 'NazunaBot/2.0'
+    'User-Agent': 'ChainyBot/2.0'
   },
   // Mantemos <500 para não explodir tudo, mas trataremos 401/403/429 manualmente no interceptor
   validateStatus: (status) => status < 500
@@ -79,7 +79,7 @@ const mediaClient = axios.create({
   maxBodyLength: Infinity,
   responseType: 'arraybuffer',
   headers: {
-    'User-Agent': 'NazunaBot/2.0',
+    'User-Agent': 'ChainyBot/2.0',
     'Accept': '*/*'
   }
 });

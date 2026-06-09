@@ -6,7 +6,7 @@ import CaptchaIndex, { getCaptcha, removeCaptcha } from '../utils/captchaIndex.j
 /**
  * Middleware para processar respostas de captcha no PV ou no Grupo
  * 
- * @param {object} nazu - Instância do bot
+ * @param {object} bot - Instância do bot
  * @param {string} sender - ID de quem enviou a mensagem
  * @param {string} body - Corpo da mensagem
  * @param {boolean} isGroup - Se a mensagem é num grupo
@@ -16,7 +16,7 @@ import CaptchaIndex, { getCaptcha, removeCaptcha } from '../utils/captchaIndex.j
  * @param {boolean} debug - Modo de depuração
  * @returns {Promise<boolean>} Retorna true se o fluxo principal deve ser interrompido (handled)
  */
-export async function handleCaptchaResponse(nazu, sender, body, isGroup, info, reply, GRUPOS_DIR, debug = false) {
+export async function handleCaptchaResponse(bot, sender, body, isGroup, info, reply, GRUPOS_DIR, debug = false) {
   if (info.key.fromMe) return false;
 
   await CaptchaIndex.init();
@@ -33,11 +33,11 @@ export async function handleCaptchaResponse(nazu, sender, body, isGroup, info, r
   if (now >= isCapUser.expiresAt) {
     if (debug) console.log('[CAPTCHA] EXPIRADO');
     try {
-      await nazu.sendMessage(isCapUser.groupId, {
+      await bot.sendMessage(isCapUser.groupId, {
         text: `⏰ @${senderNormalized} demorou demais e foi removido.`,
         mentions: [isCapUser.idOrigin]
       });
-      await nazu.groupParticipantsUpdate(
+      await bot.groupParticipantsUpdate(
         isCapUser.groupId,
         [isCapUser.idOrigin],
         'remove'
@@ -59,7 +59,7 @@ export async function handleCaptchaResponse(nazu, sender, body, isGroup, info, r
     CaptchaIndex.remove(senderNormalized);
 
     try {
-      const groupMetadata = await nazu.groupMetadata(isCapUser.groupId).catch(() => null);
+      const groupMetadata = await bot.groupMetadata(isCapUser.groupId).catch(() => null);
       const groupPath = pathz.join(GRUPOS_DIR, isCapUser.groupFile || `${isCapUser.groupId.replace('@g.us', '')}.json`);
       const groupSettings = await readJsonFileAsync(groupPath, {});
 
@@ -71,30 +71,30 @@ export async function handleCaptchaResponse(nazu, sender, body, isGroup, info, r
             const { createGroupMessage } = await import('../connect.js').catch(() => ({}));
             if (createGroupMessage) {
                 const message = await createGroupMessage(
-                  nazu,
+                  bot,
                   groupMetadata,
                   [isCapUser.idOrigin],
                   groupSettings.welcome || { text: groupSettings.textbv }
                 );
-                await nazu.sendMessage(isCapUser.groupId, message);
+                await bot.sendMessage(isCapUser.groupId, message);
             } else {
                 throw new Error("createGroupMessage não encontrado");
             }
         } catch (e) {
-            await nazu.sendMessage(isCapUser.groupId, {
+            await bot.sendMessage(isCapUser.groupId, {
               text: `✅ @${senderNormalized} liberado com sucesso!`,
               mentions: [isCapUser.idOrigin]
             });
         }
       } else {
-        await nazu.sendMessage(isCapUser.groupId, {
+        await bot.sendMessage(isCapUser.groupId, {
           text: `✅ @${senderNormalized} liberado com sucesso!`,
           mentions: [isCapUser.idOrigin]
         });
       }
     } catch (e) {
       console.log('[ERRO WELCOME PÓS-CAPTCHA]:', e.message);
-      await nazu.sendMessage(isCapUser.groupId, {
+      await bot.sendMessage(isCapUser.groupId, {
         text: `✅ @${senderNormalized} liberado com sucesso!`,
         mentions: [isCapUser.idOrigin]
       }).catch(() => {});
@@ -102,7 +102,7 @@ export async function handleCaptchaResponse(nazu, sender, body, isGroup, info, r
     
     // Se a lógica do chainy aprova a requisição de grupo (para autoAccept), faz aqui também
     try {
-        await nazu.groupRequestParticipantsUpdate(isCapUser.groupId, [isCapUser.idOrigin], 'approve').catch(() => {});
+        await bot.groupRequestParticipantsUpdate(isCapUser.groupId, [isCapUser.idOrigin], 'approve').catch(() => {});
     } catch {}
 
     return true;

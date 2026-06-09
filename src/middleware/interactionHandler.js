@@ -1,6 +1,6 @@
 export async function processInteraction(context) {
     const { 
-        nazu, from, sender, body, groupPrefix, relationshipManager, reply
+        bot, from, sender, body, groupPrefix, relationshipManager, reply
     } = context;
 
     if (relationshipManager && relationshipManager.hasPendingRequest && relationshipManager.processResponse) {
@@ -9,7 +9,7 @@ export async function processInteraction(context) {
           const relResponse = relationshipManager.processResponse(from, sender, body);
           if (relResponse) {
             if (relResponse.success && relResponse.message) {
-              await nazu.sendMessage(from, {
+              await bot.sendMessage(from, {
                 text: relResponse.message,
                 mentions: relResponse.mentions || []
               });
@@ -22,7 +22,7 @@ export async function processInteraction(context) {
             const betrayalResponse = relationshipManager.processBetrayalResponse(from, sender, body, groupPrefix);
             if (betrayalResponse) {
               if (betrayalResponse.success && betrayalResponse.message) {
-                await nazu.sendMessage(from, {
+                await bot.sendMessage(from, {
                   text: betrayalResponse.message,
                   mentions: betrayalResponse.mentions || []
                 });

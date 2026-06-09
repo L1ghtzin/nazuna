@@ -1,7 +1,7 @@
 /**
  * Middleware para lidar com AntiPV (Anti Privado)
  * 
- * @param {object} nazu - Instância do bot
+ * @param {object} bot - Instância do bot
  * @param {string} sender - ID de quem enviou a mensagem
  * @param {string} command - Comando executado
  * @param {boolean} isGroup - Se a mensagem é num grupo
@@ -12,7 +12,7 @@
  * @param {function} reply - Função para enviar resposta
  * @returns {Promise<boolean>} Retorna true se a mensagem foi bloqueada pelo AntiPV
  */
-export async function handleAntiPV(nazu, sender, command, isGroup, isCmd, isOwner, isPremium, antipvData, reply) {
+export async function handleAntiPV(bot, sender, command, isGroup, isCmd, isOwner, isPremium, antipvData, reply) {
   // Se for grupo, AntiPV não se aplica
   if (isGroup) return false;
   // Se não houver configuração ou modo, não aplica
@@ -52,7 +52,7 @@ export async function handleAntiPV(nazu, sender, command, isGroup, isCmd, isOwne
   if (antipvData.mode === 'antipv4') {
     await reply(defaultMsg + '\n\n⚠️ Você será bloqueado.');
     await new Promise(r => setTimeout(r, 2000));
-    await nazu.updateBlockStatus(sender, 'block');
+    await bot.updateBlockStatus(sender, 'block');
     return true;
   }
 

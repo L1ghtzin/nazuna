@@ -4,7 +4,7 @@ export default {
   commands: ["qrcode"],
   usage: `${global.prefixo}qrcode <texto ou link>`,
   handle: async ({ 
-    nazu,
+    bot,
     from,
     reply,
     q,
@@ -18,7 +18,7 @@ export default {
       await reply('Aguarde um momentinho... ☀️');
       
       const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=${encodeURIComponent(q)}`;
-      await nazu.sendMessage(from, {
+      await bot.sendMessage(from, {
         image: { url: qrUrl },
         caption: `📱✨ *Seu QR Code super fofo está pronto!*\n\nConteúdo: ${q.substring(0, 100)}${q.length > 100 ? '...' : ''}`
       }, { quoted: info });

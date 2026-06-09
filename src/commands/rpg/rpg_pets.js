@@ -17,7 +17,7 @@ export default {
     commands: ["pets", "meuspets", "adotar", "adopt", "alimentar", "feed", "treinar", "train", "evoluirpet", "evolve", "renomearpet", "renamepet", "batalhapet", "petbattle", "apostarpet", "petbet"],
     handle: async ({ 
     reply, isGroup, groupData, sender, prefix, command, args, q, pushname, menc_jid2,
-    MESSAGES, nazu, getLidFromJidCached, isValidJid
+    MESSAGES, bot, getLidFromJidCached, isValidJid
   }) => {
         if (!isGroup || !groupData.modorpg) return;
 
@@ -242,7 +242,7 @@ export default {
             
             let target = menc_jid2[0];
             if (isValidJid(target)) {
-                target = await getLidFromJidCached(nazu, target) || target;
+                target = await getLidFromJidCached(bot, target) || target;
             }
 
             if (target === sender) return reply(`💔 Você não pode batalhar contra seus próprios pets!`);
@@ -405,7 +405,7 @@ export default {
             
             let target = menc_jid2[0];
             if (isValidJid(target)) {
-                target = await getLidFromJidCached(nazu, target) || target;
+                target = await getLidFromJidCached(bot, target) || target;
             }
 
             if (target === sender) return reply('❌ Você não pode apostar contra si mesmo!');

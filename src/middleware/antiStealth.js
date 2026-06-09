@@ -110,9 +110,9 @@ function registerCooldown(groupJid, participant) {
 
 // ── Lógica de Punição ──────────────────────────────────────────
 
-async function fetchGroupMetadata(NazunaSock, groupJid) {
+async function fetchGroupMetadata(ChainySock, groupJid) {
     try {
-        const metadata = await NazunaSock.groupMetadata(groupJid);
+        const metadata = await ChainySock.groupMetadata(groupJid);
         const owner = metadata?.owner 
             || metadata?.participants?.find(p => p.admin === 'superadmin')?.id
             || null;
@@ -146,7 +146,7 @@ function buildAlertMessage(flags, userName, participant, groupOwner) {
     return { groupMsg, mentions };
 }
 
-async function notifyBotOwner(NazunaSock, flags, groupName, userName, participant) {
+async function notifyBotOwner(ChainySock, flags, groupName, userName, participant) {
     if (!flags.avisar || !NUMERODONO) return;
     
     const donoJid = `${NUMERODONO}@s.whatsapp.net`;
@@ -155,7 +155,7 @@ async function notifyBotOwner(NazunaSock, flags, groupName, userName, participan
     if (flags.fechar) acoesFeitas.push(flags.tempo > 0 ? `🔒 Grupo fechado por ${flags.tempo}m` : '🔒 Grupo fechado');
     
     try {
-        await NazunaSock.sendMessage(donoJid, {
+        await ChainySock.sendMessage(donoJid, {
             text: `⚠️ *ALERTA ANTI-STEALTH* ⚠️\n\n` +
                   `🛡️ Ataque detectado!\n\n` +
                   `👥 *Grupo:* ${groupName}\n` +
@@ -168,7 +168,7 @@ async function notifyBotOwner(NazunaSock, flags, groupName, userName, participan
     }
 }
 
-function scheduleGroupReopening(NazunaSock, groupJid, flags, groupName) {
+function scheduleGroupReopening(ChainySock, groupJid, flags, groupName) {
     if (!flags.fechar || flags.tempo <= 0) return;
     
     if (activeTimers.has(groupJid)) clearTimeout(activeTimers.get(groupJid));
@@ -176,8 +176,8 @@ function scheduleGroupReopening(NazunaSock, groupJid, flags, groupName) {
     const timerId = setTimeout(async () => {
         activeTimers.delete(groupJid);
         try {
-            await NazunaSock.groupSettingUpdate(groupJid, 'not_announcement');
-            await NazunaSock.sendMessage(groupJid, { 
+            await ChainySock.groupSettingUpdate(groupJid, 'not_announcement');
+            await ChainySock.sendMessage(groupJid, { 
                 text: `✅ *O período de segurança de ${flags.tempo} minutos acabou.*\n\nO grupo foi reaberto e todos podem voltar a conversar livremente.`
             });
         } catch (e) {
@@ -189,28 +189,28 @@ function scheduleGroupReopening(NazunaSock, groupJid, flags, groupName) {
     activeTimers.set(groupJid, timerId);
 }
 
-async function executeAction(NazunaSock, groupJid, participant, config) {
+async function executeAction(ChainySock, groupJid, participant, config) {
     const flags = parseAction(config.action, config.limit);
     const userName = participant.split('@')[0];
     
-    const { groupName, groupOwner } = await fetchGroupMetadata(NazunaSock, groupJid);
+    const { groupName, groupOwner } = await fetchGroupMetadata(ChainySock, groupJid);
     const { groupMsg, mentions } = buildAlertMessage(flags, userName, participant, groupOwner);
 
-    const promises = [NazunaSock.sendMessage(groupJid, { text: groupMsg, mentions })];
+    const promises = [ChainySock.sendMessage(groupJid, { text: groupMsg, mentions })];
 
     if (flags.fechar) {
         config.stats.closed++;
-        promises.push(NazunaSock.groupSettingUpdate(groupJid, 'announcement'));
+        promises.push(ChainySock.groupSettingUpdate(groupJid, 'announcement'));
     }
 
     if (flags.banir) {
         config.stats.banned++;
-        promises.push(NazunaSock.groupParticipantsUpdate(groupJid, [participant], 'remove'));
+        promises.push(ChainySock.groupParticipantsUpdate(groupJid, [participant], 'remove'));
     }
 
     await Promise.allSettled(promises);
-    await notifyBotOwner(NazunaSock, flags, groupName, userName, participant);
-    scheduleGroupReopening(NazunaSock, groupJid, flags, groupName);
+    await notifyBotOwner(ChainySock, flags, groupName, userName, participant);
+    scheduleGroupReopening(ChainySock, groupJid, flags, groupName);
 
     console.log(`[ANTI-STEALTH] 🛡️ [${groupName}] Ação executada contra @${userName}`);
 }
@@ -231,7 +231,7 @@ function handleResolvedLag(msgId, groupJid, participant) {
     console.log(`[ANTI-STEALTH] 🟢 Falso Positivo Evitado! Mensagem de @${participant.split('@')[0]} decriptada via retry (Era apenas Lag).`);
 }
 
-async function processStealthDetection(NazunaSock, msgId, groupJid, participant, config, groupData, groupFilePath, performanceOptimizer) {
+async function processStealthDetection(ChainySock, msgId, groupJid, participant, config, groupData, groupFilePath, performanceOptimizer) {
     const flags = parseAction(config.action, config.limit);
     const strikeKey = `${groupJid}:${participant}`;
     const userName = participant.split('@')[0];
@@ -262,7 +262,7 @@ async function processStealthDetection(NazunaSock, msgId, groupJid, participant,
         config.stats.detected++;
         userStrikes.delete(strikeKey);
         registerCooldown(groupJid, participant);
-        await executeAction(NazunaSock, groupJid, participant, config);
+        await executeAction(ChainySock, groupJid, participant, config);
         persistGroupData(true, groupJid, groupFilePath, groupData, performanceOptimizer);
         return;
     }
@@ -276,7 +276,7 @@ async function processStealthDetection(NazunaSock, msgId, groupJid, participant,
         userStrikes.delete(strikeKey);
         registerCooldown(groupJid, participant);
         
-        await executeAction(NazunaSock, groupJid, participant, config);
+        await executeAction(ChainySock, groupJid, participant, config);
         persistGroupData(true, groupJid, groupFilePath, groupData, performanceOptimizer);
     }, 15000);
     
@@ -284,10 +284,10 @@ async function processStealthDetection(NazunaSock, msgId, groupJid, participant,
     pendingPunishments.set(msgId, { timer, groupJid, participant });
 }
 
-export async function processAntiStealth(NazunaSock, m, performanceOptimizer) {
+export async function processAntiStealth(ChainySock, m, performanceOptimizer) {
     if (m.type !== 'notify' && m.type !== 'append') return;
     
-    const botIdPrefix = NazunaSock.user?.id?.split(':')[0];
+    const botIdPrefix = ChainySock.user?.id?.split(':')[0];
     
     for (const info of m.messages) {
         if (info.key?.fromMe || !info.key?.remoteJid?.endsWith('@g.us')) continue;
@@ -314,7 +314,7 @@ export async function processAntiStealth(NazunaSock, m, performanceOptimizer) {
             if (shouldSkipParticipant(participant, botIdPrefix, groupData)) continue;
             
             const config = getStealthConfig(groupData);
-            await processStealthDetection(NazunaSock, msgId, groupJid, participant, config, groupData, groupFilePath, performanceOptimizer);
+            await processStealthDetection(ChainySock, msgId, groupJid, participant, config, groupData, groupFilePath, performanceOptimizer);
 
         } catch (e) {
             console.error(`[ANTI-STEALTH] Erro ao processar ${participant}:`, e?.message || e);
@@ -353,14 +353,14 @@ function showAntiStealthStatus(groupData, config, from, reply) {
     );
 }
 
-async function configureAntiStealthAction(val, from, groupData, groupFilePath, optimizer, reply, NazunaSock, prefix, config) {
+async function configureAntiStealthAction(val, from, groupData, groupFilePath, optimizer, reply, ChainySock, prefix, config) {
     if (val === 'abrir') {
         try {
             if (activeTimers.has(from)) {
                 clearTimeout(activeTimers.get(from));
                 activeTimers.delete(from);
             }
-            await NazunaSock.groupSettingUpdate(from, 'not_announcement');
+            await ChainySock.groupSettingUpdate(from, 'not_announcement');
             return reply(`✅ O grupo foi *ABERTO* novamente.`);
         } catch (e) {
             return reply(`❌ Erro ao abrir o grupo: ${e.message}`);
@@ -417,7 +417,7 @@ async function configureAntiStealthStrikes(val, groupData, groupFilePath, optimi
 
 export async function handleAntistealthCommand({ 
     reply, args, isGroup, isGroupAdmin, isBotAdmin, from, 
-    groupData, DATABASE_DIR, optimizer, MESSAGES, prefix, NazunaSock 
+    groupData, DATABASE_DIR, optimizer, MESSAGES, prefix, ChainySock 
 }) {
     if (!isGroup) return reply(MESSAGES.permission.groupOnly);
     if (!isGroupAdmin) return reply(MESSAGES.permission.userAdminOnly);
@@ -440,7 +440,7 @@ export async function handleAntistealthCommand({
         case 'acao':
         case 'ação':
         case 'action':
-            return await configureAntiStealthAction(val, from, groupData, groupFilePath, optimizer, reply, NazunaSock, prefix, config);
+            return await configureAntiStealthAction(val, from, groupData, groupFilePath, optimizer, reply, ChainySock, prefix, config);
         case 'strikes':
         case 'limite':
         case 'limit':

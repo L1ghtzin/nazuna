@@ -90,7 +90,7 @@ export default {
   commands: ["role", "roles", "role.lista", "listaroles", "role.criar", "role.alterar", "role.excluir", "role.vou", "role.nvou", "role.info", "role.confirmados", "role.participantes"],
   usage: `${global.prefix}role <subcomando>`,
   handle: async ({ 
-    nazu,
+    bot,
     from,
     reply,
     isGroup,
@@ -117,7 +117,7 @@ export default {
       try {
         if (!roleData || !roleData.announcementKey || !roleData.announcementKey.id) return;
         try {
-          await nazu.sendMessage(from, {
+          await bot.sendMessage(from, {
             delete: {
               remoteJid: from,
               fromMe: roleData.announcementKey.fromMe !== undefined ? roleData.announcementKey.fromMe : true,
@@ -135,7 +135,7 @@ export default {
           ...goingList.slice(0, MAX_MENTIONS_IN_ANNOUNCE),
           ...notGoingList.slice(0, MAX_MENTIONS_IN_ANNOUNCE)
         ];
-        const sentMessage = await nazu.sendMessage(from, { text: announcementText, mentions });
+        const sentMessage = await bot.sendMessage(from, { text: announcementText, mentions });
         if (sentMessage?.key?.id) {
           if (!groupData.roleMessages || typeof groupData.roleMessages !== 'object') {
             groupData.roleMessages = {};
@@ -172,7 +172,7 @@ export default {
       const listText = `🪩 *Rolês ativos*\n\n${listLines.join('\n\n')}\n\n🙋 Reaja com ${ROLE_GOING_BASE} ou use ${groupPrefix}role.vou CODIGO\n🤷 Reaja com ${ROLE_NOT_GOING_BASE} ou use ${groupPrefix}role.nvou CODIGO`;
 
       try {
-        await nazu.sendMessage(sendTarget, { text: listText });
+        await bot.sendMessage(sendTarget, { text: listText });
         if (sendInPv && sendTarget !== from) {
           await reply('📬 Enviei a lista de rolês no seu privado!', { mentions: [sender] });
         }
@@ -252,9 +252,9 @@ export default {
             payload.mimetype = mediaData.mimetype;
             if (mediaData.gifPlayback) payload.gifPlayback = true;
           }
-          sentMessage = await nazu.sendMessage(from, payload);
+          sentMessage = await bot.sendMessage(from, payload);
         } else {
-          sentMessage = await nazu.sendMessage(from, { text: announcementText });
+          sentMessage = await bot.sendMessage(from, { text: announcementText });
         }
       } catch (sendError) {
         console.error('Erro ao divulgar rolê:', sendError);
@@ -312,7 +312,7 @@ export default {
       if (roleData.announcementKey?.id) {
         delete groupData.roleMessages[roleData.announcementKey.id];
         try {
-          await nazu.sendMessage(from, {
+          await bot.sendMessage(from, {
             delete: {
               remoteJid: from,
               fromMe: roleData.announcementKey.fromMe !== undefined ? roleData.announcementKey.fromMe : true,
@@ -339,9 +339,9 @@ export default {
             payload.mimetype = mediaInfo.media.mimetype || 'video/mp4';
             if (mediaInfo.media.gifPlayback) payload.gifPlayback = true;
           }
-          sentMessage = await nazu.sendMessage(from, payload);
+          sentMessage = await bot.sendMessage(from, payload);
         } else {
-          sentMessage = await nazu.sendMessage(from, { text: announcementText });
+          sentMessage = await bot.sendMessage(from, { text: announcementText });
         }
       } catch (updateErr) {
         console.error('Erro ao reenviar divulgação do rolê:', updateErr);
@@ -377,7 +377,7 @@ export default {
       if (roleData.announcementKey?.id) {
         delete groupData.roleMessages[roleData.announcementKey.id];
         try {
-          await nazu.sendMessage(from, {
+          await bot.sendMessage(from, {
             delete: {
               remoteJid: from,
               fromMe: roleData.announcementKey.fromMe !== undefined ? roleData.announcementKey.fromMe : true,
@@ -484,12 +484,12 @@ export default {
             if (roleData.media.gifPlayback) payload.gifPlayback = true;
           }
           
-          await nazu.sendMessage(from, payload, { quoted: info });
+          await bot.sendMessage(from, payload, { quoted: info });
         } catch (mediaError) {
-          await nazu.sendMessage(from, { text: lines.join('\n'), mentions: [...going, ...notGoing] }, { quoted: info });
+          await bot.sendMessage(from, { text: lines.join('\n'), mentions: [...going, ...notGoing] }, { quoted: info });
         }
       } else {
-        await nazu.sendMessage(from, { text: lines.join('\n'), mentions: [...going, ...notGoing] }, { quoted: info });
+        await bot.sendMessage(from, { text: lines.join('\n'), mentions: [...going, ...notGoing] }, { quoted: info });
       }
       return;
     }

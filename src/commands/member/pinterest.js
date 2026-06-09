@@ -4,7 +4,7 @@ export default {
   commands: ["pinterest", "pin"],
   usage: `${global.prefix}pinterest <termo> [/quantidade] ou ${global.prefix}pinterest <link>`,
   handle: async ({ 
-    reply, q, nazu, from, info, prefix, pinterest,
+    reply, q, bot, from, info, prefix, pinterest,
     MESSAGES
   }) => {
     try {
@@ -50,7 +50,7 @@ export default {
               const message = isPinUrl && datinha.type === 'video'
                 ? { video: { url }, caption: '📌 Download do Pinterest' }
                 : { image: { url }, caption: isPinUrl ? '📌 Download do Pinterest' : `📌 Resultado da pesquisa por "${searchTerm}"` };
-              await nazu.sendMessage(from, message, { quoted: info });
+              await bot.sendMessage(from, message, { quoted: info });
             } catch (sendErr) {
               console.error('Erro ao enviar mídia Pinterest:', sendErr.message);
               // Tenta a próxima URL se houver

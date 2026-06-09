@@ -2,7 +2,7 @@
  * Middleware para sistemas de moderação visual e mídias
  */
 export async function processMediaSecurity({
-  nazu,
+  bot,
   from,
   info,
   groupData,
@@ -24,7 +24,7 @@ export async function processMediaSecurity({
   // AntiSticker Plus (Lottie)
   if (isGroup && antistickerplus) {
     try {
-      await antistickerplus.checkSticker(nazu, from, info, groupData, {
+      await antistickerplus.checkSticker(bot, from, info, groupData, {
         isGroupAdmin,
         isOwner,
         isParceiro,
@@ -41,7 +41,7 @@ export async function processMediaSecurity({
   if (isGroup && groupData.antifig && groupData.antifig.enabled && type === "stickerMessage" && !isGroupAdmin && !info.key.fromMe) {
     if (!isUserWhitelisted(sender, 'antifig')) {
       try {
-        await nazu.sendMessage(from, {
+        await bot.sendMessage(from, {
           delete: {
             remoteJid: from,
             fromMe: false,
@@ -64,11 +64,11 @@ export async function processMediaSecurity({
         
         if (warnCount >= warnLimit && isBotAdmin) {
           warnMessage += `\n⚠️ Você atingiu o limite de advertências e será removido.`;
-          await nazu.groupParticipantsUpdate(from, [sender], 'remove');
+          await bot.groupParticipantsUpdate(from, [sender], 'remove');
           delete groupData.warnings[sender];
         }
         
-        await nazu.sendMessage(from, {
+        await bot.sendMessage(from, {
           text: warnMessage,
           mentions: [sender]
         });

@@ -12,7 +12,7 @@ export default {
     "cortarvid", "cutvideo"
   ],
   handle: async ({ 
-    reply, command, isMedia, info, nazu, from, q, args, prefix, type, audioEdit, getFileBuffer,
+    reply, command, isMedia, info, bot, from, q, args, prefix, type, audioEdit, getFileBuffer,
     MESSAGES
   }) => {
     const cmd = command.toLowerCase();
@@ -64,7 +64,7 @@ export default {
         }
 
         if (result.success) {
-          await nazu.sendMessage(from, { audio: result.buffer, mimetype: 'audio/mpeg', ptt: false }, { quoted: info });
+          await bot.sendMessage(from, { audio: result.buffer, mimetype: 'audio/mpeg', ptt: false }, { quoted: info });
         } else {
           return reply(result.message);
         }
@@ -111,7 +111,7 @@ export default {
           
           if (fs.existsSync(ranVideoCut)) {
             const bufferVideo = fs.readFileSync(ranVideoCut);
-            await nazu.sendMessage(from, { video: bufferVideo, mimetype: 'video/mp4' }, { quoted: info });
+            await bot.sendMessage(from, { video: bufferVideo, mimetype: 'video/mp4' }, { quoted: info });
             fs.unlinkSync(ranVideoCut);
           }
         });

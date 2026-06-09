@@ -22,7 +22,7 @@ export default {
     saveEconomy, 
     getEcoUser,
     MESSAGES,
-    nazu
+    bot
   }) => {
     if (!isGroup) return reply('⚔️ Este comando funciona apenas em grupos com Modo RPG ativo.');
     if (!groupData.modorpg) return reply(`⚔️ Modo RPG desativado! Use ${prefix}modorpg para ativar.`);
@@ -177,7 +177,7 @@ export default {
       if (!target) return reply(`❗ Marque um usuário para convidar. Ex: ${prefix}convidar @user`);
       
       const rawTargetJid = target;
-      target = await normalizeUserId(nazu, target);
+      target = await normalizeUserId(bot, target);
       if (target === sender) return reply(`💔 Você já está no clã!`);
 
       const targetUser = getEcoUser(econ, target);
@@ -261,7 +261,7 @@ export default {
       if (!target) return reply(`❗ Marque um membro para expulsar. Ex: ${prefix}expulsar @user`);
       
       const rawTargetJid = target;
-      target = await normalizeUserId(nazu, target);
+      target = await normalizeUserId(bot, target);
       if (target === sender) return reply(`💔 Você não pode se expulsar. Use sair para transferir liderança.`);
 
       if (!idInList(target, clan.members)) return reply(`💔 Este usuário não é membro do seu clã.`);
@@ -332,7 +332,7 @@ export default {
       if (!target) return reply(`❗ Marque um usuário para remover o convite. Ex: ${prefix}rmconvite @user`);
       
       const rawTargetJid = target;
-      target = await normalizeUserId(nazu, target);
+      target = await normalizeUserId(bot, target);
       
       if (!Array.isArray(clan.pendingInvites) || !idInList(target, clan.pendingInvites)) return reply(`💔 Este usuário não tem um convite pendente.`);
 

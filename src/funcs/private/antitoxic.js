@@ -327,7 +327,7 @@ const getGroupAction = (groupId) => {
 
 // --- COMANDO (Handler) ---
 
-const handleCommand = async (nazu, from, args, groupData, { reply, prefix }) => {
+const handleCommand = async (bot, from, args, groupData, { reply, prefix }) => {
     const arg = args[0] ? args[0].toLowerCase() : '';
     const val = args[1] ? args[1].toLowerCase() : '';
 

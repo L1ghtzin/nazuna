@@ -5,7 +5,7 @@ import { addCaptcha, removeCaptcha } from '../utils/captchaIndex.js';
 /**
  * Middleware para processar solicitações de entrada de grupos (join requests via messageStubType)
  * 
- * @param {object} nazu - Instância do bot
+ * @param {object} bot - Instância do bot
  * @param {object} info - Informações da mensagem (stub)
  * @param {string} from - ID do grupo
  * @param {boolean} isGroup - Se a mensagem é num grupo
@@ -13,7 +13,7 @@ import { addCaptcha, removeCaptcha } from '../utils/captchaIndex.js';
  * @param {boolean} debug - Modo debug
  * @returns {Promise<boolean>} Retorna true se a mensagem foi tratada (deve interromper o fluxo)
  */
-export async function handleJoinRequest(nazu, info, from, isGroup, GRUPOS_DIR, debug = false) {
+export async function handleJoinRequest(bot, info, from, isGroup, GRUPOS_DIR, debug = false) {
   // Verifica se é um evento do tipo GROUP_MEMBERSHIP_JOIN_APPROVAL_REQUEST_NON_ADMIN_ADD
   if (!isGroup || !info.message?.messageStubType || info.message.messageStubType !== 172) {
     return false;
@@ -61,7 +61,7 @@ export async function handleJoinRequest(nazu, info, from, isGroup, GRUPOS_DIR, d
       if (groupSettings.autoAcceptRequests) {
         if (groupSettings.captchaEnabled) {
           // Pega o nome do grupo
-          const groupMetadata = await nazu.groupMetadata(from).catch(() => null);
+          const groupMetadata = await bot.groupMetadata(from).catch(() => null);
           const groupNameCaptcha = groupMetadata?.subject || 'Desconhecido';
           
           // Gera captcha e envia para o usuário
@@ -103,7 +103,7 @@ export async function handleJoinRequest(nazu, info, from, isGroup, GRUPOS_DIR, d
           }
           
           try {
-            await nazu.sendMessage(participantJid, { text: captchaMessage });
+            await bot.sendMessage(participantJid, { text: captchaMessage });
             console.log(`[JOIN REQUEST] Captcha enviado para ${participantJid}`);
           } catch (err) {
             console.error(`[JOIN REQUEST] Erro ao enviar captcha para ${participantJid}:`, err);
@@ -111,12 +111,12 @@ export async function handleJoinRequest(nazu, info, from, isGroup, GRUPOS_DIR, d
         } else {
           // Auto-aceitar sem captcha
           try {
-            await nazu.groupRequestParticipantsUpdate(from, [participantJid], 'approve');
+            await bot.groupRequestParticipantsUpdate(from, [participantJid], 'approve');
             console.log(`[JOIN REQUEST] ✅ Aprovado automaticamente: ${participantJid}`);
             
             // Notificação X9
             if (groupSettings.x9) {
-              await nazu.sendMessage(from, {
+              await bot.sendMessage(from, {
                 text: `✅ *X9 Report:* @${participantJid.split('@')[0]} foi aprovado automaticamente (auto-aceitar ativo).`,
                 mentions: [participantJid],
               }).catch(err => console.error(`❌ Erro ao enviar X9: ${err.message}`));
@@ -129,7 +129,7 @@ export async function handleJoinRequest(nazu, info, from, isGroup, GRUPOS_DIR, d
         // Auto-aceitar desativado - apenas notifica se X9 ativo
         if (groupSettings.x9) {
           try {
-            await nazu.sendMessage(from, {
+            await bot.sendMessage(from, {
               text: `📬 *X9 Report:* Nova solicitação de entrada detectada.\n👤 Usuário: @${participantJid.split('@')[0]}\n\nAprovação manual necessária.`,
               mentions: [participantJid],
             }).catch(err => console.error(`❌ Erro ao enviar X9: ${err.message}`));
@@ -154,7 +154,7 @@ export async function handleJoinRequest(nazu, info, from, isGroup, GRUPOS_DIR, d
       if (groupSettings.x9) {
         const statusText = action === 'revoked' ? 'cancelou a solicitação' : 'teve a solicitação recusada';
         try {
-          await nazu.sendMessage(from, {
+          await bot.sendMessage(from, {
             text: `🔔 *X9 Report:* @${participantJid.split('@')[0]} ${statusText}.`,
             mentions: [participantJid],
           }).catch(err => console.error(`❌ Erro ao enviar X9: ${err.message}`));

@@ -2,7 +2,7 @@
  * Middleware para processamento de jogos e sistemas de diversão
  */
 export async function processGames({
-  nazu,
+  bot,
   from,
   sender,
   budy2,
@@ -16,7 +16,7 @@ export async function processGames({
     const normalizedResponse = budy2.toLowerCase().trim();
     const result = tictactoe.processInvitationResponse(from, sender, normalizedResponse);
     if (result.success) {
-      nazu.sendMessage(from, {
+      bot.sendMessage(from, {
         text: result.message,
         mentions: result.mentions || []
       }).catch(e => console.error('[TICTACTOE] Erro ao enviar resposta de convite:', e.message));
@@ -38,7 +38,7 @@ export async function processGames({
     if (!isNaN(position)) {
       const result = tictactoe.makeMove(from, sender, position);
       if (result.success) {
-        nazu.sendMessage(from, {
+        bot.sendMessage(from, {
           text: result.message,
           mentions: result.mentions || [sender]
         }).catch(e => console.error('[TICTACTOE] Erro ao enviar jogada:', e.message));
@@ -54,7 +54,7 @@ export async function processGames({
     const normalizedResponse = budy2.toLowerCase().trim();
     const result = connect4.processInvitationResponse(from, sender, normalizedResponse);
     if (result.success) {
-      await nazu.sendMessage(from, {
+      await bot.sendMessage(from, {
         text: result.message,
         mentions: result.mentions || []
       });
@@ -76,7 +76,7 @@ export async function processGames({
     if (!isNaN(column) && column >= 1 && column <= 7) {
       const result = connect4.makeMove(from, sender, column);
       if (result.success) {
-        await nazu.sendMessage(from, {
+        await bot.sendMessage(from, {
           text: result.message,
           mentions: result.mentions || [sender]
         });

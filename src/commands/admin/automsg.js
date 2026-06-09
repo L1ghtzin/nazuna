@@ -8,7 +8,7 @@ export default {
   commands: ["add", "automsg"],
   usage: "{prefix}automsg help",
   handle: async ({ 
-    nazu, 
+    bot, 
     from, 
     reply, 
     isGroup, 

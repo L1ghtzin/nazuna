@@ -10,7 +10,7 @@ export default {
   description: "Comandos de porcentagem e ranks engraçados",
   commands: ["analogica", "analogico", "antisocial", "ateia", "ateu", "atleta", "aventureira", "aventureiro", "azarada", "azarado", "bagunceira", "bagunceiro", "bandida", "bandido", "bebada", "bebado", "bilionaria", "billionario", "boba", "bobo", "bolsonarista", "bombada", "bombado", "braba", "brabo", "brincalhao", "brincalhona", "bucetuda", "burra", "burro", "cachorra", "cachorro", "calma", "calmo", "carinhosa", "carinhoso", "caseira", "caseiro", "cetica", "cetico", "charmosa", "charmoso", "chata", "chato", "chefe", "chorao", "chorona", "ciumenta", "ciumento", "comedia", "comilao", "comilona", "comunista", "confiante", "conservador", "conservadora", "corajosa", "corajoso", "corna", "corno", "cosmopolita", "covarde", "criativa", "criativo", "dependente", "desumilde", "digital", "doente", "dorminhoca", "dorminhoco", "economica", "economico", "engracada", "engracado", "esperta", "esperto", "estudiosa", "estudioso", "extrovertida", "extrovertido", "feia", "feio", "fiel", "fofoqueira", "fofoqueiro", "fortao", "forte", "fortona", "fraca", "fraco", "gado", "gamer", "gastador", "gastadora", "gay", "global", "gostosa", "gostoso", "homofobica", "homofobico", "humilde", "independente", "infantil", "infiel", "insegura", "inseguro", "inteligente", "introvertida", "introvertido", "irresponsavel", "ladra", "ladrao", "lesbica", "liberal", "lider", "linda", "lindo", "local", "lulista", "machista", "macho", "madura", "maduro", "magrela", "magrelo", "malandra", "malandro", "misteriosa", "misterioso", "mito", "moderna", "moderno", "nazista", "nerd", "nervosa", "nervoso", "offline", "online", "organizada", "organizado", "otaku", "otaria", "otario", "otimista", "padrao", "patrao", "patriotica", "patriotico", "patroa", "pegador", "pegadora", "pessimista", "petista", "pilantra", "pirocudo", "pirokudo", "playboy", "pobre", "poderosa", "poderoso", "popular", "pratica", "pratico", "preguicosa", "preguicoso", "presidenta", "presidente", "programador", "programadora", "psicopata", "racista", "rainha", "rankbraba", "rankbrabas", "rankbrabo", "rankbrabos", "rankburra", "rankburras", "rankburro", "rankburros", "rankcharmosa", "rankcharmosas", "rankcharmoso", "rankcharmosos", "rankcorna", "rankcornas", "rankcorno", "rankcornos", "rankengracada", "rankengracadas", "rankengracado", "rankengracados", "rankfiel", "rankfiels", "rankforte", "rankfortes", "rankgada", "rankgado", "rankgados", "rankgads", "rankgay", "rankgays", "rankgostosa", "rankgostosas", "rankgostoso", "rankgostosos", "rankinfieis", "rankinfiel", "rankinteligente", "rankinteligentes", "ranklesbica", "ranklesbicas", "ranklinda", "ranklindas", "ranklindo", "ranklindos", "rankmacho", "rankmachos", "rankmalandra", "rankmalandras", "rankmalandro", "rankmalandros", "ranknerd", "ranknerds", "rankotaku", "rankotakus", "rankpegador", "rankpegadora", "rankpegadoras", "rankpegadores", "rankpobre", "rankpobres", "rankpoderosa", "rankpoderosas", "rankpoderoso", "rankpoderosos", "rankrica", "rankricas", "rankrico", "rankricos", "ranktrabalhador", "ranktrabalhadora", "ranktrabalhadoras", "ranktrabalhadores", "rankvencedor", "rankvencedora", "rankvencedoras", "rankvencedores", "rankvisionaria", "rankvisionarias", "rankvisionario", "rankvisionarios", "realista", "rei", "religiosa", "religioso", "responsavel", "rica", "rico", "romantica", "romantico", "rural", "safada", "safado", "saudavel", "sedentaria", "sedentario", "seguidor", "seguidora", "senhor", "senhora", "seria", "serio", "simpatica", "simpatico", "social", "solitaria", "solitario", "sonhador", "sonhadora", "sortuda", "sortudo", "sortudo2", "supersticiosa", "supersticioso", "talarica", "talarico", "tecnologica", "tecnologico", "trabalhador", "trabalhadora", "tradicional", "traidor", "traidora", "urbana", "urbano", "vagabunda", "vagabundo", "vencedor", "vencedora", "vesga", "vesgo", "viaja nte", "viajante", "visionaria", "visionario", "zueira", "zueiro"],
   usage: `${global.prefix}gay\n${global.prefix}rankgay`,
-  handle: async ({  nazu, reply, isGroup, command, menc_os2, info, getUserName, from, sender, buildGroupFilePath, AllgroupMembers, isModoLite, isModoBn , MESSAGES }) => {
+  handle: async ({  bot, reply, isGroup, command, menc_os2, info, getUserName, from, sender, buildGroupFilePath, AllgroupMembers, isModoLite, isModoBn , MESSAGES }) => {
     try {
       const modoLite = isModoLite || false;
       const modoBn = isModoBn || false;
@@ -23,7 +23,7 @@ export default {
         const proibidosFem = ['bucetuda', 'cachorra', 'vagabunda', 'racista', 'nazista', 'gostosa', 'machista', 'homofobica'];
         
         if (modoLite && (proibidosMasc.includes(command) || proibidosFem.includes(command))) {
-          return nazu.react('❌', { key: info.key });
+          return bot.react('❌', { key: info.key });
         }
         
         if (!isGroup) return reply(MESSAGES.permission.groupOnly);
@@ -44,17 +44,17 @@ export default {
         const media = gamesData.games[command];
         
         if (media?.image) {
-          await nazu.sendMessage(from, { image: media.image, caption: responseText, mentions: [target] });
+          await bot.sendMessage(from, { image: media.image, caption: responseText, mentions: [target] });
         } else if (media?.video) {
-          await nazu.sendMessage(from, { video: media.video, caption: responseText, mentions: [target], gifPlayback: true });
+          await bot.sendMessage(from, { video: media.video, caption: responseText, mentions: [target], gifPlayback: true });
         } else {
-          await nazu.sendMessage(from, { text: responseText, mentions: [target] });
+          await bot.sendMessage(from, { text: responseText, mentions: [target] });
         }
       } 
       // Comandos de Rank
       else {
         if (modoLite && ['rankgostoso', 'rankgostosos', 'rankgostosa', 'rankgostosas', 'ranknazista'].includes(command)) {
-          return nazu.react('❌', { key: info.key });
+          return bot.react('❌', { key: info.key });
         }
         
         if (!isGroup) return reply(MESSAGES.permission.groupOnly);
@@ -83,11 +83,11 @@ export default {
         let media = gamesData.ranks[cleanedCommand];
         
         if (media?.image) {
-          await nazu.sendMessage(from, { image: media.image, caption: responseText, mentions: top5 });
+          await bot.sendMessage(from, { image: media.image, caption: responseText, mentions: top5 });
         } else if (media?.video) {
-          await nazu.sendMessage(from, { video: media.video, caption: responseText, mentions: top5, gifPlayback: true });
+          await bot.sendMessage(from, { video: media.video, caption: responseText, mentions: top5, gifPlayback: true });
         } else {
-          await nazu.sendMessage(from, { text: responseText, mentions: top5 });
+          await bot.sendMessage(from, { text: responseText, mentions: top5 });
         }
       }
     } catch (e) {

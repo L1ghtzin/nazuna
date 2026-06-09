@@ -6,7 +6,7 @@ export default {
   commands: ["atividade", "checkativo", "mantercontador", "preservarcontador", "rankativo", "rankativos", "rankinativo", "rankinativos"],
   usage: "{prefix}rankativos",
   handle: async ({ 
-    nazu, 
+    bot, 
     from, 
     info, 
     command,
@@ -64,7 +64,7 @@ export default {
         }
       }
 
-      return nazu.sendMessage(from, { text: msg, mentions }, { quoted: info });
+      return bot.sendMessage(from, { text: msg, mentions }, { quoted: info });
     }
 
     // --- CHECK ATIVO ---
@@ -95,7 +95,7 @@ export default {
         }
       });
 
-      return nazu.sendMessage(from, { text: msg, mentions }, { quoted: info });
+      return bot.sendMessage(from, { text: msg, mentions }, { quoted: info });
     }
 
     // --- CONFIGS (Admin) ---

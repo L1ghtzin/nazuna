@@ -7,7 +7,7 @@ export default {
   commands: ["antilinkgp", "antilinkcanal", "antilinkch", "antilinksoft", "antiporn", "antigore", "antistealth"],
   handle: async ({ 
     reply, command, isGroup, isGroupAdmin, isBotAdmin, from, 
-    groupData, DATABASE_DIR, optimizer, MESSAGES, args, prefix, nazu
+    groupData, DATABASE_DIR, optimizer, MESSAGES, args, prefix, bot
   }) => {
     if (!isGroup) return reply(MESSAGES.permission.groupOnly);
     if (!isGroupAdmin) return reply(MESSAGES.permission.userAdminOnly);
@@ -39,7 +39,7 @@ export default {
     if (cmd === 'antistealth') {
       return handleAntistealthCommand({ 
         reply, args, isGroup, isGroupAdmin, isBotAdmin, from, 
-        groupData, DATABASE_DIR, optimizer, MESSAGES, prefix, NazunaSock: nazu 
+        groupData, DATABASE_DIR, optimizer, MESSAGES, prefix, ChainySock: bot 
       });
     }
 

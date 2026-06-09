@@ -1,6 +1,6 @@
 export async function processAntiLink(context) {
     const { 
-        nazu, info, isGroup, sender, groupData, budy2, isGroupAdmin, isOwner, 
+        bot, info, isGroup, sender, groupData, budy2, isGroupAdmin, isOwner, 
         isBotAdmin, from, getUserName, isUserWhitelisted, reply, AllgroupMembers, parceriasData, idInArray
     } = context;
 
@@ -13,14 +13,14 @@ export async function processAntiLink(context) {
         try {
           if (budy2.includes('chat.whatsapp.com')) {
             foundGroupLink = true;
-            link_dgp = await nazu.groupInviteCode(from);
+            link_dgp = await bot.groupInviteCode(from);
             if (budy2.includes(link_dgp)) foundGroupLink = false;
           }
           if (!foundGroupLink && info.message?.requestPaymentMessage) {
             const paymentText = info.message.requestPaymentMessage?.noteMessage?.extendedTextMessage?.text || '';
             if (paymentText.includes('chat.whatsapp.com')) {
               foundGroupLink = true;
-              link_dgp = link_dgp || await nazu.groupInviteCode(from);
+              link_dgp = link_dgp || await bot.groupInviteCode(from);
               if (paymentText.includes(link_dgp)) foundGroupLink = false;
             }
           }
@@ -33,9 +33,9 @@ export async function processAntiLink(context) {
               const targets = [sender];
               if (info.key.participantAlt) targets.push(info.key.participantAlt);
               
-              await nazu.groupParticipantsUpdate(from, targets, 'remove').catch(()=>{});
+              await bot.groupParticipantsUpdate(from, targets, 'remove').catch(()=>{});
               
-              await nazu.sendMessage(from, {
+              await bot.sendMessage(from, {
                 delete: { remoteJid: from, fromMe: false, id: info.key.id, participant: sender }
               }).catch(()=>{});
               
@@ -77,9 +77,9 @@ export async function processAntiLink(context) {
               const targets = [sender];
               if (info.key.participantAlt) targets.push(info.key.participantAlt);
               
-              await nazu.groupParticipantsUpdate(from, targets, 'remove').catch(()=>{});
+              await bot.groupParticipantsUpdate(from, targets, 'remove').catch(()=>{});
               
-              await nazu.sendMessage(from, {
+              await bot.sendMessage(from, {
                 delete: { remoteJid: from, fromMe: false, id: info.key.id, participant: sender }
               }).catch(()=>{});
               
@@ -102,7 +102,7 @@ export async function processAntiLink(context) {
     if (isGroup && groupData.antilinksoft && !isGroupAdmin && !isParceiro && budy2.includes('http') && !isOwner) {
       if (!isUserWhitelisted(sender, 'antilinksoft')) {
         try {
-          await nazu.sendMessage(from, {
+          await bot.sendMessage(from, {
             delete: { remoteJid: from, fromMe: false, id: info.key.id, participant: sender }
           });
           return { stopProcessing: true };
@@ -123,9 +123,9 @@ export async function processAntiLink(context) {
             const targets = [sender];
             if (info.key.participantAlt) targets.push(info.key.participantAlt);
             
-            await nazu.groupParticipantsUpdate(from, targets, 'remove').catch(()=>{});
+            await bot.groupParticipantsUpdate(from, targets, 'remove').catch(()=>{});
             
-            await nazu.sendMessage(from, {
+            await bot.sendMessage(from, {
               delete: { remoteJid: from, fromMe: false, id: info.key.id, participant: sender }
             }).catch(()=>{});
             
@@ -133,7 +133,7 @@ export async function processAntiLink(context) {
               mentions: [sender]
             });
           } else {
-            await nazu.sendMessage(from, {
+            await bot.sendMessage(from, {
               delete: { remoteJid: from, fromMe: false, id: info.key.id, participant: sender }
             }).catch(()=>{});
             

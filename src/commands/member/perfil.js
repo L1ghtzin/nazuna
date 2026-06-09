@@ -6,7 +6,7 @@ export default {
   commands: ["perfil"],
   usage: "{prefix}perfil [@user]",
   handle: async ({ 
-    nazu, 
+    bot, 
     from, 
     info, 
     reply, 
@@ -56,7 +56,7 @@ export default {
       
       let profilePic = 'https://raw.githubusercontent.com/nazuninha/uploads/main/outros/1747053564257_bzswae.bin';
       try {
-        profilePic = await nazu.profilePictureUrl(target, 'image');
+        profilePic = await bot.profilePictureUrl(target, 'image');
       } catch (error) { 
         if (error.message !== 'not-authorized' && !error.message.includes('not-authorized')) {
           console.error(`Erro ao buscar foto de perfil de ${target}:`, error.message);
@@ -66,7 +66,7 @@ export default {
       let bio = 'Sem bio disponível';
       let bioSetAt = '';
       try {
-        const statusData = await nazu.fetchStatus(target);
+        const statusData = await bot.fetchStatus(target);
         if (statusData) {
           let statusStr = '';
           let setAtDate = null;
@@ -139,7 +139,7 @@ export default {
   ${getEmoji(levels.gostosa, 'gostosa')} ┃ Gostosa: ${levels.gostosa}% ${createProgressBar(levels.gostosa)}
   ${getEmoji(levels.feio, 'feio')} ┃ Feio: ${levels.feio}% ${createProgressBar(levels.feio)}`.trim();
       
-      await nazu.sendMessage(from, { 
+      await bot.sendMessage(from, { 
         image: { url: profilePic }, 
         caption: perfilText, 
         mentions: [target] 

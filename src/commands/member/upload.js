@@ -6,7 +6,7 @@ export default {
   handle: async ({  
     reply, 
     info, 
-    nazu, 
+    bot, 
     from, 
     isQuotedImage, 
     isQuotedVideo, 

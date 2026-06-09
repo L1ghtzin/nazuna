@@ -7,7 +7,7 @@ export default {
   // REMOVIDOS: addxp, delxp, level, leveling, dayfree para que não interceptem o bot_config!
   commands: ["activate", "ajuda", "antipv", "antipv2", "antipv3", "antipv4", "antipvmessage", "antipvmsg", "ativar", "audiomenu", "configcmdnotfound", "deactivate", "desativar", "entrar", "fotomenu", "guia", "list", "lista", "mediamenu", "menuaudio", "midiamenu", "off", "on", "sairgp", "setcmdmsg", "setmenuaudio", "tutorial", "videomenu"],
   handle: async ({ 
-    nazu, from, info, command, reply, isOwner, q, args, prefix, OWNER_ONLY_MESSAGE,
+    bot, from, info, command, reply, isOwner, q, args, prefix, OWNER_ONLY_MESSAGE,
     MESSAGES, optimizer, getFileBuffer, getMediaInfo,
     setMenuAudio, removeMenuAudio, DATABASE_DIR, pathz
   }) => {
@@ -118,11 +118,11 @@ export default {
     // --- MISC ---
     if (cmd === 'entrar') {
       if (!q) return reply('Informe o link do grupo.');
-      return nazu.groupAcceptInvite(q.split('chat.whatsapp.com/')[1]).then(() => reply('✅ Entrando...')).catch(() => reply(`💔 Link inválido.`));
+      return bot.groupAcceptInvite(q.split('chat.whatsapp.com/')[1]).then(() => reply('✅ Entrando...')).catch(() => reply(`💔 Link inválido.`));
     }
     if (cmd === 'sairgp') {
       await reply('👋 Saindo do grupo...');
-      return nazu.groupLeave(from);
+      return bot.groupLeave(from);
     }
   }
 };

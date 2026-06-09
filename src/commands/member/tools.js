@@ -7,7 +7,7 @@ export default {
   commands: ["checklink", "checkurl", "dicionario", "dictionary", "estatisticas", "fusohorario", "groupstats", "horamundial", "horoscopo", "linkseguro", "ping", "rmbg", "sbg", "scanlink", "sfundo", "signo", "signos", "statsgrupo", "toimg", "totalcmd", "totalcomando", "upscale", "urlsafe", "urlscan", "verificar", "verificarurl", "worldtime"],
   usage: "{prefix}verificarurl <link>",
   handle: async ({
-    nazu, from, info, reply, args, q, normalizarTexto, prefix, command, isGroup, getCachedGroupMetadata,
+    bot, from, info, reply, args, q, normalizarTexto, prefix, command, isGroup, getCachedGroupMetadata,
     formatUptime, getFileBuffer, upload, removeBg, upscale, sendSticker, pushname, nomebot,
     isQuotedSticker, isQuotedImage, quotedMessageContent,
     MESSAGES
@@ -72,7 +72,7 @@ export default {
 ╰━━━━━━━━━━━━━━━━━━━━━━━━╯`);
       try {
         const buff = await getFileBuffer(info.message.extendedTextMessage.contextInfo.quotedMessage.stickerMessage, 'sticker');
-        return nazu.sendMessage(from, { image: buff }, { quoted: info });
+        return bot.sendMessage(from, { image: buff }, { quoted: info });
       } catch (e) { 
         return reply(MESSAGES.error.general);      }
     }
@@ -90,13 +90,13 @@ export default {
 
         if (cmd === 'upscale') {
           const res = await upscale(url);
-          return nazu.sendMessage(from, { image: { url: res.result } }, { quoted: info });
+          return bot.sendMessage(from, { image: { url: res.result } }, { quoted: info });
         } else {
           const res = await removeBg(url);
           if (['sbg', 'sfundo'].includes(cmd)) {
-            return sendSticker(nazu, from, { sticker: { url: res.result.download }, author: pushname, packname: nomebot, type: 'image' }, { quoted: info });
+            return sendSticker(bot, from, { sticker: { url: res.result.download }, author: pushname, packname: nomebot, type: 'image' }, { quoted: info });
           }
-          return nazu.sendMessage(from, { image: { url: res.result.download } }, { quoted: info });
+          return bot.sendMessage(from, { image: { url: res.result.download } }, { quoted: info });
         }
       } catch (e) { return reply("Erro no processamento."); }
     }

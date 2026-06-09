@@ -5,7 +5,7 @@ export default {
   description: "Gerenciamento de grupos pelo dono",
   commands: ["listagp", "listgp", "listbangp", "bangp", "unbangp", "desbangp", "listblocksgp", "blocklist", "modoliteglobal"],
   handle: async ({ 
-    nazu, from, command, reply, isOwner, isGroup,
+    bot, from, command, reply, isOwner, isGroup,
     optimizer, banGpIds, getCachedGroupMetadata, DATABASE_DIR, fs, __dirname
   , MESSAGES }) => {
     if (!isOwner) return reply(MESSAGES.permission.ownerOnly);
@@ -13,7 +13,7 @@ export default {
     const cmd = command.toLowerCase();
 
     if (['listagp', 'listgp'].includes(cmd)) {
-      const getGroups = await nazu.groupFetchAllParticipating();
+      const getGroups = await bot.groupFetchAllParticipating();
       const groups = Object.values(getGroups).sort((a, b) => a.subject.localeCompare(b.subject));
       let teks = `🌟 *LISTA DE GRUPOS* (${groups.length})\n\n`;
       groups.forEach((g, i) => {

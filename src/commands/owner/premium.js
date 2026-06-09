@@ -9,7 +9,7 @@ export default {
     "listapremium", "listavip", "premiumlist", "listpremium", "listprem"
   ],
   handle: async ({ 
-    nazu, from, info, command, reply, prefix, sender, menc_os2,
+    bot, from, info, command, reply, prefix, sender, menc_os2,
     isOwner, premiumListaZinha, DATABASE_DIR, optimizer, getUserName,
     MESSAGES
   }) => {
@@ -26,7 +26,7 @@ export default {
       const filePath = pathz.join(DATABASE_DIR, 'dono/premium.json');
       await optimizer.saveJsonWithCache(filePath, premiumListaZinha);
       
-      return nazu.sendMessage(from, {
+      return bot.sendMessage(from, {
         text: `✅ @${getUserName(menc_os2)} foi adicionado(a) à lista premium.`,
         mentions: [menc_os2]
       }, { quoted: info });
@@ -41,7 +41,7 @@ export default {
       const filePath = pathz.join(DATABASE_DIR, 'dono/premium.json');
       await optimizer.saveJsonWithCache(filePath, premiumListaZinha);
       
-      return nazu.sendMessage(from, {
+      return bot.sendMessage(from, {
         text: `✅ @${getUserName(menc_os2)} foi removido(a) da lista premium.`,
         mentions: [menc_os2]
       }, { quoted: info });
@@ -56,7 +56,7 @@ export default {
       for (let id of list) {
         teks += `- @${id.split('@')[0]}\n`;
       }
-      return nazu.sendMessage(from, { text: teks, mentions: list }, { quoted: info });
+      return bot.sendMessage(from, { text: teks, mentions: list }, { quoted: info });
     }
   }
 };

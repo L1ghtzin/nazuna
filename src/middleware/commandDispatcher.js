@@ -8,7 +8,7 @@ import { loadCmdNotFoundConfig, checkCommandLimit, loadMsgPrefix, loadCustomReac
 
 export async function dispatchCommand(ctx) {
   const {
-    isCmd, command, reply, nazu, info, from, prefix, groupPrefix,
+    isCmd, command, reply, bot, info, from, prefix, groupPrefix,
     pushname, sender, isOwner, isPremium, budy2, isAutoRepo, body,
     getUserName, args, q
   } = ctx;
@@ -55,10 +55,10 @@ export async function dispatchCommand(ctx) {
       try {
         await reply(msg);
         const topSim = topSimilar[0]?.similarity || 0;
-        await nazu.react(topSim > 60 ? '💡' : topSim > 0 ? '🔍' : '❌', { key: info.key });
-      } catch (e) { await nazu.react('⚠️', { key: info.key }); }
+        await bot.react(topSim > 60 ? '💡' : topSim > 0 ? '🔍' : '❌', { key: info.key });
+      } catch (e) { await bot.react('⚠️', { key: info.key }); }
     } else {
-      await nazu.react('❌', { key: info.key });
+      await bot.react('❌', { key: info.key });
     }
     return; // Evitar o pós-processamento (reacts, auto-repo) se já identificou que era um comando falho
   }
@@ -72,12 +72,12 @@ export async function dispatchCommand(ctx) {
   const customReacts = loadCustomReacts();
   for (const react of customReacts) {
     if (budy2.includes(react.trigger)) {
-      await nazu.react(react.emoji, { key: info.key });
+      await bot.react(react.emoji, { key: info.key });
       break;
     }
   }
 
   if (!isCmd && isAutoRepo) {
-    await processAutoResponse(nazu, from, body, info);
+    await processAutoResponse(bot, from, body, info);
   }
 }

@@ -6,7 +6,7 @@ import {
   formatTimeLeft
 } from '../../utils/database.js';
 
-async function cmdLimitAdd(nazu, from, q, reply, prefix, isOwnerOrSub) {
+async function cmdLimitAdd(bot, from, q, reply, prefix, isOwnerOrSub) {
   if (!isOwnerOrSub) return reply("🚫 Apenas o Dono pode limitar comandos!");
   
   const args = q.split(' ');
@@ -22,7 +22,7 @@ async function cmdLimitAdd(nazu, from, q, reply, prefix, isOwnerOrSub) {
   return reply(result.message);
 }
 
-async function cmdLimitRemove(nazu, from, q, reply, prefix, isOwnerOrSub) {
+async function cmdLimitRemove(bot, from, q, reply, prefix, isOwnerOrSub) {
   if (!isOwnerOrSub) return reply("🚫 Apenas o Dono pode remover limites de comandos!");
   
   if (!q) {
@@ -33,7 +33,7 @@ async function cmdLimitRemove(nazu, from, q, reply, prefix, isOwnerOrSub) {
   return reply(result.message);
 }
 
-async function cmdLimitList(nazu, from, q, reply, prefix, isOwnerOrSub) {
+async function cmdLimitList(bot, from, q, reply, prefix, isOwnerOrSub) {
   if (!isOwnerOrSub) return reply("🚫 Apenas o Dono pode ver os limites!");
   
   const limits = getCommandLimits();

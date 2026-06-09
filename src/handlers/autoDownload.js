@@ -2,7 +2,7 @@
  * Handler de Auto-Download de mídias para URLs detectadas em mensagens.
  * Suporta: YouTube, TikTok, Instagram, Kwai, Facebook, Pinterest, Spotify, SoundCloud
  */
-export async function handleAutoDownload(nazu, from, url, info, modules) {
+export async function handleAutoDownload(bot, from, url, info, modules) {
   try {
     const { youtube, tiktok, igdl, kwai, facebook, pinterest, spotify, soundcloud } = modules;
     
@@ -63,7 +63,7 @@ export async function handleAutoDownload(nazu, from, url, info, modules) {
     if (platformName === 'YouTube') {
       result = await youtube.mp3(url, 128);
       if (result && result.ok) {
-        await nazu.sendMessage(from, {
+        await bot.sendMessage(from, {
           audio: result.buffer,
           mimetype: 'audio/mpeg',
           fileName: result.filename || 'audio.mp3'
@@ -78,7 +78,7 @@ export async function handleAutoDownload(nazu, from, url, info, modules) {
       if (result && result.ok && result.urls && result.urls.length > 0) {
         const videoUrl = result.urls[0];
         if (videoUrl) {
-          await nazu.sendMessage(from, {
+          await bot.sendMessage(from, {
             video: { url: videoUrl },
             caption: `📱 *TikTok*`,
             mimetype: 'video/mp4'
@@ -94,13 +94,13 @@ export async function handleAutoDownload(nazu, from, url, info, modules) {
       if (result && result.ok && result.data && result.data.length > 0) {
         const media = result.data[0];
         if (media.type === 'video') {
-          await nazu.sendMessage(from, {
+          await bot.sendMessage(from, {
             video: media.buff || { url: media.url },
             caption: '📸 *Instagram*',
             mimetype: 'video/mp4'
           }, { quoted: info });
         } else {
-          await nazu.sendMessage(from, {
+          await bot.sendMessage(from, {
             image: media.buff || { url: media.url },
             caption: '📸 *Instagram*'
           }, { quoted: info });
@@ -115,13 +115,13 @@ export async function handleAutoDownload(nazu, from, url, info, modules) {
       if (result && result.ok && result.data && result.data.length > 0) {
         const media = result.data[0];
         if (media.type === 'video') {
-          await nazu.sendMessage(from, {
+          await bot.sendMessage(from, {
             video: media.buff || { url: media.url },
             caption: '📸 *Kwai*',
             mimetype: 'video/mp4'
           }, { quoted: info });
         } else {
-          await nazu.sendMessage(from, {
+          await bot.sendMessage(from, {
             image: media.buff || { url: media.url },
             caption: '📸 *Kwai*'
           }, { quoted: info });
@@ -134,7 +134,7 @@ export async function handleAutoDownload(nazu, from, url, info, modules) {
     else if (platformName === 'Facebook') {
       result = await facebook.downloadHD(url);
       if (result && result.ok && result.buffer) {
-        await nazu.sendMessage(from, {
+        await bot.sendMessage(from, {
           video: result.buffer,
           caption: `📘 *Facebook* - ${result.resolution || 'HD'}`,
           mimetype: 'video/mp4'
@@ -149,13 +149,13 @@ export async function handleAutoDownload(nazu, from, url, info, modules) {
       if (result && result.ok && result.urls && result.urls.length > 0) {
         const mediaUrl = result.urls[0];
         if (result.type === 'video') {
-          await nazu.sendMessage(from, {
+          await bot.sendMessage(from, {
             video: { url: mediaUrl },
             caption: '📌 *Pinterest*',
             mimetype: 'video/mp4'
           }, { quoted: info });
         } else {
-          await nazu.sendMessage(from, {
+          await bot.sendMessage(from, {
             image: { url: mediaUrl },
             caption: '📌 *Pinterest*'
           }, { quoted: info });
@@ -168,7 +168,7 @@ export async function handleAutoDownload(nazu, from, url, info, modules) {
     else if (platformName === 'Spotify') {
       result = await spotify.download(url);
       if (result && result.ok && result.buffer) {
-        await nazu.sendMessage(from, {
+        await bot.sendMessage(from, {
           audio: result.buffer,
           mimetype: 'audio/mpeg',
           fileName: result.filename || `${result.title || 'audio'}.mp3`
@@ -181,7 +181,7 @@ export async function handleAutoDownload(nazu, from, url, info, modules) {
     else if (platformName === 'SoundCloud') {
       result = await soundcloud.download(url);
       if (result && result.ok && result.buffer) {
-        await nazu.sendMessage(from, {
+        await bot.sendMessage(from, {
           audio: result.buffer,
           mimetype: 'audio/mpeg',
           fileName: result.filename || `${result.title || 'audio'}.mp3`

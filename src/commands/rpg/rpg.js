@@ -3,7 +3,7 @@ export default {
   description: "Comandos de RPG e Economia",
   commands: ["achievementsbn", "box", "caixa", "conquistasbn", "denunciar", "denuncias", "gerarqrbn", "giftbn", "inventory", "lerqr", "medalhasbn", "nota", "notas", "note", "notes", "presentebn", "qrcode", "qrcodebn", "rankrep", "readqr", "repbn", "report", "reports", "reputacaobn", "scanqr", "toprep"],
   handle: async ({ 
-    nazu, from, info, command, args, reply, prefix, pushname, sender, menc_os2,
+    bot, from, info, command, args, reply, prefix, pushname, sender, menc_os2,
     gifts, reputation, qrcode, achievements, notes,
     getEcoUser, loadEconomy, saveEconomy, isGroupAdmin, isOwnerOrSub
   , MESSAGES }) => {
@@ -55,7 +55,7 @@ export default {
       
       const result = gifts.sendGift(sender, menc_os2, tipoGift);
       if (result.success) {
-        await nazu.sendMessage(from, { text: result.message, mentions: [sender, menc_os2] });
+        await bot.sendMessage(from, { text: result.message, mentions: [sender, menc_os2] });
       } else {
         reply(result.message);
       }
@@ -83,7 +83,7 @@ export default {
         const target = menc_os2 || sender;
         const rep = reputation.getReputation(target);
         const name = menc_os2 ? `@${menc_os2.split('@')[0]}` : pushname;
-        return nazu.sendMessage(from, {
+        return bot.sendMessage(from, {
           text: `╭━━━⊱ ⭐ *REPUTAÇÃO* ⭐ ⊱━━━╮\n│\n│ 👤 Usuário: ${name}\n│\n│ ${rep.split('\\n').join('\\n│ ')}\n│\n╰━━━━━━━━━━━━━━━━━━━━━━━╯`,
           mentions: menc_os2 ? [menc_os2] : []
         });
@@ -130,7 +130,7 @@ export default {
       
       const result = await qrcode.generateQRCode(q, 300, prefix);
       if (result.success) {
-        await nazu.sendMessage(from, { image: { url: result.url }, caption: `📱 *QR Code gerado!*\n\nConteúdo: ${q}` }, { quoted: info });
+        await bot.sendMessage(from, { image: { url: result.url }, caption: `📱 *QR Code gerado!*\n\nConteúdo: ${q}` }, { quoted: info });
       } else {
         reply(result.message);
       }

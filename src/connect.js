@@ -36,7 +36,7 @@ import config, { CONFIG_PATH as configPath } from './config.js';
 let DEBUG_MODE = false; // Modo debug para logs detalhados
 
 // Ativa modo debug se configurado
-DEBUG_MODE = config.debug === true || process.env.NAZUNA_DEBUG === '1';
+DEBUG_MODE = config.debug === true || process.env.CHAINY_DEBUG === '1' || process.env.NAZUNA_DEBUG === '1';
 if (DEBUG_MODE) {
     console.log('🐛 Modo DEBUG ativado - Logs detalhados habilitados');
 }
@@ -76,7 +76,7 @@ let msgRetryCounterCache;
 let messagesCache;
 let sock = null;
 
-async function initializeOptimizedCaches(NazunaSock) {
+async function initializeOptimizedCaches(ChainySock) {
     try {
         await performanceOptimizer.initialize();
 
@@ -85,8 +85,8 @@ async function initializeOptimizedCaches(NazunaSock) {
             /*
                 Vai receber apenas os ids expirados
             */
-            await NazunaSock.sendMessage(dataCaptcha.groupId, { text: `⚠️ @${dataCaptcha.idOrigin.split('@')[0]} não resolveu o captcha a tempo e foi removido.` });
-            await NazunaSock.groupParticipantsUpdate(dataCaptcha.groupId, [dataCaptcha.idOrigin], 'remove').catch(() => { });
+            await ChainySock.sendMessage(dataCaptcha.groupId, { text: `⚠️ @${dataCaptcha.idOrigin.split('@')[0]} não resolveu o captcha a tempo e foi removido.` });
+            await ChainySock.groupParticipantsUpdate(dataCaptcha.groupId, [dataCaptcha.idOrigin], 'remove').catch(() => { });
         };
         await initCaptchaIndex(requestCaptchaMsg);
 
@@ -109,7 +109,7 @@ async function initializeOptimizedCaches(NazunaSock) {
 
     }
 }
-const codeMode = process.argv.includes('--code') || process.env.NAZUNA_CODE_MODE === '1';
+const codeMode = process.argv.includes('--code') || process.env.CHAINY_CODE_MODE === '1' || process.env.NAZUNA_CODE_MODE === '1';
 
 // Cleanup otimizado do cache de mensagens
 let cacheCleanupInterval = null;
@@ -212,7 +212,7 @@ async function createBotSocket(authDir) {
     const version = await getWAVersion();
     console.log(`📱 Usando versão do WhatsApp: ${version.join('.')}`);
     
-    const NazunaSock = makeWASocket({
+    const ChainySock = makeWASocket({
     version: version,
     emitOwnEvents: true,
     fireInitQueries: true,
@@ -233,9 +233,9 @@ async function createBotSocket(authDir) {
     logger
     });
 
-    sock = NazunaSock;
+    sock = ChainySock;
 
-    if (codeMode && !NazunaSock.authState.creds.registered) {
+    if (codeMode && !ChainySock.authState.creds.registered) {
     console.log('📱 Insira o número de telefone (com código de país, ex: 551199999999): ');
     let phoneNumber = await ask('--> ');
     phoneNumber = phoneNumber.replace(/\D/g, '');
@@ -243,14 +243,14 @@ async function createBotSocket(authDir) {
     console.log('⚠️ Número inválido! Use um número válido com código de país (ex: 551199999999).');
     process.exit(1);
     }
-    const code = await NazunaSock.requestPairingCode(phoneNumber.replaceAll('+', '').replaceAll(' ', '').replaceAll('-', ''));
+    const code = await ChainySock.requestPairingCode(phoneNumber.replaceAll('+', '').replaceAll(' ', '').replaceAll('-', ''));
     console.log(`🔑 Código de pareamento: ${code}`);
     console.log('📲 Envie este código no WhatsApp para autenticar o bot.');
     }
 
-    NazunaSock.ev.on('creds.update', saveCreds);
+    ChainySock.ev.on('creds.update', saveCreds);
 
-    NazunaSock.ev.on('groups.update', async (updates) => {
+    ChainySock.ev.on('groups.update', async (updates) => {
     if (!Array.isArray(updates) || updates.length === 0) return;
     
     if (DEBUG_MODE) {
@@ -265,7 +265,7 @@ async function createBotSocket(authDir) {
     }
     });
 
-    NazunaSock.ev.on('group-participants.update', async (inf) => {
+    ChainySock.ev.on('group-participants.update', async (inf) => {
     if (DEBUG_MODE) {
     console.log('\n🐛 ========== GROUP PARTICIPANTS UPDATE ==========');
     console.log('📅 Timestamp:', new Date().toISOString());
@@ -276,11 +276,11 @@ async function createBotSocket(authDir) {
     console.log('�📦 Full event data:', JSON.stringify(inf, null, 2));
     console.log('🐛 ================================================\n');
     }
-    await handleGroupParticipantsUpdate(NazunaSock, inf);
+    await handleGroupParticipantsUpdate(ChainySock, inf);
     });
     
     // Listener para solicitações de entrada em grupos (join requests)
-    NazunaSock.ev.on('group.join-request', async (inf) => {
+    ChainySock.ev.on('group.join-request', async (inf) => {
     if (DEBUG_MODE) {
     console.log('\n🐛 ========== GROUP JOIN REQUEST ==========');
     console.log('📅 Timestamp:', new Date().toISOString());
@@ -293,7 +293,7 @@ async function createBotSocket(authDir) {
     console.log('📦 Full event data:', JSON.stringify(inf, null, 2));
     console.log('🐛 ===========================================\n');
     }
-    await handleGroupJoinRequest(NazunaSock, inf);
+    await handleGroupJoinRequest(ChainySock, inf);
     });
 
     let messagesListenerAttached = false;
@@ -354,7 +354,7 @@ async function createBotSocket(authDir) {
     
     // Processa mensagem
     if (typeof indexModule === 'function') {
-    await indexModule(NazunaSock, info, null, messagesCache, rentalExpirationManager);
+    await indexModule(ChainySock, info, null, messagesCache, rentalExpirationManager);
     } else {
     throw new Error('Módulo index.js não é uma função válida. Verifique o arquivo index.js.');
     }
@@ -364,11 +364,11 @@ async function createBotSocket(authDir) {
     if (messagesListenerAttached) return;
     messagesListenerAttached = true;
 
-    NazunaSock.ev.on('messages.upsert', async (m) => {
+    ChainySock.ev.on('messages.upsert', async (m) => {
     if (!m.messages || !Array.isArray(m.messages)) return;
     
     // --- ANTI-STEALTH (Anti Msg Criptografada) ---
-    await processAntiStealth(NazunaSock, m, performanceOptimizer).catch(e => console.error('[ANTI-STEALTH] Erro crítico no módulo:', e));
+    await processAntiStealth(ChainySock, m, performanceOptimizer).catch(e => console.error('[ANTI-STEALTH] Erro crítico no módulo:', e));
     // ---------------------------------------------
     
     // Se for 'append', só processa se for solicitação de entrada (messageStubType 172)
@@ -405,13 +405,13 @@ async function createBotSocket(authDir) {
     });
     };
 
-    NazunaSock.ev.on('connection.update', async (update) => {
+    ChainySock.ev.on('connection.update', async (update) => {
     const {
     connection,
     lastDisconnect,
     qr
     } = update;
-    if (qr && !NazunaSock.authState.creds.registered && !codeMode) {
+    if (qr && !ChainySock.authState.creds.registered && !codeMode) {
     console.log('🔗 QR Code gerado para autenticação:');
     qrcode.generate(qr, {
         small: true
@@ -431,17 +431,17 @@ async function createBotSocket(authDir) {
         forbidden403Attempts = 0;
         console.log(`🔄 Conexão aberta. Inicializando sistema de otimização...`);
         
-        await initializeOptimizedCaches(NazunaSock);
+        await initializeOptimizedCaches(ChainySock);
         
-        await updateOwnerLid(NazunaSock, numerodono, config, configPath);
+        await updateOwnerLid(ChainySock, numerodono, config, configPath);
         
         setTimeout(() => {
-            performMigration(NazunaSock, DATABASE_DIR, configPath).catch(err => {
+            performMigration(ChainySock, DATABASE_DIR, configPath).catch(err => {
                 console.error('❌ Erro na migração (não-bloqueante):', err.message);
             });
         }, 10_000);
         
-        rentalExpirationManager.nazu = NazunaSock;
+        rentalExpirationManager.bot = ChainySock;
         await rentalExpirationManager.initialize();
         
         attachMessagesListener();
@@ -462,7 +462,7 @@ async function createBotSocket(authDir) {
                             .replace(/{prefix}/g, config.prefixo || '!')
                             .replace(/{botName}/g, config.nomebot || 'Chainy')
                             .replace(/{ownerName}/g, config.nomedono || 'Dono');
-                        await NazunaSock.sendMessage(ownerJid, { 
+                        await ChainySock.sendMessage(ownerJid, { 
                             text: finalMessage 
                         });
                         console.log('✅ Mensagem de inicialização enviada para o dono');
@@ -480,7 +480,7 @@ async function createBotSocket(authDir) {
         console.log(`✅ Bot ${nomebot} iniciado com sucesso! Prefixo: ${prefixo} | Dono: ${nomedono}`);
     } catch (initErr) {
         console.error('❌ Erro crítico na inicialização pós-conexão:', initErr.message);
-        setTimeout(() => startNazu(), 5000);
+        setTimeout(() => startChainy(), 5000);
     }
     }
     if (connection === 'close') {
@@ -531,7 +531,7 @@ async function createBotSocket(authDir) {
         clearTimeout(reconnectTimer);
         }
         reconnectTimer = setTimeout(() => {
-        startNazu();
+        startChainy();
         }, 5000);
         return;
     }
@@ -570,18 +570,18 @@ async function createBotSocket(authDir) {
     reconnectTimer = setTimeout(() => {
         reconnectAttempts = 0; // Reset ao reconectar por desconexão normal
         forbidden403Attempts = 0; // Reset contador de erro 403
-        startNazu();
+        startChainy();
     }, reconnectDelay);
     }
     });
-    return NazunaSock;
+    return ChainySock;
     } catch (err) {
     console.error(`❌ Erro ao criar socket do bot: ${err.message}`);
     throw err;
     }
 }
 
-async function startNazu() {
+async function startChainy() {
     // Evita múltiplas instâncias sendo criadas ao mesmo tempo
     if (isReconnecting) {
         console.log('⚠️ Reconexão já em andamento, ignorando chamada duplicada...');
@@ -639,7 +639,7 @@ async function startNazu() {
         }
 
         reconnectTimer = setTimeout(() => {
-            startNazu();
+            startChainy();
         }, delay);
     } finally {
         // CORREÇÃO: isReconnecting sempre liberado aqui — tanto em sucesso quanto em erro.
@@ -725,4 +725,4 @@ process.on('unhandledRejection', (reason, promise) => {
 
 export { rentalExpirationManager, messageQueue };
 
-startNazu();
+startChainy();

@@ -5,13 +5,13 @@ export default {
   description: "Cria uma brincadeira de suruba marcando membros aleatórios",
   commands: ["surubao", "suruba"],
   usage: `${global.prefix}surubao <quantidade>`,
-  handle: async ({  nazu, reply, isGroup, command, info, isModoLite, isModoBn, q, from, buildGroupFilePath, optimizer, AllgroupMembers, getUserName, sender , MESSAGES }) => {
+  handle: async ({  bot, reply, isGroup, command, info, isModoLite, isModoBn, q, from, buildGroupFilePath, optimizer, AllgroupMembers, getUserName, sender , MESSAGES }) => {
     try {
       // isModoLite e isModoBn normalmente vem do contexto de configuração
       const modoLite = isModoLite !== undefined ? isModoLite : false;
       const modoBn = isModoBn !== undefined ? isModoBn : true;
       
-      if (modoLite) return nazu.react('❌', { key: info.key });
+      if (modoLite) return bot.react('❌', { key: info.key });
       if (!isGroup) return reply(MESSAGES.permission.groupOnly);
       if (!modoBn) return reply('O modo brincadeira nao esta ativo no grupo');
       if (!q) return reply(`Eita, coloque o número de pessoas após o comando.`);
@@ -40,7 +40,7 @@ export default {
         mencts.push(menb);
       }
       
-      await nazu.sendMessage(from, {
+      await bot.sendMessage(from, {
         image: {
           url: 'https://raw.githubusercontent.com/nazuninha/uploads/main/outros/1747545773146_rrv7of.bin'
         },

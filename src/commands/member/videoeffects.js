@@ -13,7 +13,7 @@ export default {
   commands: ["espelhar", "fastvid", "glitch", "mirror", "pretoebranco", "reversevid", "rotacionar", "rotate", "sepia", "slowvid", "tomp3", "videobw", "videolento", "videoloop", "videomudo", "videorapido", "videoreverso", "videoslow"],
   usage: "{prefix}videorapido (responda a um vídeo)",
   handle: async ({  
-    nazu, 
+    bot, 
     from, 
     info, 
     reply, 
@@ -87,7 +87,7 @@ export default {
               mimetype: 'video/mp4'
             };
             
-            await nazu.sendMessage(from, messageType, {
+            await bot.sendMessage(from, messageType, {
               quoted: info
             });
             fs.unlinkSync(ran);

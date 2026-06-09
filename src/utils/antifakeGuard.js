@@ -49,12 +49,12 @@ export async function getAntifakeLogs(groupId, limit = 10) {
     }
 }
 
-export async function checkAntifake(participantJid, groupSettings, NazunaSock) {
+export async function checkAntifake(participantJid, groupSettings, ChainySock) {
     if (!groupSettings?.antifake) {
         return { allowed: true, number: '', reason: '', resolved: true };
     }
 
-    const { number, isLid, resolved } = await resolveNumber(participantJid, NazunaSock);
+    const { number, isLid, resolved } = await resolveNumber(participantJid, ChainySock);
 
     // LID não resolvido — sem dados para julgar, deixar passar
     if (isLid && !resolved) {

@@ -3,7 +3,7 @@ export default {
   description: "Cria uma enquete de 'Você Prefere'",
   commands: ["vab"],
   usage: `${global.prefix}vab`,
-  handle: async ({  reply, isGroup, isModoBn, nazu, from, vabJson , MESSAGES }) => {
+  handle: async ({  reply, isGroup, isModoBn, bot, from, vabJson , MESSAGES }) => {
     try {
       if (!isGroup) return reply(`💔 Isso só pode ser usado em grupo 💔`);
       if (!isModoBn) return reply(`💔 O modo brincadeira não está ativo nesse grupo`);
@@ -11,7 +11,7 @@ export default {
       const items = vabJson();
       const vabs = items[Math.floor(Math.random() * items.length)];
       
-      await nazu.sendMessage(from, {
+      await bot.sendMessage(from, {
         poll: {
           name: `🤔 *QUAL VOCÊ PREFERE?* 🤔\n\n${vabs.option1}\nvs\n${vabs.option2}`,
           values: [
