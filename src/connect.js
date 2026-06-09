@@ -109,7 +109,7 @@ async function initializeOptimizedCaches(ChainySock) {
 
     }
 }
-const codeMode = process.argv.includes('--code') || process.env.CHAINY_CODE_MODE === '1' || process.env.NAZUNA_CODE_MODE === '1';
+let codeMode = process.argv.includes('--code') || process.env.CHAINY_CODE_MODE === '1' || process.env.NAZUNA_CODE_MODE === '1';
 
 // Cleanup otimizado do cache de mensagens
 let cacheCleanupInterval = null;
@@ -206,6 +206,33 @@ async function createBotSocket(authDir) {
     saveCreds,
     signalRepository
     } = await useMultiFileAuthState(authDir, makeCacheableSignalKeyStore);
+
+    if (!state.creds.registered && !codeMode) {
+        console.log('\x1b[33m🔧 Escolha o método de conexão:\x1b[0m');
+        console.log('\x1b[33m1. 📷 Conectar via QR Code\x1b[0m');
+        console.log('\x1b[33m2. 🔑 Conectar via código de pareamento\x1b[0m');
+        console.log('\x1b[33m3. 🚪 Sair\x1b[0m');
+        
+        const answer = await ask('➡️ Digite o número da opção desejada: ');
+        console.log();
+        
+        switch (answer) {
+            case '1':
+                console.log('📷 Iniciando conexão via QR Code...');
+                codeMode = false;
+                break;
+            case '2':
+                console.log('🔑 Iniciando conexão via código de pareamento...');
+                codeMode = true;
+                break;
+            case '3':
+                console.log('👋 Encerrando... Até mais!');
+                process.exit(0);
+            default:
+                console.log('⚠️ Opção inválida! Usando conexão via QR Code como padrão.');
+                codeMode = false;
+        }
+    }
     
     // Busca a versão mais recente do WhatsApp
     // CORREÇÃO: Usa versão cacheada em vez de buscar na rede a cada reconexão.
@@ -236,15 +263,16 @@ async function createBotSocket(authDir) {
     sock = ChainySock;
 
     if (codeMode && !ChainySock.authState.creds.registered) {
-    console.log('📱 Insira o número de telefone (com código de país, ex: 551199999999): ');
+    console.log('📱 Insira o número de telefone (com código de país, ex: +5511912345678 ou +554112345678): ');
     let phoneNumber = await ask('--> ');
     phoneNumber = phoneNumber.replace(/\D/g, '');
     if (!/^\d{10,15}$/.test(phoneNumber)) {
     console.log('⚠️ Número inválido! Use um número válido com código de país (ex: 551199999999).');
     process.exit(1);
     }
-    const code = await ChainySock.requestPairingCode(phoneNumber.replaceAll('+', '').replaceAll(' ', '').replaceAll('-', ''));
-    console.log(`🔑 Código de pareamento: ${code}`);
+    const rawCode = await ChainySock.requestPairingCode(phoneNumber);
+    const formattedCode = rawCode?.match(/.{1,4}/g)?.join('-') || rawCode;
+    console.log(`🔑 Código de pareamento: ${formattedCode}`);
     console.log('📲 Envie este código no WhatsApp para autenticar o bot.');
     }
 
