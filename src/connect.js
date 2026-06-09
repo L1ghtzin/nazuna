@@ -6,7 +6,7 @@ import pino from 'pino';
 import fs from 'fs/promises';
 import path, { dirname, join } from 'path';
 import qrcode from 'qrcode-terminal';
-import { readFileSync } from 'fs';
+import { readFileSync, existsSync } from 'fs';
 import { fileURLToPath } from 'url';
 
 
@@ -207,7 +207,9 @@ async function createBotSocket(authDir) {
     signalRepository
     } = await useMultiFileAuthState(authDir, makeCacheableSignalKeyStore);
 
-    if (!state.creds.registered && !codeMode) {
+    const hasSession = state.creds.me || state.creds.registered || existsSync(path.join(authDir, 'creds.json'));
+
+    if (!hasSession && !codeMode) {
         console.log('\x1b[33m🔧 Escolha o método de conexão:\x1b[0m');
         console.log('\x1b[33m1. 📷 Conectar via QR Code\x1b[0m');
         console.log('\x1b[33m2. 🔑 Conectar via código de pareamento\x1b[0m');
@@ -262,7 +264,7 @@ async function createBotSocket(authDir) {
 
     sock = ChainySock;
 
-    if (codeMode && !ChainySock.authState.creds.registered) {
+    if (codeMode && !hasSession) {
     console.log('📱 Insira o número de telefone (com código de país, ex: +5511912345678 ou +554112345678): ');
     let phoneNumber = await ask('--> ');
     phoneNumber = phoneNumber.replace(/\D/g, '');
@@ -439,7 +441,8 @@ async function createBotSocket(authDir) {
     lastDisconnect,
     qr
     } = update;
-    if (qr && !ChainySock.authState.creds.registered && !codeMode) {
+    const hasSessionNow = ChainySock.authState.creds.me || ChainySock.authState.creds.registered || existsSync(path.join(AUTH_DIR, 'creds.json'));
+    if (qr && !hasSessionNow && !codeMode) {
     console.log('🔗 QR Code gerado para autenticação:');
     qrcode.generate(qr, {
         small: true
