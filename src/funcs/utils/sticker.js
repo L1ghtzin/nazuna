@@ -139,7 +139,7 @@ async function writeExif(webpBuffer, metadata) {
       "sticker-pack-id": "https://github.com/hiudyy",
       "sticker-pack-name": metadata.packname || "",
       "sticker-pack-publisher": metadata.author || "",
-      "emojis": ["NazuninhaBot"]
+      "emojis": ["ChainyBot"]
     };
     const exifAttr = Buffer.from([
       0x49, 0x49, 0x2A, 0x00,
