@@ -1,6 +1,8 @@
 import { hasPaymentMessage } from '../../utils/securityHelpers.js';
+import { unwrapMessage } from '../../utils/messageHelpers.js';
 import { sendCleanChat } from '../../utils/cleanChat.js';
 import { loadLevelingSafe, getLevelingUser } from '../../utils/database/leveling.js';
+import fs from 'fs';
 
 /**
  * Executa um step do anti-payment com error handling isolado.
@@ -16,11 +18,12 @@ async function runAntiPaymentStep(step, errorMessage) {
 
 export async function handleAntiPayment(context) {
     const { bot, info, isGroup, sender, groupData, isGroupAdmin, isOwner, from, getUserName, isUserWhitelisted, isBotAdmin, MESSAGES, idInArray, groupAdmins, botNumberLid } = context;
-    if (!isGroup || !groupData.antipayment || !info.message) return false;
+    if (!isGroup || !info.message || !groupData.antipayment) return false;
 
     const isPayment = hasPaymentMessage(info.message);
-    const quotedMessage = info.message.extendedTextMessage?.contextInfo?.quotedMessage;
-    const quotedParticipant = info.message.extendedTextMessage?.contextInfo?.participant;
+    const actualMessage = unwrapMessage(info.message);
+    const quotedMessage = actualMessage?.extendedTextMessage?.contextInfo?.quotedMessage;
+    const quotedParticipant = actualMessage?.extendedTextMessage?.contextInfo?.participant;
     const isQuotedPayment = quotedMessage ? hasPaymentMessage(quotedMessage) : false;
 
     if (!isPayment && !isQuotedPayment) return false;
@@ -41,7 +44,6 @@ export async function handleAntiPayment(context) {
         const levelingData = loadLevelingSafe();
         const targetData = getLevelingUser(levelingData, targetUser);
         if ((targetData.messages || 0) > 50) {
-            console.log(`[ANTI-PAYMENT] 🛡️ Ignorando banimento por quote fake! @${targetUser.split('@')[0]} é um veterano (${targetData.messages} msgs).`);
             await runAntiPaymentStep(() => bot.sendMessage(from, { 
                 text: `🛡️ Sistema Anti-Fake Quote ativado!\n\nO banimento de @${targetUser.split('@')[0]} foi anulado pois ele é um membro veterano (${targetData.messages} msgs).\nIsso evita banimentos injustos caso alguém forje uma mensagem de pagamento.`, 
                 mentions: [targetUser] 

@@ -67,6 +67,23 @@ export const getMessageText = (message) => {
 };
 
 /**
+ * Extrai a mensagem real, desenvelopando ephemeralMessage, viewOnceMessage, etc.
+ */
+export const unwrapMessage = (message) => {
+  if (!message) return null;
+  if (message.message) return unwrapMessage(message.message);
+  
+  const keys = Object.keys(message);
+  if (keys.length === 1) {
+    const key = keys[0];
+    if (['ephemeralMessage', 'viewOnceMessage', 'viewOnceMessageV2', 'documentWithCaptionMessage'].includes(key)) {
+      return unwrapMessage(message[key].message);
+    }
+  }
+  return message;
+};
+
+/**
  * Enhanced participant ID extraction with both LID and JID support
  */
 export const extractParticipantId = (participant) => {

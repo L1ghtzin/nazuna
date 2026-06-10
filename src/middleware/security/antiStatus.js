@@ -1,12 +1,14 @@
 import { hasGroupStatusMessage } from '../../utils/securityHelpers.js';
+import { unwrapMessage } from '../../utils/messageHelpers.js';
 import { loadLevelingSafe, getLevelingUser } from '../../utils/database/leveling.js';
 
 export async function handleAntiStatus(context) {
     const { bot, info, isGroup, sender, groupData, isStatusMention, isGroupAdmin, isOwner, from, reply, getUserName, isUserWhitelisted, isBotAdmin, MESSAGES, idInArray, groupAdmins, botNumberLid } = context;
     if (!isGroup || !groupData.antistatus || !info.message) return false;
 
-    const quotedMessage = info.message.extendedTextMessage?.contextInfo?.quotedMessage;
-    const quotedParticipant = info.message.extendedTextMessage?.contextInfo?.participant;
+    const actualMessage = unwrapMessage(info.message);
+    const quotedMessage = actualMessage?.extendedTextMessage?.contextInfo?.quotedMessage;
+    const quotedParticipant = actualMessage?.extendedTextMessage?.contextInfo?.participant;
     const isQuotedStatus = quotedMessage ? hasGroupStatusMessage(quotedMessage) : false;
 
     if (!isStatusMention && !isQuotedStatus) return false;

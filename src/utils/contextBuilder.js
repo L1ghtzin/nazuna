@@ -256,7 +256,7 @@ import { handleAntiPV } from '../middleware/antiPV.js';
 import { handleJoinRequest } from '../middleware/joinRequestHandler.js';
 import { handleAutoDownload } from '../handlers/autoDownload.js';
 import { loadGroupData, persistGroupData, isUserWhitelisted as isUserWhitelistedCore, isUserInMap, removeUserFromMap } from './groupManager.js';
-import { getMessageText, extractParticipantId, extractReason, normalizeClanName, normalizeCommand, getBotNumber, getFileBuffer, getMediaInfo, processImageForProfile } from './messageHelpers.js';
+import { getMessageText, extractParticipantId, extractReason, normalizeClanName, normalizeCommand, getBotNumber, getFileBuffer, getMediaInfo, processImageForProfile, unwrapMessage } from './messageHelpers.js';
 import * as timeHelpers from './timeHelpers.js';
 
 const __ctxFilename = fileURLToPath(import.meta.url);
@@ -548,8 +548,12 @@ export async function buildMessageContext(bot, info, store, messagesCache, renta
     let args = body.trim().split(/ +/).slice(1);
     let q = args.join(' ');
     const budy2 = normalizar(body);
-    const menc_prt = info.message?.extendedTextMessage?.contextInfo?.participant;
-    const menc_jid2 = info.message?.extendedTextMessage?.contextInfo?.mentionedJid;
+    
+    // Extrai a mensagem real ignorando wrappers como ephemeralMessage
+    const actualMessage = unwrapMessage(info.message);
+    
+    const menc_prt = actualMessage?.extendedTextMessage?.contextInfo?.participant;
+    const menc_jid2 = actualMessage?.extendedTextMessage?.contextInfo?.mentionedJid;
     const menc_os2 = (menc_jid2 && menc_jid2.length > 0) ? menc_jid2[0] : menc_prt;
     const sender_ou_n = (menc_jid2 && menc_jid2.length > 0) ? menc_jid2[0] : menc_prt || sender;
     const groupFile = buildGroupFilePath(from);
@@ -804,8 +808,8 @@ export async function buildMessageContext(bot, info, store, messagesCache, renta
     });
     if (automationResult?.stopProcessing) return;
     let quotedMessageContent = null;
-    if (type === 'extendedTextMessage' && info.message?.extendedTextMessage?.contextInfo?.quotedMessage) {
-      quotedMessageContent = info.message.extendedTextMessage.contextInfo.quotedMessage;
+    if (type === 'extendedTextMessage' && actualMessage?.extendedTextMessage?.contextInfo?.quotedMessage) {
+      quotedMessageContent = actualMessage.extendedTextMessage.contextInfo.quotedMessage;
     }
     const isQuotedMsg = !!quotedMessageContent?.conversation;
     const isQuotedMsg2 = !!quotedMessageContent?.extendedTextMessage?.text;

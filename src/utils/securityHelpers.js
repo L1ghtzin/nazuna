@@ -5,7 +5,12 @@
  */
 
 const MAX_PAYMENT_SCAN_DEPTH = 8;
-const PAYMENT_MESSAGE_KEYS = new Set(["requestPaymentMessage"]);
+const PAYMENT_MESSAGE_KEYS = new Set([
+  "requestPaymentMessage",
+  "sendPaymentMessage",
+  "cancelPaymentRequestMessage",
+  "declinePaymentRequestMessage"
+]);
 
 const MAX_MESSAGE_UNWRAP_DEPTH = 5;
 const MAX_FLAG_SCAN_DEPTH = 8;
