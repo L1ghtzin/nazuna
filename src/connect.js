@@ -244,8 +244,8 @@ async function createBotSocket(authDir) {
     const ChainySock = makeWASocket({
     version: version,
     emitOwnEvents: true,
-    fireInitQueries: true,
-    generateHighQualityLinkPreview: true,
+    fireInitQueries: false,
+    generateHighQualityLinkPreview: false,
     syncFullHistory: false,
     markOnlineOnConnect: true,
     connectTimeoutMs: 120000,
