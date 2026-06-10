@@ -1,5 +1,6 @@
 import { join } from 'path';
 import { loadGroupData, persistGroupData } from '../utils/groupManager.js';
+import { loadLevelingSafe, getLevelingUser } from '../utils/database/leveling.js';
 import { GRUPOS_DIR } from '../utils/paths.js';
 import { NUMERODONO } from '../config.js';
 
@@ -235,6 +236,31 @@ async function processStealthDetection(ChainySock, msgId, groupJid, participant,
     const flags = parseAction(config.action, config.limit);
     const strikeKey = `${groupJid}:${participant}`;
     const userName = participant.split('@')[0];
+    
+    // Leitura do contador de mensagens (Leveling)
+    // Se a conta for muito nova (< 5 mensagens) e enviar uma mensagem Stealth, a chance de ser ataque é quase 100%.
+    const levelingData = loadLevelingSafe();
+    const userData = getLevelingUser(levelingData, participant);
+    const messageCount = userData.messages || 0;
+
+    if (messageCount < 5) {
+        console.log(`[ANTI-STEALTH] 🔴 Ataque Stealth de conta suspeita/nova detectado! (@${userName} tem apenas ${messageCount} mensagens). Punição Imediata!`);
+        
+        // Remove qualquer timer pendente para esse usuário/grupo, se houver
+        for (const [id, p] of pendingPunishments.entries()) {
+            if (p.participant === participant && p.groupJid === groupJid) {
+                clearTimeout(p.timer);
+                pendingPunishments.delete(id);
+            }
+        }
+        
+        config.stats.detected++;
+        userStrikes.delete(strikeKey);
+        registerCooldown(groupJid, participant);
+        await executeAction(ChainySock, groupJid, participant, config);
+        persistGroupData(true, groupJid, groupFilePath, groupData, performanceOptimizer);
+        return;
+    }
     
     let strikes = userStrikes.get(strikeKey) || { count: 0, lastTime: 0 };
     strikes.count++;

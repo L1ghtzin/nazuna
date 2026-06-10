@@ -1,4 +1,5 @@
 import { hasGroupStatusMessage } from '../../utils/securityHelpers.js';
+import { loadLevelingSafe, getLevelingUser } from '../../utils/database/leveling.js';
 
 export async function handleAntiStatus(context) {
     const { bot, info, isGroup, sender, groupData, isStatusMention, isGroupAdmin, isOwner, from, reply, getUserName, isUserWhitelisted, isBotAdmin, MESSAGES, idInArray, groupAdmins, botNumberLid } = context;
@@ -21,6 +22,15 @@ export async function handleAntiStatus(context) {
         if (targetUser === botNumberLid || (bot.user?.id && targetUser.startsWith(bot.user.id.split(':')[0]))) return false;
         if (idInArray && groupAdmins && idInArray(targetUser, groupAdmins)) return false;
         if (isUserWhitelisted && isUserWhitelisted(targetUser, 'antistatus')) return false;
+
+        // Proteção contra falsificação de quote (marcar mensagem fake para banir inocentes)
+        // Se o alvo for um veterano (muitas mensagens), ignoramos o banimento por quote.
+        const levelingData = loadLevelingSafe();
+        const targetData = getLevelingUser(levelingData, targetUser);
+        if ((targetData.messages || 0) > 50) {
+            console.log(`[ANTI-STATUS] 🛡️ Ignorando banimento por quote fake! @${targetUser.split('@')[0]} é um veterano (${targetData.messages} msgs).`);
+            return false;
+        }
     } else {
         if (isGroupAdmin || isOwner || (isUserWhitelisted && isUserWhitelisted(sender, 'antistatus'))) return false;
     }
