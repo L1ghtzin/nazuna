@@ -238,13 +238,26 @@ async function processStealthDetection(ChainySock, msgId, groupJid, participant,
     const userName = participant.split('@')[0];
     
     // Leitura do contador de mensagens (Leveling)
-    // Se a conta for muito nova (< 5 mensagens) e enviar uma mensagem Stealth, a chance de ser ataque é quase 100%.
     const levelingData = loadLevelingSafe();
     const userData = getLevelingUser(levelingData, participant);
     const messageCount = userData.messages || 0;
 
+    // --- SISTEMA DE PREVENÇÃO DE FALSOS POSITIVOS ---
+    // Membros que já conversam bastante costumam ter problemas reais de criptografia do WhatsApp.
+    if (messageCount >= 30) {
+        console.log(`[ANTI-STEALTH] 🟢 Falso Positivo Evitado: @${userName} é membro ativo (${messageCount} msgs). Ignorando mensagem indecriptável.`);
+        for (const [id, p] of pendingPunishments.entries()) {
+            if (p.participant === participant && p.groupJid === groupJid) {
+                clearTimeout(p.timer);
+                pendingPunishments.delete(id);
+            }
+        }
+        return;
+    }
+
+    // Membros que mal conversaram e enviam stealth são quase 100% de chance de ser ataque.
     if (messageCount < 5) {
-        console.log(`[ANTI-STEALTH] 🔴 Ataque Stealth de conta suspeita/nova detectado! (@${userName} tem apenas ${messageCount} mensagens). Punição Imediata!`);
+        console.log(`[ANTI-STEALTH] 🔴 Ataque Stealth de conta suspeita: @${userName} tem apenas ${messageCount} mensagens. Punição Imediata!`);
         
         // Remove qualquer timer pendente para esse usuário/grupo, se houver
         for (const [id, p] of pendingPunishments.entries()) {
