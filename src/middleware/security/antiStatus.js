@@ -29,6 +29,14 @@ export async function handleAntiStatus(context) {
         const targetData = getLevelingUser(levelingData, targetUser);
         if ((targetData.messages || 0) > 50) {
             console.log(`[ANTI-STATUS] 🛡️ Ignorando banimento por quote fake! @${targetUser.split('@')[0]} é um veterano (${targetData.messages} msgs).`);
+            try {
+                await bot.sendMessage(from, { 
+                    text: `🛡️ Sistema Anti-Fake Quote ativado!\n\nO banimento de @${targetUser.split('@')[0]} foi anulado pois ele é um membro veterano (${targetData.messages} msgs).\nIsso evita banimentos injustos caso alguém forje um status.`, 
+                    mentions: [targetUser] 
+                });
+            } catch (e) {
+                console.error('Erro ao enviar aviso de imunidade Anti-Status:', e);
+            }
             return false;
         }
     } else {
