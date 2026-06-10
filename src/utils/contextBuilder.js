@@ -780,7 +780,8 @@ export async function buildMessageContext(bot, info, store, messagesCache, renta
       isVisuU, isVisuU2, isBotAdmin, isGroupAdmin, isOwner, isStatusMention, isButtonMessage,
       from, pushname, reply, messagesCache, type, body, isOwnerOrSub, antiSpamGlobal, writeJsonFile,
       DATABASE_DIR, optimizer, groupFile, getUserName, isUserWhitelisted, getGroupRentalStatus,
-      isRentalModeActive, validateActivationCode, useActivationCode, isMuted, isMuted2, MESSAGES
+      isRentalModeActive, validateActivationCode, useActivationCode, isMuted, isMuted2, MESSAGES,
+      idInArray, groupAdmins, botNumberLid
     });
     if (securityResult?.stopProcessing) {
       return;
