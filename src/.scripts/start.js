@@ -187,7 +187,12 @@ function startBot(codeMode = false) {
 
   botProcess = spawn('node', args, {
     stdio: 'inherit',
-    env: { ...process.env, FORCE_COLOR: '1' },
+    env: { 
+      ...process.env, 
+      FORCE_COLOR: '1',
+      TMPDIR: path.join(process.cwd(), 'temp'),
+      TEMP: path.join(process.cwd(), 'temp')
+    },
   });
 
   botProcess.on('error', (error) => {

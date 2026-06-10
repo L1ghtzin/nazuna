@@ -1,9 +1,14 @@
 import axios from 'axios';
 import yts from 'yt-search';
 import ffmpeg from 'fluent-ffmpeg';
-import { promises as fs } from 'fs';
+import { promises as fs, existsSync, mkdirSync } from 'fs';
 import os from 'os';
 import { join } from 'path';
+
+const localTmp = join(process.cwd(), 'temp');
+if (!existsSync(localTmp)) {
+  mkdirSync(localTmp, { recursive: true });
+}
 
 const TIMEOUT = 60000;
 const DL_TIMEOUT = 300000; // 5 minutos para downloads grandes
@@ -24,8 +29,8 @@ async function convertToMp3(inputBuffer) {
   if (isRealMp3(inputBuffer)) return inputBuffer;
 
   const id = `yt_${Date.now()}`;
-  const inp = join(os.tmpdir(), `${id}_in`);
-  const out = join(os.tmpdir(), `${id}.mp3`);
+  const inp = join(localTmp, `${id}_in`);
+  const out = join(localTmp, `${id}.mp3`);
 
   try {
     await fs.writeFile(inp, inputBuffer);
@@ -226,8 +231,8 @@ async function convertToMp4(inputBuffer) {
   if (isRealMp4(inputBuffer)) return inputBuffer;
 
   const id = `ytv_${Date.now()}`;
-  const inp = join(os.tmpdir(), `${id}_in`);
-  const out = join(os.tmpdir(), `${id}.mp4`);
+  const inp = join(localTmp, `${id}_in`);
+  const out = join(localTmp, `${id}.mp4`);
 
   try {
     await fs.writeFile(inp, inputBuffer);
