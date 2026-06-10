@@ -6,7 +6,7 @@ export default {
     bot, from, info, command, reply, q, args, isOwner, isSubOwner, isOwnerOrSub, prefix, sender, numerodono, config,
     addSubdono, removeSubdono, getSubdonos, addGlobalBlacklist, removeGlobalBlacklist, getGlobalBlacklist,
     isValidJid, isValidLid, buildUserId, getLidFromJidCached, groupMetadata, isGroup, pushname, menc_os2,
-    MESSAGES
+    MESSAGES, botState, optimizer, DATABASE_DIR
   }) => {
     const cmd = command.toLowerCase();
 
@@ -185,6 +185,22 @@ export default {
       }
       const list = getGlobalBlacklist();
       return reply(`🛑 *Blacklist Global:*\n\n` + Object.keys(list.users).join('\n'));
+    }
+
+    // --- VIEWMSG (Marcar como lida) ---
+    if (cmd === 'viewmsg') {
+      if (!isOwner) return reply(MESSAGES.permission.ownerOnly);
+      const opt = q.toLowerCase();
+      
+      if (opt !== 'on' && opt !== 'off') {
+        return reply(`⚠️ Uso incorreto! Digite:\n*${prefix}viewmsg on* (ativar marcação de lida)\n*${prefix}viewmsg off* (desativar)`);
+      }
+      
+      const path = await import('path');
+      botState.viewMessages = (opt === 'on');
+      await optimizer.saveJsonWithCache(path.join(DATABASE_DIR, 'botState.json'), botState);
+      
+      return reply(`👁️ *Visualização automática:* ${opt === 'on' ? '✅ ATIVADA' : '❌ DESATIVADA'}\n_O bot agora vai ${opt === 'on' ? 'marcar as mensagens que recebe como lidas' : 'deixar as mensagens acumularem sem visualizar'}._`);
     }
   }
 };
