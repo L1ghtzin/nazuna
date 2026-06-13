@@ -50,7 +50,7 @@ export default {
       if (menc_os2 && menc_os2 !== sender) {
         const numPerguntas = parseInt(args.find(arg => !isNaN(parseInt(arg)))) || 5;
         if (numPerguntas < 3 || numPerguntas > 20) {
-          return reply(`💔 Número de perguntas inválido! Use entre 3 e 20 perguntas.\n\n💡 Exemplo: ${prefix}dueloquiz @usuario 10`);
+          return reply(`💔 Número de perguntas inválido! Use entre 3 e 20 perguntas.\n\n💡 Exemplo: ${prefix}dueloquiz @usuário 10`);
         }
 
         if (global.dueloQuizChallenges[gameKey] || global.dueloQuizGames[gameKey]) {

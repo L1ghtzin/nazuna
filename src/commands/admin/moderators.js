@@ -4,7 +4,7 @@ export default {
   name: "moderadores",
   description: "Gerencia moderadores do grupo e suas permissões globais",
   commands: ["addmod", "addmodcmd", "delmod", "delmodcmd", "grantmodcmd", "listmodcmds", "listmods", "modlist", "revokemodcmd"],
-  usage: `${global.prefix}addmod @usuario\n${global.prefix}grantmodcmd ban`,
+  usage: `${global.prefix}addmod @usuário\n${global.prefix}grantmodcmd ban`,
   handle: async ({  reply, isGroup, isGroupAdmin, command, menc_os2, q, prefix, groupData, groupFile, getUserName, groupName, optimizer , MESSAGES }) => {
     if (!isGroup) return reply(MESSAGES.permission.groupOnly);
     if (!isGroupAdmin) return reply(MESSAGES.permission.adminOnly);
@@ -14,7 +14,7 @@ export default {
     groupData.allowedModCommands = groupData.allowedModCommands || [];
 
     if (['addmod'].includes(cmd)) {
-      if (!menc_os2) return reply(`Marque o usuário que deseja promover a moderador. Ex: ${prefix}addmod @usuario`);
+      if (!menc_os2) return reply(`Marque o usuário que deseja promover a moderador. Ex: ${prefix}addmod @usuário`);
       const modToAdd = menc_os2;
       
       if (groupData.moderators.includes(modToAdd)) {
@@ -26,7 +26,7 @@ export default {
     }
 
     if (['delmod', 'rmmod'].includes(cmd)) {
-      if (!menc_os2) return reply(`Marque o usuário que deseja remover de moderador. Ex: ${prefix}delmod @usuario`);
+      if (!menc_os2) return reply(`Marque o usuário que deseja remover de moderador. Ex: ${prefix}delmod @usuário`);
       const modToRemove = menc_os2;
       const modIndex = groupData.moderators.indexOf(modToRemove);
       if (modIndex === -1) {

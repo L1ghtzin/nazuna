@@ -3,7 +3,7 @@ import * as cheerio from 'cheerio';
 
 const removerAcentos = (s) => typeof s === 'string' ? s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase() : '';
 
-async function Dicionario(query) {
+async function Dicionário(query) {
     try {
         const url = `https://www.dicio.com.br/${removerAcentos(query)}/`;
         const response = await axios.get(url, {
@@ -131,5 +131,5 @@ async function Dicionario(query) {
     }
 }
 
-export default Dicionario;
-export { Dicionario };
+export default Dicionário;
+export { Dicionário };

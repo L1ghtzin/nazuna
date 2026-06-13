@@ -84,7 +84,7 @@ ${middleBorder}${menuItemIcon}${prefix}apagalembrete
 ${middleBorder}
 ${middleBorder}${menuTitleIcon} *OUTROS* ${menuTitleIcon}
 ${middleBorder}${menuItemIcon}${prefix}aniversario
-${middleBorder}${menuItemIcon}${prefix}estatisticas
+${middleBorder}${menuItemIcon}${prefix}estatísticas
 ${bottomBorder}
 `;
 }

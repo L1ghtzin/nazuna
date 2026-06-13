@@ -2,7 +2,7 @@
 export default {
   name: "rpgadmin",
   description: "Comandos administrativos do RPG",
-  commands: ["adicionardinheiro", "adicionaritem", "definirnivelrpg", "estatisticasrpg", "globalrank", "rankglobal", "removerdinheiro", "removeritem", "resetarjogador", "resetrpgglobal", "rpgadd", "rpgadditem", "rpgaddmoney", "rpgremove", "rpgremoveitem", "rpgremovemoney", "rpgresetglobal", "rpgresetplayer", "rpgsetlevel", "rpgstatistics", "rpgstats", "topglobal", "toprpgglobal"],
+  commands: ["adicionardinheiro", "adicionaritem", "definirnivelrpg", "estatísticasrpg", "globalrank", "rankglobal", "removerdinheiro", "removeritem", "resetarjogador", "resetrpgglobal", "rpgadd", "rpgadditem", "rpgaddmoney", "rpgremove", "rpgremoveitem", "rpgremovemoney", "rpgresetglobal", "rpgresetplayer", "rpgsetlevel", "rpgstatistics", "rpgstats", "topglobal", "toprpgglobal"],
   usage: "{prefix}rankglobal",
   handle: async ({ 
     reply, 
@@ -100,7 +100,7 @@ export default {
     }
 
     // --- STATS ---
-    if (command === 'rpgstats' || command === 'rpgstatistics' || command === 'estatisticasrpg') {
+    if (command === 'rpgstats' || command === 'rpgstatistics' || command === 'estatísticasrpg') {
       const allUsers = Object.entries(econ.users || {});
       let totalMoney = 0;
       allUsers.forEach(([id, data]) => totalMoney += (data.wallet || 0) + (data.bank || 0));

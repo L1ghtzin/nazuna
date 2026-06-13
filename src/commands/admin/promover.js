@@ -2,7 +2,7 @@ export default {
   name: "promover",
   description: "Promove um membro a administrador do grupo",
   commands: ["promover", "promote"],
-  usage: `${global.prefixo}promover @usuario`,
+  usage: `${global.prefixo}promover @usuário`,
   handle: async ({ 
     bot,
     from,

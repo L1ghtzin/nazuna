@@ -277,7 +277,7 @@ export default {
         message += `│ 🆔 ID: ${targetGroupId}\n`;
         message += "│\n";
         message += "╰━━━━━━━━━━━━━━━━━━━━━━━━━━╯\n\n";
-        message += "⚠️ O bot não funcionará mais neste grupo ate que um novo aluguel seja adicionado.";
+        message += "⚠️ O bot não funcionará mais neste grupo até que um novo aluguel seja adicionado.";
 
         await reply(message);
 

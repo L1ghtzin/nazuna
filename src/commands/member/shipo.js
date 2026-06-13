@@ -2,7 +2,7 @@ export default {
   name: "shipo",
   description: "Forma um casal com a pessoa marcada",
   commands: ["shipo"],
-  usage: `${global.prefix}shipo <@usuario>`,
+  usage: `${global.prefix}shipo <@usuário>`,
   handle: async ({  reply, isGroup, isModoBn, menc_os2, from, buildGroupFilePath, optimizer, AllgroupMembers, getUserName, prefix , MESSAGES }) => {
     try {
       if (!isGroup) return reply("╭━━━⊱ 💔 *ERRO* 💔 ⊱━━━╮\n│\n│ ❌ Este comando só funciona\n│    em grupos!\n│\n╰━━━━━━━━━━━━━━━━━━━━╯");

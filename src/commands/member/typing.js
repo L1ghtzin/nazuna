@@ -10,7 +10,7 @@ export default {
   name: "digitar",
   description: "Corrida de digitação entre usuários",
   commands: ["digitar", "typing", "digitacao"],
-  usage: "{prefix}digitar @usuario",
+  usage: "{prefix}digitar @usuário",
   handle: async ({ 
     reply, 
     isGroup, 
@@ -127,6 +127,6 @@ export default {
       }
     }
 
-    return reply(`⚡ *CORRIDA DE DIGITAÇÃO*\n\n💡 *Como jogar:*\n1️⃣ Desafie alguém: ${prefix}digitar @usuario\n2️⃣ O desafiado aceita: ${prefix}digitar aceitar\n🏆 Quem digitar primeiro e corretamente vence!`);
+    return reply(`⚡ *CORRIDA DE DIGITAÇÃO*\n\n💡 *Como jogar:*\n1️⃣ Desafie alguém: ${prefix}digitar @usuário\n2️⃣ O desafiado aceita: ${prefix}digitar aceitar\n🏆 Quem digitar primeiro e corretamente vence!`);
   },
 };

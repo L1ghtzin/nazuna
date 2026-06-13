@@ -50,7 +50,7 @@ function registerCommandAlias(alias, type, command) {
     duplicateCommandAliases.push(duplicate);
     console.error(
       `[COMMANDS] Alias duplicado "${normalizedAlias}" ignorado em ${duplicate.duplicate}; ` +
-      `ja registrado em ${duplicate.first}.`
+      `já registrado em ${duplicate.first}.`
     );
     return;
   }

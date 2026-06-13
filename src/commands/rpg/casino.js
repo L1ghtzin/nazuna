@@ -29,22 +29,22 @@ export default {
 
     // --- APOSTA SIMPLES ---
     if (command === 'apostar' || command === 'bet') {
-      if (!args[0]) return reply(`ðŸ’¡ Use ${prefix}${command} <valor>`);
+      if (!args[0]) return reply(`💡 Use ${prefix}${command} <valor>`);
       const bet = parseAmount(args[0], me.wallet);
       if (!isFinite(bet) || bet <= 0) return reply(MESSAGES.error.invalid('valor'));
-      if (bet < 100) return reply(`ðŸ’¡ Aposta mÃ­nima Ã© de 100 gold.`);
-      if (me.wallet < bet) return reply('ðŸ’° Saldo insuficiente na carteira!');
+      if (bet < 100) return reply(`💡 Aposta mínima é de 100 gold.`);
+      if (me.wallet < bet) return reply('💰 Saldo insuficiente na carteira!');
 
       const won = Math.random() < 0.45;
       if (won) {
         me.wallet += bet;
         saveEconomy(econ);
-        return reply(`ðŸŽ‰ Voce venceu a aposta e ganhou ${fmt(bet)} gold!`);
+        return reply(`🎉 Você venceu a aposta e ganhou ${fmt(bet)} gold!`);
       }
 
       me.wallet -= bet;
       saveEconomy(econ);
-      return reply(`ðŸ’€ Voce perdeu ${fmt(bet)} gold na aposta.`);
+      return reply(`💀 Você perdeu ${fmt(bet)} gold na aposta.`);
     }
 
     // --- COINFLIP ---

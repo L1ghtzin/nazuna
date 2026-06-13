@@ -26,12 +26,12 @@ export default {
         let statusCor = '🟩';
         if (speedConverted > 2) {
           statusEmoji = '🟡';
-          statusTexto = 'Bom';
+          statusTexto = 'Boa';
           statusCor = '🟨';
         }
         if (speedConverted > 5) {
           statusEmoji = '🟠';
-          statusTexto = 'Médio';
+          statusTexto = 'Média';
           statusCor = '🟧';
         }
         if (speedConverted > 8) {
@@ -45,7 +45,7 @@ export default {
 │ 📡 *Informações de Latência*
 │ ├─ ${statusEmoji} Velocidade: *${speedConverted.toFixed(3)}s*
 │ ├─ ${statusCor} Qualidade: *${statusTexto}*
-│ └─ 📊 Status: *${speedConverted <= 2 ? 'Ótima' : speedConverted <= 5 ? 'Boa' : speedConverted <= 8 ? 'Regular' : 'Precisa Melhorar'}*
+│ └─ 📊 Status: *${speedConverted <= 2 ? 'Ótimo' : speedConverted <= 5 ? 'Bom' : speedConverted <= 8 ? 'Regular' : 'Precisa Melhorar'}*
 │
 │ ⏱️ *Informações do Sistema*
 │ ├─ 🟢 Tempo Online: *${uptimeBot}*
@@ -102,7 +102,7 @@ export default {
     }
 
     // --- GROUPSTATS ---
-    if (['groupstats', 'estatisticas', 'statsgrupo'].includes(command)) {
+    if (['groupstats', "estatisticas", 'statsgrupo'].includes(command)) {
       if (!isGroup) return reply(MESSAGES.permission.groupOnly);
       try {
         const groupMeta = await getCachedGroupMetadata(from);
@@ -122,8 +122,8 @@ export default {
       if (!q) return reply(`📔 Qual palavra você quer procurar?`);
       return reply("📔 Procurando...").then(async () => {
         try {
-          const { Dicionario } = await import('../../funcs/utils/dicionario.js');
-          const res = await Dicionario(q.trim());
+          const { Dicionário } = await import('../../funcs/utils/dicionario.js');
+          const res = await Dicionário(q.trim());
           if (res && res.significados.length > 0) {
             let msg = `📘✨ *Significado de "${res.palavra}":*\n\n*📚 Classe:* ${res.classe || 'N/A'}\n\n*📖 Significados:*\n${res.significados.slice(0, 3).map((s, i) => `${i+1}. ${s}`).join('\n')}`;
             return reply(msg);

@@ -2,7 +2,7 @@ export default {
   name: "ban",
   description: "Bane um usuário do grupo",
   commands: ["banir", "ban", "b", "kick"],
-  usage: `${global.prefixo}ban @usuario`,
+  usage: `${global.prefixo}ban @usuário`,
   handle: async ({ 
     bot,
     from,

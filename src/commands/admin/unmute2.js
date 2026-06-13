@@ -11,7 +11,7 @@ export default {
   name: "unmute2",
   description: "Desmuta um usuário no grupo (sistema mute2)",
   commands: ["unmute2", "desmute2", "desmutar2"],
-  usage: `${global.prefixo}unmute2 @usuario`,
+  usage: `${global.prefixo}unmute2 @usuário`,
   handle: async ({ 
     bot,
     from,

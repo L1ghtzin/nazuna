@@ -2,7 +2,7 @@ export default {
   name: "rebaixar",
   description: "Remove um membro de administrador do grupo",
   commands: ["rebaixar", "demote"],
-  usage: `${global.prefixo}rebaixar @usuario`,
+  usage: `${global.prefixo}rebaixar @usuário`,
   handle: async ({ 
     bot,
     from,

@@ -10,7 +10,7 @@ export default {
   name: "mute2",
   description: "Muta um usuário no grupo (mensagens serão apagadas)",
   commands: ["mute2", "mutar2"],
-  usage: `${global.prefixo}mute2 @usuario`,
+  usage: `${global.prefixo}mute2 @usuário`,
   handle: async ({ 
     bot,
     from,

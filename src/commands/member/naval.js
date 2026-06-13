@@ -10,7 +10,7 @@ export default {
   name: "batalhanaval",
   description: "Jogo de estratégia naval",
   commands: ["batalhanaval", "batalha", "naval"],
-  usage: "{prefix}batalhanaval @usuario",
+  usage: "{prefix}batalhanaval @usuário",
   handle: async ({ 
     reply, 
     isGroup, 
@@ -222,6 +222,6 @@ export default {
       return reply(status, { mentions: [game.jogador1, game.jogador2] });
     }
 
-    return reply(`🚢 *BATALHA NAVAL*\n\n💡 *Como jogar:*\n\n1️⃣ Desafie alguém:\n${prefix}batalhanaval @usuario\n\n2️⃣ O desafiado aceita ou recusa:\n${prefix}batalhanaval aceitar / recusar\n\n3️⃣ Atire em coordenadas:\n${prefix}batalhanaval A5\n\n🎯 Objetivo: Afundar todos os navios do oponente!\n\n📌 Coordenadas: A-J (colunas) e 1-10 (linhas)\n💥 = Acerto | ❌ = Água`);
+    return reply(`🚢 *BATALHA NAVAL*\n\n💡 *Como jogar:*\n\n1️⃣ Desafie alguém:\n${prefix}batalhanaval @usuário\n\n2️⃣ O desafiado aceita ou recusa:\n${prefix}batalhanaval aceitar / recusar\n\n3️⃣ Atire em coordenadas:\n${prefix}batalhanaval A5\n\n🎯 Objetivo: Afundar todos os navios do oponente!\n\n📌 Coordenadas: A-J (colunas) e 1-10 (linhas)\n💥 = Acerto | ❌ = Água`);
   },
 };

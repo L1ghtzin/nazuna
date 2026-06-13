@@ -111,7 +111,7 @@ async function loadModules() {
 
         // --- utils (ESM via dynamic import) ---
         const [
-            Dicionario, 
+            Dicionário, 
             styleTextMod,
             verifyUpdateMod,
             emojiMixMod,
@@ -169,7 +169,7 @@ async function loadModules() {
         ]);
 
         // Utils modules with null checking
-        modules.Dicionary = Dicionario.default ?? Dicionario;
+        modules.Dicionary = Dicionário.default ?? Dicionário;
         modules.styleText = styleTextMod.default ?? styleTextMod;
         modules.VerifyUpdate = verifyUpdateMod.default ?? verifyUpdateMod;
         modules.emojiMix = emojiMixMod.default ?? emojiMixMod;

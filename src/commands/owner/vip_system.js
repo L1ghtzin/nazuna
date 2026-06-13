@@ -3,7 +3,7 @@
 export default {
   name: "vip_system",
   description: "Gerenciamento de comandos VIP",
-  commands: ["addcmdvip", "addvipcommand", "adicionarcmdvip", "ativarcmdvip", "comandosvip", "delcmdvip", "desativarcmdvip", "estatisticasvip", "infovip", "listcmdvip", "listvipcommands", "removecmdvip", "removevipcommand", "rmcmdvip", "statsvip", "togglecmdvip", "vip", "vipinfo", "vipmenu", "vipstats"],
+  commands: ["addcmdvip", "addvipcommand", "adicionarcmdvip", "ativarcmdvip", "comandosvip", "delcmdvip", "desativarcmdvip", "estatísticasvip", "infovip", "listcmdvip", "listvipcommands", "removecmdvip", "removevipcommand", "rmcmdvip", "statsvip", "togglecmdvip", "vip", "vipinfo", "vipmenu", "vipstats"],
   handle: async ({ 
     reply, command, args, q, isOwner, isPremium, prefix, pushname,
     vipCommandsManager, menuVIP, getMenuDesignWithDefaults, nomebot,
@@ -46,7 +46,7 @@ export default {
       return reply(res.message);
     }
 
-    if (['statsvip', 'vipstats', 'estatisticasvip'].includes(cmd)) {
+    if (['statsvip', 'vipstats', 'estatísticasvip'].includes(cmd)) {
       const stats = vipCommandsManager.getVipStats();
       return reply(`📊 *STATS VIP*\n\nTotal: ${stats.total}\nAtivos: ${stats.enabled}\nCategorias: ${stats.categories.length}`);
     }
