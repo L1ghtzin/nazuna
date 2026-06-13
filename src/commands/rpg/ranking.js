@@ -23,16 +23,16 @@ export default {
                 .sort((a, b) => b[1] - a[1])
                 .slice(0, 10);
 
-            if (arr.length === 0) return reply(`💔 Sem dados suficientes para ranking.`);
+            if (arr.length === 0) return reply(MESSAGES.rpg.notEnoughData);
 
-            let text = '⚔️ 🏆 *RANKING DE RIQUEZA* 🏆 ⚔️\n\n';
+            let text = MESSAGES.rpg.rankingHeader;
             const mentions = [];
             arr.forEach(([id, total], i) => {
                 const medal = ['🥇', '🥈', '🥉'][i] || `${i + 1}.`;
-                text += `${medal} @${id.split('@')[0]} — 💰 ${fmt(total)}\n`;
+                text += MESSAGES.rpg.rankingItem(medal, id.split('@')[0], fmt(total));
                 mentions.push(id);
             });
-            text += `\n✨ Continue jogando para subir no rank!`;
+            text += MESSAGES.rpg.rankingFooter;
             return reply(text, { mentions });
         }
     }

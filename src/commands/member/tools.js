@@ -22,37 +22,26 @@ export default {
         const uptimeBot = formatUptime(process.uptime());
         
         let statusEmoji = '🟢';
-        let statusTexto = 'Excelente';
         let statusCor = '🟩';
+        let qualidade = 'Excelente';
+
         if (speedConverted > 2) {
           statusEmoji = '🟡';
-          statusTexto = 'Boa';
           statusCor = '🟨';
+          qualidade = 'Boa';
         }
         if (speedConverted > 5) {
           statusEmoji = '🟠';
-          statusTexto = 'Média';
           statusCor = '🟧';
+          qualidade = 'Regular';
         }
         if (speedConverted > 8) {
           statusEmoji = '🔴';
-          statusTexto = 'Ruim';
           statusCor = '🟥';
+          qualidade = 'Ruim';
         }
         
-        return reply(`╭⊱ ⚡ *STATUS DA CONEXÃO* ⚡ ⊱╮
-│
-│ 📡 *Informações de Latência*
-│ ├─ ${statusEmoji} Velocidade: *${speedConverted.toFixed(3)}s*
-│ ├─ ${statusCor} Qualidade: *${statusTexto}*
-│ └─ 📊 Status: *${speedConverted <= 2 ? 'Ótimo' : speedConverted <= 5 ? 'Bom' : speedConverted <= 8 ? 'Regular' : 'Precisa Melhorar'}*
-│
-│ ⏱️ *Informações do Sistema*
-│ ├─ 🟢 Tempo Online: *${uptimeBot}*
-│ ├─ 📈 Resposta: *${speedConverted <= 1 ? 'Instantânea' : speedConverted <= 3 ? 'Rápida' : 'Lenta'}*
-│ └─ 🌐 Servidor: *Online*
-│
-╰━━━━━━━━━━━━━━━━━━━━━━━━╯`);
+        return reply(MESSAGES.tools.ping(statusEmoji, speedConverted.toFixed(3), statusCor, qualidade, uptimeBot));
       } catch (e) {
         console.error("Erro no comando ping:", e);
         return reply(MESSAGES.error.general);

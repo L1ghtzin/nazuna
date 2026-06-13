@@ -43,6 +43,23 @@ export const MESSAGES = {
     notCompleted: "❌ Complete todas as tarefas para coletar.",
     clanNotFound: "❌ Seu clã não foi encontrado.",
     insufficientCoins: (needed) => `❌ Você precisa de ${needed} moedas!`,
+    notEnoughData: "💔 Sem dados suficientes para ranking.",
+    rankingHeader: "⚔️ 🏆 *RANKING DE RIQUEZA* 🏆 ⚔️\n\n",
+    rankingItem: (medal, id, total) => `${medal} @${id} — 💰 ${total}\n`,
+    rankingFooter: "\n✨ Continue jogando para subir no rank!"
+  },
+  tools: {
+    ping: (statusEmoji, speed, statusCor, qualidade, uptimeBot) => `╭⊱ ⚡ *STATUS DA CONEXÃO* ⚡ ⊱╮
+│
+│ 📡 *Informações de Latência*
+│ ├─ ${statusEmoji} Velocidade: *${speed}s*
+│ └─ ${statusCor} Qualidade: *${qualidade}*
+│
+│ ⏱️ *Informações do Sistema*
+│ ├─ 🟢 Tempo Online: *${uptimeBot}*
+│ └─ 🌐 Servidor: *Online*
+│
+╰━━━━━━━━━━━━━━━━━━━━━━━━╯`
   },
   security: {
     antiSpamWarn: (time) => `🚫 Você está temporariamente bloqueado de usar comandos por anti-spam.\n⏳ Aguarde ${time}.`,
