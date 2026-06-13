@@ -17,7 +17,7 @@ export default {
       
       if (saveMsgBotOn(newStatus)) {
         const statusText = newStatus ? '✅ ativada' : `💔 desativada`;
-        await reply(`🔔 *Mensagem de inicialização ${statusText}!*\n\nAgora, quando o bot ligar, ${newStatus ? 'você receberá' : 'NÃO receberá'} uma mensagem de boas-vindas no seu privado.`);
+        await reply(MESSAGES.owner.msgboton.status(newStatus, statusText));
       } else {
         await reply(MESSAGES.error.general);
       }

@@ -13,10 +13,10 @@ export default {
   }) => {
     try {
       if (!q) {
-        return reply(`🌤️ *Previsão do Tempo*\n\n💡 *Como usar:*\n• ${prefix}clima <cidade>\n\n📌 *Exemplos:*\n• ${prefix}clima São Paulo\n• ${prefix}clima Rio de Janeiro\n• ${prefix}clima Tokyo`);
+        return reply(MESSAGES.member.clima.menu(prefix));
       }
 
-      await reply('🌤️ Consultando previsão do tempo... ⏳');
+      await reply(MESSAGES.member.clima.consulting);
 
       const cidade = encodeURIComponent(q);
       const response = await axios.get(`https://wttr.in/${cidade}?format=j1&lang=pt`, {
@@ -65,10 +65,10 @@ export default {
         });
       }
 
-      await reply(`${weatherEmoji} *Clima em ${cityName}*\n📍 ${region}, ${country}\n\n🌡️ *Temperatura:* ${tempC}°C\n🤒 *Sensação:* ${feelsLike}°C\n💧 *Umidade:* ${humidity}%\n💨 *Vento:* ${windKmph} km/h (${windDir})\n☀️ *Índice UV:* ${uvIndex}\n👁️ *Visibilidade:* ${visibility} km\n☁️ *Nuvens:* ${cloudcover}%\n\n📋 *Condição:* ${descPt}${forecast}`);
+      await reply(MESSAGES.member.clima.result(weatherEmoji, cityName, region, country, tempC, feelsLike, humidity, windKmph, windDir, uvIndex, visibility, cloudcover, descPt, forecast));
     } catch (e) {
       console.error('Erro ao buscar clima:', e);
-      await reply(`💔 Não consegui encontrar informações do clima para essa cidade. Verifique o nome e tente novamente!`);
+      await reply(MESSAGES.member.clima.error);
     }
   }
 };

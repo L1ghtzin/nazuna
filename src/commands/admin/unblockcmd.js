@@ -25,7 +25,7 @@ export default {
     try {
       if (!isGroup) return reply(MESSAGES.permission.groupOnly);
       if (!isGroupAdmin) return reply(MESSAGES.permission.userAdminOnly);
-      if (!q) return reply(`❌ Digite o comando que deseja desbloquear. Exemplo: ${prefix}unblockcmd sticker`);
+      if (!q) return reply(MESSAGES.admin.unblockcmd.usage(prefix));
       
       groupData.blockedCommands = groupData.blockedCommands || {};
       const cmdKey = q.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replaceAll(prefix, '');
@@ -33,9 +33,9 @@ export default {
       if (groupData.blockedCommands[cmdKey]) {
         delete groupData.blockedCommands[cmdKey];
         await optimizer.saveJsonWithCache(groupFile, groupData);
-        reply(`🔓 O comando *${q.trim()}* foi desbloqueado e pode ser usado por todos.`);
+        reply(MESSAGES.admin.unblockcmd.success(q.trim()));
       } else {
-        reply('❌ Este comando não está bloqueado.');
+        reply(MESSAGES.admin.unblockcmd.notBlocked);
       }
     } catch (e) {
       console.error(e);

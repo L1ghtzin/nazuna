@@ -42,7 +42,7 @@ export default {
 
     // --- LÓGICA DE DUELO ---
     if (args[0] === 'duelo' || args[0] === 'dueloquiz' || menc_os2) {
-      if (!isGroup) return reply('⚔️ Este jogo só funciona em grupos!');
+      if (!isGroup) return reply(MESSAGES.member.quiz.groupOnly);
       if (!global.dueloQuizGames) global.dueloQuizGames = {};
       if (!global.dueloQuizChallenges) global.dueloQuizChallenges = {};
 
@@ -50,11 +50,11 @@ export default {
       if (menc_os2 && menc_os2 !== sender) {
         const numPerguntas = parseInt(args.find(arg => !isNaN(parseInt(arg)))) || 5;
         if (numPerguntas < 3 || numPerguntas > 20) {
-          return reply(`💔 Número de perguntas inválido! Use entre 3 e 20 perguntas.\n\n💡 Exemplo: ${prefix}dueloquiz @usuário 10`);
+          return reply(MESSAGES.member.quiz.invalidNumQuestions(prefix));
         }
 
         if (global.dueloQuizChallenges[gameKey] || global.dueloQuizGames[gameKey]) {
-          return reply('⚠️ Já existe um duelo ou desafio pendente neste grupo!');
+          return reply(MESSAGES.member.quiz.existingGame);
         }
 
         global.dueloQuizChallenges[gameKey] = {
@@ -65,18 +65,18 @@ export default {
           created: Date.now()
         };
 
-        return reply(`⚔️ *DESAFIO DE QUIZ*\n\n@${sender.split('@')[0]} desafiou @${menc_os2.split('@')[0]} para um duelo de ${numPerguntas} perguntas!\n\n💡 O desafiado deve usar: ${prefix}dueloquiz aceitar\n⏱️ O desafio expira em 60 segundos.`, { mentions: [sender, menc_os2] });
+        return reply(MESSAGES.member.quiz.challenge(sender.split('@')[0], menc_os2.split('@')[0], numPerguntas, prefix), { mentions: [sender, menc_os2] });
       }
 
       // Aceitar desafio
       if (args[0]?.toLowerCase() === 'aceitar') {
         const challenge = global.dueloQuizChallenges[gameKey];
         if (!challenge || challenge.challenged !== sender || challenge.status !== 'pending') {
-          return reply(`💔 Não há desafio pendente para você aceitar!`);
+          return reply(MESSAGES.member.quiz.noChallengeAccept);
         }
         if (Date.now() - challenge.created > 60000) {
           delete global.dueloQuizChallenges[gameKey];
-          return reply('⏰ O desafio expirou!');
+          return reply(MESSAGES.member.quiz.challengeExpired);
         }
 
         const categoriasDisponiveis = Object.keys(quizDB);
@@ -107,14 +107,14 @@ export default {
 
         delete global.dueloQuizChallenges[gameKey];
         const primeiraPergunta = perguntasSelecionadas[0];
-        return reply(`⚔️ *DUELO DE QUIZ INICIADO!*\n\n@${challenge.challenger.split('@')[0]} vs @${challenge.challenged.split('@')[0]}\n\n📊 ${challenge.numPerguntas} perguntas\n\n🎯 *Pergunta 1/${challenge.numPerguntas}*\n📂 Categoria: ${primeiraPergunta.categoria}\n\n❓ ${primeiraPergunta.pergunta.p}\n\n💡 É a vez de @${challenge.challenger.split('@')[0]} responder!\nUse: ${prefix}dueloquiz [resposta]`, { mentions: [challenge.challenger, challenge.challenged] });
+        return reply(MESSAGES.member.quiz.duelStarted(challenge.challenger.split('@')[0], challenge.challenged.split('@')[0], challenge.numPerguntas, primeiraPergunta.categoria, primeiraPergunta.pergunta.p, prefix), { mentions: [challenge.challenger, challenge.challenged] });
       }
 
       // Responder duelo
       if (global.dueloQuizGames[gameKey]) {
         const game = global.dueloQuizGames[gameKey];
-        if (game.status !== 'active') return reply(`💔 Este duelo já terminou!`);
-        if (game.turno !== sender) return reply('⏳ Não é sua vez! Aguarde o oponente.');
+        if (game.status !== 'active') return reply(MESSAGES.member.quiz.duelFinished);
+        if (game.turno !== sender) return reply(MESSAGES.member.quiz.notYourTurn);
 
         const perguntaAtual = game.perguntas[game.perguntaAtual];
         const resposta = normalizar(args.join(' ').toLowerCase());
@@ -133,17 +133,18 @@ export default {
           game.status = 'finished';
           const acertos1 = game.respostas1.filter(r => r.acertou).length;
           const acertos2 = game.respostas2.filter(r => r.acertou).length;
-          let res = `⚔️ *DUELO FINALIZADO!*\n\n📊 *Resultado:*\n@${game.jogador1.split('@')[0]}: ${acertos1}/${game.perguntas.length} acertos\n@${game.jogador2.split('@')[0]}: ${acertos2}/${game.perguntas.length} acertos\n\n`;
-          if (acertos1 > acertos2) res += `🏆 *VENCEDOR:* @${game.jogador1.split('@')[0]}!`;
-          else if (acertos2 > acertos1) res += `🏆 *VENCEDOR:* @${game.jogador2.split('@')[0]}!`;
-          else res += `🤝 *EMPATE!*`;
+          let resText = '';
+          if (acertos1 > acertos2) resText = MESSAGES.member.quiz.winner(game.jogador1.split('@')[0]);
+          else if (acertos2 > acertos1) resText = MESSAGES.member.quiz.winner(game.jogador2.split('@')[0]);
+          else resText = MESSAGES.member.quiz.draw;
+          const res = MESSAGES.member.quiz.duelResult(game.jogador1.split('@')[0], game.jogador2.split('@')[0], acertos1, acertos2, game.perguntas.length, resText);
           delete global.dueloQuizGames[gameKey];
           return reply(res, { mentions: [game.jogador1, game.jogador2] });
         }
 
         const proxima = game.perguntas[game.perguntaAtual];
-        let msg = acertou ? `✅ *CORRETO!*` : `💔 *ERRADO!*\n✅ Resposta: ${perguntaAtual.pergunta.d}`;
-        msg += `\n\n🎯 *Pergunta ${game.perguntaAtual + 1}/${game.perguntas.length}*\n📂 Categoria: ${proxima.categoria}\n\n❓ ${proxima.pergunta.p}\n\n💡 É a vez de @${game.turno.split('@')[0]} responder!\nUse: ${prefix}dueloquiz [resposta]`;
+        let acertouText = acertou ? MESSAGES.member.quiz.duelCorrect : MESSAGES.member.quiz.duelIncorrect(perguntaAtual.pergunta.d);
+        const msg = MESSAGES.member.quiz.duelTurnResult(acertouText, game.perguntaAtual + 1, game.perguntas.length, proxima.categoria, proxima.pergunta.p, game.turno.split('@')[0], prefix);
         return reply(msg, { mentions: [game.jogador1, game.jogador2] });
       }
     }
@@ -156,7 +157,7 @@ export default {
       if (args[0] === 'pular') {
         const resposta = global.quizGames[gameKey].display;
         delete global.quizGames[gameKey];
-        return reply(`⏭️ Pergunta pulada!\n\nA resposta era: *${resposta}*`);
+        return reply(MESSAGES.member.quiz.skipped(resposta));
       }
       const game = global.quizGames[gameKey];
       const resposta = normalizar(args.join(' ').toLowerCase());
@@ -165,20 +166,20 @@ export default {
       if (acertou) {
         const tempo = ((Date.now() - game.iniciado) / 1000).toFixed(1);
         const pontos = Math.max(50 - Math.floor(parseFloat(tempo) * 2), 10);
-        return reply(`🎉 *CORRETO!*\n\n✅ Resposta: *${game.display}*\n⏱️ Tempo: ${tempo}s\n🏆 +${pontos} pontos`);
+        return reply(MESSAGES.member.quiz.correct(game.display, tempo, pontos));
       } else {
-        return reply(`💔 *ERRADO!*\n\n✅ A resposta correta era: *${game.display}*\n\nMais sorte na próxima!`);
+        return reply(MESSAGES.member.quiz.incorrect(game.display));
       }
     }
 
     if (!args[0]) {
       const list = categoriasDisponiveis.map(cat => `• ${prefix}quiz ${cat}`).join('\n');
-      return reply(`❓ *QUIZ - Teste seus conhecimentos!*\n\n📚 *Categorias disponíveis:*\n${list}\n\n💡 Responda rápido para ganhar mais pontos!`);
+      return reply(MESSAGES.member.quiz.usage(list));
     }
 
     const categoria = args[0].toLowerCase();
     const perguntas = quizDB[categoria];
-    if (!perguntas) return reply(`💔 Categoria "${categoria}" não encontrada!\n\n📚 Categorias disponíveis: ${categoriasDisponiveis.join(', ')}`);
+    if (!perguntas) return reply(MESSAGES.member.quiz.invalidCategory(categoria, categoriasDisponiveis));
 
     const escolhida = perguntas[Math.floor(Math.random() * perguntas.length)];
     global.quizGames[gameKey] = {
@@ -189,6 +190,6 @@ export default {
       iniciado: Date.now()
     };
 
-    await reply(`❓ *QUIZ* (${categoria})\n\n${escolhida.p}\n\n💡 Responda com: ${prefix}quiz [resposta]\n⏱️ Responda rápido para mais pontos!`);
+    await reply(MESSAGES.member.quiz.question(categoria, escolhida.p, prefix));
   },
 };

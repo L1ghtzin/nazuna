@@ -1,4 +1,5 @@
 import fs from 'fs';
+import fs from 'fs';
 import { CONFIG_FILE } from '../../utils/paths.js';
 
 export default {
@@ -17,16 +18,16 @@ export default {
   }) => {
     try {
       if (!isOwner) return reply(MESSAGES.permission.ownerOnly);
-      if (!q) return reply(`📌 *Configuração de Prefixo*\n\n📝 *Como usar:*\n  Digite o novo prefixo após o comando\n  Ex: ${prefix}${command} /\n  Ex: ${prefix}${command} !\n\n⚠️ O prefixo do bot será atualizado para o valor especificado!`);
+      if (!q) return reply(MESSAGES.owner.prefix.usage(prefix, command));
       
       let newPrefix = q.trim();
       
       // Bloqueia o uso de $ como prefixo e converte automaticamente para /
       if (newPrefix === '$') {
         newPrefix = '/';
-        await reply(`💔 O símbolo "$" é reservado e não pode ser usado como prefixo.\n✅ Prefixo alterado automaticamente para "/" globalmente!`);
+        await reply(MESSAGES.owner.prefix.reserved);
       } else {
-        await reply(`✅ Prefixo alterado globalmente para: "${newPrefix}"`);
+        await reply(MESSAGES.owner.prefix.success(newPrefix));
       }
       
       let config = JSON.parse(fs.readFileSync(CONFIG_FILE));

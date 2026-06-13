@@ -19,12 +19,12 @@ export default {
 
     // Comandos de Áudio
     if (['cortaraudio', 'cutaudio', 'velocidade', 'speed', 'reversobn', 'reversebn', 'bassbn', 'bassboostbn', 'normalizar', 'normalize'].includes(cmd)) {
-      if (!audioEdit) return reply(`💔 Sistema de edição de áudio temporariamente indisponível.`);
+      if (!audioEdit) return reply(MESSAGES.member.media_editing.audioDisabled);
       
       const quotedMsg = info.message?.extendedTextMessage?.contextInfo?.quotedMessage;
       const hasAudio = type === 'audioMessage' || quotedMsg?.audioMessage;
       
-      if (!hasAudio) return reply(`💔 Responda a um áudio para usar este comando!`);
+      if (!hasAudio) return reply(MESSAGES.member.media_editing.requireAudio);
       
       try {
         const mediaMsg = quotedMsg?.audioMessage || info.message?.audioMessage;
@@ -43,12 +43,12 @@ export default {
         if (['cortaraudio', 'cutaudio'].includes(cmd)) {
           const start = args[0];
           const end = args[1];
-          if (!start || !end) return reply(`💔 Informe início e fim!\n\nUso: ${prefix}${cmd} <inicio> <fim>\nExemplo: ${prefix}${cmd} 0:10 0:30`);
+          if (!start || !end) return reply(MESSAGES.member.media_editing.cutAudioUsage(prefix, cmd));
           result = await audioEdit.cutAudio(audioBuffer, start, end, prefix);
         } 
         else if (['velocidade', 'speed'].includes(cmd)) {
           const vel = parseFloat(args[0]);
-          if (isNaN(vel) || vel < 0.5 || vel > 3) return reply(`💔 Velocidade inválida!\n\nUso: ${prefix}${cmd} <0.5-3.0>\nExemplo: ${prefix}${cmd} 1.5`);
+          if (isNaN(vel) || vel < 0.5 || vel > 3) return reply(MESSAGES.member.media_editing.speedUsage(prefix, cmd));
           result = await audioEdit.changeSpeed(audioBuffer, vel);
         }
         else if (['reversobn', 'reversebn'].includes(cmd)) {
@@ -56,7 +56,7 @@ export default {
         }
         else if (['bassbn', 'bassboostbn'].includes(cmd)) {
           const levelBass = parseInt(args[0]) || 10;
-          if (levelBass < 1 || levelBass > 20) return reply(`💔 Nível de bass inválido!\n\nUso: ${prefix}${cmd} <1-20>\nExemplo: ${prefix}${cmd} 15`);
+          if (levelBass < 1 || levelBass > 20) return reply(MESSAGES.member.media_editing.bassUsage(prefix, cmd));
           result = await audioEdit.bassBoost(audioBuffer, levelBass);
         }
         else if (['normalizar', 'normalize'].includes(cmd)) {
@@ -80,15 +80,15 @@ export default {
       const quotedMsgVideo = info.message?.extendedTextMessage?.contextInfo?.quotedMessage;
       const hasVideo = type === 'videoMessage' || quotedMsgVideo?.videoMessage;
       
-      if (!hasVideo) return reply(`💔 Responda a um vídeo para cortar!`);
+      if (!hasVideo) return reply(MESSAGES.member.media_editing.requireVideo);
       
       const inicioVid = args[0];
       const fimVid = args[1];
       if (!inicioVid || !fimVid) {
-        return reply(`💔 Informe início e fim!\n\nUso: ${prefix}${cmd} <inicio> <fim>\nExemplo: ${prefix}${cmd} 0:10 0:30`);
+        return reply(MESSAGES.member.media_editing.cutVideoUsage(prefix, cmd));
       }
       
-      await reply('🎬 Cortando vídeo... Por favor, aguarde alguns segundos.');
+      await reply(MESSAGES.member.media_editing.cuttingVideo);
       
       try {
         const encmediaVideo = quotedMsgVideo?.videoMessage || info.message?.videoMessage;

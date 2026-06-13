@@ -17,14 +17,14 @@ export default {
   }) => {
     try {
       if (!isOwner) return reply(MESSAGES.permission.ownerOnly);
-      if (!q) return reply(`Por favor, digite o novo número do dono.\nExemplo: ${prefix}${command} +559681361714`);
+      if (!q) return reply(MESSAGES.owner.numerodono.missingParams(prefix, command));
       
       let config = JSON.parse(fs.readFileSync(CONFIG_FILE));
       config.numerodono = q;
       
       await optimizer.saveJsonWithCache(CONFIG_FILE, config);
       
-      await reply(`Número do dono alterado com sucesso para "${q}"!`);
+      await reply(MESSAGES.owner.numerodono.success(q));
     } catch (e) {
       console.error(e);
       await reply(MESSAGES.error.general);

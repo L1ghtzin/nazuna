@@ -15,24 +15,7 @@ export default {
 
     if (['designmenu', 'verdesign', 'configmenu'].includes(cmd)) {
       const headerPreview = currentDesign.header.replace(/{botName}/g, nomebot).replace(/{userName}/g, pushname);
-      const designText = `╭─⊰ 🎨 *CONFIGURAÇÕES DO DESIGN* 🎨 ⊱─╮
-┊
-┊ 🔸 *Cabeçalho:*
-┊ ${headerPreview}
-┊
-┊ 🔸 *Borda Superior:* ${currentDesign.menuTopBorder}
-┊ 🔸 *Borda Inferior:* ${currentDesign.bottomBorder}
-┊ 🔸 *Borda do Meio:* ${currentDesign.middleBorder}
-┊ 🔸 *Ícone do Item:* ${currentDesign.menuItemIcon}
-┊ 🔸 *Ícone Separador:* ${currentDesign.separatorIcon}
-┊ 🔸 *Ícone do Título:* ${currentDesign.menuTitleIcon}
-┊
-┊ 📝 *Comandos:*
-┊ ${prefix}setborda, ${prefix}setbordafim, ${prefix}setbordameio,
-┊ ${prefix}setitem, ${prefix}setseparador, ${prefix}settitulo,
-┊ ${prefix}setheader, ${prefix}resetdesign
-┊
-╰─┈┈┈┈┈◜❁◞┈┈┈┈┈─╯`;
+      const designText = MESSAGES.owner.design_menu.menuPreview(headerPreview, currentDesign, prefix);
       return reply(designText);
     }
 
@@ -47,10 +30,10 @@ export default {
         middleBorder: "┊"
       };
       await saveMenuDesign(defaultDesign);
-      return reply("✅ Design do menu resetado!");
+      return reply(MESSAGES.owner.design_menu.resetSuccess);
     }
 
-    if (!q) return reply(`Uso: ${prefix}${cmd} <texto/emoji>`);
+    if (!q) return reply(MESSAGES.owner.design_menu.usage(prefix, cmd));
 
     if (['setborda', 'setbordatopo', 'settopborder'].includes(cmd)) {
       currentDesign.menuTopBorder = q;
@@ -69,6 +52,6 @@ export default {
     }
 
     await saveMenuDesign(currentDesign);
-    return reply(`✅ Alteração realizada no design do menu!`);
+    return reply(MESSAGES.owner.design_menu.success);
   }
 };

@@ -101,12 +101,12 @@ export default {
 
     // ADICIONAR LEMBRETE
     if (['lembrete', 'lembrar'].includes(sub)) {
-      if (!q) return reply(`📅 *Como usar o comando lembrete:*\n\n💡 *Exemplos:*\n• ${prefix}lembrete em 30m beber água\n• ${prefix}lembrete 15/09 18:30 reunião\n• ${prefix}lembrete amanhã 08:00 acordar`);
+      if (!q) return reply(MESSAGES.member.lembrete.usageAdd(prefix));
       const parsed = parseReminderInput(q);
-      if (!parsed) return reply(`💔 Não consegui entender a data/hora. Exemplos:\n- em 10m tomar remédio\n- 25/12 09:00 ligar para a família\n- hoje 21:15 estudar`);
+      if (!parsed) return reply(MESSAGES.member.lembrete.invalidDate);
       const { at, message } = parsed;
       const minDelay = 10 * 1000;
-      if (at - Date.now() < minDelay) return reply('⏳ Escolha um horário pelo menos 10 segundos à frente.');
+      if (at - Date.now() < minDelay) return reply(MESSAGES.member.lembrete.tooSoon);
       
       const newReminder = {
         id: (() => {
@@ -134,7 +134,7 @@ export default {
       saveReminders(list);
       optimizer.clearStatic('reminders:all');
       
-      await reply(`✅ Lembrete agendado para ${tzFormat(at)}.\n📝 Mensagem: ${message}`);
+      await reply(MESSAGES.member.lembrete.addSuccess(tzFormat(at), message));
       return;
     }
 
@@ -146,18 +146,18 @@ export default {
         5000
       );
       const list = allReminders.filter(r => r.userId === sender && r.status !== 'sent');
-      if (!list.length) return reply('📭 Você não tem lembretes pendentes.');
+      if (!list.length) return reply(MESSAGES.member.lembrete.emptyList);
       const lines = list
         .sort((a,b)=>a.at-b.at)
         .map((r,i)=>`${i+1}. [${r.id.slice(0,6)}] ${tzFormat(r.at)} — ${r.message}`);
-      await reply(`🗓️ Seus lembretes pendentes:\n\n${lines.join('\n')}`);
+      await reply(MESSAGES.member.lembrete.listHeader + lines.join('\n'));
       return;
     }
 
     // APAGAR LEMBRETE
     if (['apagalembrete', 'removerlembrete'].includes(sub)) {
       const idArg = (q||'').trim();
-      if (!idArg) return reply(`🗑️ *Uso do comando apagalembrete:*\n\n📝 *Formato:* ${prefix}apagalembrete <id|tudo>\n\n💡 *Exemplos:*\n• ${prefix}apagalembrete 123456\n• ${prefix}apagalembrete tudo`);
+      if (!idArg) return reply(MESSAGES.member.lembrete.usageRemove(prefix));
       
       let list = await optimizer.memoize(
         'reminders:all',
@@ -171,15 +171,15 @@ export default {
         const removed = before - list.length;
         saveReminders(list);
         optimizer.clearStatic('reminders:all');
-        return reply(`🗑️ Removidos ${removed} lembrete(s) pendente(s).`);
+        return reply(MESSAGES.member.lembrete.removedAll(removed));
       }
 
       const idx = list.findIndex(r => r.id.startsWith(idArg) && r.userId === sender && r.status !== 'sent');
-      if (idx === -1) return reply(`💔 Lembrete não encontrado ou já enviado. Dica: use o ID mostrado em "meuslembretes".`);
+      if (idx === -1) return reply(MESSAGES.member.lembrete.notFound);
       const removed = list.splice(idx,1)[0];
       saveReminders(list);
       optimizer.clearStatic('reminders:all');
-      await reply(`🗑️ Lembrete removido: ${removed.message}`);
+      await reply(MESSAGES.member.lembrete.removeSuccess(removed.message));
       return;
     }
   }

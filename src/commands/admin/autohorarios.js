@@ -12,26 +12,7 @@ export default {
       const action = args[0]?.toLowerCase();
       
       if (!action || (action !== 'on' && action !== 'off' && action !== 'status' && action !== 'link')) {
-        const helpText = `┏━━━━━━━━━━━━━━━━━━━━━━━━┓\n` +
-        `┃   🤖 *AUTO HORÁRIOS*     ┃\n` +
-        `┗━━━━━━━━━━━━━━━━━━━━━━━━┛\n\n` +
-        `📋 *Comandos disponíveis:*\n\n` +
-        `🟢 \`${prefix}autohorarios on\`\n` +
-        `   ▸ Liga o envio automático\n\n` +
-        `🔴 \`${prefix}autohorarios off\`\n` +
-        `   ▸ Desliga o envio automático\n\n` +
-        `📊 \`${prefix}autohorarios status\`\n` +
-        `   ▸ Verifica status atual\n\n` +
-        `🔗 \`${prefix}autohorarios link [URL]\`\n` +
-        `   ▸ Define link de apostas\n` +
-        `   ▸ Sem URL remove o link\n\n` +
-        `⏰ *Funcionamento:*\n` +
-        `• Envia horários a cada hora\n` +
-        `• Apenas em grupos\n` +
-        `• Inclui link se configurado\n\n` +
-        `🔒 *Restrito a administradores*`;
-        
-        await reply(helpText);
+        await reply(MESSAGES.admin.autohorarios.helpText(prefix));
         return;
       }
       
@@ -57,28 +38,18 @@ export default {
         case 'on':
           autoSchedules[from].enabled = true;
           fs.writeFileSync(autoSchedulesPath, JSON.stringify(autoSchedules, null, 2));
-          await reply('✅ *Auto horários ativado!*\n\n📤 Os horários pagantes serão enviados automaticamente a cada hora.\n\n⚡ O primeiro envio será na próxima hora cheia.');
+          await reply(MESSAGES.admin.autohorarios.activated);
           break;
           
         case 'off':
           autoSchedules[from].enabled = false;
           fs.writeFileSync(autoSchedulesPath, JSON.stringify(autoSchedules, null, 2));
-          await reply('🔴 *Auto horários desativado!*\n\n📴 Os envios automáticos foram interrompidos.');
+          await reply(MESSAGES.admin.autohorarios.deactivated);
           break;
           
         case 'status': {
           const config = autoSchedules[from];
-          const statusEmoji = config.enabled ? '🟢' : '🔴';
-          const statusText = config.enabled ? 'ATIVO' : 'INATIVO';
-          const linkStatus = config.link ? `🔗 ${config.link}` : '🚫 Nenhum link configurado';
-          
-          const statusResponse = `┏━━━━━━━━━━━━━━━━━━━━━━━━┓\n` +
-           `┃   📊 *STATUS AUTO HORÁRIOS*  ┃\n` +
-           `┗━━━━━━━━━━━━━━━━━━━━━━━━┛\n\n` +
-           `${statusEmoji} *Status:* ${statusText}\n\n` +
-           `🔗 *Link:*\n${linkStatus}\n\n` +
-           `⏰ *Próximo envio:*\n${config.enabled ? 'Na próxima hora cheia' : 'Desativado'}`;
-          
+          const statusResponse = MESSAGES.admin.autohorarios.status(config.enabled, config.link);
           await reply(statusResponse);
           break;
         }
@@ -89,11 +60,11 @@ export default {
           if (!linkUrl) {
             autoSchedules[from].link = null;
             fs.writeFileSync(autoSchedulesPath, JSON.stringify(autoSchedules, null, 2));
-            await reply('🗑️ *Link removido!*\n\n📝 Os horários automáticos não incluirão mais link de apostas.');
+            await reply(MESSAGES.admin.autohorarios.linkRemoved);
           } else {
             autoSchedules[from].link = linkUrl;
             fs.writeFileSync(autoSchedulesPath, JSON.stringify(autoSchedules, null, 2));
-            await reply(`✅ *Link configurado!*\n\n🔗 *URL:* ${linkUrl}\n\n📝 Este link será incluído nos horários automáticos.`);
+            await reply(MESSAGES.admin.autohorarios.linkConfigured(linkUrl));
           }
           break;
         }
@@ -101,7 +72,7 @@ export default {
       
     } catch (e) {
       console.error('Erro no comando autohorarios:', e);
-      await reply('❌ Ocorreu um erro ao configurar os horários automáticos.');
+      await reply(MESSAGES.admin.autohorarios.error);
     }
   }
 };

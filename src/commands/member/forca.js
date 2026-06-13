@@ -52,12 +52,11 @@ export default {
     if (args[0] === 'desistir' && global.forcaGames[gameKey]) {
       const palavra = global.forcaGames[gameKey].palavra;
       delete global.forcaGames[gameKey];
-      return reply(`🏳️ Vocês desistiram!\n\nA palavra era: *${palavra.toUpperCase()}*`);
+      return reply(MESSAGES.member.forca.surrender(palavra));
     }
 
     if (args[0] === 'dica' && global.forcaGames[gameKey]) {
-      const game = global.forcaGames[gameKey];
-      return reply(`${desenhoForca[game.erros]}\n\n🎯 *FORCA*\n\n📝 ${game.progresso.join(' ')}\n\n💡 *Dica:* ${game.dica}\n❌ Letras erradas: ${game.letrasErradas.join(', ') || 'Nenhuma'}\n⚠️ Erros: ${game.erros}/6\n\n💬 Chute com: ${prefix}forca [letra]\n🔤 Ou chute a palavra: ${prefix}forca [palavra]`);
+      return reply(MESSAGES.member.forca.hint(desenhoForca[game.erros], game.progresso.join(' '), game.dica, game.letrasErradas.join(', '), game.erros, prefix));
     }
 
     if (global.forcaGames[gameKey] && args.length > 0) {
@@ -67,20 +66,20 @@ export default {
       if (chute.length > 1) {
         if (chute === normalizar(game.palavra)) {
           delete global.forcaGames[gameKey];
-          return reply(`🎉 *PARABÉNS!*\n\n✅ Você acertou a palavra!\n\n🏆 A palavra era: *${game.palavra.toUpperCase()}*`);
+          return reply(MESSAGES.member.forca.correctWord(game.palavra));
         } else {
           game.erros += 2;
           if (game.erros >= 6) {
             delete global.forcaGames[gameKey];
-            return reply(`${desenhoForca[6]}\n\n💀 *GAME OVER!*\n\n❌ A palavra era: *${game.palavra.toUpperCase()}*`);
+            return reply(MESSAGES.member.forca.gameOverWord(desenhoForca[6], game.palavra));
           }
-          return reply(`${desenhoForca[game.erros]}\n\n❌ Palavra errada! (+2 erros)\n\n📝 ${game.progresso.join(' ')}\n\n❌ Letras erradas: ${game.letrasErradas.join(', ') || 'Nenhuma'}\n⚠️ Erros: ${game.erros}/6`);
+          return reply(MESSAGES.member.forca.wrongWord(desenhoForca[game.erros], game.progresso.join(' '), game.letrasErradas.join(', '), game.erros));
         }
       }
 
       const letra = chute[0];
       if (game.letrasCorretas.includes(letra) || game.letrasErradas.includes(letra)) {
-        return reply(`⚠️ Você já chutou a letra "${letra.toUpperCase()}"!`);
+        return reply(MESSAGES.member.forca.alreadyGuessed(letra));
       }
       
       const palavraNorm = normalizar(game.palavra.toLowerCase());
@@ -91,23 +90,22 @@ export default {
         }
         if (!game.progresso.includes('_')) {
           delete global.forcaGames[gameKey];
-          return reply(`🎉 *PARABÉNS!*\n\n📝 ${game.progresso.join(' ')}\n\n✅ Vocês descobriram a palavra!\n🏆 *${game.palavra.toUpperCase()}*`);
+          return reply(MESSAGES.member.forca.correctLetterWin(game.progresso.join(' '), game.palavra));
         }
-        return reply(`${desenhoForca[game.erros]}\n\n✅ Letra "${letra.toUpperCase()}" correta!\n\n📝 ${game.progresso.join(' ')}\n\n⚠️ Erros: ${game.erros}/6`);
+        return reply(MESSAGES.member.forca.correctLetter(desenhoForca[game.erros], letra, game.progresso.join(' '), game.erros));
       } else {
         game.letrasErradas.push(letra.toUpperCase());
         game.erros++;
         if (game.erros >= 6) {
           delete global.forcaGames[gameKey];
-          return reply(`${desenhoForca[6]}\n\n💀 *GAME OVER!*\n\n❌ A palavra era: *${game.palavra.toUpperCase()}*`);
+          return reply(MESSAGES.member.forca.gameOverLetter(desenhoForca[6], game.palavra));
         }
-        return reply(`${desenhoForca[game.erros]}\n\n❌ Letra "${letra.toUpperCase()}" errada!\n\n📝 ${game.progresso.join(' ')}\n\n❌ Letras erradas: ${game.letrasErradas.join(', ')}\n⚠️ Erros: ${game.erros}/6`);
+        return reply(MESSAGES.member.forca.wrongLetter(desenhoForca[game.erros], letra, game.progresso.join(' '), game.letrasErradas.join(', '), game.erros));
       }
     }
 
     if (global.forcaGames[gameKey]) {
-      const game = global.forcaGames[gameKey];
-      return reply(`${desenhoForca[game.erros]}\n\n🎯 *FORCA*\n\n📝 ${game.progresso.join(' ')}\n\n💡 Ver dica: ${prefix}forca dica\n🏳️ Desistir: ${prefix}forca desistir`);
+      return reply(MESSAGES.member.forca.gameStatus(desenhoForca[game.erros], game.progresso.join(' '), prefix));
     }
 
     const escolhida = palavrasForca[Math.floor(Math.random() * palavrasForca.length)];
@@ -122,6 +120,6 @@ export default {
       iniciado: Date.now()
     };
 
-    await reply(`${desenhoForca[0]}\n\n🎯 *FORCA - Novo Jogo!*\n\n📝 ${progresso.join(' ')}\n\n💬 Chute uma letra: ${prefix}forca [letra]\n💡 Ver dica: ${prefix}forca dica`);
+    await reply(MESSAGES.member.forca.newGame(desenhoForca[0], progresso.join(' '), prefix));
   },
 };

@@ -6,10 +6,10 @@ export default {
   handle: async ({  reply, isGroupAdmin, isBotAdmin, pushname, bot, from, sender, isGroup, AllgroupMembers, idsMatch, MESSAGES }) => {
     try {
       if (!isGroup) return reply(MESSAGES.permission.groupOnly);
-      if (isGroupAdmin) return reply(`💔 Awn, admin, você é precioso demais para isso. Fica aqui com a gente, tá? <3`);
+      if (isGroupAdmin) return reply(MESSAGES.member.suicidio.adminProtect);
       if (!isBotAdmin) return reply(MESSAGES.permission.botAdminOnly);
       
-      await reply(`*É uma pena que tenha tomado essa decisão ${pushname}, vamos sentir saudades... 😕*`);
+      await reply(MESSAGES.member.suicidio.goodbye(pushname));
       
       setTimeout(() => {
         let targetId = sender;
@@ -23,7 +23,7 @@ export default {
         }
         bot.groupParticipantsUpdate(from, [targetId], "remove").then(() => {
           setTimeout(() => {
-            reply(`*Ainda bem que morreu, não aguentava mais essa praga kkkkkk*`);
+            reply(MESSAGES.member.suicidio.joke);
           }, 1000);
         });
       }, 2000);

@@ -162,23 +162,23 @@ export default {
     if (['roles', 'role.lista', 'listaroles'].includes(sub)) {
       const roleEntries = Object.entries(groupData.roles || {});
       if (!roleEntries.length) {
-        return reply('🪩 Nenhum rolê ativo no momento.');
+        return reply(MESSAGES.member.role.noActiveRoles);
       }
 
       const wantsPv = normalizar(args[0] || '') === 'pv';
       const sendInPv = !isGroupAdmin || wantsPv;
       const sendTarget = sendInPv ? sender : from;
       const listLines = roleEntries.map(([roleCode, roleData], index) => formatRoleSummary(roleCode, roleData, getUserName, roleEntries.length > 1 ? index : null));
-      const listText = `🪩 *Rolês ativos*\n\n${listLines.join('\n\n')}\n\n🙋 Reaja com ${ROLE_GOING_BASE} ou use ${groupPrefix}role.vou CODIGO\n🤷 Reaja com ${ROLE_NOT_GOING_BASE} ou use ${groupPrefix}role.nvou CODIGO`;
+      const listText = `${MESSAGES.member.role.listHeader}\n\n${listLines.join('\n\n')}\n\n${MESSAGES.member.role.listFooter(groupPrefix, ROLE_GOING_BASE, ROLE_NOT_GOING_BASE)}`;
 
       try {
         await bot.sendMessage(sendTarget, { text: listText });
         if (sendInPv && sendTarget !== from) {
-          await reply('📬 Enviei a lista de rolês no seu privado!', { mentions: [sender] });
+          await reply(MESSAGES.member.role.sentPv, { mentions: [sender] });
         }
       } catch (listError) {
         console.error('Erro ao enviar lista de rolês:', listError);
-        await reply(`💔 Não consegui enviar a lista de rolês agora. Tente novamente mais tarde.`);
+        await reply(MESSAGES.member.role.errorSendList);
       }
       return;
     }
@@ -189,12 +189,12 @@ export default {
 
       const parts = parsePipeArgs(q);
       if (parts.length < 1) {
-        return reply(`📋 Formato esperado:\n${groupPrefix}role.criar CODIGO | Título/Descrição\n\n*Opcional:* CODIGO | Título | Data/Horário | Local | Observações`);
+        return reply(MESSAGES.member.role.createFormat(groupPrefix));
       }
 
       const code = sanitizeRoleCode(parts.shift());
-      if (!code) return reply(`💔 Informe um código alfanumérico para o rolê.`);
-      if (groupData.roles[code]) return reply(`💔 Já existe um rolê cadastrado com esse código.`);
+      if (!code) return reply(MESSAGES.member.role.missingCode);
+      if (groupData.roles[code]) return reply(MESSAGES.member.role.alreadyExists);
 
       const title = parts[0] || '';
       const when = parts[1] || '';
@@ -276,7 +276,7 @@ export default {
       groupData.roles[code] = roleData;
       persistGroupData();
 
-      await reply(sentMessage ? `✅ Rolê *${code}* cadastrado e divulgado!` : `⚠️ Rolê *${code}* salvo, mas não consegui enviar a divulgação automaticamente. Use ${groupPrefix}roles para compartilhar.`);
+      await reply(sentMessage ? MESSAGES.member.role.createSuccess(code) : MESSAGES.member.role.createWarn(code, groupPrefix));
       return;
     }
 
@@ -286,18 +286,18 @@ export default {
 
       const parts = parsePipeArgs(q);
       if (!parts.length) {
-        return reply(`📋 Formato esperado:\n${groupPrefix}role.alterar CODIGO | Novo título | Novo horário | Novo local | Nova descrição`);
+        return reply(MESSAGES.member.role.alterFormat(groupPrefix));
       }
 
       const code = sanitizeRoleCode(parts.shift());
-      if (!code) return reply(`💔 Informe um código válido para o rolê.`);
+      if (!code) return reply(MESSAGES.member.role.invalidCode);
 
       const roleData = groupData.roles[code];
-      if (!roleData) return reply(`💔 Não encontrei nenhum rolê com esse código.`);
+      if (!roleData) return reply(MESSAGES.member.role.notFound);
 
       const mediaInfo = getMediaInfo(info.message);
       if (!parts.length && !mediaInfo) {
-        return reply('ℹ️ Informe pelo menos um campo para atualização ou envie uma nova mídia.');
+        return reply(MESSAGES.member.role.missingUpdateFields);
       }
 
       if (parts[0]) roleData.title = parts[0];
@@ -360,7 +360,7 @@ export default {
 
       groupData.roles[code] = roleData;
       persistGroupData();
-      await reply(`✅ Rolê *${code}* atualizado.`);
+      await reply(MESSAGES.member.role.updateSuccess(code));
       return;
     }
 
@@ -369,10 +369,10 @@ export default {
       if (!isGroupAdmin) return reply(MESSAGES.permission.adminOnly);
 
       const code = sanitizeRoleCode(q || args[0] || '');
-      if (!code) return reply(`📋 Informe o código do rolê. Exemplo: ${groupPrefix}role.excluir CODIGO`);
+      if (!code) return reply(MESSAGES.member.role.deleteFormat(groupPrefix));
 
       const roleData = groupData.roles[code];
-      if (!roleData) return reply(`💔 Não encontrei nenhum rolê com esse código.`);
+      if (!roleData) return reply(MESSAGES.member.role.notFound);
 
       if (roleData.announcementKey?.id) {
         delete groupData.roleMessages[roleData.announcementKey.id];
@@ -392,21 +392,21 @@ export default {
 
       delete groupData.roles[code];
       persistGroupData();
-      await reply(`🗑️ Rolê *${code}* removido.`);
+      await reply(MESSAGES.member.role.deleteSuccess(code));
       return;
     }
 
     // VOU (CONFIRMAR PRESENÇA)
     if (sub === 'role.vou') {
       const code = sanitizeRoleCode(args[0] || '');
-      if (!code) return reply(`📋 Informe o código do rolê. Exemplo: ${groupPrefix}role.vou CODIGO`);
+      if (!code) return reply(MESSAGES.member.role.vouFormat(groupPrefix));
 
       const roleData = groupData.roles[code];
-      if (!roleData) return reply(`💔 Não encontrei nenhum rolê com esse código.`);
+      if (!roleData) return reply(MESSAGES.member.role.notFound);
 
       const participants = ensureRoleParticipants(roleData);
       if (participants.going.includes(sender)) {
-        return reply(`🙋 Você já confirmou presença no rolê *${roleData.title || code}*.`);
+        return reply(MESSAGES.member.role.alreadyGoing(roleData.title || code));
       }
 
       participants.going.push(sender);
@@ -414,7 +414,7 @@ export default {
       groupData.roles[code] = roleData;
       persistGroupData();
 
-      await reply(`✅ Presença confirmada no rolê *${roleData.title || code}*.`);
+      await reply(MESSAGES.member.role.confirmSuccess(roleData.title || code));
       await refreshRoleAnnouncementInternal(code, roleData);
       return;
     }
@@ -422,10 +422,10 @@ export default {
     // NVOU (DESISTIR)
     if (sub === 'role.nvou') {
       const code = sanitizeRoleCode(args[0] || '');
-      if (!code) return reply(`📋 Informe o código do rolê. Exemplo: ${groupPrefix}role.nvou CODIGO`);
+      if (!code) return reply(MESSAGES.member.role.nvouFormat(groupPrefix));
 
       const roleData = groupData.roles[code];
-      if (!roleData) return reply(`💔 Não encontrei nenhum rolê com esse código.`);
+      if (!roleData) return reply(MESSAGES.member.role.notFound);
 
       const participants = ensureRoleParticipants(roleData);
       const wasGoing = participants.going.includes(sender);
@@ -438,7 +438,7 @@ export default {
       groupData.roles[code] = roleData;
       persistGroupData();
 
-      await reply(wasGoing ? `🤷 Presença removida do rolê *${roleData.title || code}*.` : `🤷 Você já estava marcado como ausente para o rolê *${roleData.title || code}*.`);
+      await reply(wasGoing ? MESSAGES.member.role.abandonSuccess(roleData.title || code) : MESSAGES.member.role.alreadyAbandoned(roleData.title || code));
       await refreshRoleAnnouncementInternal(code, roleData);
       return;
     }
@@ -446,10 +446,10 @@ export default {
     // INFO / PARTICIPANTES
     if (['role', 'role.confirmados', 'role.participantes', 'role.info'].includes(sub)) {
       const code = sanitizeRoleCode(args[0] || '');
-      if (!code) return reply(`📋 Informe o código do rolê. Exemplo: ${groupPrefix}role CODIGO`);
+      if (!code) return reply(MESSAGES.member.role.infoFormat(groupPrefix));
       
       const roleData = groupData.roles[code];
-      if (!roleData) return reply(`💔 Não encontrei nenhum rolê com esse código.`);
+      if (!roleData) return reply(MESSAGES.member.role.notFound);
       
       const parts = ensureRoleParticipants(roleData);
       const going = parts.going || [];

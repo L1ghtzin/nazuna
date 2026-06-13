@@ -3,21 +3,21 @@ export default {
   description: "Cria uma enquete de 'Você Prefere'",
   commands: ["vab"],
   usage: `${global.prefix}vab`,
-  handle: async ({  reply, isGroup, isModoBn, bot, from, vabJson , MESSAGES }) => {
+  handle: async ({  reply, isGroup, isModoBn, bot, from, info, vabJson , MESSAGES }) => {
     try {
-      if (!isGroup) return reply(`💔 Isso só pode ser usado em grupo 💔`);
-      if (!isModoBn) return reply(`💔 O modo brincadeira não está ativo nesse grupo`);
+      if (!isGroup) return reply(MESSAGES.permission.groupOnly);
+      if (!isModoBn) return reply(MESSAGES.permission.botGameModeDisabled);
       
       const items = vabJson();
       const vabs = items[Math.floor(Math.random() * items.length)];
       
       await bot.sendMessage(from, {
         poll: {
-          name: `🤔 *QUAL VOCÊ PREFERE?* 🤔\n\n${vabs.option1}\nvs\n${vabs.option2}`,
+          name: MESSAGES.member.vab.pollName(vabs.option1, vabs.option2),
           values: [
-            `✅ ${vabs.option1}`,
-            `✅ ${vabs.option2}`,
-            `🤷‍♂️ Nenhuma das duas`
+            MESSAGES.member.vab.pollOpt1(vabs.option1),
+            MESSAGES.member.vab.pollOpt2(vabs.option2),
+            MESSAGES.member.vab.pollOpt3
           ],
           selectableCount: 1
         }

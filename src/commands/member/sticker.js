@@ -48,7 +48,7 @@ export default {
     // 🤡 EMOJIMIX
     // ═══════════════════════════════════════════════════════════════
     if (cmd === 'emojimix') {
-      if (!q) return reply("Cade os emojis? 💔");
+      if (!q) return reply(MESSAGES.member.sticker.missingEmojis);
       const url = `https://api.siputzx.my.id/api/m/emojimix?emo=${encodeURIComponent(q)}`;
       try {
         const buffer = await axios.get(url, { responseType: 'arraybuffer' }).then(res => Buffer.from(res.data));
@@ -62,7 +62,7 @@ export default {
     // 💬 QUOTELY (QC)
     // ═══════════════════════════════════════════════════════════════
     if (cmd === 'qc') {
-      if (!q) return reply("Cade o texto? 💔");
+      if (!q) return reply(MESSAGES.member.sticker.missingText);
       await reply(MESSAGES.general.wait);
       try {
         let ppimg;
@@ -119,10 +119,10 @@ export default {
         const boij2 = RSM?.imageMessage || info.message?.imageMessage || RSM?.viewOnceMessageV2?.message?.imageMessage || info.message?.viewOnceMessageV2?.message?.imageMessage || info.message?.viewOnceMessage?.message?.imageMessage || RSM?.viewOnceMessage?.message?.imageMessage;
         const boij = RSM?.videoMessage || info.message?.videoMessage || RSM?.viewOnceMessageV2?.message?.videoMessage || info.message?.viewOnceMessageV2?.message?.videoMessage || info.message?.viewOnceMessage?.message?.videoMessage || RSM?.viewOnceMessage?.message?.videoMessage;
         
-        if (!boij && !boij2) return reply(`Marque uma imagem ou um vídeo de até 9.9 segundos para fazer figurinha, com o comando: ${prefix + command} (mencionando a mídia)`);
+        if (!boij && !boij2) return reply(MESSAGES.member.sticker.missingMedia(prefix + command));
         
         const isVideo2 = !!boij;
-        if (isVideo2 && boij.seconds > 9.9) return reply(`O vídeo precisa ter no máximo 9.9 segundos para ser convertido em figurinha.`);
+        if (isVideo2 && boij.seconds > 9.9) return reply(MESSAGES.member.sticker.videoTooLong);
         
         const buffer = await getFileBuffer(isVideo2 ? boij : boij2, isVideo2 ? 'video' : 'image');
         
@@ -162,10 +162,10 @@ export default {
     // ═══════════════════════════════════════════════════════════════
     if (['rename', 'renomear', 'mudarpack'].includes(cmd)) {
       try {
-        if (!isQuotedSticker) return reply('Você usou de forma errada... Marque uma figurinha.');
+        if (!isQuotedSticker) return reply(MESSAGES.member.sticker.missingQuotedStickerRename);
         let author = "";
         let packname = "";
-        if (!q) return reply(`Formato errado, utilize:\n${prefix}${command} Autor/Pack\nEx: ${prefix}${command} By:/Hiudy`);
+        if (!q) return reply(MESSAGES.member.sticker.invalidFormatRename(prefix, command));
         
         if (q.includes("/")) {
           author = q.split("/")[0] || "";
@@ -174,7 +174,7 @@ export default {
           packname = q;
           author = "";
         }
-        if (!packname) return reply(`Formato errado, utilize:\n${prefix}${command} Autor/Pack\nEx: ${prefix}${command} By:/Hiudy`);
+        if (!packname) return reply(MESSAGES.member.sticker.invalidFormatRename(prefix, command));
         
         const encmediats = await getFileBuffer(info.message.extendedTextMessage.contextInfo.quotedMessage.stickerMessage, 'sticker');
         await sendSticker(bot, from, {
@@ -197,7 +197,7 @@ export default {
       try {
         let author = "";
         let pack = "";
-        if (!q) return reply(`Formato errado, utilize:\n${prefix}${command} Autor/Pack\nEx: ${prefix}${command} By:/Hiudy`);
+        if (!q) return reply(MESSAGES.member.sticker.invalidFormatTake(prefix, command));
         
         if (q.includes("/")) {
           author = q.split("/")[0] || "";
@@ -206,13 +206,13 @@ export default {
           pack = q;
           author = "";
         }
-        if (!pack) return reply(`Formato errado, utilize:\n${prefix}${command} Autor/Pack\nEx: ${prefix}${command} By:/Hiudy`);
+        if (!pack) return reply(MESSAGES.member.sticker.invalidFormatTake(prefix, command));
         
         const filePath = pathz.join(USERS_DIR, 'take.json');
         const dataTake = fs.existsSync(filePath) ? JSON.parse(fs.readFileSync(filePath, 'utf-8')) : {};
         dataTake[sender] = { author, pack };
         fs.writeFileSync(filePath, JSON.stringify(dataTake, null, 2), 'utf-8');
-        reply(`Autor e pacote salvos com sucesso!\nAutor: ${author || "(vazio)"}\nPacote: ${pack}`);
+        reply(MESSAGES.member.sticker.takeSaveSuccess(author, pack));
       } catch (e) {
         console.error(e);
         await reply(MESSAGES.error.general);
@@ -225,11 +225,11 @@ export default {
     // ═══════════════════════════════════════════════════════════════
     if (cmd === 'take') {
       try {
-        if (!isQuotedSticker) return reply('Você usou de forma errada... Marque uma figurinha.');
+        if (!isQuotedSticker) return reply(MESSAGES.member.sticker.missingQuotedStickerRename);
         const filePath = pathz.join(USERS_DIR, 'take.json');
-        if (!fs.existsSync(filePath)) return reply('Nenhum autor e pacote salvos. Use o comando *rgtake* primeiro.');
+        if (!fs.existsSync(filePath)) return reply(MESSAGES.member.sticker.takeNoSaved);
         const dataTake = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
-        if (!dataTake[sender]) return reply('Você não tem autor e pacote salvos. Use o comando *rgtake* primeiro.');
+        if (!dataTake[sender]) return reply(MESSAGES.member.sticker.takeMissingSaved);
         
         const { author, pack } = dataTake[sender];
         const encmediats = await getFileBuffer(info.message.extendedTextMessage.contextInfo.quotedMessage.stickerMessage, 'sticker');
@@ -252,13 +252,13 @@ export default {
     // ═══════════════════════════════════════════════════════════════
     if (['figurinhas', 'stickerpack', 'packfig'].includes(cmd)) {
       try {
-        if (!q) return reply(`🎨 *Gerador de Figurinhas*\n\n🔢 *Como usar:*\n• Escolha quantas figurinhas deseja (1-15)\n• Ex: ${prefix}figurinhas 10\n• Ex: ${prefix}figurinhas 5\n\n✨ As figurinhas serão enviadas uma por uma!\n${isGroup ? '📬 *Nota:* Em grupos, as figurinhas serão enviadas no seu privado!' : ''}`);
+        if (!q) return reply(MESSAGES.member.sticker.packfigUsage(prefix, isGroup));
         
         const quantidade = parseInt(q);
-        if (isNaN(quantidade) || quantidade < 1 || quantidade > 15) return reply(`💔 Número inválido! Escolha entre 1 e 15 figurinhas.`);
+        if (isNaN(quantidade) || quantidade < 1 || quantidade > 15) return reply(MESSAGES.member.sticker.packfigInvalidAmount);
         
         const destino = isGroup ? sender : from;
-        await reply(isGroup ? `📬 Enviando ${quantidade} figurinha${quantidade > 1 ? 's' : ''} no seu privado...\n⏳ Aguarde um momento!` : `🎨 Enviando ${quantidade} figurinha${quantidade > 1 ? 's' : ''}...\n⏳ Aguarde um momento!`);
+        await reply(MESSAGES.member.sticker.packfigSending(quantidade, isGroup));
         
         const usedNumbers = new Set();
         let successCount = 0;
@@ -284,7 +284,7 @@ export default {
           }
         }
         
-        await bot.sendMessage(destino, { text: `✅ Pronto!\n\n📊 *Resultado:*\n• Enviadas: ${successCount} figurinha${successCount !== 1 ? 's' : ''}\n${failCount > 0 ? `• Falhas: ${failCount}\n` : ''}` });
+        await bot.sendMessage(destino, { text: MESSAGES.member.sticker.packfigResult(successCount, failCount) });
       } catch (e) {
         console.error(e);
         await reply(MESSAGES.error.general);
@@ -297,7 +297,7 @@ export default {
     // ═══════════════════════════════════════════════════════════════
     if (['attp', 'ttp'].includes(cmd)) {
       try {
-        if (!q) return reply('Cadê o texto?');
+        if (!q) return reply(MESSAGES.member.sticker.attpMissingText);
         
         function breakText(text, maxCharsPerLine = 20) {
           const words = text.split(' ');
@@ -323,7 +323,7 @@ export default {
         const tempDir = pathz.join(__dirname, '../midias/temp_attp_' + Date.now());
         if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir, { recursive: true });
         
-        await reply('⏳ Gerando sticker animado... aguarde!');
+        await reply(MESSAGES.member.sticker.attpGenerating);
         
         const numFrames = 18;
         const downloadPromises = [];

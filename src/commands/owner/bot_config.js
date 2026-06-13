@@ -17,7 +17,7 @@ export default {
     // --- ANTIPV ---
     if (['antipv', 'antipv2', 'antipv3', 'antipv4'].includes(cmd)) {
       const dbPath = pathz.join(DATABASE_DIR, 'antipv.json');
-      let antipvData = await optimizer.loadJsonWithCache(dbPath, { mode: null, message: '🚫 Este comando só funciona em grupos!' });
+      let antipvData = await optimizer.loadJsonWithCache(dbPath, { mode: null, message: MESSAGES.permission.groupOnly });
 
       const arg0 = args[0] ? args[0].toLowerCase() : '';
       let statusChanged = true;
@@ -33,8 +33,8 @@ export default {
       }
       
       if (!statusChanged) {
-        const currentStatus = antipvData.mode ? 'já está ATIVADO' : 'já está DESATIVADO';
-        return reply(`⚠️ O Anti-PV (${cmd.toUpperCase()}) ${currentStatus}.`);
+        const currentStatus = antipvData.mode ? 'ATIVADO' : 'DESATIVADO';
+        return reply(MESSAGES.owner.bot_config.antipv.statusUnchanged(cmd, currentStatus));
       }
 
       await optimizer.saveJsonWithCache(dbPath, antipvData);
@@ -46,18 +46,18 @@ export default {
       if (antipvData.mode === 'antipv3') infoMsg = 'O bot ignora mensagens silenciosamente no privado.';
       if (antipvData.mode === 'antipv4') infoMsg = 'O bot bloqueia automaticamente os usuários no privado e envia aviso.';
       
-      return reply(`✅ *Anti-PV (${cmd.toUpperCase()})*: ${status.toUpperCase()}\n\n💡 ${infoMsg}`);
+      return reply(MESSAGES.owner.bot_config.antipv.statusChanged(cmd, status, infoMsg));
     }
 
     if (cmd === 'antipvmessage' || cmd === 'antipvmsg') {
-      if (!q) return reply(`Por favor, forneça a nova mensagem para o antipv. Exemplo: ${prefix}antipvmessage Comandos no privado estão desativados!`);
+      if (!q) return reply(MESSAGES.owner.bot_config.antipv.missingMessage(prefix));
       const dbPath = pathz.join(DATABASE_DIR, 'antipv.json');
-      let antipvData = await optimizer.loadJsonWithCache(dbPath, { mode: null, message: '🚫 Este comando só funciona em grupos!' });
+      let antipvData = await optimizer.loadJsonWithCache(dbPath, { mode: null, message: MESSAGES.permission.groupOnly });
       
       antipvData.message = q.trim();
       await optimizer.saveJsonWithCache(dbPath, antipvData);
       
-      return reply(`✅ Mensagem do antipv atualizada para: "${antipvData.message}"`);
+      return reply(MESSAGES.owner.bot_config.antipv.messageUpdated(antipvData.message));
     }
 
     // --- MENU MEDIA (FOTO/VIDEO) ---
@@ -68,7 +68,7 @@ export default {
         const mediaInfo = getMediaInfo(info.message) || (quotedMsg ? getMediaInfo(quotedMsg) : null);
 
         if (!mediaInfo || (mediaInfo.type !== 'image' && mediaInfo.type !== 'video')) {
-          return reply(`Marque uma imagem ou um vídeo, com o comando: ${prefix + command} (mencionando a mídia)`);
+          return reply(MESSAGES.owner.bot_config.menu.mediaMissing(prefix, command));
         }
         
         const isVideo2 = mediaInfo.type === 'video';
@@ -78,10 +78,10 @@ export default {
         const buffer = await getFileBuffer(mediaInfo.media, mediaInfo.type);
         fs.mkdirSync(midiasDir, { recursive: true });
         fs.writeFileSync(path.join(midiasDir, `menu.${isVideo2 ? 'mp4' : 'jpg'}`), buffer);
-        return reply('✅ Mídia do menu atualizada com sucesso.');
+        return reply(MESSAGES.owner.bot_config.menu.mediaUpdated);
       } catch (e) {
         console.error(e);
-        return reply("Ocorreu um erro 💔");
+        return reply(MESSAGES.error.general);
       }
     }
 
@@ -91,14 +91,14 @@ export default {
         if (typeof removeMenuAudio === 'function') removeMenuAudio();
         const audioPath = path.resolve('./dados/midias/menu_audio.mp3');
         if (fs.existsSync(audioPath)) fs.unlinkSync(audioPath);
-        return reply("✅ Áudio do menu removido com sucesso!\n\nO menu voltará a ser enviado sem áudio.");
+        return reply(MESSAGES.owner.bot_config.menu.audioRemoved);
       }
       
       const quotedMsg = info.message?.extendedTextMessage?.contextInfo?.quotedMessage;
       const mediaInfo = getMediaInfo(info.message) || (quotedMsg ? getMediaInfo(quotedMsg) : null);
       
       if (!mediaInfo || mediaInfo.type !== 'audio') {
-        return reply(`❌ *Envie ou marque um áudio* com o comando: ${prefix}${command}\n\n🎵 Este áudio será enviado junto com o menu principal.\n\n💡 Para remover depois, use: ${prefix}${command} off`);
+        return reply(MESSAGES.owner.bot_config.menu.audioMissing(prefix, command));
       }
       
       try {
@@ -108,20 +108,20 @@ export default {
         fs.writeFileSync(audioPath, audioBuffer);
         if (typeof setMenuAudio === 'function') setMenuAudio(audioPath);
         
-        return reply('✅ *Áudio do menu configurado com sucesso!*\n\n🎵 O áudio será enviado junto com o menu principal.\n\n💡 Para remover, use: ' + prefix + command + ' off');
+        return reply(MESSAGES.owner.bot_config.menu.audioUpdated(prefix, command));
       } catch (e) {
         console.error(e);
-        return reply("❌ Ocorreu um erro ao configurar o áudio do menu 💔");
+        return reply(MESSAGES.error.general);
       }
     }
 
     // --- MISC ---
     if (cmd === 'entrar') {
-      if (!q) return reply('Informe o link do grupo.');
-      return bot.groupAcceptInvite(q.split('chat.whatsapp.com/')[1]).then(() => reply('✅ Entrando...')).catch(() => reply(`💔 Link inválido.`));
+      if (!q) return reply(MESSAGES.owner.bot_config.misc.missingLink);
+      return bot.groupAcceptInvite(q.split('chat.whatsapp.com/')[1]).then(() => reply(MESSAGES.owner.bot_config.misc.joining)).catch(() => reply(MESSAGES.owner.bot_config.misc.invalidLink));
     }
     if (cmd === 'sairgp') {
-      await reply('👋 Saindo do grupo...');
+      await reply(MESSAGES.owner.bot_config.misc.leaving);
       return bot.groupLeave(from);
     }
   }

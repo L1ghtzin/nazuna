@@ -7,15 +7,15 @@ export default {
   usage: `${global.prefix}msgprefix texto aqui #prefixo#\n${global.prefix}msgprefix off`,
   handle: async ({  reply, isOwner, q, prefix , MESSAGES }) => {
     try {
-      if (!isOwner) return reply('Apenas o dono pode configurar isso.');
-      if (!q) return reply('Uso: ' + prefix + 'msgprefix off ou ' + prefix + 'msgprefix texto aqui #prefixo#');
+      if (!isOwner) return reply(MESSAGES.permission.ownerOnly);
+      if (!q) return reply(MESSAGES.owner.msgprefix.missingParams(prefix));
       
       const newMsg = q.trim().toLowerCase() === 'off' ? false : q;
       
       if (saveMsgPrefix(newMsg)) {
-        await reply(newMsg ? `✅ Mensagem prefix configurada: ${newMsg.replace('#prefixo#', prefix)}` : '✅ Mensagem prefix desativada.');
+        await reply(newMsg ? MESSAGES.owner.msgprefix.success(newMsg, prefix) : MESSAGES.owner.msgprefix.disabled);
       } else {
-        await reply('Erro ao salvar.');
+        await reply(MESSAGES.owner.msgprefix.error);
       }
     } catch (e) {
       console.error('Erro no msgprefix:', e);

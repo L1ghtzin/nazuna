@@ -30,7 +30,7 @@ export default {
       
       data.users[menc_os2].count += 1;
       await optimizer.saveJsonWithCache(filePath, data);
-      return reply(`✅ Indicação adicionada para @${getUserName(menc_os2)}! Total: ${data.users[menc_os2].count}`, { mentions: [menc_os2] });
+      return reply(MESSAGES.member.indications.addSuccess(getUserName(menc_os2), data.users[menc_os2].count), { mentions: [menc_os2] });
     }
 
     // --- RANKING ---
@@ -39,9 +39,9 @@ export default {
         .sort((a, b) => b[1].count - a[1].count)
         .slice(0, 10);
       
-      if (users.length === 0) return reply("📭 Nenhuma indicação registrada.");
+      if (users.length === 0) return reply(MESSAGES.member.indications.empty);
       
-      let teks = `🏆 *RANKING DE INDICAÇÕES*\n\n`;
+      let teks = MESSAGES.member.indications.rankingHeader;
       users.forEach(([id, info], i) => {
         teks += `${i + 1}. @${id.split('@')[0]} - ${info.count} indicações\n`;
       });
@@ -51,11 +51,11 @@ export default {
     // --- REMOVER ---
     if (cmd.startsWith('del') || cmd.startsWith('rm') || cmd.startsWith('remover')) {
       if (!isOwner) return reply(MESSAGES.permission.ownerOnly);
-      if (!menc_os2 || !data.users[menc_os2]) return reply("Usuário não encontrado.");
+      if (!menc_os2 || !data.users[menc_os2]) return reply(MESSAGES.member.indications.userNotFound);
       
       delete data.users[menc_os2];
       await optimizer.saveJsonWithCache(filePath, data);
-      return reply("✅ Indicação removida.");
+      return reply(MESSAGES.member.indications.removeSuccess);
     }
   }
 };

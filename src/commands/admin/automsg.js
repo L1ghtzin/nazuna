@@ -32,23 +32,16 @@ export default {
     isQuotedMsg2,
     getFileBuffer,
     sender,
-    q
+    q,
+    MESSAGES
   }) => {
-    if (!isGroup) return reply("❌ Este comando só pode ser usado em grupos!");
-    if (!isGroupAdmin && !isOwner) return reply("❌ Apenas administradores podem usar este comando!");
+    if (!isGroup) return reply(MESSAGES.permission.groupOnly);
+    if (!isGroupAdmin && !isOwner) return reply(MESSAGES.permission.adminOnly);
 
     const subCommand = args[0]?.toLowerCase();
     
     if (!subCommand || subCommand === 'help') {
-      return reply(`📨 *Auto Mensagens*
-      
-Use os subcomandos:
-• ${prefix}automsg add HH:MM | descrição - Adicionar (responda à mídia/texto)
-• ${prefix}automsg list - Listar mensagens
-• ${prefix}automsg del [id] - Remover mensagem
-• ${prefix}automsg on/off [id] - Ativar/Desativar mensagem
-
-💡 *Exemplo:* ${prefix}automsg add 08:00 | Bom dia!`);
+      return reply(MESSAGES.admin.automsg.helpText(prefix));
     }
 
     const groupFilePath = buildGroupFilePath(from);
@@ -58,7 +51,7 @@ Use os subcomandos:
     // --- ADD ---
     if (subCommand === 'add') {
       if (!q.includes('|')) {
-        return reply(`❌ Formato inválido! Use: ${prefix}automsg add HH:MM | descrição`);
+        return reply(MESSAGES.admin.automsg.addInvalidFormat(prefix));
       }
 
       const parts = q.split('|').map(s => s.trim());
@@ -67,7 +60,7 @@ Use os subcomandos:
 
       // Validação de horário básica (HH:MM)
       const timeMatch = timeStr.match(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/);
-      if (!timeMatch) return reply("❌ Horário inválido! Use o formato 24h (ex: 08:30, 22:00).");
+      if (!timeMatch) return reply(MESSAGES.admin.automsg.addInvalidTime);
 
       const normalizedTime = timeStr.padStart(5, '0');
 
@@ -91,12 +84,12 @@ Use os subcomandos:
           msgConfig.caption = quotedMessageContent.imageMessage?.caption || description;
           // O buffer precisaria ser salvo em disco. No Chainy, 
           // assumimos que o sistema de carregamento cuidará disso.
-          return reply("⚠️ Salvamento de mídia para automsg modularizado requer integração com o sistema de arquivos local. Migrando apenas metadados por enquanto.");
+          return reply(MESSAGES.admin.automsg.addMediaWarning);
         } else if (isQuotedMsg || isQuotedMsg2) {
           msgConfig.type = 'text';
           msgConfig.content = quotedMessageContent.conversation || quotedMessageContent.extendedTextMessage?.text;
         } else {
-          return reply("❌ Por enquanto, apenas mensagens de texto e mídia simples são suportadas na migração modular.");
+          return reply(MESSAGES.admin.automsg.addUnsupportedFormat);
         }
       } else {
         msgConfig.type = 'text';
@@ -106,17 +99,17 @@ Use os subcomandos:
       data.autoMessages.push(msgConfig);
       await optimizer.saveJsonWithCache(groupFilePath, data);
       
-      return reply(`✅ Mensagem automática adicionada para às ${normalizedTime}!`);
+      return reply(MESSAGES.admin.automsg.addSuccess(normalizedTime));
     }
 
     // --- LIST ---
     if (subCommand === 'list' || subCommand === 'lista') {
-      if (data.autoMessages.length === 0) return reply("📭 Nenhuma mensagem automática configurada.");
+      if (data.autoMessages.length === 0) return reply(MESSAGES.admin.automsg.listEmpty);
       
-      let listMsg = '📨 *Auto Mensagens*\n\n';
+      let listMsg = MESSAGES.admin.automsg.listHeader;
       data.autoMessages.forEach((msg, idx) => {
         const status = msg.enabled ? '✅' : '❌';
-        listMsg += `${status} *${idx + 1}.* ID: ${msg.id} | ⏰ ${msg.time}\n   📝 ${msg.description}\n\n`;
+        listMsg += MESSAGES.admin.automsg.listItem(status, idx + 1, msg.id, msg.time, msg.description);
       });
       return reply(listMsg);
     }
@@ -124,7 +117,7 @@ Use os subcomandos:
     // --- DELETE ---
     if (subCommand === 'del' || subCommand === 'remover') {
       const id = args[1];
-      if (!id) return reply("❌ Informe o ID ou o número da lista.");
+      if (!id) return reply(MESSAGES.admin.automsg.delProvideId);
       
       const initialCount = data.autoMessages.length;
       if (id.length < 5) { // Provavelmente um índice
@@ -138,9 +131,9 @@ Use os subcomandos:
 
       if (data.autoMessages.length < initialCount) {
         await optimizer.saveJsonWithCache(groupFilePath, data);
-        return reply("✅ Mensagem removida com sucesso.");
+        return reply(MESSAGES.admin.automsg.delSuccess);
       } else {
-        return reply("❌ Mensagem não encontrada.");
+        return reply(MESSAGES.admin.automsg.delNotFound);
       }
     }
   },

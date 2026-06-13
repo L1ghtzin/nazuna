@@ -20,14 +20,14 @@ export default {
     // --- ADICIONAR PREMIUM ---
     if (['addpremium', 'addvip'].includes(cmd)) {
       if (!menc_os2) return reply(MESSAGES.error.missing('alguém'));
-      if (premiumListaZinha[menc_os2]) return reply('O usuário já está na lista premium.');
+      if (premiumListaZinha[menc_os2]) return reply(MESSAGES.owner.premium.add.alreadyPremium);
       
       premiumListaZinha[menc_os2] = true;
       const filePath = pathz.join(DATABASE_DIR, 'dono/premium.json');
       await optimizer.saveJsonWithCache(filePath, premiumListaZinha);
       
       return bot.sendMessage(from, {
-        text: `✅ @${getUserName(menc_os2)} foi adicionado(a) à lista premium.`,
+        text: MESSAGES.owner.premium.add.success(getUserName(menc_os2)),
         mentions: [menc_os2]
       }, { quoted: info });
     }
@@ -35,14 +35,14 @@ export default {
     // --- REMOVER PREMIUM ---
     if (['delpremium', 'delvip', 'rmpremium', 'rmvip'].includes(cmd)) {
       if (!menc_os2) return reply(MESSAGES.error.missing('alguém'));
-      if (!premiumListaZinha[menc_os2]) return reply('O usuário não está na lista premium.');
+      if (!premiumListaZinha[menc_os2]) return reply(MESSAGES.owner.premium.remove.notPremium);
       
       delete premiumListaZinha[menc_os2];
       const filePath = pathz.join(DATABASE_DIR, 'dono/premium.json');
       await optimizer.saveJsonWithCache(filePath, premiumListaZinha);
       
       return bot.sendMessage(from, {
-        text: `✅ @${getUserName(menc_os2)} foi removido(a) da lista premium.`,
+        text: MESSAGES.owner.premium.remove.success(getUserName(menc_os2)),
         mentions: [menc_os2]
       }, { quoted: info });
     }
@@ -50,11 +50,11 @@ export default {
     // --- LISTAR PREMIUM ---
     if (['listapremium', 'listavip', 'premiumlist', 'listpremium', 'listprem'].includes(cmd)) {
       const list = Object.keys(premiumListaZinha).filter(id => premiumListaZinha[id]);
-      if (list.length === 0) return reply("A lista premium está vazia.");
+      if (list.length === 0) return reply(MESSAGES.owner.premium.list.empty);
       
-      let teks = `⭐ *USUÁRIOS PREMIUM* (${list.length})\n\n`;
+      let teks = MESSAGES.owner.premium.list.header(list.length);
       for (let id of list) {
-        teks += `- @${id.split('@')[0]}\n`;
+        teks += MESSAGES.owner.premium.list.item(id.split('@')[0]);
       }
       return bot.sendMessage(from, { text: teks, mentions: list }, { quoted: info });
     }

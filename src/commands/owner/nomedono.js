@@ -17,14 +17,14 @@ export default {
   }) => {
     try {
       if (!isOwner) return reply(MESSAGES.permission.ownerOnly);
-      if (!q) return reply(`Por favor, digite o novo nome do dono.\nExemplo: ${prefix}${command} Hiudy`);
+      if (!q) return reply(MESSAGES.owner.nomedono.missingName(prefix, command));
       
       let config = JSON.parse(fs.readFileSync(CONFIG_FILE));
       config.nomedono = q;
       
       await optimizer.saveJsonWithCache(CONFIG_FILE, config);
       
-      await reply(`Nome do dono alterado com sucesso para "${q}"!`);
+      await reply(MESSAGES.owner.nomedono.success(q));
       
     } catch (e) {
       console.error(e);

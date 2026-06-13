@@ -38,12 +38,12 @@ export default {
       // Notificação X9 para rebaixamento
       if (groupData?.x9) {
         await bot.sendMessage(from, {
-          text: `⬇️ *X9 Report:* @${menc_os2.split('@')[0]} foi rebaixado(a) de ADM por @${sender.split('@')[0]}.`,
+          text: MESSAGES.admin.rebaixar.x9(menc_os2.split('@')[0], sender.split('@')[0]),
           mentions: [menc_os2, sender],
         }).catch(err => console.error(`❌ Erro ao enviar X9: ${err.message}`));
       }
       
-      reply(`✅ Usuário rebaixado com sucesso!`);
+      reply(MESSAGES.admin.rebaixar.success);
     } catch (e) {
       console.error(e);
       reply(MESSAGES.error.general);

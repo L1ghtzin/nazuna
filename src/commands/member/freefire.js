@@ -4,23 +4,16 @@ export default {
   commands: ['likeff'],
   usage: '{prefix}likeff <uid>',
   handle: async ({ reply, q, prefix, freefire, MESSAGES }) => {
-    if (!q) return reply(`Use: ${prefix}likeff <uid>`);
-    if (!freefire?.sendLikes) return reply('Servico de Free Fire indisponivel.');
+    if (!q) return reply(MESSAGES.member.freefire.missingUid(prefix));
+    if (!freefire?.sendLikes) return reply(MESSAGES.member.freefire.unavailable);
 
-    await reply('Enviando likes no Free Fire...');
+    await reply(MESSAGES.member.freefire.sendingLikes);
 
     try {
       const result = await freefire.sendLikes(q.trim());
       if (!result.ok) return reply(result.msg || MESSAGES.error.general);
 
-      return reply(
-        `Likes enviados com sucesso!\n\n` +
-        `Jogador: ${result.player || 'N/A'}\n` +
-        `UID: ${result.uid || q.trim()}\n` +
-        `Likes antes: ${result.initialLikes ?? 'N/A'}\n` +
-        `Likes depois: ${result.finalLikes ?? 'N/A'}\n` +
-        `Adicionados: ${result.likesAdded ?? 'N/A'}`
-      );
+      return reply(MESSAGES.member.freefire.likesSuccess(result.player, result.uid || q.trim(), result.initialLikes, result.finalLikes, result.likesAdded));
     } catch (error) {
       console.error('[FREEFIRE] Erro no comando likeff:', error);
       return reply(MESSAGES.error.general);

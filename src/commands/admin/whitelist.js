@@ -14,28 +14,28 @@ export default {
 
     if (['wl.lista', 'wllist', 'listawhitelist', 'whitelistlista', 'listwhite', 'listaunwhite'].includes(cmd)) {
       const entries = Object.entries(groupData.adminWhitelist);
-      if (!entries.length) return reply('📋 Whitelist vazia.');
-      let msg = `📋 *Whitelist do Grupo*\n\n`;
+      if (!entries.length) return reply(MESSAGES.admin.whitelist.listEmpty);
+      let msg = MESSAGES.admin.whitelist.listHeader;
       entries.forEach(([id, data], i) => {
-        msg += `${i+1}. @${getUserName(id)}\n   Antis: ${data.antis.join(', ')}\n\n`;
+        msg += MESSAGES.admin.whitelist.listItem(i + 1, getUserName(id), data.antis.join(', '));
       });
       return await reply(msg, { mentions: entries.map(e => e[0]) });
     }
 
     if (['wl.add', 'wladd', 'addwhitelist'].includes(cmd)) {
-      if (!menc_os2) return reply(`Uso: ${prefix}wl.add @user | anti1,anti2`);
+      if (!menc_os2) return reply(MESSAGES.admin.whitelist.addUsage(prefix));
       const antis = q.split('|')[1]?.split(',').map(a => a.trim().toLowerCase()) || [];
-      if (!antis.length) return reply("Especifique os antis!");
+      if (!antis.length) return reply(MESSAGES.admin.whitelist.missingAntis);
       groupData.adminWhitelist[menc_os2] = { antis, addedBy: sender, addedAt: Date.now() };
       await optimizer.saveJsonWithCache(groupFile, groupData);
-      return reply(`✅ @${getUserName(menc_os2)} adicionado!`, { mentions: [menc_os2] });
+      return reply(MESSAGES.admin.whitelist.addSuccess(getUserName(menc_os2)), { mentions: [menc_os2] });
     }
 
     if (['wl.remove', 'wlremove', 'removewhitelist', 'unwhitelist'].includes(cmd)) {
-      if (!menc_os2) return reply("Marque o usuário!");
+      if (!menc_os2) return reply(MESSAGES.admin.whitelist.missingUser);
       delete groupData.adminWhitelist[menc_os2];
       await optimizer.saveJsonWithCache(groupFile, groupData);
-      return reply("✅ Removido da whitelist.");
+      return reply(MESSAGES.admin.whitelist.removeSuccess);
     }
   }
 };

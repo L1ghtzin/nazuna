@@ -81,19 +81,19 @@ export default {
       const game = global.cacaPalavrasGames[gameKey];
       const chute = normalizar(args.join(' ').toUpperCase());
       const pEnc = game.palavras.find(p => normalizar(p) === chute);
-      if (!pEnc) return reply(`❌ "${args.join(' ')}" não está na lista!`);
-      if (game.palavrasEncontradas.includes(pEnc)) return reply('⚠️ Já encontrou!');
+      if (!pEnc) return reply(MESSAGES.member.cacapalavras.notFound(args.join(' ')));
+      if (game.palavrasEncontradas.includes(pEnc)) return reply(MESSAGES.member.cacapalavras.alreadyFound);
       game.palavrasEncontradas.push(pEnc);
       if (game.palavrasEncontradas.length === game.palavras.length) {
         delete global.cacaPalavrasGames[gameKey];
-        return reply(`🎉 *VITÓRIA!* Todas encontradas em ${((Date.now()-game.iniciado)/1000).toFixed(1)}s!`);
+        return reply(MESSAGES.member.cacapalavras.win(((Date.now()-game.iniciado)/1000).toFixed(1)));
       }
-      return reply(`✅ Encontrou "${pEnc}"! (${game.palavrasEncontradas.length}/${game.palavras.length})`);
+      return reply(MESSAGES.member.cacapalavras.found(pEnc, game.palavrasEncontradas.length, game.palavras.length));
     }
 
     if (global.cacaPalavrasGames[gameKey]) {
       const g = global.cacaPalavrasGames[gameKey];
-      return reply(`🔍 *CAÇA PALAVRAS*\nProgresso: ${g.palavrasEncontradas.length}/${g.palavras.length}\n\`\`\`${formatarGrade(g.grade)}\`\`\``);
+      return reply(MESSAGES.member.cacapalavras.status(g.palavrasEncontradas.length, g.palavras.length, formatarGrade(g.grade)));
     }
 
     const dif = args[0]?.toLowerCase() || 'medio';
@@ -103,6 +103,6 @@ export default {
     while (sel.length < conf.palavras && filtradas.length > 0) sel.push(filtradas.splice(Math.floor(Math.random() * filtradas.length), 1)[0]);
     const { grade, posicionadas } = gerarGrade(sel, configCaca.tamanho);
     global.cacaPalavrasGames[gameKey] = { grade, palavras: posicionadas, palavrasEncontradas: [], iniciado: Date.now() };
-    await reply(`🔍 *CAÇA PALAVRAS* (${dif})\n\`\`\`${formatarGrade(grade)}\`\`\`\nEncontre ${posicionadas.length} palavras!`);
+    await reply(MESSAGES.member.cacapalavras.start(dif, formatarGrade(grade), posicionadas.length));
   },
 };

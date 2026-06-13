@@ -25,7 +25,7 @@ export default {
     try {
       if (isMedia && info.message.videoMessage || isQuotedVideo) {
         const encmedia = isQuotedVideo ? info.message.extendedTextMessage.contextInfo.quotedMessage.videoMessage : info.message.videoMessage;
-        await reply('🎬 Processando vídeo... Por favor, aguarde alguns segundos.');
+        await reply(MESSAGES.member.videoeffects.processing);
         
         const videoEffects = {
           videorapido: '[0:v]setpts=0.5*PTS[v];[0:a]atempo=2[a]',
@@ -94,7 +94,7 @@ export default {
           }
         });
       } else {
-        reply(command === 'tomp3' ? "🎬 Para converter vídeo para áudio, responda a uma mensagem que contenha um vídeo." : "🎬 Para aplicar este efeito de vídeo, responda a uma mensagem que contenha um vídeo.");
+        reply(command === 'tomp3' ? MESSAGES.member.videoeffects.missingToMp3 : MESSAGES.member.videoeffects.missingEffect);
       }
     } catch (e) {
       console.error(e);

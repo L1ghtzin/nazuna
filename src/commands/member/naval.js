@@ -21,7 +21,7 @@ export default {
     menc_os2,
     MESSAGES
   }) => {
-    if (!isGroup) return reply('🚢 Este jogo só funciona em grupos!');
+    if (!isGroup) return reply(MESSAGES.member.naval.groupOnly);
 
     const navalPath = path.join(__dirname, '../../funcs/json/batalhanaval.json');
     let configNaval = {
@@ -115,18 +115,18 @@ export default {
         delete global.navalGames[gameKey];
       }
 
-      if (global.navalChallenges[gameKey] || global.navalGames[gameKey]) return reply('⚠️ Já existe um jogo ou desafio pendente neste grupo!');
+      if (global.navalChallenges[gameKey] || global.navalGames[gameKey]) return reply(MESSAGES.member.naval.existingGame);
       global.navalChallenges[gameKey] = { challenger: sender, challenged: menc_os2, status: 'pending', created: Date.now() };
-      return reply(`🚢 *DESAFIO DE BATALHA NAVAL*\n\n@${sender.split('@')[0]} desafiou @${menc_os2.split('@')[0]} para uma batalha naval!\n\n💡 O desafiado deve usar: ${prefix}batalhanaval aceitar (ou recusar)\n⏱️ O desafio expira em 60 segundos.`, { mentions: [sender, menc_os2] });
+      return reply(MESSAGES.member.naval.challenge(sender.split('@')[0], menc_os2.split('@')[0], prefix), { mentions: [sender, menc_os2] });
     }
 
     if (args[0]?.toLowerCase() === 'aceitar') {
       const ch = global.navalChallenges[gameKey];
-      if (!ch || ch.challenged !== sender || ch.status !== 'pending') return reply(`💔 Não há desafio pendente para você aceitar!`);
+      if (!ch || ch.challenged !== sender || ch.status !== 'pending') return reply(MESSAGES.member.naval.noChallengeAccept);
       // Verificar expiração (60 segundos)
       if (Date.now() - ch.created > 60000) {
         delete global.navalChallenges[gameKey];
-        return reply('⏰ O desafio expirou!');
+        return reply(MESSAGES.member.naval.challengeExpired);
       }
       const t1 = criarTabuleiro(10), t2 = criarTabuleiro(10);
       global.navalGames[gameKey] = {
@@ -138,29 +138,29 @@ export default {
         turno: ch.challenger, status: 'active', ultimaJogada: Date.now()
       };
       delete global.navalChallenges[gameKey];
-      return reply(`🚢 *BATALHA NAVAL INICIADA!*\n\n@${ch.challenger.split('@')[0]} vs @${ch.challenged.split('@')[0]}\n\n🎯 É a vez de @${ch.challenger.split('@')[0]} atirar!\n\n💡 Use: ${prefix}batalhanaval [coordenada]\n📌 Exemplo: ${prefix}batalhanaval A5`, { mentions: [ch.challenger, ch.challenged] });
+      return reply(MESSAGES.member.naval.started(ch.challenger.split('@')[0], ch.challenged.split('@')[0], prefix), { mentions: [ch.challenger, ch.challenged] });
     } else if (args[0]?.toLowerCase() === 'recusar') {
       const ch = global.navalChallenges[gameKey];
-      if (!ch || ch.challenged !== sender || ch.status !== 'pending') return reply(`💔 Não há desafio pendente para você recusar!`);
+      if (!ch || ch.challenged !== sender || ch.status !== 'pending') return reply(MESSAGES.member.naval.noChallengeRefuse);
       delete global.navalChallenges[gameKey];
-      return reply(`🚫 @${sender.split('@')[0]} recusou o desafio de Batalha Naval.`, { mentions: [sender] });
+      return reply(MESSAGES.member.naval.refused(sender.split('@')[0]), { mentions: [sender] });
     }
 
     if (global.navalGames[gameKey] && args[0]) {
       const game = global.navalGames[gameKey];
-      if (game.status !== 'active') return reply(`💔 Jogo terminado!`);
-      if (game.turno !== sender) return reply('⏳ Não é sua vez! Aguarde o oponente.');
+      if (game.status !== 'active') return reply(MESSAGES.member.naval.gameOver);
+      if (game.turno !== sender) return reply(MESSAGES.member.naval.notYourTurn);
       const coord = parseCoordenada(args[0].toUpperCase());
-      if (!coord) return reply(`💔 Coordenada inválida! Use formato: A1, B5, J10\n\n💡 Exemplo: ${prefix}batalhanaval A5`);
+      if (!coord) return reply(MESSAGES.member.naval.invalidCoord(prefix));
 
       let alvo = sender === game.jogador1 ? game.tabuleiro2 : game.tabuleiro1;
       let tiros = sender === game.jogador1 ? game.tiros1 : game.tiros2;
       let naviosAlvo = sender === game.jogador1 ? game.navios2 : game.navios1;
 
-      if (tiros[coord.linha][coord.coluna] !== '🌊') return reply('⚠️ Você já atirou nesta coordenada!');
+      if (tiros[coord.linha][coord.coluna] !== '🌊') return reply(MESSAGES.member.naval.alreadyShot);
 
       const celula = alvo[coord.linha][coord.coluna];
-      let res = celula === '🚢' ? '💥 *ACERTOU!*' : `❌ *ÁGUA!*`;
+      let res = celula === '🚢' ? MESSAGES.member.naval.hit : MESSAGES.member.naval.miss;
       tiros[coord.linha][coord.coluna] = celula === '🚢' ? '💥' : '❌';
       alvo[coord.linha][coord.coluna] = tiros[coord.linha][coord.coluna];
 
@@ -168,7 +168,7 @@ export default {
         for (const n of naviosAlvo) {
           if (n.posicoes.some(p => p.linha === coord.linha && p.coluna === coord.coluna)) {
             n.acertos++;
-            if (n.acertos === n.tamanho) res = `💥 *${n.nome.toUpperCase()} AFUNDADO!*`;
+            if (n.acertos === n.tamanho) res = MESSAGES.member.naval.sunk(n.nome);
             break;
           }
         }
@@ -177,7 +177,7 @@ export default {
       if (naviosAlvo.every(n => n.acertos === n.tamanho)) {
         const v = game.turno;
         delete global.navalGames[gameKey];
-        return reply(`🏆 *VITÓRIA!* @${v.split('@')[0]} afundou toda a frota!`, { mentions: [game.jogador1, game.jogador2] });
+        return reply(MESSAGES.member.naval.victory(v.split('@')[0]), { mentions: [game.jogador1, game.jogador2] });
       }
 
       game.turno = sender === game.jogador1 ? game.jogador2 : game.jogador1;
@@ -187,13 +187,10 @@ export default {
       const naviosAtingidos = naviosAlvo.filter(n => n.acertos > 0 && n.acertos < n.tamanho);
       const naviosIntactos = naviosAlvo.filter(n => n.acertos === 0);
 
-      let msg = `${res}\n\n🎯 Coordenada: ${args[0].toUpperCase()}\n`;
-      msg += `\n📋 *Frota inimiga:*\n`;
-      msg += `💀 Afundados: ${naviosAfundados.length}/${naviosAlvo.length}`;
-      if (naviosAfundados.length > 0) msg += ` (${naviosAfundados.map(n => n.nome).join(', ')})`;
-      msg += `\n🔥 Atingidos: ${naviosAtingidos.length}`;
-      msg += `\n🌊 Intactos: ${naviosIntactos.length}\n`;
-      msg += `\n📊 *Seu tabuleiro de tiros:*\n\`\`\`${formatarTabuleiro(tiros)}\`\`\`\n⏭️ Vez de @${game.turno.split('@')[0]}!`;
+      let afundadosText = `${naviosAfundados.length}/${naviosAlvo.length}`;
+      if (naviosAfundados.length > 0) afundadosText += ` (${naviosAfundados.map(n => n.nome).join(', ')})`;
+      
+      const msg = MESSAGES.member.naval.turnResult(res, args[0].toUpperCase(), afundadosText, naviosAtingidos.length, naviosIntactos.length, formatarTabuleiro(tiros), game.turno.split('@')[0]);
       return reply(msg, { mentions: [game.jogador1, game.jogador2] });
     }
 
@@ -208,20 +205,16 @@ export default {
       const naviosAtingidos = naviosAlvoStatus.filter(n => n.acertos > 0 && n.acertos < n.tamanho);
       const naviosIntactos = naviosAlvoStatus.filter(n => n.acertos === 0);
 
-      let status = `🚢 *BATALHA NAVAL*\n\n`;
-      status += `@${game.jogador1.split('@')[0]} vs @${game.jogador2.split('@')[0]}\n\n`;
-      status += `🎯 Turno: @${game.turno.split('@')[0]}\n\n`;
-      status += `📋 *Frota inimiga:*\n`;
-      status += `💀 Afundados: ${naviosAfundados.length}/${naviosAlvoStatus.length}`;
-      if (naviosAfundados.length > 0) status += ` (${naviosAfundados.map(n => n.nome).join(', ')})`;
-      status += `\n🔥 Atingidos: ${naviosAtingidos.length}`;
-      if (naviosAtingidos.length > 0) status += ` (${naviosAtingidos.map(n => `${n.nome} ${n.acertos}/${n.tamanho}`).join(', ')})`;
-      status += `\n🌊 Intactos: ${naviosIntactos.length}\n\n`;
-      status += `📊 *Seu tabuleiro de tiros:*\n\`\`\`${formatarTabuleiro(tirosJogador)}\`\`\`\n`;
-      status += `💡 Use: ${prefix}batalhanaval [coordenada]\n📌 Exemplo: ${prefix}batalhanaval A5`;
-      return reply(status, { mentions: [game.jogador1, game.jogador2] });
+      let afundadosText = `${naviosAfundados.length}/${naviosAlvoStatus.length}`;
+      if (naviosAfundados.length > 0) afundadosText += ` (${naviosAfundados.map(n => n.nome).join(', ')})`;
+      
+      let atingidosText = `${naviosAtingidos.length}`;
+      if (naviosAtingidos.length > 0) atingidosText += ` (${naviosAtingidos.map(n => `${n.nome} ${n.acertos}/${n.tamanho}`).join(', ')})`;
+
+      const statusMsg = MESSAGES.member.naval.status(game.jogador1.split('@')[0], game.jogador2.split('@')[0], game.turno.split('@')[0], afundadosText, atingidosText, naviosIntactos.length, formatarTabuleiro(tirosJogador), prefix);
+      return reply(statusMsg, { mentions: [game.jogador1, game.jogador2] });
     }
 
-    return reply(`🚢 *BATALHA NAVAL*\n\n💡 *Como jogar:*\n\n1️⃣ Desafie alguém:\n${prefix}batalhanaval @usuário\n\n2️⃣ O desafiado aceita ou recusa:\n${prefix}batalhanaval aceitar / recusar\n\n3️⃣ Atire em coordenadas:\n${prefix}batalhanaval A5\n\n🎯 Objetivo: Afundar todos os navios do oponente!\n\n📌 Coordenadas: A-J (colunas) e 1-10 (linhas)\n💥 = Acerto | ❌ = Água`);
+    return reply(MESSAGES.member.naval.usage(prefix));
   },
 };

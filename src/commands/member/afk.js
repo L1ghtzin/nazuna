@@ -11,8 +11,10 @@ export default {
     isGroup,
     sender,
     groupData,
-    groupFile
-  , MESSAGES }) => {
+    groupFile,
+    optimizer,
+    MESSAGES
+  }) => {
     try {
       if (!isGroup) return reply(MESSAGES.permission.groupOnly);
       
@@ -24,16 +26,12 @@ export default {
         reason: reason || 'Não especificado',
         since: Date.now()
       };
-      fs.writeFileSync(groupFile, JSON.stringify(groupData, null, 2));
+      await optimizer.saveJsonWithCache(groupFile, groupData);
       
-      let afkSetMessage = `😴 Você está AFK.`;
-      if (reason) {
-        afkSetMessage += `\nMotivo: ${reason}`;
-      }
-      await reply(afkSetMessage);
+      await reply(MESSAGES.member.afk.success(reason));
     } catch (e) {
       console.error('Erro no comando afk:', e);
-      await reply("Ocorreu um erro ao definir AFK 💔");
+      await reply(MESSAGES.member.afk.error);
     }
   }
 };

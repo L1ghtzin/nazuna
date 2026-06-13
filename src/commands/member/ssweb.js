@@ -11,7 +11,7 @@ export default {
     info
   , MESSAGES }) => {
     try {
-      if (!q) return reply(`Cade o link?`);
+      if (!q) return reply(MESSAGES.error.missing('link'));
       
       await bot.sendMessage(from, {
         image: {

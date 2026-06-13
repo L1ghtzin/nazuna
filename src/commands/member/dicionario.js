@@ -12,9 +12,9 @@ export default {
     MESSAGES
   }) => {
     try {
-      if (!q) return reply(`📔 Qual palavra você quer procurar no dicionário? Me diga após o comando ${prefix}${command}! 😊`);
+      if (!q) return reply(MESSAGES.member.dicionario.missingWord(prefix, command));
 
-      await reply("📔 Procurando no dicionário... Aguarde um pouquinho! ⏳");
+      await reply(MESSAGES.member.dicionario.searching);
 
       const palavra = q.trim().toLowerCase();
       const resultado = await Dicionary(palavra);
@@ -66,7 +66,7 @@ export default {
         throw new Error('Sem resultados');
       }
     } catch (error) {
-      reply(`💔 Palavra não encontrada. Verifique a ortografia e tente novamente.`);
+      reply(MESSAGES.member.dicionario.notFound);
     }
   }
 };

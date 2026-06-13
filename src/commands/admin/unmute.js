@@ -43,13 +43,13 @@ export default {
         await optimizer.saveJsonWithCache(groupFilePath, groupData);
         optimizer.invalidateGroup(from);
         await bot.sendMessage(from, {
-          text: `✅ @${getUserName(menc_os2)} foi desmutado e pode enviar mensagens novamente.`,
+          text: MESSAGES.admin.unmute.success(getUserName(menc_os2)),
           mentions: [menc_os2]
         }, {
           quoted: info
         });
       } else {
-        reply('❌ Este usuário não está mutado.');
+        reply(MESSAGES.admin.unmute.notMuted);
       }
       
     } catch (e) {

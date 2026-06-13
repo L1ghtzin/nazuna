@@ -21,8 +21,8 @@ export default {
       groupData.antiporn = !groupData.antiporn;
       await optimizer.saveJsonWithCache(groupFilePath, groupData);
       return reply(groupData.antiporn 
-        ? "🔞 *ANTI-PORN ATIVADO*\n\nQualquer imagem ou vídeo adulto enviado neste grupo será detectado e o usuário será banido automaticamente." 
-        : "✅ *ANTI-PORN DESATIVADO*\n\nA detecção de conteúdo adulto foi desligada.");
+        ? MESSAGES.admin.extra_protections.antipornOn 
+        : MESSAGES.admin.extra_protections.antipornOff);
     }
 
     // --- ANTIGORE ---
@@ -31,8 +31,8 @@ export default {
       groupData.antigore = !groupData.antigore;
       await optimizer.saveJsonWithCache(groupFilePath, groupData);
       return reply(groupData.antigore 
-        ? "🩸 *ANTI-GORE ATIVADO*\n\nQualquer conteúdo de violência extrema ou gore enviado neste grupo causará o banimento automático do membro." 
-        : "✅ *ANTI-GORE DESATIVADO*\n\nA detecção de violência/gore foi desligada.");
+        ? MESSAGES.admin.extra_protections.antigoreOn 
+        : MESSAGES.admin.extra_protections.antigoreOff);
     }
 
     // --- ANTI-STEALTH (configurável) ---
@@ -55,20 +55,20 @@ export default {
       
       if (key === 'antilinkgp') {
         const message = groupData.antilinkgp 
-          ? `✅ *Antilinkgp foi ativado com sucesso!*\n\nAgora, se alguém enviar links de outros grupos, será banido automaticamente. Mantenha o grupo seguro! 🛡️` 
-          : `⚠️ *Antilinkgp foi desativado.*\n\nLinks de outros grupos não serão mais bloqueados. Use com cuidado! 🔓`;
+          ? MESSAGES.admin.extra_protections.antilinkgpOn 
+          : MESSAGES.admin.extra_protections.antilinkgpOff;
         return reply(message);
       } else if (key === 'antilinkcanal') {
         const message = groupData.antilinkcanal 
-          ? `✅ *Antilinkcanal foi ativado!*\n\nNão serão tolerados links de canais neste grupo. Quem desrespeitar, levará ban! 🛡️` 
-          : `⚠️ *Antilinkcanal desativado.*\n\nFiquem à vontade, links de canais são permitidos novamente. 🔓`;
+          ? MESSAGES.admin.extra_protections.antilinkcanalOn 
+          : MESSAGES.admin.extra_protections.antilinkcanalOff;
         return reply(message);
       } else {
         const status = groupData[key] ? "ATIVADO 🟢" : "DESATIVADO 🔴";
-        return reply(`🔗 *PROTEÇÃO DE LINK: ${cmd.toUpperCase()}*\n\nStatus: ${status}`);
+        return reply(MESSAGES.admin.extra_protections.genericStatus(cmd, status));
       }
     }
 
-    return reply(`✅ Proteção ${cmd} atualizada.`);
+    return reply(MESSAGES.admin.extra_protections.genericUpdate(cmd));
   }
 };

@@ -18,11 +18,11 @@ export default {
   , MESSAGES }) => {
     try {
       if (!isOwner) return reply(MESSAGES.permission.ownerOnly);
-      if (!isQuotedImage && !isImage) return reply(`💔 Envie ou marque uma imagem para definir como foto de perfil do bot.\n\n📝 *Uso:* Envie uma imagem com o comando ou responda uma imagem com ${prefix}fotobot`);
+      if (!isQuotedImage && !isImage) return reply(MESSAGES.owner.fotobot.missingImage(prefix));
       
       const messageToUse = isQuotedImage ? quotedMessageContent : info.message;
       const mediaInfo = getMediaInfo(messageToUse);
-      if (!mediaInfo || mediaInfo.type !== 'image') return reply(`💔 Mídia inválida. Envie uma imagem.`);
+      if (!mediaInfo || mediaInfo.type !== 'image') return reply(MESSAGES.owner.fotobot.invalidMedia);
       
       const imageBuffer = await getFileBuffer(mediaInfo.media, 'image');
       
@@ -30,7 +30,7 @@ export default {
         // Processa a imagem com ffmpeg antes de atualizar
         const processedBuffer = await processImageForProfile(imageBuffer);
         await bot.updateProfilePicture(bot.user.id, processedBuffer);
-        reply('✅ Foto de perfil do bot alterada com sucesso!');
+        reply(MESSAGES.owner.fotobot.success);
       } catch (updateError) {
         console.error('Erro ao alterar foto de perfil:', updateError);
         reply(MESSAGES.error.general);

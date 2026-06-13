@@ -21,15 +21,15 @@ export default {
     GRUPOS_DIR,
     MESSAGES
   }) => {
-    if (!isGroup) return reply("🎮 Ops! Esse comando só funciona em grupos!");
+    if (!isGroup) return reply(MESSAGES.error.onlyGroup);
 
     // --- CHAVEAMENTO ---
     if (command === 'chaveamento') {
       let participantes = [];
-      if (!q) return reply(`💔 Forneça exatamente 16 nomes! Exemplo: ${prefix}${command} nome1,nome2,...,nome16`);
+      if (!q) return reply(MESSAGES.member.fun.chaveamentoMissingNames(prefix, command));
       
       participantes = q.split(',').map(n => n.trim()).filter(n => n);
-      if (participantes.length !== 16) return reply(`💔 Forneça exatamente 16 nomes! Você forneceu ${participantes.length}.`);
+      if (participantes.length !== 16) return reply(MESSAGES.member.fun.chaveamentoInvalidCount(participantes.length));
 
       participantes.sort(() => Math.random() - 0.5);
       const g1 = participantes.slice(0, 8);
@@ -45,11 +45,11 @@ export default {
 
     // --- SORTEIO NUMERO ---
     if (command === 'sorteionum' || command === 'gerarnumero') {
-      if (!q) return reply(`💡 Uso: ${prefix}${command} 1-50`);
+      if (!q) return reply(MESSAGES.member.fun.sorteionumUsage(prefix, command));
       const [min, max] = q.split('-').map(n => parseInt(n.trim()));
-      if (isNaN(min) || isNaN(max) || min >= max) return reply(`💔 Intervalo inválido!`);
+      if (isNaN(min) || isNaN(max) || min >= max) return reply(MESSAGES.member.fun.sorteionumInvalid);
       const num = Math.floor(Math.random() * (max - min + 1)) + min;
-      return reply(`🎲 *Sorteio:* *${num}*`);
+      return reply(MESSAGES.member.fun.sorteionumResult(num));
     }
 
     // --- ANIVERSÁRIO ---
@@ -65,16 +65,12 @@ export default {
       } catch (e) { aniversarios = {}; }
 
       if (!q) {
-        let msg = `🎂 *Sistema de Aniversários*\n\n`;
-        msg += `📅 Use: ${prefix}${command} DD/MM\n`;
-        msg += `👥 Use: ${prefix}${command} lista\n`;
-        msg += `✨ O bot parabeniza automaticamente os aniversariantes do dia!`;
-        return reply(msg);
+        return reply(MESSAGES.member.fun.niverMenu(prefix, command));
       }
 
       if (q.toLowerCase() === 'lista' || q.toLowerCase() === 'list') {
         const entries = Object.entries(aniversarios);
-        if (entries.length === 0) return reply("📭 Nenhum aniversário registrado neste grupo.");
+        if (entries.length === 0) return reply(MESSAGES.member.fun.niverEmpty);
         
         let msg = `📅 *Aniversários do Grupo*\n\n`;
         entries.sort((a, b) => a[1].split('/').reverse().join('') > b[1].split('/').reverse().join('') ? 1 : -1)
@@ -85,19 +81,19 @@ export default {
       }
 
       const dateMatch = q.match(/^([0-2][0-9]|3[01])\/(0[1-9]|1[0-2])$/);
-      if (!dateMatch) return reply(`💔 Formato inválido! Use DD/MM (ex: 25/12).`);
+      if (!dateMatch) return reply(MESSAGES.member.fun.niverInvalidFormat);
 
       aniversarios[sender] = q;
       fs.writeFileSync(aniversariosPath, JSON.stringify(aniversarios, null, 2));
-      return reply(`✅ @${sender.split('@')[0]}, seu aniversário foi registrado para o dia ${q}! 🥳`, { mentions: [sender] });
+      return reply(MESSAGES.member.fun.niverSuccess(sender.split('@')[0], q), { mentions: [sender] });
     }
 
     const isModoBn = groupData.modobn || groupData.modobrincadeira || true;
-    if (!isModoBn) return reply(`💔 O modo brincadeira está desativado nesse grupo!`);
+    if (!isModoBn) return reply(MESSAGES.error.modoBnDisabled);
 
     // --- CHANCE ---
     if (command === 'chance') {
-      if (!q) return reply(`🎲 Me conta algo para eu calcular as chances! 📊\n\n📝 *Exemplo:* ${prefix}chance chover pizza hoje`);
+      if (!q) return reply(MESSAGES.member.fun.chanceMissingText(prefix));
       const chance = Math.floor(Math.random() * 101);
       const comments = [
         'As estrelas sussurraram...', 'Minha bola de cristal revelou...', 'Calculei usando matemática quântica...', 
@@ -109,7 +105,7 @@ export default {
 
     // --- QUANDO ---
     if (command === 'quando') {
-      if (!q) return reply(`🔮 Me conta o que você quer que eu preveja! 🌠\n\n📝 *Exemplo:* ${prefix}quando vou ficar rico`);
+      if (!q) return reply(MESSAGES.member.fun.quandoMissingText(prefix));
       const times = [
         'hoje à noite 🌙', 'amanhã de manhã 🌅', 'na próxima semana 📅', 'no próximo mês 🌕', 
         'no próximo ano 🎆', 'em 2025 🚀', 'quando você menos esperar ✨', 'em uma terça-feira chuvosa 🌧️',
@@ -121,7 +117,7 @@ export default {
 
     // --- SN (Sim ou Não) ---
     if (command === 'sn') {
-      if (!q) return reply(`🎱 Faça uma pergunta para o oráculo! 🔮\n\n📝 *Exemplo:* ${prefix}sn Vou ganhar na loteria?`);
+      if (!q) return reply(MESSAGES.member.fun.snMissingText(prefix));
       const pos = ['Sim! 🎉', 'Claro que sim! 😎', 'Com certeza! ✨', 'Pode apostar! 🎯', 'Sem dúvida! 👍', 'Obviamente! 😌', 'É isso aí! 🚀', 'Vai dar certo! 🍀'];
       const neg = ['Não! 😅', 'Nem pensar! 😂', 'Esquece! 🤭', 'Nada a ver! 🙄', 'De jeito nenhum! 😑', 'Que nada! 😒', 'Não rola! 😶', 'Melhor não! 😬'];
       const isPos = Math.random() > 0.5;
@@ -135,7 +131,7 @@ export default {
       const name = menc_os2 ? getUserName(menc_os2) : pushname;
       const level = Math.floor(Math.random() * 101);
       const status = level >= 90 ? '🌟 SORTE LENDÁRIA!' : level >= 75 ? '🍀 Super sortudo!' : level >= 60 ? '✨ Boa sorte!' : level >= 40 ? '😐 Sorte mediana' : level >= 20 ? '😅 Pouca sorte' : '💀 AZAR TOTAL!';
-      return reply(`🍀 *TESTE DE SORTE* 🍀\n\n👤 *Usuário:* ${name}\n📊 *Nível de Sorte:* ${level}%\n\n📝 *Status:* ${status}\n\n${level >= 50 ? '🚀 Aproveite o dia, a sorte está com você!' : '⚠️ Melhor ter cuidado hoje!'}`, { mentions: [target] });
+      return reply(MESSAGES.member.fun.sorteStatus(name, level, status), { mentions: [target] });
     }
   },
 };

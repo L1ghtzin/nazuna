@@ -21,7 +21,7 @@ export default {
     normalizar,
     MESSAGES
   }) => {
-    if (!isGroup) return reply('🛑 Este jogo só funciona em grupos!');
+    if (!isGroup) return reply(MESSAGES.permission.groupOnly);
 
     const stopPath = path.join(__dirname, '../../funcs/json/stop.json');
     let categoriasStop = ['Nome', 'País', 'Cidade', 'Animal', 'Cor', 'Fruta', 'Objeto', 'Profissão'];
@@ -48,7 +48,7 @@ export default {
       global.stopGames[gameKey] = {
         letra, categorias: escolhidas, respostas: {}, status: 'active', iniciado: Date.now(), tempoLimite: 300000
       };
-      let msg = `🛑 *STOP*\n🔤 *Letra:* ${letra}\n📋 *Categorias:*\n${escolhidas.map((c, i) => `${i+1}. ${c}`).join('\n')}\n\n💡 Use: ${prefix}stop [categoria] [palavra]`;
+      let msg = MESSAGES.member.stop.start(letra, escolhidas.map((c, i) => `${i+1}. ${c}`).join('\n'), prefix);
       return reply(msg);
     }
 
@@ -56,31 +56,31 @@ export default {
     if (Date.now() - game.iniciado > game.tempoLimite) {
       game.status = 'finished';
       delete global.stopGames[gameKey];
-      return reply('⏰ *TEMPO ESGOTADO!* Jogo encerrado.');
+      return reply(MESSAGES.member.stop.timeout);
     }
 
     if (args.length >= 2) {
       const catInput = normalizar(args[0].toLowerCase());
       const palInput = args.slice(1).join(' ');
       const cat = game.categorias.find(c => normalizar(c.toLowerCase()).includes(catInput) || catInput.includes(normalizar(c.toLowerCase())));
-      if (!cat) return reply(`💔 Categoria inválida!`);
-      if (normalizar(palInput.toLowerCase())[0] !== normalizar(game.letra.toLowerCase())) return reply(`💔 Deve começar com ${game.letra}!`);
+      if (!cat) return reply(MESSAGES.member.stop.invalidCategory);
+      if (normalizar(palInput.toLowerCase())[0] !== normalizar(game.letra.toLowerCase())) return reply(MESSAGES.member.stop.wrongLetter(game.letra));
       if (!game.respostas[sender]) game.respostas[sender] = {};
-      if (game.respostas[sender][cat]) return reply(`⚠️ Já respondeu ${cat}!`);
+      if (game.respostas[sender][cat]) return reply(MESSAGES.member.stop.alreadyAnsweredCategory(cat));
       
       const jaUsada = Object.values(game.respostas).some(r => Object.values(r).some(p => normalizar(p.toLowerCase()) === normalizar(palInput.toLowerCase())));
-      if (jaUsada) return reply('⚠️ Palavra já usada!');
+      if (jaUsada) return reply(MESSAGES.member.stop.wordAlreadyUsed);
 
       game.respostas[sender][cat] = palInput;
       const comps = Object.keys(game.respostas[sender]).length;
       if (comps === game.categorias.length) {
         delete global.stopGames[gameKey];
-        return reply(`🏆 *STOP!* @${sender.split('@')[0]} completou tudo!\n⏱️ Tempo: ${((Date.now() - game.iniciado)/1000).toFixed(1)}s`, { mentions: [sender] });
+        return reply(MESSAGES.member.stop.winner(sender.split('@')[0], ((Date.now() - game.iniciado)/1000).toFixed(1)), { mentions: [sender] });
       }
-      return reply(`✅ Aceito! ${cat}: ${palInput} (${comps}/${game.categorias.length})`);
+      return reply(MESSAGES.member.stop.accepted(cat, palInput, comps, game.categorias.length));
     }
 
-    let status = `🛑 *STOP*\n🔤 *Letra:* ${game.letra}\n📋 *Categorias:*\n`;
+    let status = MESSAGES.member.stop.status(game.letra);
     game.categorias.forEach((c, i) => status += `${i+1}. ${c}${game.respostas[sender]?.[c] ? ' ✅' : ''}\n`);
     return reply(status);
   },

@@ -13,14 +13,15 @@ export default {
     MESSAGES
   }) => {
     try {
-      if (!q) return reply(`📲 *Gerador de QR Code*\n\n💡 *Como usar:*\n• Envie o texto ou link após o comando\n• Ex: ${prefix}qrcode https://exemplo.com\n• Ex: ${prefix}qrcode Seu texto aqui\n\n✨ O QR Code será gerado instantaneamente!`);
+      if (!q) return reply(MESSAGES.member.qrcode.usage(prefix));
 
-      await reply('Aguarde um momentinho... ☀️');
+      await reply(MESSAGES.member.qrcode.generating);
       
       const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=${encodeURIComponent(q)}`;
+      const qSnippet = `${q.substring(0, 100)}${q.length > 100 ? '...' : ''}`;
       await bot.sendMessage(from, {
         image: { url: qrUrl },
-        caption: `📱✨ *Seu QR Code super fofo está pronto!*\n\nConteúdo: ${q.substring(0, 100)}${q.length > 100 ? '...' : ''}`
+        caption: MESSAGES.member.qrcode.success(qSnippet)
       }, { quoted: info });
     } catch (e) {
       console.error("Erro ao gerar QR Code:", e);

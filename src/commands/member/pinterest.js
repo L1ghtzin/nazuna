@@ -9,10 +9,10 @@ export default {
   }) => {
     try {
       if (!pinterest || typeof pinterest.search !== 'function') {
-        return reply('⚠️ Módulo Pinterest indisponível no momento. Tente novamente em instantes.');
+        return reply(MESSAGES.member.pinterest.unavailable);
       }
 
-      if (!q) return reply('Digite o termo para pesquisar no Pinterest. Exemplo: ' + prefix + 'pinterest gatinhos /3');
+      if (!q) return reply(MESSAGES.member.pinterest.usage(prefix));
 
       // Detecta se é URL de Pinterest antes de qualquer split
       const PIN_URL_REGEX = /^(?:https?:\/\/)?(?:[a-zA-Z0-9-]+\.)?pinterest\.\w{2,6}(?:\.\w{2})?\/pin\/([0-9a-zA-Z]+)|^https?:\/\/pin\.it\/[a-zA-Z0-9]+/i;
@@ -34,22 +34,22 @@ export default {
 
       const isPinUrl = PIN_URL_REGEX.test(searchTerm);
       
-      await reply(isPinUrl ? '⏳ Baixando do Pinterest... Isso pode levar um momento.' : `🔍 Pesquisando no Pinterest por "*${searchTerm}*"...\n\n⏳ Aguarde um momento...`);
+      await reply(isPinUrl ? MESSAGES.member.pinterest.downloading : MESSAGES.member.pinterest.searching(searchTerm));
 
       const pinPromise = isPinUrl ? pinterest.dl(searchTerm) : pinterest.search(searchTerm);
 
       pinPromise
         .then(async (datinha) => {
           if (!datinha || !datinha.ok || !datinha.urls || datinha.urls.length === 0) {
-            return reply(isPinUrl ? 'Não foi possível baixar este link do Pinterest. 😕' : 'Nenhuma imagem encontrada para o termo pesquisado. 😕');
+            return reply(isPinUrl ? MESSAGES.member.pinterest.downloadError : MESSAGES.member.pinterest.searchError);
           }
 
           const itemsToSend = datinha.urls.slice(0, maxImages);
           for (const url of itemsToSend) {
             try {
               const message = isPinUrl && datinha.type === 'video'
-                ? { video: { url }, caption: '📌 Download do Pinterest' }
-                : { image: { url }, caption: isPinUrl ? '📌 Download do Pinterest' : `📌 Resultado da pesquisa por "${searchTerm}"` };
+                ? { video: { url }, caption: MESSAGES.member.pinterest.downloadCaption }
+                : { image: { url }, caption: isPinUrl ? MESSAGES.member.pinterest.downloadCaption : MESSAGES.member.pinterest.searchCaption(searchTerm) };
               await bot.sendMessage(from, message, { quoted: info });
             } catch (sendErr) {
               console.error('Erro ao enviar mídia Pinterest:', sendErr.message);
@@ -59,12 +59,12 @@ export default {
         })
         .catch((e) => {
           console.error('Erro no comando pinterest (promise):', e);
-          reply("Ocorreu um erro ao processar o Pinterest 💔");
+          reply(MESSAGES.error.general);
         });
       return;
     } catch (e) {
       console.error('Erro no comando pinterest:', e);
-      reply("Ocorreu um erro ao processar o Pinterest 💔");
+      reply(MESSAGES.error.general);
     }
   }
 };

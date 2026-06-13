@@ -7,8 +7,8 @@ export default {
   usage: `${global.prefix}delreact <id>`,
   handle: async ({  reply, isOwner, q, prefix , MESSAGES }) => {
     try {
-      if (!isOwner) return reply('Apenas o dono pode remover reacts.');
-      if (!q) return reply('Uso: ' + prefix + 'delreact id');
+      if (!isOwner) return reply(MESSAGES.permission.ownerOnly);
+      if (!q) return reply(MESSAGES.owner.delreact.missingParams(prefix, 'delreact'));
       const result = deleteCustomReact(q.trim());
       await reply(result.message);
     } catch (e) {

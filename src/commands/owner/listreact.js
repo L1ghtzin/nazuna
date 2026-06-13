@@ -7,12 +7,12 @@ export default {
   usage: `${global.prefix}listreact`,
   handle: async ({  reply, isOwner , MESSAGES }) => {
     try {
-      if (!isOwner) return reply('Apenas o dono pode listar reacts.');
+      if (!isOwner) return reply(MESSAGES.permission.ownerOnly);
       const reacts = loadCustomReacts();
-      if (reacts.length === 0) return reply('Nenhum react configurado.');
-      let listMsg = '📋 Lista de Reacts:\n\n';
+      if (reacts.length === 0) return reply(MESSAGES.owner.listreact.empty);
+      let listMsg = MESSAGES.owner.listreact.header;
       reacts.forEach(r => {
-        listMsg += `ID: ${r.id} | Trigger: ${r.trigger} | Emoji: ${r.emoji}\n`;
+        listMsg += MESSAGES.owner.listreact.item(r);
       });
       await reply(listMsg);
     } catch (e) {

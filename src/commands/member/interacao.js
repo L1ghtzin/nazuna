@@ -19,7 +19,7 @@ export default {
       }
       
       if (!isGroup) return reply(MESSAGES.permission.groupOnly);
-      if (!isModoBn) return reply(`💔 O modo brincadeira não está ativo nesse grupo.`);
+      if (!isModoBn) return reply(MESSAGES.error.modoBnDisabled);
       
       if (!menc_os2) return reply(MESSAGES.error.missing('alguém'));
       
@@ -40,7 +40,7 @@ export default {
       }
 
       let responseText = gameResponse?.replaceAll('#nome#', `@${getUserName(menc_os2)}`) 
-        || `Você acabou de dar um(a) ${command} no(a) @${getUserName(menc_os2)}`;
+        || MESSAGES.member.interacao.defaultAction(command, getUserName(menc_os2));
         
       let media = gamesData.games2?.[command];
       

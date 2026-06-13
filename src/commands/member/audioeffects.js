@@ -76,7 +76,7 @@ export default {
         };
 
         const muk = isQuotedAudio ? info.message.extendedTextMessage.contextInfo.quotedMessage.audioMessage : info.message.audioMessage;
-        await reply('🎵 Processando áudio... Por favor, aguarde alguns segundos.');
+        await reply(MESSAGES.member.audioeffects.processing);
         
         const rane = path.join(TMP_DIR, `${Math.random()}.mp3`);
         const buffimg = await getFileBuffer(muk, 'audio');
@@ -105,7 +105,7 @@ export default {
           }
         });
       } else {
-        reply(" Para aplicar este efeito de áudio, responda a uma mensagem que contenha um áudio.");
+        reply(MESSAGES.member.audioeffects.missingAudio);
       }
     } catch (e) {
       console.error(e);

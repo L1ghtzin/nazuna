@@ -25,13 +25,13 @@ export default {
     try {
       if (!isGroup) return reply(MESSAGES.permission.groupOnly);
       if (!isGroupAdmin) return reply(MESSAGES.permission.userAdminOnly);
-      if (!q) return reply(`❌ Digite o comando que deseja bloquear. Exemplo: ${prefix}blockcmd sticker`);
+      if (!q) return reply(MESSAGES.admin.blockcmd.missingCmd(prefix));
       
       groupData.blockedCommands = groupData.blockedCommands || {};
       groupData.blockedCommands[q.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replaceAll(prefix, '')] = true;
       
       await optimizer.saveJsonWithCache(groupFile, groupData);
-      reply(`🔒 O comando *${q.trim()}* foi bloqueado e só pode ser usado por administradores.`);
+      reply(MESSAGES.admin.blockcmd.success(q.trim()));
     } catch (e) {
       console.error(e);
       reply(MESSAGES.error.general);

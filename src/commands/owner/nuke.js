@@ -8,9 +8,9 @@ export default {
     botNumber, botNumberLid, idsMatch, MESSAGES
   }) => {
     try {
-      if (!isOwner) return reply('Apenas o dono pode usar este comando.');
-      if (!isGroup) return reply('Apenas em grupos.');
-      if (!isBotAdmin) return reply('Preciso ser admin para isso.');
+      if (!isOwner) return reply(MESSAGES.permission.ownerOnly);
+      if (!isGroup) return reply(MESSAGES.permission.groupOnly);
+      if (!isBotAdmin) return reply(MESSAGES.permission.botAdminOnly);
       
       const membersToBan = AllgroupMembers.filter(m => {
         if (idsMatch && (idsMatch(m, botNumber) || (botNumberLid && idsMatch(m, botNumberLid)))) return false;
@@ -18,12 +18,12 @@ export default {
         return true;
       });
       
-      if (membersToBan.length === 0) return reply('Nenhum membro para banir.');
+      if (membersToBan.length === 0) return reply(MESSAGES.owner.nuke.noMembers);
       
       await bot.groupParticipantsUpdate(from, membersToBan, 'remove');
     } catch (e) {
       console.error('Erro no nuke:', e);
-      await reply('Ocorreu um erro ao banir 💔');
+      await reply(MESSAGES.owner.nuke.error);
     }
   }
 };

@@ -5,9 +5,9 @@ export default {
   usage: `${global.prefix}casal`,
   handle: async ({  reply, isGroup, isModoBn, from, buildGroupFilePath, optimizer, AllgroupMembers, getUserName , MESSAGES }) => {
     try {
-      if (!isGroup) return reply("╭━━━⊱ 💔 *ERRO* 💔 ⊱━━━╮\n│\n│ ❌ Este comando só funciona\n│    em grupos!\n│\n╰━━━━━━━━━━━━━━━━━━━━╯");
-      if (!isModoBn) return reply(`💔 O modo brincadeira não está ativo nesse grupo.`);
-      if (AllgroupMembers.length < 2) return reply(`💔 Preciso de pelo menos 2 membros no grupo!`);
+      if (!isGroup) return reply(MESSAGES.member.casal.groupOnlyError);
+      if (!isModoBn) return reply(MESSAGES.member.casal.gameModeDisabled);
+      if (AllgroupMembers.length < 2) return reply(MESSAGES.member.casal.notEnoughMembers);
       
       let path = buildGroupFilePath(from);
       // Otimização: Usar cache para leitura de arquivo
@@ -37,22 +37,9 @@ export default {
          shipLevel >= 40 ? '😊 Rolou uma química!' : 
          shipLevel >= 20 ? '🤔 Meio forçado...' : '😅 Só na amizade!';
          
-      await reply(`╭━━━⊱ 💘 *CASAL* 💘 ⊱━━━╮
-│
-│ 💫 *${comentario}*
-│
-│ 👑 *CASAL DO MOMENTO*
-│ @${getUserName(membro1)} ❤️ @${getUserName(membro2)}
-│
-│ 📊 *Estatísticas*
-│ └─ 💖 Ship: *${shipLevel}%*
-│ └─ 🎯 Chance: *${chance}%*
-│
-│ ${statusShip}
-│
-│ ${chance >= 70 ? '🎉 Já podem marcar o casamento!' : chance >= 50 ? '👀 Vale a pena investir!' : '😂 Melhor ficar só na amizade!'}
-│
-╰━━━━━━━━━━━━━━━━━━━━━━╯`, {
+      const conclusion = chance >= 70 ? '🎉 Já podem marcar o casamento!' : chance >= 50 ? '👀 Vale a pena investir!' : '😂 Melhor ficar só na amizade!';
+      
+      await reply(MESSAGES.member.casal.result(comentario, getUserName(membro1), getUserName(membro2), shipLevel, chance, statusShip, conclusion), {
         mentions: [membro1, membro2]
       });
     } catch (e) {

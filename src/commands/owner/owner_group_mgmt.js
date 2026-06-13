@@ -15,30 +15,30 @@ export default {
     if (['listagp', 'listgp'].includes(cmd)) {
       const getGroups = await bot.groupFetchAllParticipating();
       const groups = Object.values(getGroups).sort((a, b) => a.subject.localeCompare(b.subject));
-      let teks = `🌟 *LISTA DE GRUPOS* (${groups.length})\n\n`;
+      let teks = MESSAGES.owner.owner_group_mgmt.listgp.header(groups.length);
       groups.forEach((g, i) => {
-        teks += `${i + 1}. ${g.subject}\n🆔 ${g.id}\n\n`;
+        teks += MESSAGES.owner.owner_group_mgmt.listgp.item(i + 1, g.subject, g.id);
       });
       return reply(teks);
     }
 
     if (cmd === 'listbangp') {
       const banned = Object.keys(banGpIds || {}).filter(id => banGpIds[id]);
-      if (!banned.length) return reply("✅ Nenhum grupo banido.");
-      let teks = `🚫 *GRUPOS BANIDOS* (${banned.length})\n\n`;
+      if (!banned.length) return reply(MESSAGES.owner.owner_group_mgmt.listbangp.empty);
+      let teks = MESSAGES.owner.owner_group_mgmt.listbangp.header(banned.length);
       for (const id of banned) {
         const meta = await getCachedGroupMetadata(id).catch(() => null);
-        teks += `🔹 ${meta?.subject || 'Desconhecido'}\n🆔 ${id}\n\n`;
+        teks += MESSAGES.owner.owner_group_mgmt.listbangp.item(meta?.subject || 'Desconhecido', id);
       }
       return reply(teks);
     }
 
     if (['bangp', 'unbangp', 'desbangp'].includes(cmd)) {
-      if (!isGroup) return reply("Use no grupo!");
+      if (!isGroup) return reply(MESSAGES.permission.groupOnly);
       banGpIds[from] = !banGpIds[from];
       const filePath = DATABASE_DIR + `/dono/bangp.json`;
       await optimizer.saveJsonWithCache(filePath, banGpIds);
-      return reply(banGpIds[from] ? "🚫 Grupo banido!" : "✅ Grupo desbanido!");
+      return reply(banGpIds[from] ? MESSAGES.owner.owner_group_mgmt.bangp.banned : MESSAGES.owner.owner_group_mgmt.bangp.unbanned);
     }
   }
 };

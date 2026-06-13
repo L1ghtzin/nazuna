@@ -15,7 +15,7 @@ export default {
     // ==================== AUTO-RESPOSTAS ====================
     if (['addauto', 'addautoadmin', 'addautoresponse'].includes(cmd)) {
       if (!isGroupAdmin && !isOwner) return reply(MESSAGES.permission.adminOnly);
-      if (!q || !q.includes('/')) return reply(`Uso: ${groupPrefix}${cmd} trigger/resposta`);
+      if (!q || !q.includes('/')) return reply(MESSAGES.admin.custom.autoAddUsage(groupPrefix, cmd));
       
       const [trigger, ...respParts] = q.split('/');
       const responseText = respParts.join('/').trim();
@@ -25,13 +25,13 @@ export default {
         const responses = loadCustomAutoResponses();
         responses.push({ trigger: trigger.trim(), response: responseText, addedBy: sender });
         saveCustomAutoResponses(responses);
-        return reply(`✅ Auto-resposta global '${trigger.trim()}' adicionada!`);
+        return reply(MESSAGES.admin.custom.autoAddGlobalSuccess(trigger.trim()));
       } else {
-        if (!isGroup) return reply("Comando para grupos 💔");
+        if (!isGroup) return reply(MESSAGES.permission.groupOnly);
         const responses = loadGroupAutoResponses(from);
         responses.push({ trigger: trigger.trim(), response: responseText, addedBy: sender });
         saveGroupAutoResponses(from, responses);
-        return reply(`✅ Auto-resposta do grupo '${trigger.trim()}' adicionada!`);
+        return reply(MESSAGES.admin.custom.autoAddGroupSuccess(trigger.trim()));
       }
     }
 
@@ -40,21 +40,21 @@ export default {
       const globalResponses = loadCustomAutoResponses();
       const groupResponses = isGroup ? loadGroupAutoResponses(from) : [];
       
-      let msg = `📋 *AUTO-RESPOSTAS*\n\n`;
+      let msg = MESSAGES.admin.custom.autoListHeader;
       if (globalResponses.length) {
-        msg += `🌍 *Globais:*\n` + globalResponses.map((r, i) => `${i+1}. ${r.trigger}`).join('\n') + '\n\n';
+        msg += MESSAGES.admin.custom.autoListGlobal + globalResponses.map((r, i) => `${i+1}. ${r.trigger}`).join('\n') + '\n\n';
       }
       if (groupResponses.length) {
-        msg += `👥 *Do Grupo:*\n` + groupResponses.map((r, i) => `${i+1}. ${r.trigger}`).join('\n');
+        msg += MESSAGES.admin.custom.autoListGroup + groupResponses.map((r, i) => `${i+1}. ${r.trigger}`).join('\n');
       }
-      if (!globalResponses.length && !groupResponses.length) return reply("📪 Nenhuma cadastrada.");
+      if (!globalResponses.length && !groupResponses.length) return reply(MESSAGES.admin.custom.autoListEmpty);
       return reply(msg);
     }
 
     // ==================== COMANDOS SEM PREFIXO (NOPREFIX) ====================
     if (['addnoprefix', 'addnopref'].includes(cmd)) {
       if (!isOwner) return reply(MESSAGES.permission.ownerOnly);
-      if (!q || !q.includes('/')) return reply(`Uso: ${groupPrefix}${cmd} trigger/comando\nEx: menu/menu`);
+      if (!q || !q.includes('/')) return reply(MESSAGES.admin.custom.noPrefAddUsage(groupPrefix, cmd));
       
       const [trigger, ...targetParts] = q.split('/');
       const target = targetParts.join('/').trim();
@@ -63,17 +63,17 @@ export default {
 
       if (addNoPrefix(trigger.trim(), targetCmd, fixedParams)) {
         optimizer.clearStatic(`noprefix:${from}`);
-        return reply(`✅ NoPrefix '${trigger.trim()}' -> '${target}' adicionado!`);
+        return reply(MESSAGES.admin.custom.noPrefAddSuccess(trigger.trim(), target));
       }
-      return reply("❌ Erro ao salvar.");
+      return reply(MESSAGES.admin.custom.noPrefAddError);
     }
 
     if (['listnoprefix', 'listnopref'].includes(cmd)) {
       if (!isOwner) return reply(MESSAGES.permission.ownerOnly);
       const list = listNoPrefix();
-      if (!list.length) return reply("📜 Nenhum comando NoPrefix cadastrado.");
+      if (!list.length) return reply(MESSAGES.admin.custom.noPrefListEmpty);
       
-      let msg = `📋 *COMANDOS SEM PREFIXO*\n\n`;
+      let msg = MESSAGES.admin.custom.noPrefListHeader;
       list.forEach((item, i) => {
         msg += `${i + 1}. ${item.trigger} ➔ ${item.command}${item.fixedParams ? ' ' + item.fixedParams : ''}\n`;
       });
@@ -82,71 +82,71 @@ export default {
 
     if (['delnoprefix', 'delnopref'].includes(cmd)) {
       if (!isOwner) return reply(MESSAGES.permission.ownerOnly);
-      if (!q || isNaN(q)) return reply(`Uso: ${groupPrefix}${cmd} [número]`);
+      if (!q || isNaN(q)) return reply(MESSAGES.admin.custom.noPrefDelUsage(groupPrefix, cmd));
       
       const index = parseInt(q) - 1;
       if (removeNoPrefix(index)) {
         optimizer.clearStatic(`noprefix:${from}`);
-        return reply("✅ NoPrefix removido.");
+        return reply(MESSAGES.admin.custom.noPrefDelSuccess);
       }
-      return reply("❌ Posição inválida.");
+      return reply(MESSAGES.admin.custom.noPrefDelInvalid);
     }
 
     // ==================== APELIDOS (ALIAS) ====================
     if (['addalias'].includes(cmd)) {
       if (!isOwner) return reply(MESSAGES.permission.ownerOnly);
-      if (!q || !q.includes('/')) return reply(`Uso: ${groupPrefix}addalias apelido/comando`);
+      if (!q || !q.includes('/')) return reply(MESSAGES.admin.custom.aliasAddUsage(groupPrefix));
       
       const [alias, target] = q.split('/').map(p => p.trim());
       if (addAlias(alias, target)) {
         optimizer.clearStatic('aliases:global');
-        return reply(`✅ Alias '${alias}' -> '${target}' adicionado!`);
+        return reply(MESSAGES.admin.custom.aliasAddSuccess(alias, target));
       }
-      return reply("❌ Erro ao salvar.");
+      return reply(MESSAGES.admin.custom.aliasAddError);
     }
 
     if (['listalias', 'listaralias'].includes(cmd)) {
       const aliases = listAliases();
-      if (!aliases.length) return reply("📜 Nenhum alias cadastrado.");
-      return reply(`📋 *APELIDOS DE COMANDOS*\n\n` + aliases.map((a, i) => `${i+1}. ${a.alias} ➔ ${a.command}`).join('\n'));
+      if (!aliases.length) return reply(MESSAGES.admin.custom.aliasListEmpty);
+      return reply(MESSAGES.admin.custom.aliasListHeader + aliases.map((a, i) => `${i+1}. ${a.alias} ➔ ${a.command}`).join('\n'));
     }
 
     if (['delalias'].includes(cmd)) {
       if (!isOwner) return reply(MESSAGES.permission.ownerOnly);
-      if (!q) return reply("Informe o alias.");
+      if (!q) return reply(MESSAGES.admin.custom.aliasDelProvide);
       if (removeAlias(q.trim())) {
         optimizer.clearStatic('aliases:global');
-        return reply("✅ Alias removido.");
+        return reply(MESSAGES.admin.custom.aliasDelSuccess);
       }
-      return reply("❌ Não encontrado.");
+      return reply(MESSAGES.admin.custom.aliasDelNotFound);
     }
 
     // ==================== COMANDOS PERSONALIZADOS (CUSTOM CMD) ====================
     if (['addcmd', 'adicionarcmd'].includes(cmd)) {
       if (!isOwner) return reply(MESSAGES.permission.ownerOnly);
-      if (!q || !q.includes('|')) return reply(`Uso: ${groupPrefix}addcmd trigger | resposta`);
+      if (!q || !q.includes('|')) return reply(MESSAGES.admin.custom.cmdAddUsage(groupPrefix));
       
       const [trigger, ...resp] = q.split('|').map(p => p.trim());
       const commands = loadCustomCommands();
       commands.push({ trigger, response: resp.join('|'), addedBy: sender });
       saveCustomCommands(commands);
-      return reply(`✅ Comando personalizado '${trigger}' adicionado!`);
+      return reply(MESSAGES.admin.custom.cmdAddSuccess(trigger));
     }
 
     if (['listcmd', 'comandoscustom'].includes(cmd)) {
       const commands = loadCustomCommands();
-      if (!commands.length) return reply("📪 Sem comandos personalizados.");
-      return reply(`📋 *COMANDOS PERSONALIZADOS*\n\n` + commands.map((c, i) => `${i+1}. ${c.trigger}`).join('\n'));
+      if (!commands.length) return reply(MESSAGES.admin.custom.cmdListEmpty);
+      return reply(MESSAGES.admin.custom.cmdListHeader + commands.map((c, i) => `${i+1}. ${c.trigger}`).join('\n'));
     }
 
     if (['delcmd'].includes(cmd)) {
       if (!isOwner) return reply(MESSAGES.permission.ownerOnly);
-      if (!q) return reply("Informe o trigger.");
+      if (!q) return reply(MESSAGES.admin.custom.cmdDelProvide);
       const commands = loadCustomCommands();
       const filtered = commands.filter(c => c.trigger !== q.trim());
-      if (filtered.length === commands.length) return reply("❌ Não encontrado.");
+      if (filtered.length === commands.length) return reply(MESSAGES.admin.custom.cmdDelNotFound);
       saveCustomCommands(filtered);
-      return reply("✅ Removido.");
+      return reply(MESSAGES.admin.custom.cmdDelSuccess);
     }
   }
 };

@@ -26,17 +26,17 @@ export default {
         const data = await optimizer.loadJsonWithCache(path, { mark: {} });
         
         if (cmd === 'sorteionome') {
-          if (!q) return reply(`📝 Use: ${prefix}sorteionome <nome1>, <nome2>, ...`);
+          if (!q) return reply(MESSAGES.admin.group_management.sorteio.nameUsage(prefix));
           const nomes = q.split(',').map(n => n.trim()).filter(Boolean);
-          if (nomes.length < 2) return reply("❌ Forneça pelo menos 2 nomes.");
+          if (nomes.length < 2) return reply(MESSAGES.admin.group_management.sorteio.minNames);
           const vencedor = nomes[Math.floor(Math.random() * nomes.length)];
-          return reply(`🎉 *Resultado do Sorteio* 🎉\n\n🏆 O vencedor é: *${vencedor}*`);
+          return reply(MESSAGES.admin.group_management.sorteio.resultName(vencedor));
         }
 
         const membros = AllgroupMembers.filter(m => !['0', 'marca'].includes(data.mark?.[m]));
-        if (membros.length < 2) return reply('❌ Membros insuficientes para sorteio.');
+        if (membros.length < 2) return reply(MESSAGES.admin.group_management.sorteio.minMembers);
         const numVencedores = parseInt(q) || 1;
-        if (numVencedores < 1 || numVencedores > membros.length) return reply('❌ Quantidade inválida.');
+        if (numVencedores < 1 || numVencedores > membros.length) return reply(MESSAGES.admin.group_management.sorteio.invalidAmount);
         
         const vencedores = [];
         const pool = [...membros];
@@ -45,11 +45,11 @@ export default {
           vencedores.push(pool.splice(idx, 1)[0]);
         }
         
-        const text = `🎉 *Resultado do Sorteio* 🎉\n\n` + vencedores.map((v, i) => `🏆 *#${i + 1}* - @${getUserName(v)}`).join('\n');
+        const text = MESSAGES.admin.group_management.sorteio.resultHeader + vencedores.map((v, i) => MESSAGES.admin.group_management.sorteio.resultItem(i + 1, getUserName(v))).join('\n');
         return reply(text, { mentions: vencedores });
       } catch (e) {
         console.error(e);
-        return reply("❌ Erro ao realizar sorteio.");
+        return reply(MESSAGES.admin.group_management.sorteio.error);
       }
     }
 
@@ -109,17 +109,17 @@ export default {
           } else if (quoted.conversation) {
             messageToSend = { text: q || quoted.conversation, mentions };
           } else {
-            messageToSend = { text: q || 'Mencionando todos...', mentions };
+            messageToSend = { text: q || MESSAGES.admin.group_management.hidetag.defaultMsg, mentions };
           }
         } else {
-          messageToSend = { text: q || 'Mencionando todos...', mentions };
+          messageToSend = { text: q || MESSAGES.admin.group_management.hidetag.defaultMsg, mentions };
         }
 
         await bot.sendMessage(from, messageToSend);
         registerMassMentionUse(from);
       } catch (e) {
         console.error(e);
-        return reply("❌ Erro no hidetag/cita.");
+        return reply(MESSAGES.admin.group_management.hidetag.error);
       }
       return;
     }
@@ -144,7 +144,7 @@ export default {
       const feature = featureMap[cmd] || cmd;
 
       if (cmd === 'antiflood') {
-        if (!q) return reply(`Intervalo em s ou "off". Ex: ${prefix}antiflood 5`);
+        if (!q) return reply(MESSAGES.admin.group_management.protections.floodUsage(prefix));
         const antifloodFile = pathz.join(DATABASE_DIR, 'antiflood.json');
         let floodData = await optimizer.loadJsonWithCache(antifloodFile, {});
         floodData[from] = floodData[from] || {};
@@ -152,17 +152,17 @@ export default {
           floodData[from].enabled = false;
         } else {
           const interval = parseInt(q);
-          if (isNaN(interval) || interval < 1) return reply("Inválido.");
+          if (isNaN(interval) || interval < 1) return reply(MESSAGES.admin.group_management.protections.floodInvalid);
           floodData[from].enabled = true;
           floodData[from].interval = interval;
         }
         await optimizer.saveJsonWithCache(antifloodFile, floodData);
-        return reply(`✅ Antiflood ${floodData[from].enabled ? 'ativado' : 'desativado'}!`);
+        return reply(MESSAGES.admin.group_management.protections.floodToggle(floodData[from].enabled));
       }
 
       groupData[feature] = !groupData[feature];
       await optimizer.saveJsonWithCache(groupFile, groupData);
-      return reply(`✅ *${feature}* ${groupData[feature] ? 'ativado' : 'desativado'}!`);
+      return reply(MESSAGES.admin.group_management.protections.genericToggle(feature, groupData[feature]));
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -181,26 +181,15 @@ export default {
         const ddiValue = subArg.replace(/^ddi\s*/i, '').trim();
         if (!ddiValue) {
           const currentDDI = groupData.antifakeDDI || '55';
-          return reply(
-            `🌐 *Configuração de DDI Permitido*\n\n` +
-            `DDI atual: *${currentDDI}*\n\n` +
-            `💡 *Como usar:*\n` +
-            `• ${prefix}antifake ddi 55 — Apenas Brasil\n` +
-            `• ${prefix}antifake ddi 55,351 — Brasil + Portugal\n` +
-            `• ${prefix}antifake ddi 55,54,598 — Brasil + Argentina + Uruguai`
-          );
+          return reply(MESSAGES.admin.group_management.antifake.ddiInfo(currentDDI, prefix));
         }
         const ddis = ddiValue.split(',').map(d => d.trim()).filter(d => /^\d{1,4}$/.test(d));
         if (ddis.length === 0) {
-          return reply(`❌ DDI inválido! Use números separados por vírgula.\nExemplo: ${prefix}antifake ddi 55,351`);
+          return reply(MESSAGES.admin.group_management.antifake.ddiInvalid(prefix));
         }
         groupData.antifakeDDI = ddis.join(',');
         await optimizer.saveJsonWithCache(groupFile, groupData);
-        return reply(
-          `✅ *DDI atualizado!*\n\n` +
-          `🌐 DDIs permitidos: *${ddis.join(', ')}*\n\n` +
-          `Números que não começarem com esses DDIs serão banidos automaticamente ao entrar.`
-        );
+        return reply(MESSAGES.admin.group_management.antifake.ddiSuccess(ddis.join(', ')));
       }
 
       // --- Subcomando: WHITELIST ---
@@ -210,39 +199,33 @@ export default {
         const wlNumber = (wlParts[1] || '').replace(/\D/g, '');
 
         if (wlAction === 'add') {
-          if (!wlNumber) return reply(`❌ Informe o número.\nExemplo: ${prefix}antifake wl add 1234567890`);
+          if (!wlNumber) return reply(MESSAGES.admin.group_management.antifake.wlAddUsage(prefix));
           if (!groupData.antifakeWhitelist) groupData.antifakeWhitelist = [];
           if (groupData.antifakeWhitelist.includes(wlNumber)) {
-            return reply(`ℹ️ O número *${wlNumber}* já está na whitelist.`);
+            return reply(MESSAGES.admin.group_management.antifake.wlAddExists(wlNumber));
           }
           groupData.antifakeWhitelist.push(wlNumber);
           await optimizer.saveJsonWithCache(groupFile, groupData);
-          return reply(`✅ *${wlNumber}* adicionado à whitelist do antifake.\n\nEsse número poderá entrar no grupo mesmo sendo estrangeiro.`);
+          return reply(MESSAGES.admin.group_management.antifake.wlAddSuccess(wlNumber));
         }
 
         if (wlAction === 'remove' || wlAction === 'rem' || wlAction === 'del') {
-          if (!wlNumber) return reply(`❌ Informe o número.\nExemplo: ${prefix}antifake wl remove 1234567890`);
+          if (!wlNumber) return reply(MESSAGES.admin.group_management.antifake.wlRemUsage(prefix));
           if (!groupData.antifakeWhitelist) groupData.antifakeWhitelist = [];
           const idx = groupData.antifakeWhitelist.indexOf(wlNumber);
-          if (idx === -1) return reply(`❌ O número *${wlNumber}* não está na whitelist.`);
+          if (idx === -1) return reply(MESSAGES.admin.group_management.antifake.wlRemNotFound(wlNumber));
           groupData.antifakeWhitelist.splice(idx, 1);
           await optimizer.saveJsonWithCache(groupFile, groupData);
-          return reply(`✅ *${wlNumber}* removido da whitelist do antifake.`);
+          return reply(MESSAGES.admin.group_management.antifake.wlRemSuccess(wlNumber));
         }
 
         if (wlAction === 'lista' || wlAction === 'list' || !wlAction) {
           const wl = groupData.antifakeWhitelist || [];
-          if (wl.length === 0) return reply(`📭 Nenhum número na whitelist do antifake.\n\n💡 Use: ${prefix}antifake wl add <número>`);
-          return reply(`📋 *Whitelist Anti-Fake* (${wl.length})\n\n` + wl.map((n, i) => `${i + 1}. ${n}`).join('\n'));
+          if (wl.length === 0) return reply(MESSAGES.admin.group_management.antifake.wlListEmpty(prefix));
+          return reply(MESSAGES.admin.group_management.antifake.wlListHeader(wl.length) + wl.map((n, i) => `${i + 1}. ${n}`).join('\n'));
         }
 
-        return reply(
-          `🛡️ *Whitelist Anti-Fake*\n\n` +
-          `💡 *Comandos:*\n` +
-          `• ${prefix}antifake wl add <número>\n` +
-          `• ${prefix}antifake wl remove <número>\n` +
-          `• ${prefix}antifake wl lista`
-        );
+        return reply(MESSAGES.admin.group_management.antifake.wlUsage(prefix));
       }
 
       // --- Subcomando: LOG ---
@@ -250,8 +233,8 @@ export default {
         try {
           const { getAntifakeLogs } = await import('../../utils/antifakeGuard.js');
           const logs = await getAntifakeLogs(from, 10);
-          if (logs.length === 0) return reply(`📭 Nenhum registro de antifake para este grupo.`);
-          let msg = `📋 *Log Anti-Fake* (últimos ${logs.length})\n\n`;
+          if (logs.length === 0) return reply(MESSAGES.admin.group_management.antifake.logEmpty);
+          let msg = MESSAGES.admin.group_management.antifake.logHeader(logs.length);
           logs.forEach((log, i) => {
             const date = new Date(log.timestamp).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });
             const actionEmoji = log.action === 'ban' ? '🚫' : '❌';
@@ -260,7 +243,7 @@ export default {
           return reply(msg.trim());
         } catch (e) {
           console.error('Erro ao carregar logs antifake:', e);
-          return reply('❌ Erro ao carregar logs.');
+          return reply(MESSAGES.admin.group_management.antifake.logError);
         }
       }
 
@@ -272,22 +255,9 @@ export default {
       const wlCount = (groupData.antifakeWhitelist || []).length;
 
       if (groupData.antifake) {
-        return reply(
-          `🛡️ *ANTIFAKE ATIVADO!*\n\n` +
-          `Números estrangeiros serão banidos automaticamente ao entrar no grupo.\n\n` +
-          `🌐 DDIs permitidos: *${currentDDI}*\n` +
-          `📋 Whitelist: *${wlCount} número(s)*\n\n` +
-          `💡 *Configurações:*\n` +
-          `• ${prefix}antifake ddi 55,351 — DDIs permitidos\n` +
-          `• ${prefix}antifake wl add <nº> — Whitelist\n` +
-          `• ${prefix}antifake log — Ver histórico\n` +
-          `• ${prefix}antifake — Desativar`
-        );
+        return reply(MESSAGES.admin.group_management.antifake.statusOn(currentDDI, wlCount, prefix));
       } else {
-        return reply(
-          `⚠️ *ANTIFAKE DESATIVADO*\n\n` +
-          `Números estrangeiros não serão mais bloqueados. Use ${prefix}antifake para reativar.`
-        );
+        return reply(MESSAGES.admin.group_management.antifake.statusOff(prefix));
       }
     }
 
@@ -297,12 +267,12 @@ export default {
     if (cmd === 'setprefix') {
       if (!isGroup) return reply(MESSAGES.permission.groupOnly);
       if (!isGroupAdmin) return reply(MESSAGES.permission.adminOnly);
-      if (!q) return reply(`Uso: ${prefix}setprefix <símbolo>`);
+      if (!q) return reply(MESSAGES.admin.group_management.config.prefixUsage(prefix));
       const newPrefix = q.trim().charAt(0);
-      if (newPrefix === '$') return reply("Símbolo reservado 💔");
+      if (newPrefix === '$') return reply(MESSAGES.admin.group_management.config.prefixReserved);
       groupData.customPrefix = newPrefix;
       await optimizer.saveJsonWithCache(groupFile, groupData);
-      return reply(`✅ Prefixo alterado para "${newPrefix}"`);
+      return reply(MESSAGES.admin.group_management.config.prefixSuccess(newPrefix));
     }
 
     if (['modobrincadeira', 'modobrincadeiras', 'modobn', 'gamemode'].includes(cmd)) {
@@ -310,7 +280,7 @@ export default {
       if (!isGroupAdmin) return reply(MESSAGES.permission.adminOnly);
       groupData.modobrincadeira = !groupData.modobrincadeira;
       await optimizer.saveJsonWithCache(groupFile, groupData);
-      return reply(`🎮 Modo brincadeira ${groupData.modobrincadeira ? 'ativado' : 'desativado'}!`);
+      return reply(MESSAGES.admin.group_management.config.gameModeToggle(groupData.modobrincadeira));
     }
 
     if (['limitmessage', 'dellimitmessage'].includes(cmd)) {
@@ -320,15 +290,15 @@ export default {
       if (cmd === 'dellimitmessage') {
         delete groupData.messageLimit;
         await optimizer.saveJsonWithCache(groupFile, groupData);
-        return reply("🗑️ Limite de mensagens removido.");
+        return reply(MESSAGES.admin.group_management.config.limitDelSuccess);
       }
 
-      if (args.length < 3) return reply(`Uso: ${prefix}limitmessage <quantidade> <tempo(s|m|h)> <ação(ban|adv)>`);
+      if (args.length < 3) return reply(MESSAGES.admin.group_management.config.limitUsage(prefix));
       const limit = parseInt(args[0]);
       const timeMatch = args[1].toLowerCase().match(/^(\d+)(s|m|h)$/);
       const action = args[2].toLowerCase();
 
-      if (isNaN(limit) || !timeMatch || !['ban', 'adv'].includes(action)) return reply("Formato inválido.");
+      if (isNaN(limit) || !timeMatch || !['ban', 'adv'].includes(action)) return reply(MESSAGES.admin.group_management.config.limitInvalid);
       
       let seconds = parseInt(timeMatch[1]);
       if (timeMatch[2] === 'm') seconds *= 60;
@@ -336,7 +306,7 @@ export default {
 
       groupData.messageLimit = { enabled: true, limit, interval: seconds, action, users: {} };
       await optimizer.saveJsonWithCache(groupFile, groupData);
-      return reply(`✅ Limite configurado: ${limit} msgs/${args[1]} -> ${action}`);
+      return reply(MESSAGES.admin.group_management.config.limitSuccess(limit, args[1], action));
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -354,24 +324,24 @@ export default {
       if (shouldOpen) {
         await bot.groupSettingUpdate(from, 'not_announcement');
         if (groupData?.x9) {
-          await bot.sendMessage(from, { text: `📢 *X9 Report:* Grupo aberto por @${sender.split('@')[0]}`, mentions: [sender] }).catch(e => {});
+          await bot.sendMessage(from, { text: MESSAGES.admin.group_management.status.openX9(sender.split('@')[0]), mentions: [sender] }).catch(e => {});
         }
-        return reply('✅ Grupo aberto.');
+        return reply(MESSAGES.admin.group_management.status.openSuccess);
       } else if (shouldClose) {
         await bot.groupSettingUpdate(from, 'announcement');
         if (groupData?.x9) {
-          await bot.sendMessage(from, { text: `📢 *X9 Report:* Grupo fechado por @${sender.split('@')[0]}`, mentions: [sender] }).catch(e => {});
+          await bot.sendMessage(from, { text: MESSAGES.admin.group_management.status.closeX9(sender.split('@')[0]), mentions: [sender] }).catch(e => {});
         }
-        return reply('✅ Grupo fechado.');
+        return reply(MESSAGES.admin.group_management.status.closeSuccess);
       }
-      return reply(`💡 Uso: ${prefix}${cmd} <abrir|fechar>`);
+      return reply(MESSAGES.admin.group_management.status.usage(prefix, cmd));
     }
 
     if (cmd === 'opengp' || cmd === 'abrirgp') {
       if (!isGroup) return reply(MESSAGES.permission.groupOnly);
       if (!isGroupAdmin) return reply(MESSAGES.permission.adminOnly);
       if (!q) {
-        return reply(`Uso: ${prefix}${cmd} HH:MM (24h)\nExemplos: ${prefix}${cmd} 07:00 | ${prefix}${cmd} off`);
+        return reply(MESSAGES.admin.group_management.status.openScheduleUsage(prefix, cmd));
       }
 
       const rawArg = q.trim();
@@ -389,17 +359,17 @@ export default {
         }
         await optimizer.saveJsonWithCache(groupFile, groupData);
         try { unscheduleGroupJob(from, 'open'); } catch (e) { console.error('Error unscheduling group open job:', e); }
-        return reply('✅ Agendamento diário para ABRIR o grupo foi removido.');
+        return reply(MESSAGES.admin.group_management.status.openScheduleRemSuccess);
       }
 
       const timeValidation = validateTimeFormat(rawArg);
       if (!timeValidation.valid) {
-        return reply(`⏰ ${timeValidation.error}\nExemplo: ${prefix}opengp 07:30`);
+        return reply(MESSAGES.admin.group_management.status.scheduleInvalid(timeValidation.error, prefix, cmd, '07:30'));
       }
 
       const normalizedTime = normalizeScheduleTime(rawArg);
       if (!normalizedTime) {
-        return reply(`⏰ Não consegui entender o horário informado. Use o formato HH:MM, por exemplo ${prefix}opengp 07:30`);
+        return reply(MESSAGES.admin.group_management.status.scheduleUnrecognized(prefix, cmd, '07:30'));
       }
 
       groupData.schedule.openTime = normalizedTime;
@@ -413,16 +383,14 @@ export default {
       await optimizer.saveJsonWithCache(groupFile, groupData);
       try { scheduleGroupJob(from, 'open', normalizedTime, bot); } catch (e) { console.error('Erro ao agendar open cron:', e); }
 
-      let msg = `✅ Agendamento salvo! O grupo será ABERTO todos os dias às ${normalizedTime} (horário de São Paulo).`;
-      if (!isBotAdmin) msg += '\n⚠️ Observação: Eu preciso ser administrador para efetivar a abertura no horário.';
-      return reply(msg);
+      return reply(MESSAGES.admin.group_management.status.openScheduleSuccess(normalizedTime, isBotAdmin));
     }
 
     if (cmd === 'closegp' || cmd === 'fechargp') {
       if (!isGroup) return reply(MESSAGES.permission.groupOnly);
       if (!isGroupAdmin) return reply(MESSAGES.permission.adminOnly);
       if (!q) {
-        return reply(`Uso: ${prefix}${cmd} HH:MM (24h)\nExemplos: ${prefix}${cmd} 22:30 | ${prefix}${cmd} off`);
+        return reply(MESSAGES.admin.group_management.status.closeScheduleUsage(prefix, cmd));
       }
 
       const rawArg = q.trim();
@@ -440,17 +408,17 @@ export default {
         }
         await optimizer.saveJsonWithCache(groupFile, groupData);
         try { unscheduleGroupJob(from, 'close'); } catch (e) { console.error('Error unscheduling group close job:', e); }
-        return reply('✅ Agendamento diário para FECHAR o grupo foi removido.');
+        return reply(MESSAGES.admin.group_management.status.closeScheduleRemSuccess);
       }
 
       const timeValidation = validateTimeFormat(rawArg);
       if (!timeValidation.valid) {
-        return reply(`⏰ ${timeValidation.error}\nExemplo: ${prefix}closegp 22:30`);
+        return reply(MESSAGES.admin.group_management.status.scheduleInvalid(timeValidation.error, prefix, cmd, '22:30'));
       }
 
       const normalizedTime = normalizeScheduleTime(rawArg);
       if (!normalizedTime) {
-        return reply(`⏰ Não consegui entender o horário informado. Use o formato HH:MM, por exemplo ${prefix}closegp 22:30`);
+        return reply(MESSAGES.admin.group_management.status.scheduleUnrecognized(prefix, cmd, '22:30'));
       }
 
       groupData.schedule.closeTime = normalizedTime;
@@ -464,9 +432,7 @@ export default {
       await optimizer.saveJsonWithCache(groupFile, groupData);
       try { scheduleGroupJob(from, 'close', normalizedTime, bot); } catch (e) { console.error('Erro ao agendar close cron:', e); }
 
-      let msg = `✅ Agendamento salvo! O grupo será FECHADO todos os dias às ${normalizedTime} (horário de São Paulo).`;
-      if (!isBotAdmin) msg += '\n⚠️ Observação: Eu preciso ser administrador para efetivar o fechamento no horário.';
-      return reply(msg);
+      return reply(MESSAGES.admin.group_management.status.closeScheduleSuccess(normalizedTime, isBotAdmin));
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -476,23 +442,23 @@ export default {
       if (!isGroup) return reply(MESSAGES.permission.groupOnly);
       if (!isGroupAdmin) return reply(MESSAGES.permission.adminOnly);
       if (!isBotAdmin) return reply(MESSAGES.permission.botAdminOnly);
-      if (!isQuotedImage && !isQuotedMsg && !info.message?.imageMessage) return reply("Marque uma imagem.");
+      if (!isQuotedImage && !isQuotedMsg && !info.message?.imageMessage) return reply(MESSAGES.admin.group_management.media.photoProvide);
 
       try {
         const media = isQuotedImage ? info.message.extendedTextMessage.contextInfo.quotedMessage.imageMessage : info.message.imageMessage;
         const buffer = await getFileBuffer(media, 'image');
         await bot.updateProfilePicture(from, buffer);
-        return reply("✅ Foto alterada.");
-      } catch (e) { return reply("❌ Erro ao alterar foto."); }
+        return reply(MESSAGES.admin.group_management.media.photoSuccess);
+      } catch (e) { return reply(MESSAGES.admin.group_management.media.photoError); }
     }
 
     if (cmd === 'nomegp' || cmd === 'setname') {
       if (!isGroup) return reply(MESSAGES.permission.groupOnly);
       if (!isGroupAdmin) return reply(MESSAGES.permission.adminOnly);
       if (!isBotAdmin) return reply(MESSAGES.permission.botAdminOnly);
-      if (!q) return reply("Informe o nome.");
+      if (!q) return reply(MESSAGES.admin.group_management.media.nameProvide);
       await bot.groupUpdateSubject(from, q);
-      return reply("✅ Nome alterado.");
+      return reply(MESSAGES.admin.group_management.media.nameSuccess);
     }
 
     if (cmd === 'descgp' || cmd === 'descgrupo' || cmd === 'setdesc') {
@@ -500,7 +466,7 @@ export default {
       if (!isGroupAdmin) return reply(MESSAGES.permission.adminOnly);
       if (!isBotAdmin) return reply(MESSAGES.permission.botAdminOnly);
       await bot.groupUpdateDescription(from, q || '');
-      return reply("✅ Descrição alterada.");
+      return reply(MESSAGES.admin.group_management.media.descSuccess);
     }
 
     if (cmd === 'soadm' || cmd === 'adminonly' || cmd === 'soadmin') {
@@ -510,11 +476,7 @@ export default {
       groupData.soadm = !groupData.soadm;
       await optimizer.saveJsonWithCache(groupFile, groupData);
       
-      if (groupData.soadm) {
-        return reply(`✅ *Modo apenas adm ativado!* Agora apenas administradores do grupo poderão utilizar o bot.`);
-      } else {
-        return reply(`⚠️ *Modo apenas adm desativado!* Agora todos os membros podem utilizar o bot novamente.`);
-      }
+      return reply(MESSAGES.admin.group_management.media.onlyAdmToggle(groupData.soadm));
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -524,15 +486,15 @@ export default {
       if (!isGroupAdmin && !isOwner) return reply(MESSAGES.permission.adminOnly);
       try {
         const requests = await bot.groupRequestParticipantsList(from);
-        if (!requests || requests.length === 0) return reply("📭 Não há solicitações pendentes.");
-        let msg = `📬 *SOLICITAÇÕES PENDENTES* (${requests.length})\n\n`;
+        if (!requests || requests.length === 0) return reply(MESSAGES.admin.group_management.requests.empty);
+        let msg = MESSAGES.admin.group_management.requests.header(requests.length);
         const mentions = [];
         requests.forEach((req, i) => {
           msg += `${i + 1}. @${req.jid.split('@')[0]}\n`;
           mentions.push(req.jid);
         });
         return bot.sendMessage(from, { text: msg, mentions });
-      } catch (e) { return reply("❌ Erro ao buscar solicitações."); }
+      } catch (e) { return reply(MESSAGES.admin.group_management.requests.fetchError); }
     }
 
     if (['aprovar', 'aceitar', 'approve', 'recusarsolic', 'recusar', 'reject'].includes(cmd)) {
@@ -542,18 +504,18 @@ export default {
       if (!target) return reply(MESSAGES.error.missing('alguém'));
       try {
         await bot.groupRequestParticipantsUpdate(from, [target], type);
-        return reply(`${type === 'approve' ? '✅ Aprovado!' : '❌ Recusado!'}`);
-      } catch (e) { return reply("❌ Erro na operação."); }
+        return reply(`${type === 'approve' ? MESSAGES.admin.group_management.requests.actionSuccess : MESSAGES.admin.group_management.requests.actionReject}`);
+      } catch (e) { return reply(MESSAGES.admin.group_management.requests.actionError); }
     }
 
     if (['autoaceitarsolic', 'autoaprovar', 'captchasolic'].includes(cmd)) {
       if (!isGroupAdmin && !isOwner) return reply(MESSAGES.permission.adminOnly);
       const subCmd = args[0]?.toLowerCase();
-      if (!subCmd) return reply(`Uso: ${prefix}${cmd} on/off`);
+      if (!subCmd) return reply(MESSAGES.admin.group_management.requests.autoUsage(prefix, cmd));
       const feature = cmd === 'captchasolic' ? 'captchaEnabled' : 'autoAcceptRequests';
       groupData[feature] = subCmd === 'on';
       await optimizer.saveJsonWithCache(groupFile, groupData);
-      return reply(`✅ ${cmd === 'captchasolic' ? 'Captcha' : 'Auto-aprovação'}: *${groupData[feature] ? 'ATIVADO' : 'DESATIVADO'}*`);
+      return reply(MESSAGES.admin.group_management.requests.autoToggle(cmd === 'captchasolic' ? 'Captcha' : 'Auto-aprovação', groupData[feature]));
     }
   }
 };

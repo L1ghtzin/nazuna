@@ -37,24 +37,22 @@ export default {
       const entries = Object.entries(mappings);
       const totalEntries = entries.length;
       
-      let msg = '📊 *Cache JID→LID Debug*\n\n';
-      msg += `📈 Total de entradas: ${totalEntries}\n`;
-      msg += `🕐 Última atualização: ${cacheData.lastUpdate || 'N/A'}\n`;
-      msg += `📦 Versão: ${cacheData.version || 'N/A'}\n\n`;
+      let msg = MESSAGES.owner.cachedebug.header;
+      msg += MESSAGES.owner.cachedebug.stats(totalEntries, cacheData.lastUpdate || 'N/A', cacheData.version || 'N/A');
       
       if (totalEntries > 0) {
-        msg += '📋 *Últimas 10 entradas:*\n\n';
+        msg += MESSAGES.owner.cachedebug.lastEntriesHeader;
         const lastTen = entries.slice(-10);
         lastTen.forEach(([jid, lid], idx) => {
           const jidShort = jid.substring(0, 15) + '...';
           const lidShort = lid.substring(0, 20) + '...';
-          msg += `${idx + 1}. JID: ${jidShort}\n   LID: ${lidShort}\n\n`;
+          msg += MESSAGES.owner.cachedebug.entryLine(idx + 1, jidShort, lidShort);
         });
       } else {
-        msg += '⚠️ Cache vazio - nenhuma conversão JID→LID registrada ainda.\n';
+        msg += MESSAGES.owner.cachedebug.empty;
       }
       
-      msg += `\n💾 Arquivo: ${cacheFilePath.split('/').slice(-2).join('/')}`;
+      msg += MESSAGES.owner.cachedebug.footer(cacheFilePath.split(/[\\/]/).slice(-2).join('/'));
       
       await reply(msg);
     } catch (e) {

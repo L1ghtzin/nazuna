@@ -17,22 +17,20 @@ export default {
     try {
       if (!isGroup) return reply(MESSAGES.permission.groupOnly);
       if (!isGroupAdmin) return reply(MESSAGES.permission.adminOnly);
-      if (!q || isNaN(parseInt(q))) return reply(`🔢 Por favor, forneça o número da regra a ser removida. Ex: ${prefix}delregra 3`);
+      if (!q || isNaN(parseInt(q))) return reply(MESSAGES.admin.rules.delProvideNum(prefix));
       
       groupData.rules = groupData.rules || [];
       const ruleNumber = parseInt(q);
       
-      if (ruleNumber < 1 || ruleNumber > groupData.rules.length) {
-        return reply(`❌ Número de regra inválido. Use ${prefix}regras para ver a lista. Atualmente existem ${groupData.rules.length} regras.`);
-      }
+        return reply(MESSAGES.admin.rules.delInvalidNum(prefix, groupData.rules.length));
       
       const removedRule = groupData.rules.splice(ruleNumber - 1, 1);
       fs.writeFileSync(groupFile, JSON.stringify(groupData, null, 2));
       
-      await reply(`🗑️ Regra "${removedRule}" removida com sucesso!`);
+      await reply(MESSAGES.admin.rules.delSuccess(removedRule[0]));
     } catch (e) {
       console.error('Erro no comando delregra:', e);
-      await reply("Ocorreu um erro ao remover a regra 💔");
+      await reply(MESSAGES.admin.rules.delError);
     }
   }
 };

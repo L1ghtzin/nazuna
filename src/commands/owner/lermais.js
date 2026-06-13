@@ -16,12 +16,8 @@ export default {
       const newState = setMenuLerMais(!currentState);
       
       const statusMsg = newState
-        ? `✅ *"Ler Mais" ATIVADO nos menus!*\n\n` +
-          `📱 Os menus agora exibem caracteres invisíveis no início, fazendo o WhatsApp mostrar "Ler mais".\n\n` +
-          `💡 Isso deixa os menus mais limpos na prévia da conversa.`
-        : `💔 *"Ler Mais" DESATIVADO nos menus!*\n\n` +
-          `📱 Os menus não terão mais os caracteres invisíveis.\n\n` +
-          `💡 O conteúdo completo aparecerá direto sem precisar expandir.`;
+        ? MESSAGES.owner.lermais.enabled
+        : MESSAGES.owner.lermais.disabled;
       
       await reply(statusMsg);
     } catch (e) {

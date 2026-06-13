@@ -62,14 +62,14 @@ export default {
         const horaBrasil = agora.toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo', hour: '2-digit', minute: '2-digit', second: '2-digit' });
         const dataBrasil = agora.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo', weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' });
         
-        return reply(`🕐 *Horário Atual*\n\n🇧🇷 *Brasil (Brasília):*\n⏰ ${horaBrasil}\n📅 ${dataBrasil}\n\n💡 *Ver outro fuso:*\n${prefix}hora <local>\n\n📍 *Locais disponíveis:*\nbrasil, eua, japao, china, coreia, londres, paris, portugal, dubai, australia, argentina...`);
+        return reply(MESSAGES.member.hora.currentTime(horaBrasil, dataBrasil, prefix));
       }
 
       const local = normalizar(q.toLowerCase().replace(/\s+/g, ''));
       const timezone = fusos[local];
 
       if (!timezone) {
-        return reply(`💔 Fuso horário "${q}" não encontrado!\n\n📍 *Locais disponíveis:*\nbrasil, eua, newyork, losangeles, japao, china, coreia, londres, paris, alemanha, portugal, russia, dubai, india, australia, argentina`);
+        return reply(MESSAGES.member.hora.invalidTimezone(q));
       }
 
       const agora = new Date();
@@ -82,7 +82,7 @@ export default {
       const diffHours = Math.round((localTime - brTime) / (1000 * 60 * 60));
       const diffStr = diffHours >= 0 ? `+${diffHours}h` : `${diffHours}h`;
 
-      await reply(`🕐 *Horário em ${q}*\n\n⏰ *Hora:* ${hora}\n📅 *Data:* ${data}\n\n🇧🇷 *Diferença do Brasil:* ${diffStr}`);
+      await reply(MESSAGES.member.hora.timeResult(q, hora, data, diffStr));
     } catch (e) {
       console.error('Erro ao converter fuso:', e);
       await reply(MESSAGES.error.general);

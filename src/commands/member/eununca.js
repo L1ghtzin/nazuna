@@ -5,20 +5,16 @@ export default {
   usage: `${global.prefix}eununca`,
   handle: async ({  reply, isGroup, isModoBn, bot, from, toolsJson , MESSAGES, info }) => {
     try {
-      if (!isGroup) return reply(`💔 Isso só pode ser usado em grupo 💔`);
-      if (!isModoBn) return reply(`💔 O modo brincadeira não está ativo nesse grupo`);
+      if (!isGroup) return reply(MESSAGES.error.onlyGroup);
+      if (!isModoBn) return reply(MESSAGES.error.modoBnDisabled);
       
       const items = toolsJson().iNever;
       const pollQuestion = items[Math.floor(Math.random() * items.length)];
       
       await bot.sendMessage(from, {
         poll: {
-          name: `💭 EU NUNCA, EU JÁ 🌱\n\n${pollQuestion}`,
-          values: [
-            `💔 Eu nunca`,
-            "✅ Eu já",
-            "🤐 Prefiro não responder"
-          ],
+          name: MESSAGES.member.eununca.pollTitle(pollQuestion),
+          values: MESSAGES.member.eununca.options,
           selectableCount: 1  
         }
       }, { quoted: info });

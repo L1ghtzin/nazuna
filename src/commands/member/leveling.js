@@ -9,6 +9,13 @@ export default {
   , MESSAGES }) => {
     const cmd = command.toLowerCase();
 
+  handle: async ({ 
+    bot, from, info, command, q, args, reply, prefix, pushname, sender, menc_os2,
+    isGroup, isGroupAdmin, isOwner, groupData, groupFile, getUserName, optimizer,
+    loadLevelingSafe, saveLevelingSafe, getLevelingUser, calculateNextLevelXp, checkLevelUp, checkLevelDown
+  , MESSAGES }) => {
+    const cmd = command.toLowerCase();
+
     // ═══════════════════════════════════════════════════════════════
     // ⚙️ CONFIGURAÇÃO (ADMIN)
     // ═══════════════════════════════════════════════════════════════
@@ -17,7 +24,7 @@ export default {
       if (!isGroupAdmin) return reply(MESSAGES.permission.adminOnly);
       groupData.levelingEnabled = !groupData.levelingEnabled;
       await optimizer.saveJsonWithCache(groupFile, groupData);
-      return reply(`🎚️ Sistema de leveling ${groupData.levelingEnabled ? 'ativado' : 'desativado'}!`);
+      return reply(MESSAGES.member.leveling.toggled(groupData.levelingEnabled));
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -32,22 +39,14 @@ export default {
       const filled = Math.round((progress / 100) * barLen);
       const bar = '█'.repeat(filled) + '░'.repeat(barLen - filled);
 
-      let text = `╭━━━⊱ 📊 *STATUS DE NÍVEL* ⊱━━━╮\n`;
-      text += `│ 👤 *Jogador:* ${pushname}\n`;
-      text += `│ 🏅 *Nível:* ${user.level || 1}\n`;
-      text += `│ 🎖️ *Patente:* ${user.patent || 'Bronze'}\n`;
-      text += `│ ✨ *XP:* ${user.xp || 0} / ${nextXp}\n`;
-      text += `│ 📈 [${bar}] ${progress}%\n`;
-      text += `│ 💬 *Msgs:* ${user.messages || 0}\n`;
-      text += `╰━━━━━━━━━━━━━━━━━━━━╯`;
-      return reply(text);
+      return reply(MESSAGES.member.leveling.status(pushname, user.level || 1, user.patent || 'Bronze', user.xp || 0, nextXp, bar, progress, user.messages || 0));
     }
 
     if (['rank', 'ranking', 'ranklevel', 'ranklvl', 'rankinglevel', 'levels', 'toplevels'].includes(cmd)) {
       const data = loadLevelingSafe();
       const users = Object.entries(data).sort((a, b) => (b[1].xp || 0) - (a[1].xp || 0)).slice(0, 10);
-      if (!users.length) return reply("Vazio.");
-      let text = `🏆 *TOP 10 NÍVEL*\n\n`;
+      if (!users.length) return reply(MESSAGES.member.leveling.emptyRank);
+      let text = MESSAGES.member.leveling.rankHeader;
       for (let i = 0; i < users.length; i++) {
         text += `${i + 1}. @${getUserName(users[i][0])} - Lvl ${users[i][1].level || 1}\n`;
       }
@@ -61,7 +60,7 @@ export default {
       if (!isOwner) return reply(MESSAGES.permission.ownerOnly);
       if (!menc_os2) return reply(MESSAGES.error.missing('alguém'));
       const val = parseInt(q);
-      if (isNaN(val)) return reply("Informe um número.");
+      if (isNaN(val)) return reply(MESSAGES.member.leveling.requireNumber);
       
       const data = loadLevelingSafe();
       const user = getLevelingUser(data, menc_os2);
@@ -78,7 +77,7 @@ export default {
       }
       
       saveLevelingSafe(data);
-      return reply(`✅ @${getUserName(menc_os2)} atualizado!`, { mentions: [menc_os2] });
+      return reply(MESSAGES.member.leveling.updated(getUserName(menc_os2)), { mentions: [menc_os2] });
     }
   }
 };

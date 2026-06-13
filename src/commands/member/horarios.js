@@ -35,11 +35,7 @@ export default {
         { name: 'Cash Patrol 🚔', emoji: '🚔', baseMinutes: [18, 28, 38, 48, 58, 8] }
       ];
 
-      let responseText = `🎰✨ *HORÁRIOS PAGANTES* ✨🎰\n\n`;
-      responseText += `┏━━━━━━━━━━━━━━━━━━━━━━━━┓\n`;
-      responseText += `┃  ⏰ *Horário (BR):* ${currentHour}:${currentMinute}  ┃\n`;
-      responseText += `┃  📅 *Data:* ${brasiliaTime.toLocaleDateString('pt-BR')}     ┃\n`;
-      responseText += `┗━━━━━━━━━━━━━━━━━━━━━━━━┛\n\n`;
+      let responseText = MESSAGES.member.horarios.header(currentHour, currentMinute, brasiliaTime.toLocaleDateString('pt-BR'));
 
       games.forEach(game => {
         const gameMinutes = game.baseMinutes.map(minute => {
@@ -50,9 +46,6 @@ export default {
           return String(adjustedMinute).padStart(2, '0');
         }).sort((a, b) => parseInt(a) - parseInt(b));
 
-        responseText += `╭─────────────────────────╮\n`;
-        responseText += `│ ${game.emoji} *${game.name}*\n`;
-        
         const nextTimes = [];
         const currentMinuteInt = parseInt(currentMinute);
         
@@ -77,23 +70,10 @@ export default {
           }
         }
 
-        responseText += `│ 🕐 ${nextTimes.slice(0, 3).join(' • ')}\n`;
-        responseText += `╰─────────────────────────╯\n\n`;
+        responseText += MESSAGES.member.horarios.gameItem(game.emoji, game.name, nextTimes.slice(0, 3).join(' • '));
       });
 
-      responseText += `┏━━━━━━━━━━━━━━━━━━━━━━━━┓\n`;
-      responseText += `┃      ⚠️ *IMPORTANTE* ⚠️      ┃\n`;
-      responseText += `┗━━━━━━━━━━━━━━━━━━━━━━━━┛\n\n`;
-      responseText += `🔞 *Conteúdo para maiores de 18 anos*\n`;
-      responseText += `📊 Estes são horários estimados\n`;
-      responseText += `🎯 Jogue com responsabilidade\n`;
-      responseText += `💰 Nunca aposte mais do que pode perder\n`;
-      responseText += `🆘 Procure ajuda se tiver vício em jogos\n`;
-      responseText += `⚖️ Apostas podem causar dependência\n\n`;
-      responseText += `┏━━━━━━━━━━━━━━━━━━━━━━━━┓\n`;
-      responseText += `┃  🍀 *BOA SORTE E JOGUE*    ┃\n`;
-      responseText += `┃     *CONSCIENTEMENTE!* 🍀  ┃\n`;
-      responseText += `┗━━━━━━━━━━━━━━━━━━━━━━━━┛`;
+      responseText += MESSAGES.member.horarios.footer();
 
       await reply(responseText);
     } catch (e) {

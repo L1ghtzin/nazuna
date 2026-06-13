@@ -19,24 +19,7 @@ export default {
       if (!isOwner) return reply(MESSAGES.permission.ownerOnly);
 
       if (!q || q.toLowerCase() !== 'sim') {
-        const avisoMsg = `⚠️ *ATENÇÃO - ATUALIZAÇÃO DO BOT* ⚠️\n\n` +
-          `┏━━━━━━━━━━━━━━━━━━━━━\n` +
-          `┃ 📢 *AVISOS IMPORTANTES:*\n` +
-          `┣━━━━━━━━━━━━━━━━━━━━━\n` +
-          `┃\n` +
-          `┃ ⚠️ Edições manuais no código\n` +
-          `┃    serão *PERDIDAS*\n` +
-          `┃\n` +
-          `┃ ✅ Banco de dados será\n` +
-          `┃    *PRESERVADO*\n` +
-          `┃\n` +
-          `┃ ✅ Configurações (config.json)\n` +
-          `┃    *MANTIDAS*\n` +
-          `┃\n` +
-          `┗━━━━━━━━━━━━━━━━━━━━━\n\n` +
-          `Para confirmar e atualizar, digite:\n` +
-          `*${prefix}${command} sim*`;
-        return reply(avisoMsg);
+        return reply(MESSAGES.owner.system_management.update.warning(prefix, command));
       }
 
       try {
@@ -47,10 +30,10 @@ export default {
         const updateScriptPath = pathz.join(process.cwd(), 'src', '.scripts', 'update.js');
 
         if (!fs.existsSync(updateScriptPath)) {
-          return reply("❌ Script de atualização não encontrado!\n\n📂 Caminho esperado: src/.scripts/update.js");
+          return reply(MESSAGES.owner.system_management.update.scriptNotFound);
         }
 
-        await reply("🚀 *INICIANDO ATUALIZAÇÃO...*\n\n🔄 Iniciando script de atualização e monitorando progresso...");
+        await reply(MESSAGES.owner.system_management.update.starting);
 
         const updateProcess = spawn('node', [updateScriptPath], {
           cwd: process.cwd(),
@@ -92,13 +75,13 @@ export default {
           if (code === 0) {
             setTimeout(() => process.exit(0), 3000);
           } else {
-            reply(`❌ O processo de atualização terminou com erro (Código: ${code}). Verifique o console para mais detalhes.`);
+            reply(MESSAGES.owner.system_management.update.finishedError(code));
           }
         });
 
       } catch (e) {
         console.error('Erro ao iniciar spawn de atualização:', e);
-        return reply(`❌ Erro interno ao tentar atualizar: ${e.message}`);
+        return reply(MESSAGES.owner.system_management.update.error(e.message));
       }
       return;
     }
@@ -108,7 +91,7 @@ export default {
     if (['addsubdono', 'remsubdono', 'rmsubdono', 'delsubdono', 'listasubdonos', 'listsubdonos'].includes(cmd)) {
       if (cmd.startsWith('add')) {
         let target = menc_os2 || q.trim();
-        if (!target) return reply('Marque ou digite o número.');
+        if (!target) return reply(MESSAGES.owner.system_management.subOwner.missingTarget);
         
         if (target && !target.includes('@')) {
           target = buildUserId(target, config);
@@ -119,7 +102,7 @@ export default {
       }
       if (cmd.startsWith('rem') || cmd.startsWith('rm') || cmd.startsWith('del')) {
         let target = menc_os2 || q.trim();
-        if (!target) return reply('Marque ou digite o número.');
+        if (!target) return reply(MESSAGES.owner.system_management.subOwner.missingTarget);
 
         if (target && !target.includes('@')) {
           target = buildUserId(target, config);
@@ -130,8 +113,8 @@ export default {
       }
       if (cmd.startsWith('list')) {
         const list = getSubdonos();
-        if (!list.length) return reply('📭 Nenhum subdono.');
-        return reply(`👑 *Subdonos:*\n\n` + list.join('\n'));
+        if (!list.length) return reply(MESSAGES.owner.system_management.subOwner.emptyList);
+        return reply(MESSAGES.owner.system_management.subOwner.listHeader + list.join('\n'));
       }
     }
 
@@ -162,7 +145,7 @@ export default {
           reason = q.trim();
         }
 
-        if (!target) return reply("⚠️ Marque, responda a mensagem ou digite o número do usuário.");
+        if (!target) return reply(MESSAGES.owner.system_management.blacklist.missingTarget);
 
         if (target && !target.includes('@')) {
           target = buildUserId(target, config);
@@ -174,7 +157,7 @@ export default {
       if (cmd.startsWith('rm')) {
         let target = menc_os2;
         if (!target && q) target = q.split(' ')[0];
-        if (!target) return reply("⚠️ Marque, responda a mensagem ou digite o número do usuário.");
+        if (!target) return reply(MESSAGES.owner.system_management.blacklist.missingTarget);
 
         if (target && !target.includes('@')) {
           target = buildUserId(target, config);
@@ -184,7 +167,7 @@ export default {
         return reply(res.message, { mentions: [target] });
       }
       const list = getGlobalBlacklist();
-      return reply(`🛑 *Blacklist Global:*\n\n` + Object.keys(list.users).join('\n'));
+      return reply(MESSAGES.owner.system_management.blacklist.listHeader + Object.keys(list.users).join('\n'));
     }
 
     // --- VIEWMSG (Marcar como lida) ---
@@ -193,14 +176,14 @@ export default {
       const opt = q.toLowerCase();
       
       if (opt !== 'on' && opt !== 'off') {
-        return reply(`⚠️ Uso incorreto! Digite:\n*${prefix}viewmsg on* (ativar marcação de lida)\n*${prefix}viewmsg off* (desativar)`);
+        return reply(MESSAGES.owner.system_management.viewMsg.usage(prefix));
       }
       
       const path = await import('path');
       botState.viewMessages = (opt === 'on');
       await optimizer.saveJsonWithCache(path.join(DATABASE_DIR, 'botState.json'), botState);
       
-      return reply(`👁️ *Visualização automática:* ${opt === 'on' ? '✅ ATIVADA' : '❌ DESATIVADA'}\n_O bot agora vai ${opt === 'on' ? 'marcar as mensagens que recebe como lidas' : 'deixar as mensagens acumularem sem visualizar'}._`);
+      return reply(MESSAGES.owner.system_management.viewMsg.success(opt));
     }
   }
 };

@@ -22,33 +22,33 @@ export default {
       const cfg = antiSpamGlobal || {};
       const usage = `Uso: ${prefix}antispamcmd on <limite> <janela_s> <bloqueio_s> | off | status`;
       
-      if (!q) return reply(usage);
+      if (!q) return reply(MESSAGES.owner.owner_broadcast.antispamcmd.usage(prefix));
       const parts = q.trim().split(/\s+/);
       const sub = parts[0].toLowerCase();
 
       if (sub === 'status') {
-        return reply(`🛡️ *ANTISPAM GLOBAL*\n\nStatus: ${cfg.enabled ? '✅ Ativo' : `💔 Inativo`}\nLimite: ${cfg.limit} cmds/${cfg.interval}s\nBloqueio: ${Math.floor(cfg.blockTime/60)}m`);
+        return reply(MESSAGES.owner.owner_broadcast.antispamcmd.status(cfg.enabled ? '✅ Ativo' : `💔 Inativo`, cfg.limit, cfg.interval, Math.floor(cfg.blockTime/60)));
       }
       if (sub === 'off') {
         cfg.enabled = false;
         await optimizer.saveJsonWithCache(filePath, cfg);
-        return reply("✅ AntiSpam desativado.");
+        return reply(MESSAGES.owner.owner_broadcast.antispamcmd.off);
       }
       if (sub === 'on') {
         const [l, i, b] = parts.slice(1).map(v => parseInt(v));
-        if ([l, i, b].some(isNaN)) return reply(usage);
+        if ([l, i, b].some(isNaN)) return reply(MESSAGES.owner.owner_broadcast.antispamcmd.usage(prefix));
         Object.assign(cfg, { enabled: true, limit: l, interval: i, blockTime: b });
         await optimizer.saveJsonWithCache(filePath, cfg);
-        return reply("✅ AntiSpam configurado e ativado!");
+        return reply(MESSAGES.owner.owner_broadcast.antispamcmd.on);
       }
-      return reply(usage);
+      return reply(MESSAGES.owner.owner_broadcast.antispamcmd.usage(prefix));
     }
 
     // ═══════════════════════════════════════════════════════════════
     // 📣 DIVULGAÇÃO (DIV/DIVULGAR)
     // ═══════════════════════════════════════════════════════════════
     if (cmd === 'div' || cmd === 'divulgar') {
-      if (!isGroup) return reply("Use no grupo!");
+      if (!isGroup) return reply(MESSAGES.permission.groupOnly);
       const count = parseInt(args.pop());
       const markAll = args[args.length - 1]?.toLowerCase() === 'all';
       if (markAll) args.pop();
@@ -58,9 +58,9 @@ export default {
         const divCfg = await optimizer.loadJsonWithCache(DATABASE_DIR + '/divulgacao.json', {});
         text = divCfg.savedMessage;
       }
-      if (!text || isNaN(count)) return reply(`Uso: ${prefix}${cmd} <mensagem> [all] <quantidade>`);
+      if (!text || isNaN(count)) return reply(MESSAGES.owner.owner_broadcast.div.usage(prefix, cmd));
 
-      reply(`🚀 Iniciando divulgação de ${count} mensagens...`);
+      reply(MESSAGES.owner.owner_broadcast.div.start(count));
       
       for (let i = 0; i < count; i++) {
         const payment = {
@@ -75,13 +75,13 @@ export default {
         await bot.relayMessage(from, msg.message, { messageId: msg.key.id });
         await new Promise(r => setTimeout(r, 500));
       }
-      return reply("✅ Divulgação concluída.");
+      return reply(MESSAGES.owner.owner_broadcast.div.success);
     }
 
     if (cmd === 'setdiv') {
-      if (!q) return reply("Informe a mensagem.");
+      if (!q) return reply(MESSAGES.owner.owner_broadcast.setdiv.missingMsg);
       await optimizer.saveJsonWithCache(DATABASE_DIR + '/divulgacao.json', { savedMessage: q });
-      return reply("✅ Mensagem salva.");
+      return reply(MESSAGES.owner.owner_broadcast.setdiv.success);
     }
     
     if (cmd === 'divdono') {
@@ -100,38 +100,38 @@ export default {
         `• ${prefix}divdono time <HH:MM|off>\n` +
         `• ${prefix}divdono status`;
 
-      if (!sub || sub === 'help') return reply(helpText);
+      if (!sub || sub === 'help') return reply(MESSAGES.owner.owner_broadcast.divdono.help(prefix));
 
       if (sub === 'add' || sub === 'registrar' || sub === 'register') {
         let targetGroupId = rest || (isGroup ? from : null);
-        if (!targetGroupId) return reply(`💡 Use: ${prefix}divdono add [id_do_grupo]`);
+        if (!targetGroupId) return reply(MESSAGES.owner.owner_broadcast.divdono.add.usage(prefix));
         if (!targetGroupId.includes('@g.us')) targetGroupId += '@g.us';
         
         if (!groups.includes(targetGroupId)) {
           groups.push(targetGroupId);
           config.groups = groups;
           await optimizer.saveJsonWithCache(configPath, config);
-          return reply(`✅ Grupo registrado para divulgação.\n📌 Total: ${groups.length}`);
+          return reply(MESSAGES.owner.owner_broadcast.divdono.add.success(groups.length));
         }
-        return reply('⚠️ Este grupo já está registrado.');
+        return reply(MESSAGES.owner.owner_broadcast.divdono.add.exists);
       }
 
       if (sub === 'rem' || sub === 'remove' || sub === 'del') {
-        if (!rest) return reply(`💡 Use: ${prefix}divdono rem <id_do_grupo>`);
+        if (!rest) return reply(MESSAGES.owner.owner_broadcast.divdono.rem.usage(prefix));
         let targetGroupId = rest.trim();
         if (!targetGroupId.includes('@g.us')) targetGroupId += '@g.us';
         
         const newGroups = groups.filter(id => id !== targetGroupId);
-        if (newGroups.length === groups.length) return reply('⚠️ Grupo não encontrado na lista.');
+        if (newGroups.length === groups.length) return reply(MESSAGES.owner.owner_broadcast.divdono.rem.notFound);
         
         config.groups = newGroups;
         await optimizer.saveJsonWithCache(configPath, config);
-        return reply(`✅ Grupo removido da divulgação.\n📌 Total: ${newGroups.length}`);
+        return reply(MESSAGES.owner.owner_broadcast.divdono.rem.success(newGroups.length));
       }
 
       if (sub === 'list' || sub === 'lista') {
-        if (!groups.length) return reply('⚠️ Nenhum grupo registrado para divulgação.');
-        let text = `📣 *GRUPOS REGISTRADOS (${groups.length})*\n\n`;
+        if (!groups.length) return reply(MESSAGES.owner.owner_broadcast.divdono.list.empty);
+        let text = MESSAGES.owner.owner_broadcast.divdono.list.header(groups.length);
         for (let i = 0; i < groups.length; i++) {
           const id = groups[i];
           try {
@@ -145,41 +145,37 @@ export default {
       }
 
       if (sub === 'msg' || sub === 'mensagem') {
-        if (!rest) return reply(`💡 Use: ${prefix}divdono msg <sua mensagem de divulgação aqui>`);
+        if (!rest) return reply(MESSAGES.owner.owner_broadcast.divdono.msg.usage(prefix));
         config.savedMessage = rest;
         await optimizer.saveJsonWithCache(configPath, config);
-        return reply(`✅ Mensagem de divulgação salva com sucesso!\nPara testar: ${prefix}divdono send`);
+        return reply(MESSAGES.owner.owner_broadcast.divdono.msg.success(prefix));
       }
 
       if (sub === 'time' || sub === 'horario') {
-        if (!rest) return reply(`💡 Use: ${prefix}divdono time <HH:MM> ou 'off'`);
+        if (!rest) return reply(MESSAGES.owner.owner_broadcast.divdono.time.usage(prefix));
         if (rest.toLowerCase() === 'off') {
           config.scheduleTime = null;
           await optimizer.saveJsonWithCache(configPath, config);
-          return reply(`✅ Divulgação automática desativada.`);
+          return reply(MESSAGES.owner.owner_broadcast.divdono.time.off);
         }
         if (!/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/.test(rest)) {
-          return reply('❌ Formato de hora inválido! Use HH:MM (ex: 14:30)');
+          return reply(MESSAGES.owner.owner_broadcast.divdono.time.invalid);
         }
         config.scheduleTime = rest;
         await optimizer.saveJsonWithCache(configPath, config);
-        return reply(`✅ Horário de divulgação automática configurado para ${rest}.`);
+        return reply(MESSAGES.owner.owner_broadcast.divdono.time.success(rest));
       }
 
       if (sub === 'status') {
-        let text = `📊 *STATUS DIVULGAÇÃO*\n\n`;
-        text += `• *Grupos:* ${groups.length}\n`;
-        text += `• *Mensagem salva:* ${config.savedMessage ? 'Sim ✅' : 'Não ❌'}\n`;
-        text += `• *Automático:* ${config.scheduleTime ? `Sim, às ${config.scheduleTime}` : 'Desativado'}\n`;
-        return reply(text);
+        return reply(MESSAGES.owner.owner_broadcast.divdono.status.text(groups.length, config.savedMessage ? 'Sim ✅' : 'Não ❌', config.scheduleTime ? `Sim, às ${config.scheduleTime}` : 'Desativado'));
       }
 
       if (sub === 'send' || sub === 'enviar') {
-        if (!groups.length) return reply('⚠️ Nenhum grupo registrado!');
+        if (!groups.length) return reply(MESSAGES.owner.owner_broadcast.divdono.send.empty);
         const messageText = rest || config.savedMessage;
-        if (!messageText) return reply(`⚠️ Nenhuma mensagem definida! Use ${prefix}divdono msg <texto>`);
+        if (!messageText) return reply(MESSAGES.owner.owner_broadcast.divdono.send.missingMsg(prefix));
         
-        reply(`🚀 Iniciando envio para ${groups.length} grupos...`);
+        reply(MESSAGES.owner.owner_broadcast.divdono.send.start(groups.length));
         let success = 0, fail = 0;
         
         for (const id of groups) {
@@ -191,67 +187,67 @@ export default {
             fail++;
           }
         }
-        return reply(`✅ *Divulgação Concluída!*\n\n🟢 Sucesso: ${success}\n🔴 Falha: ${fail}`);
+        return reply(MESSAGES.owner.owner_broadcast.divdono.send.success(success, fail));
       }
 
-      return reply('❌ Subcomando inválido.\n\n' + helpText);
+      return reply(MESSAGES.owner.owner_broadcast.divdono.invalid + MESSAGES.owner.owner_broadcast.divdono.help(prefix));
     }
 
     // ═══════════════════════════════════════════════════════════════
     // 📩 SISTEMA DE TRANSMISSÃO TM2 (INSCRITOS)
     // ═══════════════════════════════════════════════════════════════
     if (cmd === 'inscrevertm' || cmd === 'inscrevertm2') {
-      if (isGroup) return reply('⚠️ Este comando só funciona no privado! Me chama no PV para se inscrever.');
+      if (isGroup) return reply(MESSAGES.owner.owner_broadcast.tm2.privateOnly);
       
       const subFile = pathz.join(DATABASE_DIR, 'transmissao_subs.json');
       const subs = await optimizer.loadJsonWithCache(subFile, { users: [] });
       
       if (subs.users.includes(sender)) {
-        return reply(`✅ Você já está inscrito nas transmissões!\n\n📊 *Estatísticas:*\n• Total de inscritos: ${subs.users.length}`);
+        return reply(MESSAGES.owner.owner_broadcast.tm2.alreadySubbed(subs.users.length));
       }
       
       subs.users.push(sender);
       await optimizer.saveJsonWithCache(subFile, subs);
-      return reply(`🎉 *Inscrição confirmada!*\n\nVocê agora receberá as transmissões da bot diretamente no seu privado.\n\n💡 *Como funciona:*\n• Você receberá mensagens importantes da equipe\n• Para cancelar, use: ${prefix}desinscrever\n\n✨ Obrigado por se inscrever!`);
+      return reply(MESSAGES.owner.owner_broadcast.tm2.successSub(prefix));
     }
 
     if (cmd === 'desinscrever' || cmd === 'desinscrevertm' || cmd === 'cancelartm') {
-      if (isGroup) return reply('⚠️ Este comando só funciona no privado!');
+      if (isGroup) return reply(MESSAGES.owner.owner_broadcast.tm2.privateOnlyUnsub);
       
       const subFile = pathz.join(DATABASE_DIR, 'transmissao_subs.json');
       const subs = await optimizer.loadJsonWithCache(subFile, { users: [] });
       
       if (!subs.users.includes(sender)) {
-        return reply('⚠️ Você não está inscrito nas transmissões.');
+        return reply(MESSAGES.owner.owner_broadcast.tm2.notSubbed);
       }
       
       subs.users = subs.users.filter(u => u !== sender);
       await optimizer.saveJsonWithCache(subFile, subs);
-      return reply(`✅ *Inscrição cancelada!*\n\nVocê não receberá mais as transmissões.\n\n💡 Para se inscrever novamente, use: ${prefix}inscrevertm`);
+      return reply(MESSAGES.owner.owner_broadcast.tm2.successUnsub(prefix));
     }
 
     if (cmd === 'statustm' || cmd === 'statustm2') {
       if (!isOwner) return reply(MESSAGES.permission.ownerOnly);
       const subFile = pathz.join(DATABASE_DIR, 'transmissao_subs.json');
       const subs = await optimizer.loadJsonWithCache(subFile, { users: [] });
-      return reply(`📊 *STATUS TRANSMISSÃO TM2*\n\n• Inscritos: ${subs.users.length}`);
+      return reply(MESSAGES.owner.owner_broadcast.tm2.status(subs.users.length));
     }
 
     if (cmd === 'tm2') {
       if (!isOwner) return reply(MESSAGES.permission.ownerOnly);
       
       if (!q && !isImage && !isVideo && !isQuotedImage && !isQuotedVideo) {
-        return reply('Digite uma mensagem ou marque uma imagem/vídeo! Exemplo: ' + prefix + 'tm2 Olá inscritos!');
+        return reply(MESSAGES.owner.owner_broadcast.tm2.missingMedia(prefix));
       }
       
       const subFile = pathz.join(DATABASE_DIR, 'transmissao_subs.json');
       const subs = await optimizer.loadJsonWithCache(subFile, { users: [] });
       
       if (subs.users.length === 0) {
-        return reply('⚠️ Ainda não há inscritos para enviar a transmissão.\n\n💡 Os usuários devem usar o comando /inscrevertm no privado para se inscrever.');
+        return reply(MESSAGES.owner.owner_broadcast.tm2.noSubs);
       }
       
-      const cabecalho = `╔══════════════════════\n║  📡 *TRANSMISSÃO VIP* 📡\n╚══════════════════════\n\n`;
+      const cabecalho = MESSAGES.owner.owner_broadcast.tm2.header;
       let baseMessage = {};
       
       try {
@@ -274,7 +270,7 @@ export default {
         baseMessage = { text: `${cabecalho}${q}` }; 
       }
       
-      reply(`🚀 Iniciando transmissão para ${subs.users.length} inscritos...`);
+      reply(MESSAGES.owner.owner_broadcast.tm2.start(subs.users.length));
       let success = 0, fail = 0;
       
       for (const id of subs.users) {
@@ -286,7 +282,7 @@ export default {
           fail++;
         }
       }
-      return reply(`✅ *Transmissão Concluída!*\n\n🟢 Sucesso: ${success}\n🔴 Falha: ${fail}`);
+      return reply(MESSAGES.owner.owner_broadcast.tm2.success(success, fail));
     }
   }
 };

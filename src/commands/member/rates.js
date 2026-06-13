@@ -27,7 +27,7 @@ export default {
         }
         
         if (!isGroup) return reply(MESSAGES.permission.groupOnly);
-        if (!modoBn) return reply(`💔 O modo brincadeira não esta ativo nesse grupo`);
+        if (!modoBn) return reply(MESSAGES.error.modoBnDisabled);
         
         let gamesData = fs.existsSync(funcsDir + '/json/games.json') ? JSON.parse(fs.readFileSync(funcsDir + '/json/games.json')) : { games: {} };
         let responses = fs.existsSync(funcsDir + '/json/gamestext.json') ? JSON.parse(fs.readFileSync(funcsDir + '/json/gamestext.json')) : {};
@@ -40,7 +40,7 @@ export default {
         const targetName = `@${getUserName(target)}`;
         const level = Math.floor(Math.random() * 101);
         
-        const responseText = (responses[command] ? responses[command].replaceAll('#nome#', targetName).replaceAll('#level#', level) : `📊 ${targetName} tem *${level}%* de ${command}! 🔥`);
+        const responseText = (responses[command] ? responses[command].replaceAll('#nome#', targetName).replaceAll('#level#', level) : MESSAGES.member.rates.resultIndividual(command, targetName, level));
         const media = gamesData.games[command];
         
         if (media?.image) {
@@ -58,26 +58,26 @@ export default {
         }
         
         if (!isGroup) return reply(MESSAGES.permission.groupOnly);
-        if (!modoBn) return reply(`💔 O modo brincadeira não está ativo nesse grupo.`);
+        if (!modoBn) return reply(MESSAGES.error.modoBnDisabled);
         
         let gpPath = buildGroupFilePath(from);
         let gamesData = fs.existsSync(funcsDir + '/json/games.json') ? JSON.parse(fs.readFileSync(funcsDir + '/json/games.json')) : { ranks: {} };
         let data = fs.existsSync(gpPath) ? JSON.parse(fs.readFileSync(gpPath)) : { mark: {} };
         
         let membros = AllgroupMembers.filter(m => !['0', 'marca'].includes(data.mark[m]));
-        if (membros.length < 5) return reply(`💔 Membros insuficientes para formar um ranking.`);
+        if (membros.length < 5) return reply(MESSAGES.member.rates.notEnoughMembers);
         
         let top5 = membros.sort(() => Math.random() - 0.5).slice(0, 5);
         let cleanedCommand = command.endsWith('s') ? command.slice(0, -1) : command;
         
         let ranksData = fs.existsSync(funcsDir + '/json/ranks.json') ? JSON.parse(fs.readFileSync(funcsDir + '/json/ranks.json')) : { ranks: {} };
         
-        let responseText = ranksData[cleanedCommand] || `📊 *Ranking de ${cleanedCommand.replace('rank', '')}*:\n\n`;
+        let responseText = ranksData[cleanedCommand] || MESSAGES.member.rates.rankHeader(cleanedCommand.replace('rank', ''));
         // Ajuste para evitar bugs onde não concatena as linhas corretamente
         if (!responseText.includes('\n\n')) responseText += '\n\n';
         
         top5.forEach((m, i) => {
-          responseText += `🏅 *#${i + 1}* - @${getUserName(m)}\n`;
+          responseText += MESSAGES.member.rates.rankItem(i, getUserName(m));
         });
         
         let media = gamesData.ranks[cleanedCommand];

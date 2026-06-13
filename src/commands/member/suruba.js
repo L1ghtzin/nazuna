@@ -13,19 +13,15 @@ export default {
       
       if (modoLite) return bot.react('❌', { key: info.key });
       if (!isGroup) return reply(MESSAGES.permission.groupOnly);
-      if (!modoBn) return reply('O modo brincadeira nao esta ativo no grupo');
-      if (!q) return reply(`Eita, coloque o número de pessoas após o comando.`);
-      if (Number(q) > 15) return reply("Coloque um número menor, ou seja, abaixo de *15*.");
+      if (!modoBn) return reply(MESSAGES.permission.botGameModeDisabled);
+      if (!q) return reply(MESSAGES.member.suruba.missingAmount);
+      if (Number(q) > 15) return reply(MESSAGES.member.suruba.amountTooHigh);
       
       const emojiskk = ["🥵", "😈", "🫣", "😏"];
       const emojis2 = emojiskk[Math.floor(Math.random() * emojiskk.length)];
       
-      const frasekk = [
-        `tá querendo relações sexuais a ${q}, topa?`, 
-        `quer que *${q}* pessoas venham de *chicote, algema e corda de alpinista*.`, 
-        `quer que ${q} pessoas der tapa na cara, lhe chame de cachorra e fud3r bem gostosinho...`
-      ];
-      const context = frasekk[Math.floor(Math.random() * frasekk.length)];
+      const frasekk = MESSAGES.member.suruba.phrases;
+      const context = frasekk[Math.floor(Math.random() * frasekk.length)](q);
       
       let path = buildGroupFilePath(from);
       let data = await optimizer.loadJsonWithCache(path, { mark: {} });

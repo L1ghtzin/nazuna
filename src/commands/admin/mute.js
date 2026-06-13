@@ -46,7 +46,7 @@ export default {
       optimizer.invalidateGroup(from);
       
       await bot.sendMessage(from, {
-        text: `✅ @${getUserName(menc_os2)} foi mutado. Se enviar mensagens, será banido.`,
+        text: MESSAGES.admin.mute.success(getUserName(menc_os2)),
         mentions: [menc_os2]
       }, {
         quoted: info

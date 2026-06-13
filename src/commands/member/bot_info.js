@@ -81,12 +81,12 @@ export default {
     if (['statusgp', 'dadosgp'].includes(cmd)) {
       if (!isGroup) return reply(MESSAGES.permission.groupOnly);
       const metadata = await bot.groupMetadata(from);
-      let teks = `🏢 *DADOS DO GRUPO*\n\n`;
-      teks += `📌 *Nome:* ${metadata.subject}\n`;
-      teks += `👥 *Membros:* ${metadata.participants.length}\n`;
-      teks += `👑 *Criador:* @${metadata.owner?.split('@')[0] || 'N/A'}\n`;
-      teks += `📝 *Descrição:* ${metadata.desc || 'Sem descrição'}`;
-      return reply(teks, { mentions: [metadata.owner].filter(Boolean) });
+      return reply(MESSAGES.member.bot_info.groupData(
+        metadata.subject,
+        metadata.participants.length,
+        metadata.owner?.split('@')[0] || 'N/A',
+        metadata.desc || 'Sem descrição'
+      ), { mentions: [metadata.owner].filter(Boolean) });
     }
 
     // --- INFOSERVER (DIAGNÓSTICO COMPLETO PARA DONO) ---
@@ -171,67 +171,47 @@ export default {
       const endTime = Date.now();
       const latency = endTime - startTime;
 
-      let infoServerMessage = `🌸 ═════════════════════ 🌸\n`;
-      infoServerMessage += `    *INFORMAÇÕES DO SERVIDOR*\n`;
-      infoServerMessage += `🌸 ═════════════════════ 🌸\n\n`;
-      
-      infoServerMessage += `🖥️ *Sistema Operacional:* 🏠\n`;
-      infoServerMessage += `├ 🟢 Node.js: ${nodeVersion}\n`;
-      infoServerMessage += `├ 💻 Plataforma: ${serverOsInfo.platform}\n`;
-      infoServerMessage += `├ 🏗️ Arquitetura: ${serverOsInfo.arch}\n`;
-      infoServerMessage += `├ 🔧 Tipo: ${serverOsInfo.type}\n`;
-      infoServerMessage += `├ 📋 Release: ${serverOsInfo.release}\n`;
-      infoServerMessage += `├ 🏷️ Hostname: ${serverOsInfo.hostname}\n`;
-      infoServerMessage += `├ 🔄 Endianness: ${serverOsInfo.endianness}\n`;
-      infoServerMessage += `├ ⏳ Sistema online há: ${osUptime} horas\n`;
-      infoServerMessage += `└ 📅 Hora atual: ${currentServerTime}\n\n`;
-      
-      infoServerMessage += `⚡ *Processador (CPU):* 🧠\n`;
-      infoServerMessage += `├ 🔢 Núcleos: ${serverCpuCount}\n`;
-      infoServerMessage += `├ 🏷️ Modelo: ${serverCpuModel}\n`;
-      infoServerMessage += `├ 👤 Tempo usuário: ${serverCpuUser}s\n`;
-      infoServerMessage += `├ ⚙️ Tempo sistema: ${serverCpuSystem}s\n`;
-      infoServerMessage += `├ 📈 Uso CPU atual: ${cpuPercent}%\n`;
-      infoServerMessage += `├ 📊 Load 1min: ${serverLoadAvg[0].toFixed(2)}\n`;
-      infoServerMessage += `├ 📈 Load 5min: ${serverLoadAvg[1].toFixed(2)}\n`;
-      infoServerMessage += `└ 📉 Load 15min: ${serverLoadAvg[2].toFixed(2)}\n\n`;
-      
-      const usedMemGb = (serverTotalMemory - serverFreeMemory);
-      const memPercent = (usedMemGb / serverTotalMemory) * 100;
-      infoServerMessage += `💾 *Memória do Sistema:* 🧠\n`;
-      infoServerMessage += `├ 🆓 RAM Livre: ${serverFreeMemory} GB\n`;
-      infoServerMessage += `├ 📊 RAM Total: ${serverTotalMemory} GB\n`;
-      infoServerMessage += `├ 📈 RAM Usada: ${usedMemGb.toFixed(2)} GB\n`;
-      infoServerMessage += `└ ⚠️ Uso: [${createProgressBar(memPercent)}] ${memPercent.toFixed(1)}%\n\n`;
-
-      const botNameCap = nomebot.charAt(0).toUpperCase() + nomebot.slice(1);
-      const heapPercent = (serverMemUsage.heapUsed / serverMemUsage.heapTotal) * 100;
-      infoServerMessage += `🤖 *Memória da ${botNameCap}:* 💖\n`;
-      infoServerMessage += `├ 🧠 Heap Usado: ${serverMemUsed} MB\n`;
-      infoServerMessage += `├ 📦 Heap Total: ${serverMemTotal} MB\n`;
-      infoServerMessage += `├ 🏠 RSS: ${serverMemRss} MB\n`;
-      infoServerMessage += `├ 🔗 Externo: ${serverMemExternal} MB\n`;
-      infoServerMessage += `└ ⚠️ Eficiência: [${createProgressBar(heapPercent)}] ${heapPercent.toFixed(1)}%\n\n`;
-      
-      infoServerMessage += `🌐 *Rede e Conectividade:* 🔗\n`;
-      infoServerMessage += `├ 🔌 Interfaces: ${serverInterfaces}\n`;
-      infoServerMessage += `${networkDetails}`;
-      infoServerMessage += `├ 📡 Status: Online\n`;
-      infoServerMessage += `├ ⏱️ Latência de Rede: ${networkLatency}\n`;
-      infoServerMessage += `└ 🛡️ Firewall: Ativo\n\n`;
-
-      const dp = parseFloat(diskUsagePercent);
-      infoServerMessage += `💽 *Armazenamento:* 💿\n`;
-      infoServerMessage += `├ 🆓 Livre: ${diskFree} GB\n`;
-      infoServerMessage += `├ 📊 Total: ${diskTotal} GB\n`;
-      infoServerMessage += `├ 📈 Usado: ${diskUsed} GB\n`;
-      infoServerMessage += `└ ✅ Uso: [${createProgressBar(dp)}] ${diskUsagePercent}\n\n`;
-
-      infoServerMessage += `⏰ *Tempo e Latência:* 🕐\n`;
-      infoServerMessage += `├ ⏱️ Latência do Bot: ${latency}ms\n`;
-      infoServerMessage += `└ 🚀 Bot online há: ${serverUptimeFormatted}`;
-
-      return reply(infoServerMessage);
+      return reply(MESSAGES.member.bot_info.serverInfo({
+        nodeVersion,
+        platform: serverOsInfo.platform,
+        arch: serverOsInfo.arch,
+        type: serverOsInfo.type,
+        release: serverOsInfo.release,
+        hostname: serverOsInfo.hostname,
+        endianness: serverOsInfo.endianness,
+        osUptime,
+        currentServerTime,
+        serverCpuCount,
+        serverCpuModel,
+        serverCpuUser,
+        serverCpuSystem,
+        cpuPercent,
+        serverLoadAvg0: serverLoadAvg[0].toFixed(2),
+        serverLoadAvg1: serverLoadAvg[1].toFixed(2),
+        serverLoadAvg2: serverLoadAvg[2].toFixed(2),
+        serverFreeMemory,
+        serverTotalMemory,
+        usedMemGb: usedMemGb.toFixed(2),
+        memProgressBar: createProgressBar(memPercent),
+        memPercent: memPercent.toFixed(1),
+        botNameCap,
+        serverMemUsed,
+        serverMemTotal,
+        serverMemRss,
+        serverMemExternal,
+        heapProgressBar: createProgressBar(heapPercent),
+        heapPercent: heapPercent.toFixed(1),
+        serverInterfaces,
+        networkDetails,
+        networkLatency,
+        diskFree,
+        diskTotal,
+        diskUsed,
+        diskProgressBar: createProgressBar(dp),
+        diskUsagePercent,
+        latency,
+        serverUptimeFormatted
+      }));
     }
 
     // --- INFOBOT / STATUSBOT (PÚBLICO) ---
@@ -264,36 +244,26 @@ export default {
       
       const currentTime = new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });
       
-      const lines = [
-        "╭───🤖 STATUS DO BOT ───╮",
-        `┊ 🏷️ Nome: ${nomebot}`,
-        `┊ 👨‍💻 Dono: ${nomedono}`,
-        `┊ 🆚 Versão: ${botVersion}`,
-        `┊ 🟢 Status: ${botStatus}`,
-        `┊ ⏰ Online há: ${botUptime}`,
-        `┊ 🖥️ Plataforma: ${platform}`,
-        `┊ 🟢 Node.js: ${nodeV}`,
-        "┊",
-        "┊ 📊 *Estatísticas:*",
-        `┊ • 👥 Grupos: ${totalGroups}`,
-        `┊ • 👤 Usuários: ${totalUsers}`,
-        `┊ • ⚒️ Comandos: ${totalCmds}`,
-        `┊ • 💎 Users Premium: ${premiumUsers}`,
-        `┊ • 💎 Grupos Premium: ${premiumGroups}`,
-        "┊",
-        "┊ 🛡️ *Segurança:*",
-        `┊ • 🚫 Users Bloqueados: ${blockedUsersCount}`,
-        `┊ • 🚫 Cmds Bloqueados: ${blockedCommandsCount}`,
-        `┊ • 🏠 Modo Aluguel: ${rentalMode}`,
-        "┊",
-        "┊ 💾 *Sistema:*",
-        `┊ • 🧠 RAM Usada: ${memUsed}MB`,
-        `┊ • 📦 RAM Total: ${memTotal}MB`,
-        `┊ • 🕐 Hora Atual: ${currentTime}`,
-        "╰───────────────╯"
-      ].join("\n");
-      
-      return reply(lines);
+      return reply(MESSAGES.member.bot_info.botStatus({
+        nomebot,
+        nomedono,
+        botVersion,
+        botStatus,
+        botUptime,
+        platform,
+        nodeV,
+        totalGroups,
+        totalUsers,
+        totalCmds,
+        premiumUsers,
+        premiumGroups,
+        blockedUsersCount,
+        blockedCommandsCount,
+        rentalMode,
+        memUsed,
+        memTotal,
+        currentTime
+      }));
     }
   }
 };

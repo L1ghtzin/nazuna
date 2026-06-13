@@ -1,5 +1,3 @@
-
-
 export default {
   name: "admintools",
   description: "Ferramentas administrativas adicionais",
@@ -31,13 +29,13 @@ export default {
 
     // --- MENTION (Configuração de Marcações) ---
     if (command === 'mention') {
-      if (!q) return reply(`🔔 *Configuração de Marcações*\n\n🔔 Escolha como deseja ser mencionado:\n\n🔘 *${prefix}mention all*   Marcado em tudo (marcações e jogos).\n🔔 *${prefix}mention marca*   Apenas em marcações de administradores.\n🎮 *${prefix}mention games*   Somente em jogos do bot.\n📴 *${prefix}mention 0*   Não será mencionado em nenhuma ocasião.`);
+      if (!q) return reply(MESSAGES.admin.tools.mention.usage(prefix));
       
       const options = {
-        all: '✅ Você agora será mencionado em todas as interações do bot, incluindo marcações de administradores e os jogos!',
-        marca: '🔔 A partir de agora, você será mencionado apenas quando um administrador marcar.',
-        games: '🎮 Você optou por ser mencionado somente em jogos do bot.',
-        0: '📴 Silêncio ativado! Você não será mais mencionado pelo bot, nem em marcações nem em jogos.'
+        all: MESSAGES.admin.tools.mention.all,
+        marca: MESSAGES.admin.tools.mention.marca,
+        games: MESSAGES.admin.tools.mention.games,
+        0: MESSAGES.admin.tools.mention['0']
       };
       
       const opt = q.toLowerCase();
@@ -49,14 +47,14 @@ export default {
         await optimizer.saveJsonWithCache(path, groupData);
         return reply(`*${options[opt]}*`);
       }
-      return reply(`❌ Opção inválida! Use *${prefix}mention* para ver as opções.`);
+      return reply(MESSAGES.admin.tools.mention.invalid(prefix));
     }
 
     if (!isGroupAdmin && !isOwner) return reply(MESSAGES.permission.adminOnly);
 
     // --- DELETAR (Apagar mensagem do bot ou de outros se for admin) ---
     if (['deletar', 'del', 'd', 'delete'].includes(command)) {
-      if (!info.message.extendedTextMessage?.contextInfo?.quotedMessage) return reply("❌ Responda à mensagem que deseja deletar.");
+      if (!info.message.extendedTextMessage?.contextInfo?.quotedMessage) return reply(MESSAGES.admin.tools.del.missingQuoted);
       
       const key = {
         remoteJid: from,
@@ -68,7 +66,7 @@ export default {
       try {
         await bot.sendMessage(from, { delete: key });
       } catch (e) {
-        return reply("❌ Não consegui deletar a mensagem. Verifique se sou administrador.");
+        return reply(MESSAGES.admin.tools.del.error);
       }
     }
 
@@ -76,18 +74,18 @@ export default {
     if (['blockuser', 'unblockuser'].includes(command)) {
       if (!isOwner) return reply(MESSAGES.permission.ownerOnly);
       const target = menc_os2;
-      if (!target) return reply("❌ Marque o usuário que deseja bloquear/desbloquear.");
+      if (!target) return reply(MESSAGES.admin.tools.block.missingTarget);
       
       try {
         if (command === 'blockuser') {
           await bot.updateBlockStatus(target, "block");
-          return reply("✅ Usuário bloqueado com sucesso!");
+          return reply(MESSAGES.admin.tools.block.successBlock);
         } else {
           await bot.updateBlockStatus(target, "unblock");
-          return reply("✅ Usuário desbloqueado com sucesso!");
+          return reply(MESSAGES.admin.tools.block.successUnblock);
         }
       } catch (e) {
-        return reply("❌ Erro ao atualizar status de bloqueio.");
+        return reply(MESSAGES.admin.tools.block.error);
       }
     }
   },

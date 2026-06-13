@@ -2,6 +2,11 @@
 // Todas as mensagens de erro, permissão e feedback do bot ficam aqui.
 // Comandos devem usar MESSAGES.xxx ao invés de strings hardcoded.
 
+import { rpgMessages } from './messages/rpg.js';
+import { adminMessages } from './messages/admin.js';
+import { memberMessages } from './messages/member.js';
+import { ownerMessages } from './messages/owner.js';
+
 export const MESSAGES = {
   error: {
     general: "😥 Ops! Ocorreu um erro inesperado ao processar sua solicitação. Tente novamente!",
@@ -12,6 +17,7 @@ export const MESSAGES = {
     ffmpegMissing: "❌ Erro ao processar o áudio. Verifique se o FFmpeg está instalado corretamente no seu sistema.",
     cooldown: (time) => `⏳ Aguarde ${time} antes de usar novamente.`,
     notEnough: (item) => `❌ Você não tem ${item} suficiente!`,
+    modoBnDisabled: "💔 O modo brincadeira não está ativo nesse grupo.",
   },
   permission: {
     ownerOnly: "🚫 Este comando é exclusivo do dono!",
@@ -34,20 +40,10 @@ export const MESSAGES = {
     noResults: "🔍 Nenhum resultado encontrado.",
     unknownUser: "Usuário Desconhecido"
   },
-  rpg: {
-    noAccount: "❌ Você não tem uma conta no RPG! Crie uma primeiro.",
-    itemNotFound: "❌ Você não possui esse item.",
-    invalidItem: "❌ Item inválido!",
-    maxLevel: "❌ Você já está no nível máximo!",
-    alreadyClaimed: "❌ Você já coletou este prêmio.",
-    notCompleted: "❌ Complete todas as tarefas para coletar.",
-    clanNotFound: "❌ Seu clã não foi encontrado.",
-    insufficientCoins: (needed) => `❌ Você precisa de ${needed} moedas!`,
-    notEnoughData: "💔 Sem dados suficientes para ranking.",
-    rankingHeader: "⚔️ 🏆 *RANKING DE RIQUEZA* 🏆 ⚔️\n\n",
-    rankingItem: (medal, id, total) => `${medal} @${id} — 💰 ${total}\n`,
-    rankingFooter: "\n✨ Continue jogando para subir no rank!"
-  },
+  rpg: rpgMessages,
+  admin: adminMessages,
+  member: memberMessages,
+  owner: ownerMessages,
   tools: {
     ping: (statusEmoji, speed, statusCor, qualidade, uptimeBot) => `╭⊱ ⚡ *STATUS DA CONEXÃO* ⚡ ⊱╮
 │

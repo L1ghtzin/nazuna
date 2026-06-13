@@ -10,7 +10,7 @@ export default {
     try {
       if (!isOwner) return reply(MESSAGES.permission.ownerOnly);
       
-      await reply(`🔄 *REINICIANDO O BOT...*\n\n⏳ Pausando processamento de mensagens...\n🚀 O bot voltará online em alguns segundos!`);
+      await reply(MESSAGES.owner.reiniciar.success);
       
       try {
         // Pausa o processamento de mensagens

@@ -19,33 +19,33 @@ export default {
 
     // --- APOSTAS PET ---
     if (['apostarpet', 'petbet'].includes(cmd)) {
-      if (!isGroup) return reply('⚔️ Este comando funciona apenas em grupos com Modo RPG ativo.');
-      if (!groupData?.modorpg) return reply(`⚔️ Modo RPG desativado! Use ${prefix}modorpg para ativar.`);
+      if (!isGroup) return reply(MESSAGES.owner.maintenance.apostarpet.groupOnly);
+      if (!groupData?.modorpg) return reply(MESSAGES.owner.maintenance.apostarpet.rpgDisabled(prefix));
       
-      if (!loadEconomy) return reply(`💔 Sistema de economia não carregado neste módulo.`);
+      if (!loadEconomy) return reply(MESSAGES.owner.maintenance.apostarpet.ecoDisabled);
       
       const econ = loadEconomy();
       const me = getEcoUser(econ, sender);
       const target = (info.message?.extendedTextMessage?.contextInfo?.mentionedJid?.[0]) || null;
       
-      if (!target) return reply(`💔 Marque alguém para apostar!\n\n💡 Uso: ${prefix}apostarpet <valor> <nº pet> @user`);
-      if (target === sender) return reply(`💔 Você não pode apostar contra si mesmo!`);
+      if (!target) return reply(MESSAGES.owner.maintenance.apostarpet.noTarget(prefix));
+      if (target === sender) return reply(MESSAGES.owner.maintenance.apostarpet.selfBet);
       
       const argsArr = q.split(' ');
       const betAmount = parseInt(argsArr[0]) || 0;
       const petIndex = parseInt(argsArr[1]) - 1;
       
-      if (betAmount <= 0) return reply(`💔 Informe um valor válido para apostar!`);
-      if (betAmount > me.wallet) return reply(`💔 Você não tem dinheiro suficiente na carteira!`);
+      if (betAmount <= 0) return reply(MESSAGES.owner.maintenance.apostarpet.invalidAmount);
+      if (betAmount > me.wallet) return reply(MESSAGES.owner.maintenance.apostarpet.insufficientFunds);
       
       const opponent = getEcoUser(econ, target);
-      if (betAmount > opponent.wallet) return reply(`💔 Seu oponente não tem dinheiro suficiente!`);
+      if (betAmount > opponent.wallet) return reply(MESSAGES.owner.maintenance.apostarpet.opponentInsufficient);
       
-      if (!me.pets || me.pets.length === 0) return reply('🐾 Você não tem pets!');
-      if (!opponent.pets || opponent.pets.length === 0) return reply(`💔 Seu oponente não tem pets!`);
+      if (!me.pets || me.pets.length === 0) return reply(MESSAGES.owner.maintenance.apostarpet.noPets);
+      if (!opponent.pets || opponent.pets.length === 0) return reply(MESSAGES.owner.maintenance.apostarpet.opponentNoPets);
       
       if (isNaN(petIndex) || petIndex < 0 || petIndex >= me.pets.length) {
-        return reply(`💔 Pet inválido! Use ${prefix}pets para ver seus pets.`);
+        return reply(MESSAGES.owner.maintenance.apostarpet.invalidPet(prefix));
       }
       
       const myPet = me.pets[petIndex];
@@ -66,21 +66,7 @@ export default {
       
       const won = myHp > oppHp;
       
-      let resultMsg = `╭━━━⊱ 🎰 *APOSTA DE PETS* ⊱━━━╮\n\n`;
-      resultMsg += `${myPet.emoji} *${myPet.name}* (Lv.${myPet.level}) VS ${oppPet.emoji} *${oppPet.name}* (Lv.${oppPet.level})\n\n`;
-      resultMsg += `💰 Aposta: ${betAmount.toLocaleString()}\n\n`;
-      
-      if (won) {
-        me.wallet += betAmount;
-        opponent.wallet -= betAmount;
-        resultMsg += `🏆 *VOCÊ VENCEU!*\n💰 Ganhou: +${betAmount.toLocaleString()}`;
-      } else {
-        me.wallet -= betAmount;
-        opponent.wallet += betAmount;
-        resultMsg += `💀 *VOCÊ PERDEU!*\n💸 Perdeu: -${betAmount.toLocaleString()}`;
-      }
-      
-      resultMsg += `\n╰━━━━━━━━━━━━━━━━━━━━━━╯`;
+      const resultMsg = MESSAGES.owner.maintenance.apostarpet.resultMsg(myPet, oppPet, betAmount, won);
       
       saveEconomy(econ);
       return reply(resultMsg, { mentions: [target] });
@@ -106,7 +92,7 @@ export default {
             count++;
           }
         }
-        return reply(`🧹 *Limpeza concluída!*\n\nRemovidos *${count}* arquivos de grupos que o bot não participa mais.`);
+        return reply(MESSAGES.owner.maintenance.limpardb.success(count));
       } catch (e) {
         return reply(MESSAGES.error.general);
       }
@@ -115,17 +101,17 @@ export default {
     // --- REPARO E DIAGNÓSTICO ---
     if (['repairdb', 'fixdb', 'diagnosticrpg'].includes(cmd)) {
       try {
-        await reply("🛠️ *Iniciando reparo do banco de dados...*");
+        await reply(MESSAGES.owner.maintenance.diagnostic.start);
         if (typeof diagnosticDatabase === 'function') {
           const econ = loadEconomy();
           const stats = diagnosticDatabase(econ);
           saveEconomy(econ);
-          return reply(`✅ *Manutenção Concluída!*\n\n📊 Status:\n- Usuários: ${stats.totalUsers}\n- Migrados: ${stats.usersMigrated}\n- Pets corrigidos: ${stats.petsFixed}`);
+          return reply(MESSAGES.owner.maintenance.diagnostic.success(stats.totalUsers, stats.usersMigrated, stats.petsFixed));
         } else {
-          return reply("✅ Integridade verificada e cache otimizado!");
+          return reply(MESSAGES.owner.maintenance.diagnostic.fallback);
         }
       } catch (e) {
-        return reply(`💔 Falha na rotina de diagnóstico.`);
+        return reply(MESSAGES.owner.maintenance.diagnostic.fail);
       }
     }
 
@@ -133,18 +119,18 @@ export default {
     if (['set', 'style', 'preview'].includes(cmd)) {
       if (cmd === 'preview') {
         const design = typeof getMenuDesignWithDefaults === 'function' ? getMenuDesignWithDefaults() : { headerStyle: "Premium" };
-        return reply(`🎨 *Preview do Estilo Atual*\n\n┏━━━━━━━━━━━━━━\n┃ 🌟 *Bem-vindo(a) ao bot!*\n┃ 💎 Estilo: ${design.headerStyle || 'Padrão'}\n┗━━━━━━━━━━━━━━`);
+        return reply(MESSAGES.owner.maintenance.style.preview(design.headerStyle || 'Padrão'));
       }
-      if (!q) return reply(`💔 Especifique o tema/estilo. Ex: ${prefix}${cmd} dark`);
+      if (!q) return reply(MESSAGES.owner.maintenance.style.missingStyle(prefix, cmd));
       
       if (typeof saveMenuDesign === 'function') {
         const design = getMenuDesignWithDefaults();
         design.headerStyle = q;
         saveMenuDesign(design);
       }
-      return reply(`✅ Estilo alterado para *${q}* com sucesso!`);
+      return reply(MESSAGES.owner.maintenance.style.success(q));
     }
 
-    return reply(`✅ Manutenção ${cmd} executada.`);
+    return reply(MESSAGES.owner.maintenance.defaultSuccess(cmd));
   }
 };

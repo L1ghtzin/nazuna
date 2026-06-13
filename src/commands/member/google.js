@@ -13,19 +13,19 @@ export default {
     MESSAGES
   }) => {
     try {
-      if (!q) return reply(`🔍 *Pesquisa Web*\n\n❌ Digite o que deseja pesquisar.\n\n📝 *Uso:* ${prefix}${command} <termo>\n\n📌 *Exemplo:*\n${prefix}${command} inteligência artificial`);
+      if (!q) return reply(MESSAGES.member.google.missingQuery(prefix, command));
       
-      await reply('🔍 Pesquisando...');
+      await reply(MESSAGES.member.google.searching);
       
       const searchResult = await search(q, 10);
       
       if (!searchResult.ok) {
-        return reply(`💔 Nenhum resultado encontrado.`);
+        return reply(MESSAGES.member.google.notFound);
       }
       
       const { query, results } = searchResult;
       
-      let response = `🔍 *Resultados para:* "${query}"\n\n`;
+      let response = MESSAGES.member.google.resultsHeader(query);
       
       results.slice(0, 8).forEach((result, index) => {
         response += `*${index + 1}. ${result.title}*\n`;

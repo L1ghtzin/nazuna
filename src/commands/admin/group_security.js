@@ -39,15 +39,15 @@ export default {
       
       if (isWelcome) {
         if (groupData.bemvindo) {
-          return reply(`✅ *Boas-vindas ativadas!* Agora, novos membros serão recebidos com uma mensagem personalizada.\n📝 Para configurar a mensagem, use: *${prefix}legendabv*`);
+          return reply(MESSAGES.admin.group_security.welcome.on.replace('${prefix}', prefix));
         } else {
-          return reply('⚠️ *Boas-vindas desativadas!* O grupo não enviará mais mensagens para novos membros.');
+          return reply(MESSAGES.admin.group_security.welcome.off);
         }
       } else {
         if (groupData.exit.enabled) {
-          return reply(`✅ *Despedidas ativadas!* Agora, o grupo se despedirá de quem sair.\n📝 Para configurar a mensagem, use: *${prefix}textsaiu*`);
+          return reply(MESSAGES.admin.group_security.welcome.exitOn.replace('${prefix}', prefix));
         } else {
-          return reply('⚠️ *Despedidas desativadas!* O grupo não enviará mais mensagens para quem sair.');
+          return reply(MESSAGES.admin.group_security.welcome.exitOff);
         }
       }
     }
@@ -55,7 +55,7 @@ export default {
     if (['fotobv', 'welcomeimg', 'fotosaida', 'exitimg'].includes(cmd)) {
       if (!isGroup) return reply(MESSAGES.permission.groupOnly);
       if (!isGroupAdmin) return reply(MESSAGES.permission.adminOnly);
-      if (!isQuotedImage && !isImage) return reply("Envie/marque uma imagem.");
+      if (!isQuotedImage && !isImage) return reply(MESSAGES.admin.group_security.welcome.imgProvide);
       
       try {
         const media = await getFileBuffer(isQuotedImage ? info.message.extendedTextMessage.contextInfo.quotedMessage.imageMessage : info.message.imageMessage, 'image');
@@ -64,39 +64,39 @@ export default {
         groupData[feature] = groupData[feature] || {};
         groupData[feature].image = url;
         await optimizer.saveJsonWithCache(groupFile, groupData);
-        return reply("✅ Imagem configurada!");
+        return reply(MESSAGES.admin.group_security.welcome.imgSuccess);
       } catch (e) {
-        return reply("❌ Erro no upload.");
+        return reply(MESSAGES.admin.group_security.welcome.imgError);
       }
     }
 
     if (['removerfotobv', 'rmfotobv', 'delfotobv', 'rmwelcomeimg'].includes(cmd)) {
       if (!isGroup) return reply(MESSAGES.permission.groupOnly);
       if (!isGroupAdmin) return reply(MESSAGES.permission.adminOnly);
-      if (!groupData.welcome?.image) return reply("❌ Não há imagem configurada.");
+      if (!groupData.welcome?.image) return reply(MESSAGES.admin.group_security.welcome.imgNone);
       delete groupData.welcome.image;
       await optimizer.saveJsonWithCache(groupFile, groupData);
-      return reply("✅ Imagem de boas-vindas removida!");
+      return reply(MESSAGES.admin.group_security.welcome.imgRmWelcome);
     }
 
     if (['removerfotosaiu', 'rmfotosaiu', 'delfotosaiu', 'rmexitimg'].includes(cmd)) {
       if (!isGroup) return reply(MESSAGES.permission.groupOnly);
       if (!isGroupAdmin) return reply(MESSAGES.permission.adminOnly);
-      if (!groupData.exit?.image) return reply("❌ Não há imagem configurada.");
+      if (!groupData.exit?.image) return reply(MESSAGES.admin.group_security.welcome.imgNone);
       delete groupData.exit.image;
       await optimizer.saveJsonWithCache(groupFile, groupData);
-      return reply("✅ Imagem de saída removida!");
+      return reply(MESSAGES.admin.group_security.welcome.imgRmExit);
     }
 
     if (['configsaida', 'textsaiu', 'legendasaiu', 'exitmsg'].includes(cmd)) {
       if (!isGroup) return reply(MESSAGES.permission.groupOnly);
       if (!isGroupAdmin) return reply(MESSAGES.permission.adminOnly);
-      if (!q) return reply(`Uso: ${prefix}${cmd} <mensagem>\n\nTags: #numerodele#, #nomedogp#, #membros#, #desc#`);
+      if (!q) return reply(MESSAGES.admin.group_security.welcome.msgUsage(prefix, cmd));
       groupData.exit = groupData.exit || {};
       groupData.exit.text = q;
       groupData.exit.enabled = true;
       await optimizer.saveJsonWithCache(groupFile, groupData);
-      return reply("✅ Mensagem de saída salva!");
+      return reply(MESSAGES.admin.group_security.welcome.msgSuccess);
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -107,7 +107,7 @@ export default {
       if (!isGroupAdmin) return reply(MESSAGES.permission.adminOnly);
       if (!isBotAdmin) return reply(MESSAGES.permission.botAdminOnly);
       const limit = parseInt(q);
-      if (isNaN(limit)) return reply(`Uso: ${prefix}banghost <limite_msgs>`);
+      if (isNaN(limit)) return reply(MESSAGES.admin.group_security.ghost.usage(prefix));
       
       const countMap = new Map(groupData.contador?.map(u => [u.id, u.msg || 0]) || []);
       const ghosts = AllgroupMembers.filter(m => {
@@ -115,9 +115,9 @@ export default {
         return msgCount <= limit && !idInArray(m, groupAdmins) && m !== botNumber && (!botNumberLid || m !== botNumberLid);
       });
 
-      if (!ghosts.length) return reply("Nenhum fantasma encontrado.");
+      if (!ghosts.length) return reply(MESSAGES.admin.group_security.ghost.none);
       await bot.groupParticipantsUpdate(from, ghosts, 'remove');
-      return reply(`✅ ${ghosts.length} fantasmas removidos!`);
+      return reply(MESSAGES.admin.group_security.ghost.success(ghosts.length));
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -133,19 +133,19 @@ export default {
       if (action === 'on' || action === 'ativar') {
         mmConfig[from] = { enabled: true };
         saveMassMentionConfig(mmConfig);
-        return reply("✅ Proteção Anti-Ban ativada! Limite de usos aplicado para marcas em massa.");
+        return reply(MESSAGES.admin.group_security.antiBan.on);
       } else if (action === 'off' || action === 'desativar') {
         if (mmConfig[from]) mmConfig[from].enabled = false;
         saveMassMentionConfig(mmConfig);
-        return reply("✅ Proteção Anti-Ban desativada!");
+        return reply(MESSAGES.admin.group_security.antiBan.off);
       } else if (action === 'status' || action === 'ver') {
         const isEnabled = mmConfig[from]?.enabled || false;
         const memberCount = AllgroupMembers?.length || 0;
         const limitData = loadMassMentionLimit();
         const uses = limitData[from]?.uses?.length || 0;
-        return reply(`📊 *STATUS ANTI-BAN*\n\n🔒 Ativo: ${isEnabled ? 'Sim' : 'Não'}\n👥 Membros: ${memberCount}\n📝 Usos: ${uses}/${MASS_MENTION_MAX_USES}`);
+        return reply(MESSAGES.admin.group_security.antiBan.status(isEnabled, memberCount, uses, MASS_MENTION_MAX_USES));
       } else {
-        return reply(`Uso: ${prefix}${cmd} <on/off/status>`);
+        return reply(MESSAGES.admin.group_security.antiBan.usage(prefix, cmd));
       }
     }
 
@@ -157,10 +157,10 @@ export default {
       groupData.warnings = groupData.warnings || {};
 
       if (['listadv', 'warninglist', 'listavisos', 'listaavisos'].includes(cmd)) {
-        if (!Object.keys(groupData.warnings).length) return reply("Sem advertências.");
-        let text = "📋 *ADVERTÊNCIAS*\n\n";
+        if (!Object.keys(groupData.warnings).length) return reply(MESSAGES.admin.group_security.warnings.empty);
+        let text = MESSAGES.admin.group_security.warnings.header;
         for (const [user, warns] of Object.entries(groupData.warnings)) {
-          text += `@${getUserName(user)}: ${warns.length}/3\n`;
+          text += MESSAGES.admin.group_security.warnings.item(getUserName(user), warns.length);
         }
         return reply(text, { mentions: Object.keys(groupData.warnings) });
       }
@@ -168,11 +168,11 @@ export default {
       if (!menc_os2) return reply(MESSAGES.error.missing('alguém'));
       
       if (['removeradv', 'rmadv', 'unwarning', 'removeraviso', 'rmaviso'].includes(cmd)) {
-        if (!groupData.warnings[menc_os2]) return reply("Sem advertências.");
+        if (!groupData.warnings[menc_os2]) return reply(MESSAGES.admin.group_security.warnings.empty);
         groupData.warnings[menc_os2].pop();
         if (!groupData.warnings[menc_os2].length) delete groupData.warnings[menc_os2];
         await optimizer.saveJsonWithCache(groupFile, groupData);
-        return reply("✅ Advertência removida.");
+        return reply(MESSAGES.admin.group_security.warnings.removed);
       }
 
       const reason = q || "Sem motivo";
@@ -192,11 +192,11 @@ export default {
         if (isBotAdmin) await bot.groupParticipantsUpdate(from, [targetId], 'remove');
         delete groupData.warnings[menc_os2];
         await optimizer.saveJsonWithCache(groupFile, groupData);
-        return reply(`🚫 @${getUserName(menc_os2)} recebeu 3 advertências e foi banido!\nÚltima advertência: ${reason}`, { mentions: [menc_os2] });
+        return reply(MESSAGES.admin.group_security.warnings.banned(getUserName(menc_os2), reason), { mentions: [menc_os2] });
       }
 
       await optimizer.saveJsonWithCache(groupFile, groupData);
-      return reply(`⚠️ @${getUserName(menc_os2)} recebeu uma advertência (${groupData.warnings[menc_os2].length}/3).\nMotivo: ${reason}`, { mentions: [menc_os2] });
+      return reply(MESSAGES.admin.group_security.warnings.warned(getUserName(menc_os2), groupData.warnings[menc_os2].length, reason), { mentions: [menc_os2] });
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -206,17 +206,17 @@ export default {
       if (['listaticket', 'listarticket', 'listartickets'].includes(cmd)) {
         if (!isGroupAdmin && !isOwner) return reply(MESSAGES.permission.adminOnly);
         const tickets = listSupportTickets(from);
-        if (!tickets.length) return reply("📪 Sem tickets abertos.");
-        let text = `🎫 *TICKETS ABERTOS*\n\n`;
+        if (!tickets.length) return reply(MESSAGES.admin.group_security.tickets.empty);
+        let text = MESSAGES.admin.group_security.tickets.header;
         tickets.forEach(t => {
-          text += `ID: ${t.id} | De: @${getUserName(t.userId)}\nMsg: ${t.message}\n\n`;
+          text += MESSAGES.admin.group_security.tickets.item(t.id, getUserName(t.userId), t.message);
         });
         return await reply(text, { mentions: tickets.map(t => t.userId) });
       }
 
       if (['ticketaceitar', 'aceitarticket', 'suporteaceitar', 'ticket.aceitar'].includes(cmd)) {
         if (!isGroupAdmin && !isOwner) return reply(MESSAGES.permission.adminOnly);
-        if (!q) return reply("Informe o ID do ticket.");
+        if (!q) return reply(MESSAGES.admin.group_security.tickets.provideId);
         const res = acceptSupportTicket(q.trim(), sender);
         return reply(res.message);
       }
@@ -225,11 +225,11 @@ export default {
       if (q === 'on' || q === 'off') {
         if (!isGroupAdmin) return reply(MESSAGES.permission.adminOnly);
         setSupportMode(from, q === 'on');
-        return reply(`✅ Suporte ${q === 'on' ? 'ativado' : 'desativado'}!`);
+        return reply(MESSAGES.admin.group_security.tickets.toggle(q === 'on'));
       }
       const res = createSupportTicket({ groupId: from, groupName, userId: sender, userName: pushname, message: q });
       if (!res.success) return reply(res.message);
-      return reply(`✅ Ticket #${res.ticket.id} aberto! Aguarde contato.`);
+      return reply(MESSAGES.admin.group_security.tickets.opened(res.ticket.id));
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -241,8 +241,8 @@ export default {
 
       if (['listblacklist', 'listablacklist', 'listblacklistgp', 'listblacklistgrupal', 'blacklistlista', 'blacklista'].includes(cmd)) {
         const keys = Object.keys(groupData.blacklist);
-        if (!keys.length) return reply("Vazia.");
-        return reply("📋 BLACKLIST:\n" + keys.map(u => `@${getUserName(u)}`).join('\n'), { mentions: keys });
+        if (!keys.length) return reply(MESSAGES.admin.group_security.blacklist.empty);
+        return reply(MESSAGES.admin.group_security.blacklist.header + keys.map(u => `@${getUserName(u)}`).join('\n'), { mentions: keys });
       }
 
       let target = menc_os2;
@@ -277,21 +277,21 @@ export default {
         
         if (removido) {
            await optimizer.saveJsonWithCache(groupFile, groupData);
-           return reply("✅ Removido.");
+           return reply(MESSAGES.admin.group_security.blacklist.removed);
         } else {
-           return reply("❌ Este usuário não está na blacklist.");
+           return reply(MESSAGES.admin.group_security.blacklist.notIn);
         }
       }
 
       for (const k of Object.keys(groupData.blacklist)) {
          if (k === target || k.startsWith(searchTarget) || k.includes(searchTarget)) {
-            return reply("❌ Este usuário já está na blacklist.");
+            return reply(MESSAGES.admin.group_security.blacklist.alreadyIn);
          }
       }
 
       groupData.blacklist[target] = { reason: reason, date: Date.now() };
       await optimizer.saveJsonWithCache(groupFile, groupData);
-      return reply("✅ Adicionado.");
+      return reply(MESSAGES.admin.group_security.blacklist.added);
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -307,7 +307,7 @@ export default {
         console.error('[CLEAN] Erro ao limpar chat:', error.message);
         // Fallback para limpeza simples se o relayMessage falhar
         const linhasEmBranco = Array(500).fill('🤍 ').join('\n');
-        return reply(`${linhasEmBranco}\n✅ Limpeza concluída!`);
+        return reply(`${linhasEmBranco}\n${MESSAGES.admin.group_security.clean.fallback}`);
       }
       return;
     }
@@ -326,7 +326,7 @@ export default {
         groupData.antistatus = true;
         groupData.antistatus_action = action;
         await optimizer.saveJsonWithCache(groupFile, groupData);
-        return reply(`🛡️ *AntiStatus* ativado!\n🔧 Ação: *${action === 'banir' ? 'Apagar + Banir 🔨' : 'Apenas apagar 🗑️'}*`);
+        return reply(MESSAGES.admin.group_security.protections.genericAction('AntiStatus', action));
       }
 
       groupData.antistatus = !groupData.antistatus;
@@ -334,15 +334,15 @@ export default {
 
       if (groupData.antistatus) {
         const currentAction = groupData.antistatus_action || 'banir';
-        return reply(`🛡️ *AntiStatus* ativado!\n🔧 Ação atual: *${currentAction === 'banir' ? 'Apagar + Banir 🔨' : 'Apenas apagar 🗑️'}*\n\n📝 Para mudar a ação:\n• ${prefix}antistatus apagar\n• ${prefix}antistatus banir`);
+        return reply(MESSAGES.admin.group_security.protections.genericStatus('AntiStatus', currentAction, `• ${prefix}antistatus apagar\n• ${prefix}antistatus banir`));
       }
-      return reply(`🛡️ *AntiStatus* desativado!`);
+      return reply(MESSAGES.admin.group_security.protections.genericOff('AntiStatus'));
     }
 
     if (['antistickerplus', 'antisticker+', 'antisl', 'antistickerplusbot'].includes(cmd)) {
       if (!isGroup) return reply(MESSAGES.permission.groupOnly);
       if (!isGroupAdmin && !isOwner) return reply(MESSAGES.permission.adminOnly);
-      if (!antistickerplus) return reply("❌ Sistema AntistickerPlus indisponível.");
+      if (!antistickerplus) return reply(MESSAGES.admin.group_security.protections.unavailable('AntistickerPlus'));
       await antistickerplus.handleCommand(bot, from, args, groupData, { reply, prefix });
       return;
     }
@@ -350,7 +350,7 @@ export default {
     if (cmd === 'antitoxic') {
       if (!isGroup) return reply(MESSAGES.permission.groupOnly);
       if (!isGroupAdmin && !isOwner) return reply(MESSAGES.permission.adminOnly);
-      if (!antitoxic) return reply("❌ Sistema Antitoxic indisponível.");
+      if (!antitoxic) return reply(MESSAGES.admin.group_security.protections.unavailable('Antitoxic'));
       await antitoxic.handleCommand(bot, from, args, groupData, { reply, prefix });
       return;
     }
@@ -358,7 +358,7 @@ export default {
     if (['antipalavra', 'antiword'].includes(cmd)) {
       if (!isGroup) return reply(MESSAGES.permission.groupOnly);
       if (!isGroupAdmin && !isOwner) return reply(MESSAGES.permission.adminOnly);
-      if (!antipalavra) return reply("❌ Sistema Antipalavra indisponível.");
+      if (!antipalavra) return reply(MESSAGES.admin.group_security.protections.unavailable('Antipalavra'));
       await antipalavra.handleCommand(bot, from, args, groupData, { reply, prefix });
       return;
     }
@@ -372,9 +372,9 @@ export default {
       await optimizer.saveJsonWithCache(groupFile, groupData);
 
       if (groupData.antipayment) {
-        return reply(`🛡️ *Anti-Payment* ativado!\n\n🔧 Ações automáticas:\n• 🔒 Fechar grupo temporariamente\n• 🚫 Banir o remetente\n• 🗑️ Limpar o chat\n• 🔓 Reabrir o grupo automaticamente\n\n💡 Admins, owners e whitelisted não são afetados.`);
+        return reply(MESSAGES.admin.group_security.protections.antiPaymentOn);
       }
-      return reply(`🛡️ *Anti-Payment* desativado!`);
+      return reply(MESSAGES.admin.group_security.protections.antiPaymentOff);
     }
 
     if (['antiimagem', 'antiimage'].includes(cmd)) {
@@ -386,14 +386,14 @@ export default {
       if (action === 'vizu') {
         groupData.antiimage_vizu = !groupData.antiimage_vizu;
         await optimizer.saveJsonWithCache(groupFile, groupData);
-        return reply(`🛡️ *Anti-Imagem (Vizu Única)*: ${groupData.antiimage_vizu ? '✅ Ativado! Imagens de visualização única também serão bloqueadas.' : '❌ Desativado! Apenas imagens normais serão bloqueadas.'}`);
+        return reply(MESSAGES.admin.group_security.protections.mediaVizuToggle('Anti-Imagem', groupData.antiimage_vizu));
       }
 
       if (action === 'apagar' || action === 'banir') {
         groupData.antiimage = true;
         groupData.antiimage_action = action;
         await optimizer.saveJsonWithCache(groupFile, groupData);
-        return reply(`🛡️ *Anti-Imagem* ativado!\n🔧 Ação: *${action === 'banir' ? 'Apagar + Banir 🔨' : 'Apenas apagar 🗑️'}*`);
+        return reply(MESSAGES.admin.group_security.protections.genericAction('Anti-Imagem', action));
       }
 
       groupData.antiimage = !groupData.antiimage;
@@ -402,9 +402,9 @@ export default {
       if (groupData.antiimage) {
         const currentAction = groupData.antiimage_action || 'apagar';
         const vizuStatus = groupData.antiimage_vizu ? '✅ Sim' : '❌ Não';
-        return reply(`🛡️ *Anti-Imagem* ativado!\n🔧 Ação atual: *${currentAction === 'banir' ? 'Apagar + Banir 🔨' : 'Apenas apagar 🗑️'}*\n👁️ Bloquear Vizu Única: *${vizuStatus}*\n\n📝 Configurações:\n• ${prefix}antiimagem apagar\n• ${prefix}antiimagem banir\n• ${prefix}antiimagem vizu`);
+        return reply(MESSAGES.admin.group_security.protections.mediaStatus('Anti-Imagem', currentAction, groupData.antiimage_vizu, `• ${prefix}antiimagem apagar\n• ${prefix}antiimagem banir\n• ${prefix}antiimagem vizu`));
       }
-      return reply(`🛡️ *Anti-Imagem* desativado!`);
+      return reply(MESSAGES.admin.group_security.protections.genericOff('Anti-Imagem'));
     }
 
     if (['antivideo'].includes(cmd)) {
@@ -416,14 +416,14 @@ export default {
       if (action === 'vizu') {
         groupData.antivideo_vizu = !groupData.antivideo_vizu;
         await optimizer.saveJsonWithCache(groupFile, groupData);
-        return reply(`🛡️ *Anti-Vídeo (Vizu Única)*: ${groupData.antivideo_vizu ? '✅ Ativado! Vídeos de visualização única também serão bloqueados.' : '❌ Desativado! Apenas vídeos normais serão bloqueados.'}`);
+        return reply(MESSAGES.admin.group_security.protections.mediaVizuToggle('Anti-Vídeo', groupData.antivideo_vizu));
       }
 
       if (action === 'apagar' || action === 'banir') {
         groupData.antivideo = true;
         groupData.antivideo_action = action;
         await optimizer.saveJsonWithCache(groupFile, groupData);
-        return reply(`🛡️ *Anti-Vídeo* ativado!\n🔧 Ação: *${action === 'banir' ? 'Apagar + Banir 🔨' : 'Apenas apagar 🗑️'}*`);
+        return reply(MESSAGES.admin.group_security.protections.genericAction('Anti-Vídeo', action));
       }
 
       groupData.antivideo = !groupData.antivideo;
@@ -432,9 +432,9 @@ export default {
       if (groupData.antivideo) {
         const currentAction = groupData.antivideo_action || 'apagar';
         const vizuStatus = groupData.antivideo_vizu ? '✅ Sim' : '❌ Não';
-        return reply(`🛡️ *Anti-Vídeo* ativado!\n🔧 Ação atual: *${currentAction === 'banir' ? 'Apagar + Banir 🔨' : 'Apenas apagar 🗑️'}*\n👁️ Bloquear Vizu Única: *${vizuStatus}*\n\n📝 Configurações:\n• ${prefix}antivideo apagar\n• ${prefix}antivideo banir\n• ${prefix}antivideo vizu`);
+        return reply(MESSAGES.admin.group_security.protections.mediaStatus('Anti-Vídeo', currentAction, groupData.antivideo_vizu, `• ${prefix}antivideo apagar\n• ${prefix}antivideo banir\n• ${prefix}antivideo vizu`));
       }
-      return reply(`🛡️ *Anti-Vídeo* desativado!`);
+      return reply(MESSAGES.admin.group_security.protections.genericOff('Anti-Vídeo'));
     }
 
     if (['antiaudio'].includes(cmd)) {
@@ -446,14 +446,14 @@ export default {
       if (action === 'vizu') {
         groupData.antiaudio_vizu = !groupData.antiaudio_vizu;
         await optimizer.saveJsonWithCache(groupFile, groupData);
-        return reply(`🛡️ *Anti-Áudio (Vizu Única)*: ${groupData.antiaudio_vizu ? '✅ Ativado! Áudios de visualização única também serão bloqueados.' : '❌ Desativado! Apenas áudios normais serão bloqueados.'}`);
+        return reply(MESSAGES.admin.group_security.protections.mediaVizuToggle('Anti-Áudio', groupData.antiaudio_vizu));
       }
 
       if (action === 'apagar' || action === 'banir') {
         groupData.antiaudio = true;
         groupData.antiaudio_action = action;
         await optimizer.saveJsonWithCache(groupFile, groupData);
-        return reply(`🛡️ *Anti-Áudio* ativado!\n🔧 Ação: *${action === 'banir' ? 'Apagar + Banir 🔨' : 'Apenas apagar 🗑️'}*`);
+        return reply(MESSAGES.admin.group_security.protections.genericAction('Anti-Áudio', action));
       }
 
       groupData.antiaudio = !groupData.antiaudio;
@@ -462,9 +462,9 @@ export default {
       if (groupData.antiaudio) {
         const currentAction = groupData.antiaudio_action || 'apagar';
         const vizuStatus = groupData.antiaudio_vizu ? '✅ Sim' : '❌ Não';
-        return reply(`🛡️ *Anti-Áudio* ativado!\n🔧 Ação atual: *${currentAction === 'banir' ? 'Apagar + Banir 🔨' : 'Apenas apagar 🗑️'}*\n👁️ Bloquear Vizu Única: *${vizuStatus}*\n\n📝 Configurações:\n• ${prefix}antiaudio apagar\n• ${prefix}antiaudio banir\n• ${prefix}antiaudio vizu`);
+        return reply(MESSAGES.admin.group_security.protections.mediaStatus('Anti-Áudio', currentAction, groupData.antiaudio_vizu, `• ${prefix}antiaudio apagar\n• ${prefix}antiaudio banir\n• ${prefix}antiaudio vizu`));
       }
-      return reply(`🛡️ *Anti-Áudio* desativado!`);
+      return reply(MESSAGES.admin.group_security.protections.genericOff('Anti-Áudio'));
     }
 
     if (['antidoc'].includes(cmd)) {
@@ -477,7 +477,7 @@ export default {
         groupData.antidoc = true;
         groupData.antidoc_action = action;
         await optimizer.saveJsonWithCache(groupFile, groupData);
-        return reply(`🛡️ *Anti-Documento* ativado!\n🔧 Ação: *${action === 'banir' ? 'Apagar + Banir 🔨' : 'Apenas apagar 🗑️'}*`);
+        return reply(MESSAGES.admin.group_security.protections.genericAction('Anti-Documento', action));
       }
 
       groupData.antidoc = !groupData.antidoc;
@@ -485,9 +485,9 @@ export default {
 
       if (groupData.antidoc) {
         const currentAction = groupData.antidoc_action || 'apagar';
-        return reply(`🛡️ *Anti-Documento* ativado!\n🔧 Ação atual: *${currentAction === 'banir' ? 'Apagar + Banir 🔨' : 'Apenas apagar 🗑️'}*\n\n📝 Para mudar a ação:\n• ${prefix}antidoc apagar\n• ${prefix}antidoc banir`);
+        return reply(MESSAGES.admin.group_security.protections.genericStatus('Anti-Documento', currentAction, `• ${prefix}antidoc apagar\n• ${prefix}antidoc banir`));
       }
-      return reply(`🛡️ *Anti-Documento* desativado!`);
+      return reply(MESSAGES.admin.group_security.protections.genericOff('Anti-Documento'));
     }
 
     if (['antievento'].includes(cmd)) {
@@ -500,7 +500,7 @@ export default {
         groupData.antievento = true;
         groupData.antievento_action = action;
         await optimizer.saveJsonWithCache(groupFile, groupData);
-        return reply(`🛡️ *Anti-Evento* ativado!\n🔧 Ação: *${action === 'banir' ? 'Apagar + Banir 🔨' : 'Apenas apagar 🗑️'}*`);
+        return reply(MESSAGES.admin.group_security.protections.genericAction('Anti-Evento', action));
       }
 
       groupData.antievento = !groupData.antievento;
@@ -508,9 +508,9 @@ export default {
 
       if (groupData.antievento) {
         const currentAction = groupData.antievento_action || 'apagar';
-        return reply(`🛡️ *Anti-Evento* ativado!\n🔧 Ação atual: *${currentAction === 'banir' ? 'Apagar + Banir 🔨' : 'Apenas apagar 🗑️'}*\n\n📝 Para mudar a ação:\n• ${prefix}antievento apagar\n• ${prefix}antievento banir`);
+        return reply(MESSAGES.admin.group_security.protections.genericStatus('Anti-Evento', currentAction, `• ${prefix}antievento apagar\n• ${prefix}antievento banir`));
       }
-      return reply(`🛡️ *Anti-Evento* desativado!`);
+      return reply(MESSAGES.admin.group_security.protections.genericOff('Anti-Evento'));
     }
 
     if (['antiproduto'].includes(cmd)) {
@@ -523,7 +523,7 @@ export default {
         groupData.antiproduto = true;
         groupData.antiproduto_action = action;
         await optimizer.saveJsonWithCache(groupFile, groupData);
-        return reply(`🛡️ *Anti-Produto* ativado!\n🔧 Ação: *${action === 'banir' ? 'Apagar + Banir 🔨' : 'Apenas apagar 🗑️'}*`);
+        return reply(MESSAGES.admin.group_security.protections.genericAction('Anti-Produto', action));
       }
 
       groupData.antiproduto = !groupData.antiproduto;
@@ -531,9 +531,9 @@ export default {
 
       if (groupData.antiproduto) {
         const currentAction = groupData.antiproduto_action || 'apagar';
-        return reply(`🛡️ *Anti-Produto* ativado!\n🔧 Ação atual: *${currentAction === 'banir' ? 'Apagar + Banir 🔨' : 'Apenas apagar 🗑️'}*\n\n📝 Para mudar a ação:\n• ${prefix}antiproduto apagar\n• ${prefix}antiproduto banir`);
+        return reply(MESSAGES.admin.group_security.protections.genericStatus('Anti-Produto', currentAction, `• ${prefix}antiproduto apagar\n• ${prefix}antiproduto banir`));
       }
-      return reply(`🛡️ *Anti-Produto* desativado!`);
+      return reply(MESSAGES.admin.group_security.protections.genericOff('Anti-Produto'));
     }
   }
 };

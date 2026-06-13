@@ -41,7 +41,7 @@ export default {
       if (args[0].toLowerCase() === 'desistir') {
         const palavra = global.wordleGames[gameKey].palavra;
         delete global.wordleGames[gameKey];
-        return reply(`🏳️ Você desistiu!\n\nA palavra era: *${palavra.toUpperCase()}*`);
+        return reply(MESSAGES.member.wordle.surrender(palavra));
       }
 
       const game = global.wordleGames[gameKey];
@@ -50,7 +50,7 @@ export default {
       
       // Validar tamanho do chute
       if (chute.length !== tamanhoEsperado) {
-        return reply(`💔 A palavra deve ter ${tamanhoEsperado} letras!\n\n💡 Você tem um jogo ativo com palavra de ${tamanhoEsperado} letras.\n\n📝 Chute: ${prefix}wordle [palavra de ${tamanhoEsperado} letras]`);
+        return reply(MESSAGES.member.wordle.wrongSize(tamanhoEsperado, prefix));
       }
       
       game.tentativas++;
@@ -97,22 +97,22 @@ export default {
       if (chute === game.palavra) {
         const pontos = Math.max(100 - (game.tentativas - 1) * 15, 10);
         delete global.wordleGames[gameKey];
-        return reply(`🎉 *PARABÉNS!*\n\n${game.historico.join('\n')}\n\n✅ Você acertou em ${game.tentativas}/6 tentativas!\n🏆 +${pontos} pontos\n\nA palavra era: *${game.palavra.toUpperCase()}*`);
+        return reply(MESSAGES.member.wordle.win(game.historico.join('\n'), game.tentativas, pontos, game.palavra));
       }
       
       if (game.tentativas >= 6) {
         delete global.wordleGames[gameKey];
-        return reply(`😢 *GAME OVER!*\n\n${game.historico.join('\n')}\n\n❌ Suas tentativas acabaram!\n\nA palavra era: *${game.palavra.toUpperCase()}*`);
+        return reply(MESSAGES.member.wordle.lose(game.historico.join('\n'), game.palavra));
       }
       
-      return reply(`🎯 *WORDLE* (${game.tentativas}/6)\n\n${game.historico.join('\n')}\n\n💡 Continue chutando com: ${prefix}wordle [palavra de ${tamanhoEsperado} letras]`);
+      return reply(MESSAGES.member.wordle.continue(game.tentativas, game.historico.join('\n'), prefix, tamanhoEsperado));
     }
 
     // Novo jogo
     if (global.wordleGames[gameKey]) {
       const game = global.wordleGames[gameKey];
       const tamanho = game.palavra.length;
-      return reply(`🎮 *Jogo em andamento!*\n\n${game.historico.length > 0 ? game.historico.join('\n') + '\n\n' : ''}Tentativas: ${game.tentativas}/6\n📏 Tamanho: ${tamanho} letras\n\n💡 Chute uma palavra de ${tamanho} letras:\n${prefix}wordle [palavra]\n\n🔄 Para desistir: ${prefix}wordle desistir`);
+      return reply(MESSAGES.member.wordle.inProgress(game.historico.length > 0 ? game.historico.join('\n') + '\n\n' : '', game.tentativas, tamanho, prefix));
     }
 
     // Iniciar novo jogo - escolher tamanho aleatório
@@ -132,6 +132,6 @@ export default {
       iniciado: Date.now()
     };
 
-    await reply(`🎮 *WORDLE - Adivinhe a Palavra!*\n\n📝 Tente adivinhar a palavra de ${tamanhoEscolhido} letras!\n\n🟩 = Letra certa no lugar certo\n🟨 = Letra certa no lugar errado\n⬛ = Letra não existe\n\n💡 Você tem 6 tentativas!\n\n*Chute com:* ${prefix}wordle [palavra de ${tamanhoEscolhido} letras]`);
+    await reply(MESSAGES.member.wordle.start(tamanhoEscolhido, prefix));
   },
 };

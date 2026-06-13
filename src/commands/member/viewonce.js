@@ -16,17 +16,17 @@ export default {
     
     // Verifica se temos as chaves de mídia necessárias
     if (!type || !media || !media.mediaKey) {
-      return reply("❌ Não foi possível extrair as chaves de mídia desta mensagem. Ela pode ser muito antiga ou não é uma visualização única válida.");
+      return reply(MESSAGES.member.viewonce.missingMediaKeys);
     }
     
     try {
-      await reply("⏳ Revelando mídia...");
+      await reply(MESSAGES.member.viewonce.revealing);
       const buffer = await getFileBuffer(media, type === 'imageMessage' ? 'image' : 'video');
       
       if (type === 'imageMessage') {
-        return bot.sendMessage(from, { image: buffer, caption: "✅ *Imagem Revelada!*" }, { quoted: info });
+        return bot.sendMessage(from, { image: buffer, caption: MESSAGES.member.viewonce.imageRevealed }, { quoted: info });
       } else if (type === 'videoMessage') {
-        return bot.sendMessage(from, { video: buffer, caption: "✅ *Vídeo Revelado!*" }, { quoted: info });
+        return bot.sendMessage(from, { video: buffer, caption: MESSAGES.member.viewonce.videoRevealed }, { quoted: info });
       }
     } catch (e) {
       return reply(MESSAGES.error.general);

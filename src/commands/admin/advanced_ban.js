@@ -32,7 +32,7 @@ export default {
       }
       
       await bot.sendMessage(from, {
-        text: `⚠️ *ÚLTIMAS PALAVRAS!*\n\n@${menc_os2.split('@')[0]}, você tem *10 segundos* para dizer suas últimas palavras antes de ser banido! ⏰`,
+        text: MESSAGES.admin.bam.lastWordsReal(menc_os2.split('@')[0]),
         mentions: [menc_os2]
       }, { quoted: info });
 
@@ -51,7 +51,7 @@ export default {
 
       await bot.groupParticipantsUpdate(from, [targetId], 'remove');
       return bot.sendMessage(from, {
-        text: `👋 @${menc_os2.split('@')[0]} foi banido! Adeus! 🚪\n\n📝 Motivo: Banimento com aviso.`,
+        text: MESSAGES.admin.bam.bannedReal(menc_os2.split('@')[0]),
         mentions: [menc_os2]
       }, { quoted: info });
     }
@@ -61,13 +61,13 @@ export default {
       if (!menc_os2) return reply(MESSAGES.error.missing('alguém'));
       
       await bot.sendMessage(from, {
-        text: `⏳ *ÚLTIMAS PALAVRAS!*\n\n@${menc_os2.split('@')[0]}, você tem *10 segundos* para dizer suas últimas palavras antes de ser banido! 🔨`,
+        text: MESSAGES.admin.bam.lastWordsFake(menc_os2.split('@')[0]),
         mentions: [menc_os2]
       }, { quoted: info });
 
       await new Promise(r => setTimeout(r, 10000));
 
-      const defaultMsg = `🎭 *ERA MEME!*\n\n@${menc_os2.split('@')[0]}, relaxa, era só uma brincadeira! 😂\n\nVocê não vai ser banido... dessa vez! 🥳`;
+      const defaultMsg = MESSAGES.admin.bam.defaultFakeMsg(menc_os2.split('@')[0]);
       const msg = groupData.bamMessage || defaultMsg;
 
       return bot.sendMessage(from, {
@@ -78,20 +78,20 @@ export default {
 
     // --- CONFIGURAÇÃO ---
     if (['setbammsg', 'editarbam'].includes(cmd)) {
-      if (!q) return reply(`Uso: ${prefix}${cmd} <mensagem>\nUse #numerodele# para marcar o usuário.`);
+      if (!q) return reply(MESSAGES.admin.bam.setUsage(prefix, cmd));
       groupData.bamMessage = q;
       await optimizer.saveJsonWithCache(groupFilePath, groupData);
-      return reply("✅ Mensagem do BAM atualizada!");
+      return reply(MESSAGES.admin.bam.setSuccess);
     }
 
     if (['verbammsg', 'verbam'].includes(cmd)) {
-      return reply(`📝 *Mensagem atual do BAM:*\n\n${groupData.bamMessage || "(Padrão do Sistema)"}`);
+      return reply(MESSAGES.admin.bam.viewCurrent(groupData.bamMessage || "(Padrão do Sistema)"));
     }
 
     if (['resetbammsg', 'resetarbam'].includes(cmd)) {
       delete groupData.bamMessage;
       await optimizer.saveJsonWithCache(groupFilePath, groupData);
-      return reply("🔄 Mensagem do BAM resetada para o padrão.");
+      return reply(MESSAGES.admin.bam.resetSuccess);
     }
   }
 };

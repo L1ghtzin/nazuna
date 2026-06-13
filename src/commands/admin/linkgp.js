@@ -25,18 +25,7 @@ export default {
       const participantCount = groupMetadata.participants.length;
       const adminCount = groupMetadata.participants.filter(p => p.admin === 'admin' || p.admin === 'superadmin').length;
       
-      let mensagem = `*🔗 LINK DO GRUPO 🔗*\n\n`;
-      mensagem += `📝 *Informações:*\n\n`;
-      mensagem += `👥 *Grupo:* ${groupName}\n`;
-      mensagem += `👤 *Membros:* ${participantCount}\n`;
-      mensagem += `👑 *Admins:* ${adminCount}\n`;
-      mensagem += `🕒 *Gerado em:* ${new Date().toLocaleString('pt-BR')}\n\n`;
-      mensagem += `_🌐 *Link de convite:*_\n`;
-      mensagem += `${linkCompleto}\n\n`;
-      mensagem += `_⚠️ *Avisos:*_\n`;
-      mensagem += `  Compartilhe apenas com quem confia\n`;
-      mensagem += `  Administradores podem revogar o link nas configurações do grupo\n`;
-      mensagem += `_📱 *Compartilhe com responsabilidade!* 📱_`;
+      const mensagem = MESSAGES.admin.linkgp.message(groupName, participantCount, adminCount, new Date().toLocaleString('pt-BR'), linkCompleto);
   
       await bot.sendMessage(from, {
         text: mensagem,

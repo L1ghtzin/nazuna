@@ -22,10 +22,10 @@ export default {
       filePatterns.forEach(pattern => deletedByCategory[pattern] = 0);
       
       if (!fs.existsSync(authDir)) {
-        return reply('❌ Pasta de autenticação não encontrada.');
+        return reply(MESSAGES.owner.reviverqr.notFound);
       }
 
-      await reply(`🧹 *INICIANDO LIMPEZA DE SESSÃO...*\n\nRemovendo arquivos temporários para resolver erros de 'Bad MAC' mantendo o login ativo.\n\n⏳ Aguarde...`);
+      await reply(MESSAGES.owner.reviverqr.start);
 
       const files = fs.readdirSync(authDir);
       for (const file of files) {
@@ -43,13 +43,12 @@ export default {
       }
 
       if (totalDeleted > 0) {
-        let report = `✅ *LIMPEZA CONCLUÍDA!*\n\n`;
-        report += `📊 *Arquivos removidos:*\n`;
+        let listStr = "";
         for (const [category, count] of Object.entries(deletedByCategory)) {
-          if (count > 0) report += `└─ ${category}: ${count}\n`;
+          if (count > 0) listStr += MESSAGES.owner.reviverqr.reportItem(category, count);
         }
-        report += `\n📈 *Total:* ${totalDeleted}\n`;
-        report += `\n🔄 *O bot será reiniciado em 3 segundos para aplicar as mudanças.*`;
+        
+        let report = MESSAGES.owner.reviverqr.report(listStr, totalDeleted);
         
         await reply(report);
         
@@ -58,12 +57,12 @@ export default {
           process.exit(0);
         }, 3000);
       } else {
-        await reply(`ℹ️ *Nenhum arquivo problemático encontrado.* \n\nA sessão parece estar limpa.`);
+        await reply(MESSAGES.owner.reviverqr.clean);
       }
       
     } catch (e) {
       console.error('[REVIVERQR ERROR]', e);
-      reply(`❌ Erro ao limpar sessão: ${e.message}`);
+      reply(MESSAGES.owner.reviverqr.error(e.message));
     }
   }
 };

@@ -14,15 +14,14 @@ export default {
   ],
   handle: async ({ reply, command, isOwner, rentalExpirationManager }) => {
     const cmd = (command || "").toLowerCase();
-    const ownerOnlyMessage = "🚫 Apenas o Dono e subdonos podem gerenciar o sistema de aluguel!";
 
     if (!isOwner) {
-      return reply(ownerOnlyMessage);
+      return reply(MESSAGES.owner.rental_management.permission);
     }
 
     if (cmd === "rentalstats") {
       if (!rentalExpirationManager?.getStats) {
-        return reply("💔 Sistema de expiração não inicializado.");
+        return reply(MESSAGES.owner.rental_management.notInitialized);
       }
 
       const stats = rentalExpirationManager.getStats();
@@ -30,51 +29,34 @@ export default {
       const warningDays = stats?.config?.warningDays ?? "N/A";
       const finalWarningDays = stats?.config?.finalWarningDays ?? "N/A";
 
-      let text = "📋 *ESTATÍSTICAS DE ALUGUEL*\n\n";
-      text += `🚀 *Status:* ${stats.isRunning ? "Ativo" : "Parado"}\n`;
-      text += `⏱️ *Última Checagem:* ${stats.lastCheckTime ? new Date(stats.lastCheckTime).toLocaleString("pt-BR") : "Nunca"}\n`;
-      text += `🔔 *Avisos Enviados:* ${stats.warningsSent}\n`;
-      text += `🚨 *Avisos Finais:* ${stats.finalWarningsSent}\n`;
-      text += `🔨 *Expirados Processados:* ${stats.expiredProcessed}\n`;
-      text += `💔 *Erros:* ${stats.errors}\n`;
-      text += `\n⚙️ *Intervalo:* ${checkInterval}\n`;
-      text += `⚠️ *Dias de Aviso:* ${warningDays}\n`;
-      text += `🚨 *Aviso Final:* ${finalWarningDays}`;
-      return reply(text);
+      return reply(MESSAGES.owner.rental_management.stats(stats.isRunning ? "Ativo" : "Parado", stats.lastCheckTime ? new Date(stats.lastCheckTime).toLocaleString("pt-BR") : "Nunca", stats.warningsSent, stats.finalWarningsSent, stats.expiredProcessed, stats.errors, checkInterval, warningDays, finalWarningDays));
     }
 
     if (["rentaltest", "rentalclean", "cleanup"].includes(cmd)) {
       if (!rentalExpirationManager?.checkExpiredRentals) {
-        return reply("💔 Sistema de expiração não inicializado no contexto atual.");
+        return reply(MESSAGES.owner.rental_management.check.notInitialized);
       }
 
-      await reply("⏳ Iniciando verificação forçada de expirações...");
+      await reply(MESSAGES.owner.rental_management.check.start);
       try {
         await rentalExpirationManager.checkExpiredRentals();
-        return reply("✅ Verificação de aluguéis concluída com sucesso!");
+        return reply(MESSAGES.owner.rental_management.check.success);
       } catch (error) {
         console.error("Erro na verificação forçada:", error);
-        return reply("❌ Falha na verificação forçada.");
+        return reply(MESSAGES.owner.rental_management.check.error);
       }
     }
 
     if (["rentalconfig", "interval", "notifications", "autocleanup", "final"].includes(cmd)) {
       if (!rentalExpirationManager?.getStats) {
-        return reply("💔 Sistema de expiração não inicializado.");
+        return reply(MESSAGES.owner.rental_management.notInitialized);
       }
 
       const { config } = rentalExpirationManager.getStats();
-      let message = "⚙️ *Configuração Atual do Sistema de Aluguel*\n\n";
-      message += `• Intervalo cron: ${config?.checkInterval || "N/A"}\n`;
-      message += `• Dias de aviso: ${config?.warningDays ?? "N/A"}\n`;
-      message += `• Aviso final: ${config?.finalWarningDays ?? "N/A"}\n`;
-      message += `• Auto limpeza: ${config?.enableAutoCleanup ? "Ativa" : "Desativada"}\n`;
-      message += `• Notificações: ${config?.enableNotifications ? "Ativas" : "Desativadas"}\n`;
-      message += `\nPara alterar, ajuste a inicialização em src/connect.js (RentalExpirationManager).`;
-      return reply(message);
+      return reply(MESSAGES.owner.rental_management.config(config?.checkInterval || "N/A", config?.warningDays ?? "N/A", config?.finalWarningDays ?? "N/A", config?.enableAutoCleanup ? "Ativa" : "Desativada", config?.enableNotifications ? "Ativas" : "Desativadas"));
     }
 
-    return reply(`❌ Comando de gerenciamento desconhecido: ${cmd}`);
+    return reply(MESSAGES.owner.rental_management.unknownCmd(cmd));
   }
 };
 

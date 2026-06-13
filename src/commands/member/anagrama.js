@@ -42,26 +42,26 @@ export default {
       if (resp === normalizar(game.palavra.toLowerCase())) {
         const pontos = Math.max(100 - (game.tentativas * 10), 10);
         delete global.anagramaGames[gameKey];
-        return reply(`🎉 *ACERTOU!*\n📝 Palavra: *${game.palavra.toUpperCase()}*\n🏆 Pontos: +${pontos}`);
+        return reply(MESSAGES.member.anagrama.win(game.palavra.toUpperCase(), pontos));
       }
       game.tentativas++;
       if (game.tentativas >= 5) {
         const p = game.palavra;
         delete global.anagramaGames[gameKey];
-        return reply(`😢 *GAME OVER!* A palavra era *${p.toUpperCase()}*.`);
+        return reply(MESSAGES.member.anagrama.gameOver(p.toUpperCase()));
       }
-      return reply(`💔 Errado! ${game.embaralhada}\n💡 Dica: ${game.dica}\n📊 Tentativas: ${game.tentativas}/5`);
+      return reply(MESSAGES.member.anagrama.wrong(game.embaralhada, game.dica, game.tentativas));
     }
 
     if (global.anagramaGames[gameKey]) {
       const g = global.anagramaGames[gameKey];
-      return reply(`🔀 *ANAGRAMA*\n📝 Embaralhada: *${g.embaralhada.toUpperCase()}*\n💡 Dica: ${g.dica}`);
+      return reply(MESSAGES.member.anagrama.status(g.embaralhada.toUpperCase(), g.dica));
     }
 
     const esc = palavrasAnagrama[Math.floor(Math.random() * palavrasAnagrama.length)];
     global.anagramaGames[gameKey] = {
       palavra: esc.palavra, embaralhada: embaralhar(esc.palavra), dica: esc.dica, tentativas: 0
     };
-    await reply(`🔀 *ANAGRAMA*\n📝 Descubra: *${global.anagramaGames[gameKey].embaralhada.toUpperCase()}*\n💡 Dica: ${esc.dica}`);
+    await reply(MESSAGES.member.anagrama.start(global.anagramaGames[gameKey].embaralhada.toUpperCase(), esc.dica));
   },
 };

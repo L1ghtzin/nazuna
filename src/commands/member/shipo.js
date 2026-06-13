@@ -5,10 +5,10 @@ export default {
   usage: `${global.prefix}shipo <@usuário>`,
   handle: async ({  reply, isGroup, isModoBn, menc_os2, from, buildGroupFilePath, optimizer, AllgroupMembers, getUserName, prefix , MESSAGES }) => {
     try {
-      if (!isGroup) return reply("╭━━━⊱ 💔 *ERRO* 💔 ⊱━━━╮\n│\n│ ❌ Este comando só funciona\n│    em grupos!\n│\n╰━━━━━━━━━━━━━━━━━━━━╯");
-      if (!isModoBn) return reply(`💔 O modo brincadeira não está ativo nesse grupo.`);
-      if (!menc_os2) return reply(`╭━━━⊱ 💘 *SHIPO* 💘 ⊱━━━╮\n│\n│ ❌ Marque alguém para\n│    encontrar um par!\n│\n│ 💡 *Exemplo:*\n│ ${prefix}shipo @fulano\n│\n╰━━━━━━━━━━━━━━━━━━━━╯`);
-      if (AllgroupMembers.length < 2) return reply(`💔 Preciso de pelo menos 2 membros no grupo!`);
+      if (!isGroup) return reply(MESSAGES.permission.groupOnly);
+      if (!isModoBn) return reply(MESSAGES.error.modoBnDisabled);
+      if (!menc_os2) return reply(MESSAGES.member.shipo.missingMention(prefix));
+      if (AllgroupMembers.length < 2) return reply(MESSAGES.member.shipo.notEnoughMembers);
       
       let path = buildGroupFilePath(from);
       // Otimização: Usar cache para leitura de arquivo
@@ -40,22 +40,7 @@ export default {
          shipLevel >= 40 ? '😊 Pode dar certo!' : 
          shipLevel >= 20 ? '🤔 Vai precisar de esforço...' : '😅 Zero chance!';
 
-      await reply(`╭━━━⊱ 💘 *SHIPO* 💘 ⊱━━━╮
-│
-│ 💫 *${comentario}*
-│
-│ 💝 *O PAR PERFEITO*
-│ @${userName1} ❤️ @${userName2}
-│
-│ 🏷️ *Nome do Ship:* ${nomeShip}
-│
-│ 📊 *Estatísticas*
-│ └─ 💖 Ship: *${shipLevel}%*
-│ └─ 🎯 Chance: *${chance}%*
-│
-│ ${statusShip}
-│
-╰━━━━━━━━━━━━━━━━━━━━━━╯`, {
+      await reply(MESSAGES.member.shipo.result(comentario, userName1, userName2, nomeShip, shipLevel, chance, statusShip), {
         mentions: [menc_os2, par]
       });
     } catch (e) {

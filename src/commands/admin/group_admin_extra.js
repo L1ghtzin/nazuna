@@ -20,24 +20,24 @@ export default {
     if (cmd === 'autosticker') {
       groupData.autoSticker = !groupData.autoSticker;
       await optimizer.saveJsonWithCache(groupFilePath, groupData);
-      return reply(`✨ Auto figurinhas ${groupData.autoSticker ? 'ativadas' : 'desativadas'}! ${groupData.autoSticker ? 'Todas as imagens e vídeos serão convertidos em figurinhas.' : ''}`);
+      return reply(MESSAGES.admin.group_admin_extra.autostickerToggle(groupData.autoSticker));
     }
 
     // --- AUTOREPO / AUTOREPOSTA ---
     if (['autorepo', 'autoresposta'].includes(cmd)) {
       groupData.autorepo = !groupData.autorepo;
       await optimizer.saveJsonWithCache(groupFilePath, groupData);
-      return reply(`✨ Auto resposta ${groupData.autorepo ? 'ativada' : 'desativada'}!`);
+      return reply(MESSAGES.admin.group_admin_extra.autorepoToggle(groupData.autorepo));
     }
 
     // --- BOAS-VINDAS ---
     if (['legendabv', 'textbv', 'welcomemsg'].includes(cmd)) {
-      if (!q) return reply(`📝 *Configuração da Mensagem de Boas-Vindas*\n\nPara definir uma mensagem personalizada, digite o comando seguido do texto desejado. Você pode usar as seguintes variáveis:\n\n- *#numerodele#* → Marca o novo membro.\n- *#nomedogp#* → Nome do grupo.\n- *#desc#* → Descrição do grupo.\n- *#membros#* → Número total de membros no grupo.\n\n📌 *Exemplo:*\n${prefix}legendabv Bem-vindo(a) #numerodele# ao grupo *#nomedogp#*! Agora somos #membros# membros. Leia a descrição: #desc#`);
+      if (!q) return reply(MESSAGES.admin.group_admin_extra.welcomeUsage(prefix));
       groupData.textbv = q;
       await optimizer.saveJsonWithCache(groupFilePath, groupData);
-      return reply(`✅ *Mensagem de boas-vindas configurada com sucesso!*\n\n📌 Nova mensagem:\n"${groupData.textbv}"`);
+      return reply(MESSAGES.admin.group_admin_extra.welcomeSuccess(groupData.textbv));
     }
 
-    return reply(`✅ Configuração ${cmd} atualizada.`);
+    return reply(MESSAGES.admin.group_admin_extra.genericUpdate(cmd));
   }
 };

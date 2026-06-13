@@ -16,40 +16,35 @@ export default {
     if (['personalizargrupo', 'ativarperso'].includes(cmd)) {
       if (!isOwner) return reply(MESSAGES.permission.ownerOnly);
       const newState = setGroupCustomizationEnabled(!isGroupCustomizationEnabled());
-      return reply(`✅ Sistema de personalização ${newState ? 'ATIVADO' : 'DESATIVADO'}!`);
+      return reply(MESSAGES.owner.personalizargrupo.toggle(newState));
     }
 
     // ═══════════════════════════════════════════════════════════════
     // 👥 ADMINS DO GRUPO (PERSONALIZAR)
     // ═══════════════════════════════════════════════════════════════
-    if (!isGroup) return reply("Use no grupo!");
+    if (!isGroup) return reply(MESSAGES.permission.groupOnly);
     if (!isGroupAdmin && !isOwner) return reply(MESSAGES.permission.adminOnly);
 
     if (['infoperso', 'personalizacao'].includes(cmd)) {
       const customization = getGroupCustomization(from);
-      let msg = `🎨 *PERSONALIZAÇÃO DO GRUPO*\n\n`;
-      msg += `Status Global: ${isGroupCustomizationEnabled() ? '✅ Ativo' : `💔 Inativo`}\n`;
-      msg += `Nome: ${customization?.customName || 'Padrão'}\n`;
-      msg += `Foto: ${customization?.customPhoto ? '✅ Personalizada' : `💔 Padrão`}\n\n`;
-      msg += `Comandos: ${prefix}nomegrupo, ${prefix}fotomenugrupo, ${prefix}removernome, ${prefix}removerfotomenu`;
-      return reply(msg);
+      return reply(MESSAGES.owner.personalizargrupo.info(isGroupCustomizationEnabled() ? '✅ Ativo' : `💔 Inativo`, customization?.customName || 'Padrão', customization?.customPhoto ? '✅ Personalizada' : `💔 Padrão`, prefix));
     }
 
-    if (!isGroupCustomizationEnabled()) return reply("⚠️ O sistema de personalização está desativado pelo dono.");
+    if (!isGroupCustomizationEnabled()) return reply(MESSAGES.owner.personalizargrupo.disabled);
 
     if (['nomegrupo', 'nomebotgrupo', 'setbotname'].includes(cmd)) {
-      if (!q) return reply(`Uso: ${prefix}${cmd} <nome>`);
+      if (!q) return reply(MESSAGES.owner.personalizargrupo.name.usage(prefix, cmd));
       setGroupCustomName(from, q);
-      return reply(`✅ Nome do bot alterado para "${q}" neste grupo!`);
+      return reply(MESSAGES.owner.personalizargrupo.name.success(q));
     }
 
     if (['fotomenugrupo', 'setmenupic'].includes(cmd)) {
-      if (!isQuotedImage && !isImage) return reply("Envie/marque uma imagem.");
+      if (!isQuotedImage && !isImage) return reply(MESSAGES.owner.personalizargrupo.photo.missingMedia);
       try {
         const media = await getFileBuffer(isQuotedImage ? info.message.extendedTextMessage.contextInfo.quotedMessage.imageMessage : info.message.imageMessage, 'image');
         const url = await upload(media);
         setGroupCustomPhoto(from, url);
-        return reply("✅ Foto do menu personalizada!");
+        return reply(MESSAGES.owner.personalizargrupo.photo.success);
       } catch (e) {
         return reply(MESSAGES.error.general);
       }
@@ -57,12 +52,12 @@ export default {
 
     if (['removernome', 'resetnome'].includes(cmd)) {
       removeGroupCustomName(from);
-      return reply("✅ Nome resetado para o padrão.");
+      return reply(MESSAGES.owner.personalizargrupo.resetName);
     }
 
     if (['removerfotomenu', 'resetfotomenu'].includes(cmd)) {
       removeGroupCustomPhoto(from);
-      return reply("✅ Foto resetada para o padrão.");
+      return reply(MESSAGES.owner.personalizargrupo.resetPhoto);
     }
   }
 };

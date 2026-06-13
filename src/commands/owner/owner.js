@@ -19,9 +19,9 @@ export default {
     // ═══════════════════════════════════════════════════════════════
     if (cmd === 'tm') {
       if (!isOwner) return reply(MESSAGES.permission.ownerOnly);
-      if (!q && !isImage && !isVideo && !isQuotedImage && !isQuotedVideo) return reply('Digite uma mensagem ou marque uma imagem/vídeo!');
+      if (!q && !isImage && !isVideo && !isQuotedImage && !isQuotedVideo) return reply(MESSAGES.owner.owner.tm.missingMedia);
 
-      const cabecalho = `╔══════════════════════\n║  📡 *TRANSMISSÃO DA BOT* 📡\n╚══════════════════════\n\n`;
+      const cabecalho = MESSAGES.owner.owner.tm.header;
       let baseMessage = {};
 
       if (isImage || isQuotedImage) {
@@ -45,20 +45,20 @@ export default {
           await new Promise(r => setTimeout(r, 1500));
         } catch (e) { console.error('Error fetching broadcast PP:', e); }
       }
-      return reply(`✅ Transmissão enviada para ${enviados} grupos!`);
+      return reply(MESSAGES.owner.owner.tm.success(enviados));
     }
 
     // ═══════════════════════════════════════════════════════════════
     // 🛡️ BLOQUEIOS GLOBAIS
     // ═══════════════════════════════════════════════════════════════
     if (cmd === 'blockcmdg') {
-      if (!q) return reply(`💔 Informe o comando a bloquear! Ex.: ${prefix}blockcmdg sticker`);
+      if (!q) return reply(MESSAGES.owner.owner.blockcmdg.missingCmd(prefix));
       const cmdToBlock = q.toLowerCase().split(' ')[0];
-      if (!cmdToBlock) return reply(`💔 Informe o comando a bloquear! Ex.: ${prefix}blockcmdg sticker`);
+      if (!cmdToBlock) return reply(MESSAGES.owner.owner.blockcmdg.missingCmd(prefix));
       
       const allCommands = await getAllCommandList();
       if (!allCommands.includes(cmdToBlock)) {
-        return reply(`❌ O comando *${cmdToBlock}* não existe e não pode ser bloqueado!`);
+        return reply(MESSAGES.owner.owner.blockcmdg.invalidCmd(cmdToBlock));
       }
       
       const blockFile = pathz.join(DATABASE_DIR, 'globalBlocks.json');
@@ -67,24 +67,24 @@ export default {
       loadedBlocks.commands[cmdToBlock] = { reason: q.split(' ').slice(1).join(' ') || 'Sem motivo', timestamp: Date.now() };
       
       await optimizer.saveJsonWithCache(blockFile, loadedBlocks);
-      return reply(`✅ Comando *${cmdToBlock}* bloqueado globalmente!\nMotivo: ${loadedBlocks.commands[cmdToBlock].reason}`);
+      return reply(MESSAGES.owner.owner.blockcmdg.success(cmdToBlock, loadedBlocks.commands[cmdToBlock].reason));
     }
 
     if (cmd === 'unblockcmdg') {
-      if (!q) return reply(`💔 Informe o comando a desbloquear! Ex.: ${prefix}unblockcmdg sticker`);
+      if (!q) return reply(MESSAGES.owner.owner.unblockcmdg.missingCmd(prefix));
       const cmdToUnblock = q.toLowerCase().split(' ')[0];
-      if (!cmdToUnblock) return reply(`💔 Informe o comando a desbloquear! Ex.: ${prefix}unblockcmdg sticker`);
+      if (!cmdToUnblock) return reply(MESSAGES.owner.owner.unblockcmdg.missingCmd(prefix));
       
       const blockFile = pathz.join(DATABASE_DIR, 'globalBlocks.json');
       const loadedBlocks = await optimizer.loadJsonWithCache(blockFile, { users: {}, commands: {} });
       loadedBlocks.commands = loadedBlocks.commands || {};
       
       if (!loadedBlocks.commands[cmdToUnblock]) {
-        return reply(`❌ O comando *${cmdToUnblock}* não está bloqueado!`);
+        return reply(MESSAGES.owner.owner.unblockcmdg.notBlocked(cmdToUnblock));
       }
       delete loadedBlocks.commands[cmdToUnblock];
       await optimizer.saveJsonWithCache(blockFile, loadedBlocks);
-      return reply(`✅ Comando *${cmdToUnblock}* desbloqueado globalmente!`);
+      return reply(MESSAGES.owner.owner.unblockcmdg.success(cmdToUnblock));
     }
 
     if (cmd === 'listblocks') {
@@ -93,17 +93,17 @@ export default {
       
       const blockedCommands = loadedBlocks.commands && Object.keys(loadedBlocks.commands).length > 0
         ? Object.entries(loadedBlocks.commands).map(([cmd, data]) => `🔧 *${cmd}* - Motivo: ${data.reason}`).join('\n')
-        : 'Nenhum comando bloqueado.';
+        : MESSAGES.owner.owner.listblocks.noCmds;
       const blockedUsers = loadedBlocks.users && Object.keys(loadedBlocks.users).length > 0
         ? Object.entries(loadedBlocks.users).map(([user, data]) => `👤 *${user.split('@')[0]}* - Motivo: ${data.reason}`).join('\n')
-        : 'Nenhum usuário bloqueado.';
-      return reply(`🔒 *Bloqueios Globais* 🔒\n\n📜 *Comandos Bloqueados*:\n${blockedCommands}\n\n👥 *Usuários Bloqueados*:\n${blockedUsers}`);
+        : MESSAGES.owner.owner.listblocks.noUsers;
+      return reply(`${MESSAGES.owner.owner.listblocks.header}${blockedCommands}${MESSAGES.owner.owner.listblocks.usersHeader}${blockedUsers}`);
     }
 
     if (cmd === 'boton' || cmd === 'botoff') {
       botState.status = (cmd === 'boton' ? 'on' : 'off');
       await optimizer.saveJsonWithCache(pathz.join(DATABASE_DIR, 'botState.json'), botState);
-      return reply(`✅ Bot ${cmd === 'boton' ? 'ativado' : 'desativado'}!`);
+      return reply(MESSAGES.owner.owner.botState.success(cmd === 'boton' ? 'ativado' : 'desativado'));
     }
 
 
@@ -116,7 +116,7 @@ export default {
             fs.unlinkSync(pathz.join(qrcodeDir, f));
           }
         });
-        reply('🧹 Limpeza concluída! Reiniciando...');
+        reply(MESSAGES.owner.owner.reviverqr.success);
         setTimeout(() => process.exit(), 1000);
       }
       return;
@@ -139,10 +139,10 @@ export default {
            }
         }
         await bot.groupParticipantsUpdate(from, [targetId], action);
-        return reply(`✅ O dono agora é ${cmd === 'seradm' ? 'Administrador' : 'Membro comum'}.`);
+        return reply(MESSAGES.owner.owner.role.success(cmd === 'seradm' ? 'Administrador' : 'Membro comum'));
       } catch (e) {
         console.error("Erro no seradm/sermembro:", e);
-        return reply(`❌ Erro. Verifique se o bot é administrador do grupo.`);
+        return reply(MESSAGES.owner.owner.role.error);
       }
     }
 
@@ -156,7 +156,7 @@ export default {
       globalBlocks.users[target] = { reason, timestamp: Date.now() };
       await optimizer.saveJsonWithCache(blockFile, globalBlocks);
       
-      return reply(`✅ Usuário @${target.split('@')[0]} bloqueado globalmente!\nMotivo: ${reason}`, { mentions: [target] });
+      return reply(MESSAGES.owner.owner.blockuserg.success(target.split('@')[0], reason), { mentions: [target] });
     }
 
     if (cmd === 'unblockuserg') {
@@ -167,12 +167,12 @@ export default {
       const globalBlocks = await optimizer.loadJsonWithCache(blockFile, { users: {}, commands: {} });
       
       if (!globalBlocks.users[target]) {
-         return reply(`❌ O usuário não está bloqueado globalmente!`);
+         return reply(MESSAGES.owner.owner.unblockuserg.notBlocked);
       }
       
       delete globalBlocks.users[target];
       await optimizer.saveJsonWithCache(blockFile, globalBlocks);
-      return reply(`✅ Usuário @${target.split('@')[0]} desbloqueado globalmente!`, { mentions: [target] });
+      return reply(MESSAGES.owner.owner.unblockuserg.success(target.split('@')[0]), { mentions: [target] });
     }
 
 

@@ -121,23 +121,31 @@ export default {
         return '▪️';
       };
       
-      const perfilText = `*📋 Perfil completo de ${targetName} 📋*
+      const emojis = {
+        puta: getEmoji(levels.puta, 'puta'),
+        gado: getEmoji(levels.gado, 'gado'),
+        corno: getEmoji(levels.corno, 'corno'),
+        sortudo: getEmoji(levels.sortudo, 'sortudo'),
+        carisma: getEmoji(levels.carisma, 'carisma'),
+        rico: getEmoji(levels.rico, 'rico'),
+        gostosa: getEmoji(levels.gostosa, 'gostosa'),
+        feio: getEmoji(levels.feio, 'feio')
+      };
+      
+      const bars = {
+        puta: createProgressBar(levels.puta),
+        gado: createProgressBar(levels.gado),
+        corno: createProgressBar(levels.corno),
+        sortudo: createProgressBar(levels.sortudo),
+        carisma: createProgressBar(levels.carisma),
+        rico: createProgressBar(levels.rico),
+        gostosa: createProgressBar(levels.gostosa),
+        feio: createProgressBar(levels.feio)
+      };
 
-👤 *Nome*: ${pushname || 'Desconhecido'}
-📱 *Número*: ${targetId}
-📜 *Bio*: ${bio}${bioSetAt ? `\n🕒 *Bio atualizada em*: ${bioSetAt}` : ''}
-💰 *Valor do Pacote*: ${pacoteValue} 🫦
-😊 *Humor*: ${randomHumor}
+      const bioSetAtStr = bioSetAt ? `\n🕒 *Bio atualizada em*: ${bioSetAt}` : '';
 
-🎭 *Níveis*:
-  ${getEmoji(levels.puta, 'puta')} ┃ Puta: ${levels.puta}% ${createProgressBar(levels.puta)}
-  ${getEmoji(levels.gado, 'gado')} ┃ Gado: ${levels.gado}% ${createProgressBar(levels.gado)}
-  ${getEmoji(levels.corno, 'corno')} ┃ Corno: ${levels.corno}% ${createProgressBar(levels.corno)}
-  ${getEmoji(levels.sortudo, 'sortudo')} ┃ Sorte: ${levels.sortudo}% ${createProgressBar(levels.sortudo)}
-  ${getEmoji(levels.carisma, 'carisma')} ┃ Carisma: ${levels.carisma}% ${createProgressBar(levels.carisma)}
-  ${getEmoji(levels.rico, 'rico')} ┃ Rico: ${levels.rico}% ${createProgressBar(levels.rico)}
-  ${getEmoji(levels.gostosa, 'gostosa')} ┃ Gostosa: ${levels.gostosa}% ${createProgressBar(levels.gostosa)}
-  ${getEmoji(levels.feio, 'feio')} ┃ Feio: ${levels.feio}% ${createProgressBar(levels.feio)}`.trim();
+      const perfilText = MESSAGES.member.perfil.text(targetName, pushname || 'Desconhecido', targetId, bio, bioSetAtStr, pacoteValue, randomHumor, emojis, levels, bars);
       
       await bot.sendMessage(from, { 
         image: { url: profilePic }, 
@@ -147,7 +155,7 @@ export default {
       
     } catch (error) {
       console.error('Erro ao processar comando perfil:', error);
-      await reply('Ocorreu um erro ao gerar o perfil 💔');
+      await reply(MESSAGES.error.general);
     }
   },
 };

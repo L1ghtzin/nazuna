@@ -47,10 +47,10 @@ export default {
     if (['rankativos', 'rankativo', 'rankinativos', 'rankinativo'].includes(command)) {
       const order = command.includes('inativo') ? 'asc' : 'desc';
       const sorted = getSortedUsers(order);
-      if (sorted.length === 0) return reply("📊 Nenhum dado de atividade encontrado.");
+      if (sorted.length === 0) return reply(MESSAGES.admin.activity.noData);
 
       const limit = Math.min(sorted.length, 10);
-      let msg = `*🏆 Rank dos ${limit} mais ${order === 'desc' ? 'ativos' : 'inativos'} do grupo:*\n`;
+      let msg = MESSAGES.admin.activity.rankHeader(limit, order === 'desc');
       const mentions = [];
 
       // Respeitar preferência de mention (igual ao Tokyo)
@@ -58,7 +58,7 @@ export default {
 
       for (let i = 0; i < limit; i++) {
         const u = sorted[i];
-        msg += `\n*🏅 ${i + 1}º Lugar:* @${getUserName(u.id)}\n- Mensagens: *${u.msg || 0}*\n- Comandos: *${u.cmd || 0}*\n- Figurinhas: *${u.figu || 0}*\n`;
+        msg += MESSAGES.admin.activity.rankItem(i + 1, getUserName(u.id), u.msg || 0, u.cmd || 0, u.figu || 0);
         if (!['0', 'marca'].includes(groupData.mark[u.id])) {
           mentions.push(u.id);
         }
@@ -70,26 +70,26 @@ export default {
     // --- CHECK ATIVO ---
     if (command === 'checkativo') {
       const target = menc_os2 || sender;
-      if (!currentMembers.includes(target)) return reply("❌ Este usuário não está no grupo.");
+      if (!currentMembers.includes(target)) return reply(MESSAGES.admin.activity.notInGroup);
 
       const u = (groupData.contador || []).find(it => it.id === target);
-      if (!u) return reply(`📊 @${getUserName(target)} ainda não possui dados no contador.`, { mentions: [target] });
+      if (!u) return reply(MESSAGES.admin.activity.userNoData(getUserName(target)), { mentions: [target] });
 
       const lastActivity = u.lastActivity ? new Date(u.lastActivity).toLocaleString('pt-BR') : 'N/A';
-      const msg = `📊 *Atividade de @${getUserName(target)}*\n\n💬 *Mensagens:* ${u.msg || 0}\n⚒️ *Comandos:* ${u.cmd || 0}\n🎨 *Figurinhas:* ${u.figu || 0}\n📈 *Total:* ${(u.msg || 0) + (u.cmd || 0) + (u.figu || 0)}\n🕐 *Última atividade:* ${lastActivity}`;
+      const msg = MESSAGES.admin.activity.userActivity(getUserName(target), u.msg || 0, u.cmd || 0, u.figu || 0, (u.msg || 0) + (u.cmd || 0) + (u.figu || 0), lastActivity);
       return reply(msg, { mentions: [target] });
     }
 
     // --- ATIVIDADE (Lista Completa) ---
     if (command === 'atividade') {
       const sorted = getSortedUsers('desc');
-      if (sorted.length === 0) return reply("📊 Nenhum dado encontrado.");
+      if (sorted.length === 0) return reply(MESSAGES.admin.activity.noData);
 
-      let msg = `📊 *Atividade do Grupo*\n👥 *Total:* ${sorted.length}\n\n`;
+      let msg = MESSAGES.admin.activity.groupActivityHeader(sorted.length);
       const mentions = [];
       if (!groupData.mark) groupData.mark = {};
       sorted.slice(0, 30).forEach((u, i) => { // Limitado a 30 para evitar mensagem gigante
-        msg += `${i + 1}. @${getUserName(u.id)} | 💬 ${u.msg || 0} | ⚒️ ${u.cmd || 0} | 📈 ${(u.msg || 0) + (u.cmd || 0) + (u.figu || 0)}\n`;
+        msg += MESSAGES.admin.activity.groupActivityItem(i + 1, getUserName(u.id), u.msg || 0, u.cmd || 0, (u.msg || 0) + (u.cmd || 0) + (u.figu || 0));
         if (!['0', 'marca'].includes(groupData.mark[u.id])) {
           mentions.push(u.id);
         }
@@ -104,15 +104,15 @@ export default {
     if (['limparatividade', 'resetatividade'].includes(command)) {
       groupData.contador = [];
       await optimizer.saveJsonWithCache(groupFile, groupData);
-      return reply("✅ Contador de atividade resetado com sucesso!");
+      return reply(MESSAGES.admin.activity.resetSuccess);
     }
 
     if (command === 'preservarcontador') {
       const sub = args[0]?.toLowerCase();
-      if (!sub) return reply(`💡 Uso: ${prefix}preservarcontador on/off`);
+      if (!sub) return reply(MESSAGES.admin.activity.preserveUsage(prefix));
       groupData.preservarContador = sub === 'on';
       await optimizer.saveJsonWithCache(groupFile, groupData);
-      return reply(`✅ Preservação do contador: *${groupData.preservarContador ? 'ATIVADA' : 'DESATIVADA'}*`);
+      return reply(MESSAGES.admin.activity.preserveToggle(groupData.preservarContador));
     }
   },
 };

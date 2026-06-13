@@ -18,7 +18,7 @@ export default {
   }) => {
     try {
       if (!isQuotedImage && !isQuotedVideo && !isQuotedDocument && !isQuotedAudio) {
-        return reply(`Marque um video, uma foto, um audio ou um documento`);
+        return reply(MESSAGES.member.upload.missingMedia);
       }
       
       var foto1 = isQuotedImage ? info.message.extendedTextMessage.contextInfo.quotedMessage.imageMessage : {};

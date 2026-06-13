@@ -20,42 +20,42 @@ export default {
       
       switch (command) {
         case 'conselho':
-          msg = `💡 *Conselho do dia:*\n\n${data.Conselhos[Math.floor(Math.random() * data.Conselhos.length)]}`;
+          msg = MESSAGES.member.textorandom.conselho(data.Conselhos[Math.floor(Math.random() * data.Conselhos.length)]);
           break;
         case 'conselhobiblico':
         case 'versiculo':
         case 'biblia':
-          msg = `📖 *Conselho Bíblico:*\n\n${data.ConselhosBiblicos[Math.floor(Math.random() * data.ConselhosBiblicos.length)]}`;
+          msg = MESSAGES.member.textorandom.conselhobiblico(data.ConselhosBiblicos[Math.floor(Math.random() * data.ConselhosBiblicos.length)]);
           break;
         case 'cantada':
         case 'cantadas':
-          msg = `💘 *Cantada:*\n\n${data.Cantadas[Math.floor(Math.random() * data.Cantadas.length)]}`;
+          msg = MESSAGES.member.textorandom.cantada(data.Cantadas[Math.floor(Math.random() * data.Cantadas.length)]);
           break;
         case 'piada':
         case 'piadas':
-          msg = `😂 *Piada:*\n\n${data.Piadas[Math.floor(Math.random() * data.Piadas.length)]}`;
+          msg = MESSAGES.member.textorandom.piada(data.Piadas[Math.floor(Math.random() * data.Piadas.length)]);
           break;
         case 'charada':
         case 'enigma':
-          msg = `🧩 *Charada:*\n\n${data.Charadas[Math.floor(Math.random() * data.Charadas.length)]}`;
+          msg = MESSAGES.member.textorandom.charada(data.Charadas[Math.floor(Math.random() * data.Charadas.length)]);
           break;
         case 'motivacional':
         case 'motivacao':
         case 'frasemotivacional':
-          msg = `🚀 *Frase Motivacional:*\n\n${data.FrasesMotivacionais[Math.floor(Math.random() * data.FrasesMotivacionais.length)]}`;
+          msg = MESSAGES.member.textorandom.motivacional(data.FrasesMotivacionais[Math.floor(Math.random() * data.FrasesMotivacionais.length)]);
           break;
         case 'elogio':
         case 'elogiar':
-          msg = `🌟 *Elogio:*\n\n${data.Elogios[Math.floor(Math.random() * data.Elogios.length)]}`;
+          msg = MESSAGES.member.textorandom.elogio(data.Elogios[Math.floor(Math.random() * data.Elogios.length)]);
           break;
         case 'reflexao':
         case 'pensamento':
-          msg = `🤔 *Reflexão:*\n\n${data.Reflexoes[Math.floor(Math.random() * data.Reflexoes.length)]}`;
+          msg = MESSAGES.member.textorandom.reflexao(data.Reflexoes[Math.floor(Math.random() * data.Reflexoes.length)]);
           break;
         case 'fato':
         case 'fatocurioso':
         case 'curiosidade':
-          msg = `🔬 *Fato Curioso:*\n\n${data.curiousFacts[Math.floor(Math.random() * data.curiousFacts.length)]}`;
+          msg = MESSAGES.member.textorandom.fato(data.curiousFacts[Math.floor(Math.random() * data.curiousFacts.length)]);
           break;
       }
       

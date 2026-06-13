@@ -19,7 +19,7 @@ export default {
         await bot.sendMessage(from, { audio: dlRes.buffer, mimetype: 'audio/mpeg' }, { quoted: info });
       } catch (e) {
         if (String(e).includes("ENOSPC") || String(e).includes("size")) {
-          await reply('📦 Arquivo muito grande, enviando como documento...');
+          await reply(MESSAGES.member.download.largeFile);
           await bot.sendMessage(from, { document: dlRes.buffer, fileName: dlRes.filename || 'audio.mp3', mimetype: 'audio/mpeg' }, { quoted: info });
         } else {
           reply(MESSAGES.error.general);
@@ -32,27 +32,27 @@ export default {
     // ═══════════════════════════════════════════════════════════════
     if (cmd === 'play' || cmd === 'ytmp3') {
       if (!q) {
-        return reply(`╭━━━⊱ 🎵 *YOUTUBE MP3* 🎵 ⊱━━━╮\n│\n│ 📝 Digite o nome da música ou\n│     um link do YouTube\n│\n│  *Exemplos:*\n│  ${prefix + command} Back to Black\n│  ${prefix + command} https://youtube.com/...\n│\n╰━━━━━━━━━━━━━━━━━━━━━━━━━╯`);
+        return reply(MESSAGES.member.download.youtubeMenu(prefix, command));
       }
 
       try {
         if (q.includes('youtube.com') || q.includes('youtu.be')) {
-          await reply('Aguarde um momentinho... ☀️');
+          await reply(MESSAGES.member.download.youtubeWaitLink);
           // Execução em background para não travar o bot
           youtube.mp3(q).then(sendAudio).catch(e => {
             console.error('Erro play link:', e);
             reply(MESSAGES.error.general);
           });
         } else {
-          await reply(`🔍 *Pesquisando no YouTube...*\n\n🎵 Música: *${q}*\n\n⏳ Aguarde um momento...`);
+          await reply(MESSAGES.member.download.youtubeSearch(q));
           const result = await youtube.search(q);
           if (!result.ok) return reply(MESSAGES.error.general);
 
           const { data: v } = result;
-          if (v.seconds > 1800) return reply(`⚠️ Este vídeo é muito longo (${v.timestamp}).\nPor favor, escolha um vídeo com menos de 30 minutos.`);
+          if (v.seconds > 1800) return reply(MESSAGES.member.download.youtubeVideoTooLong(v.timestamp));
 
           const views = typeof v.views === 'number' ? v.views.toLocaleString('pt-BR') : v.views;
-          const caption = `🎵 *Música Encontrada* 🎵\n\n📌 *Título:* ${v.title}\n👤 *Artista/Canal:* ${v.author.name}\n⏱ *Duração:* ${v.timestamp} (${v.seconds} segundos)\n👀 *Visualizações:* ${views}\n🔗 *Link:* ${v.url}\n\n🎧 *Baixando e processando sua música, aguarde...*`;
+          const caption = MESSAGES.member.download.youtubeFound(v.title, v.author.name, v.timestamp, v.seconds, views, v.url);
 
           bot.sendMessage(from, { image: { url: v.thumbnail }, caption, footer: `${nomebot} • Versão ${botVersion}` }, { quoted: info }).catch(() => { });
 
@@ -73,34 +73,34 @@ export default {
     // 📺 YOUTUBE VIDEO (MP4 / PLAYVID)
     // ═══════════════════════════════════════════════════════════════
     if (cmd === 'playvid' || cmd === 'ytmp4') {
-      if (!q) return reply(`🎥 Envie o nome ou link do vídeo do YouTube!\n\nExemplo: ${prefix}${cmd} Linkin Park Numb`);
+      if (!q) return reply(MESSAGES.member.download.youtubeVideoMenu(prefix, cmd));
 
       try {
         let videoUrl = q;
         if (!q.includes('youtube.com') && !q.includes('youtu.be')) {
-          await reply(`🔍 Pesquisando vídeo: *${q}*...`);
+          await reply(MESSAGES.member.download.youtubeVideoSearch(q));
           const result = await youtube.search(q);
-          if (!result.ok) return reply(`💔 Vídeo não encontrado.`);
+          if (!result.ok) return reply(MESSAGES.member.download.youtubeVideoNotFound);
           videoUrl = result.data.url;
         }
 
-        await reply('⏳ Baixando vídeo... Isso pode levar um momento.');
+        await reply(MESSAGES.member.download.youtubeVideoWait);
 
         // Download em background para não travar o bot
         youtube.mp4(videoUrl, '360p').then(async (dlRes) => {
           if (!dlRes || !dlRes.ok || !dlRes.buffer) {
             console.error('Download MP4 falhou:', dlRes?.msg);
-            return reply('💔 Não foi possível baixar o vídeo. Tente novamente mais tarde.');
+            return reply(MESSAGES.member.download.youtubeVideoFail);
           }
 
           await bot.sendMessage(from, {
             video: dlRes.buffer,
-            caption: `✨ *${dlRes.title || 'Vídeo baixado'}*\n\n📺 Qualidade: ${dlRes.quality || '360p'}\n🔗 Fonte: ${dlRes.source || 'Auto'}`,
+            caption: MESSAGES.member.download.youtubeVideoCaption(dlRes.title, dlRes.quality, dlRes.source),
             mimetype: 'video/mp4'
           }, { quoted: info });
         }).catch(e => {
           console.error('Erro fatal no playvid background:', e);
-          reply('💔 Ocorreu um erro ao processar seu vídeo.');
+          reply(MESSAGES.member.download.youtubeVideoFatalError);
         });
 
       } catch (e) {
@@ -114,10 +114,10 @@ export default {
     // 🎵 SPOTIFY
     // ═══════════════════════════════════════════════════════════════
     if (cmd === 'spotify' || cmd === 'spotifydl' || cmd === 'play2' || cmd === 'playspotify') {
-      if (!q) return reply(`🎵 Envie o nome da música ou link do Spotify!\n\nExemplo: ${prefix}${cmd} Imagine Dragons Believer`);
+      if (!q) return reply(MESSAGES.member.download.spotifyMenu(prefix, cmd));
 
       try {
-        await reply('🎵 Processando solicitação do Spotify...');
+        await reply(MESSAGES.member.download.spotifyProcessing);
         const spotifyFn = q.includes('spotify.com') ? spotifyModule.download : spotifyModule.searchDownload;
         spotifyFn(q).then(async (dlRes) => {
           if (!dlRes.ok) return reply(MESSAGES.error.general);
@@ -131,9 +131,9 @@ export default {
     // 🎵 SOUNDCLOUD
     // ═══════════════════════════════════════════════════════════════
     if (cmd === 'soundcloud' || cmd === 'soundclouddl' || cmd === 'play3' || cmd === 'playsoundcloud') {
-      if (!q) return reply(`🎵 Envie o nome ou link do SoundCloud!\n\nExemplo: ${prefix}${cmd} https://soundcloud.com/...`);
+      if (!q) return reply(MESSAGES.member.download.soundcloudMenu(prefix, cmd));
       try {
-        await reply('☁️ Baixando do SoundCloud...');
+        await reply(MESSAGES.member.download.soundcloudDownloading);
         const scFn = q.includes('soundcloud.com') ? soundcloud.download : soundcloud.searchDownload;
         scFn(q).then(async (dlRes) => {
           if (!dlRes.ok) return reply(MESSAGES.error.general);
@@ -147,38 +147,38 @@ export default {
     // 📱 TIKTOK
     // ═══════════════════════════════════════════════════════════════
     if (['tiktok', 'ttk', 'tkk', 'tiktokaudio', 'tiktokvideo', 'tiktoks', 'tiktoksearch'].includes(cmd)) {
-      if (!q) return reply(`📱 Envie o link do TikTok ou o que deseja pesquisar!`);
+      if (!q) return reply(MESSAGES.member.download.tiktokMenu);
       try {
         if (q.includes('tiktok.com')) {
-          await reply('⏳ Baixando do TikTok...');
+          await reply(MESSAGES.member.download.tiktokDownloading);
           tiktok.dl(q).then(async (dlRes) => {
             if (!dlRes.ok) return reply(MESSAGES.error.general);
             if (cmd === 'tiktokaudio') {
               if (dlRes.audio) {
                 await bot.sendMessage(from, { audio: { url: dlRes.audio }, mimetype: 'audio/mpeg' }, { quoted: info });
               } else {
-                return reply(`💔 Áudio não encontrado no TikTok.`);
+                return reply(MESSAGES.member.download.tiktokAudioNotFound);
               }
             } else {
               if (dlRes.type === 'image' && dlRes.urls) {
                 for (let url of dlRes.urls) {
-                  await bot.sendMessage(from, { image: { url }, caption: `✨ TikTok: *${dlRes.title || ''}*` }, { quoted: info });
+                  await bot.sendMessage(from, { image: { url }, caption: MESSAGES.member.download.tiktokCaption(dlRes.title) }, { quoted: info });
                 }
               } else if (dlRes.urls && dlRes.urls.length > 0) {
-                await bot.sendMessage(from, { video: { url: dlRes.urls[0] }, caption: `✨ TikTok: *${dlRes.title || ''}*` }, { quoted: info });
+                await bot.sendMessage(from, { video: { url: dlRes.urls[0] }, caption: MESSAGES.member.download.tiktokCaption(dlRes.title) }, { quoted: info });
               } else {
-                return reply(`💔 Mídia não encontrada no TikTok.`);
+                return reply(MESSAGES.member.download.tiktokMediaNotFound);
               }
             }
           }).catch(() => reply(MESSAGES.error.general));
         } else {
-          await reply(`🔍 Pesquisando TikToks: *${q}*...`);
+          await reply(MESSAGES.member.download.tiktokSearching(q));
           const results = await tiktok.search(q);
-          if (!results || !results.ok) return reply(`💔 Nenhum resultado encontrado.`);
+          if (!results || !results.ok) return reply(MESSAGES.member.download.tiktokSearchNoResults);
           if (results.type === 'image' && results.urls) {
-            await bot.sendMessage(from, { image: { url: results.urls[0] }, caption: `✨ *${results.title || ''}*` }, { quoted: info });
+            await bot.sendMessage(from, { image: { url: results.urls[0] }, caption: MESSAGES.member.download.tiktokSearchCaption(results.title) }, { quoted: info });
           } else if (results.urls && results.urls.length > 0) {
-            await bot.sendMessage(from, { video: { url: results.urls[0] }, caption: `✨ *${results.title || ''}*` }, { quoted: info });
+            await bot.sendMessage(from, { video: { url: results.urls[0] }, caption: MESSAGES.member.download.tiktokSearchCaption(results.title) }, { quoted: info });
           }
         }
       } catch (e) { reply(MESSAGES.error.general); }
@@ -190,12 +190,12 @@ export default {
     // 📸 INSTAGRAM
     // ═══════════════════════════════════════════════════════════════
     if (['instagram', 'igdl', 'ig', 'instavideo', 'igstory'].includes(cmd)) {
-      if (!q || !q.includes('instagram.com')) return reply(`📸 Envie um link vindo do Instagram!`);
+      if (!q || !q.includes('instagram.com')) return reply(MESSAGES.member.download.instagramMenu);
       try {
-        await reply('⏳ Baixando do Instagram...');
+        await reply(MESSAGES.member.download.instagramDownloading);
         igdl.dl(q).then(async (dlRes) => {
           if (!dlRes || !dlRes.ok || !dlRes.data || dlRes.data.length === 0) {
-            return reply(`💔 Não foi possível baixar. Verifique se o link é público.`);
+            return reply(MESSAGES.member.download.instagramFail);
           }
           for (const item of dlRes.data) {
             if (item.type === 'image') {
@@ -213,26 +213,26 @@ export default {
     }
 
     if (['facebook', 'fb', 'fbdl', 'facebookdl'].includes(cmd)) {
-      if (!q || !q.includes('facebook.com')) return reply(`👥 Envie um link do Facebook!`);
+      if (!q || !q.includes('facebook.com')) return reply(MESSAGES.member.download.facebookMenu);
       try {
-        await reply('⏳ Baixando do Facebook...');
+        await reply(MESSAGES.member.download.facebookDownloading);
         facebook.downloadHD(q).then(async (dlRes) => {
           if (!dlRes.ok) return reply(MESSAGES.error.general);
-          await bot.sendMessage(from, { video: dlRes.buffer, caption: `✨ Vídeo do Facebook (${dlRes.resolution || 'HD'})` }, { quoted: info });
+          await bot.sendMessage(from, { video: dlRes.buffer, caption: MESSAGES.member.download.facebookCaption(dlRes.resolution) }, { quoted: info });
         }).catch(() => reply(MESSAGES.error.general));
       } catch (e) { reply(MESSAGES.error.general); }
       return;
     }
 
     if (['twitter', 'twitterdl', 'twt', 'x', 'xdl'].includes(cmd)) {
-      if (!q) return reply(`🐦 Envie o link do tweet!`);
+      if (!q) return reply(MESSAGES.member.download.twitterMenu);
       try {
-        await reply('🐦 Buscando informações do tweet...');
+        await reply(MESSAGES.member.download.twitterFetching);
         twitterGetInfo(q).then(async (twitterResult) => {
-          if (!twitterResult.ok) return reply(`💔 ${twitterResult.msg || 'Erro'}`);
+          if (!twitterResult.ok) return reply(MESSAGES.member.download.twitterError(twitterResult.msg));
           const { text, author, stats, media, hasMedia } = twitterResult;
-          const caption = `🐦 *Twitter/X Download*\n\n👤 *${author?.name || 'Usuário'}*\n\n📝 ${text || ''}`;
-          if (!hasMedia) return reply(`${caption}\n\n⚠️ Sem mídia.`);
+          const caption = MESSAGES.member.download.twitterCaption(author?.name, text);
+          if (!hasMedia) return reply(MESSAGES.member.download.twitterNoMedia(caption));
           for (const item of media) {
             if (item.type === 'video') await bot.sendMessage(from, { video: { url: item.bestQuality?.url || item.url }, caption }, { quoted: info });
             else await bot.sendMessage(from, { image: { url: item.url }, caption }, { quoted: info });
@@ -243,7 +243,7 @@ export default {
     }
 
     if (['gdrive', 'googledrive', 'drive', 'gd'].includes(cmd)) {
-      if (!q) return reply(`📂 Envie o link do Google Drive!`);
+      if (!q) return reply(MESSAGES.member.download.gdriveMenu);
       try {
         gdriveGetInfo(q).then(async (res) => {
           if (!res.ok) return reply(MESSAGES.error.general);
@@ -254,7 +254,7 @@ export default {
     }
 
     if (['mediafire', 'mf'].includes(cmd)) {
-      if (!q) return reply(`📂 Envie o link do Mediafire!`);
+      if (!q) return reply(MESSAGES.member.download.mediafireMenu);
       try {
         mediafireGetInfo(q).then(async (res) => {
           if (!res.ok) return reply(MESSAGES.error.general);
@@ -265,27 +265,27 @@ export default {
     }
 
     if (cmd === 'lyrics' || cmd === 'letra') {
-      if (!q) return reply(`🎵 Qual música?`);
-      if (!lyrics) return reply('💔 Sistema de letras indisponível no momento.');
+      if (!q) return reply(MESSAGES.member.download.lyricsMenu);
+      if (!lyrics) return reply(MESSAGES.member.download.lyricsUnavailable);
       try {
-        await reply(`🔍 Procurando letra de *${q}*...`);
+        await reply(MESSAGES.member.download.lyricsSearching(q));
         const res = await lyrics(q);
-        if (!res) return reply(`💔 Letra não encontrada.`);
+        if (!res) return reply(MESSAGES.member.download.lyricsNotFound);
         await reply(res);
       } catch (e) { reply(`💔 ${e.message || MESSAGES.error.general}`); }
       return;
     }
 
     if (cmd === 'mcplugin' || cmd === 'mcplugins') {
-      if (!q) return reply('🔍 Cadê o nome do plugin para eu pesquisar? 🤔\n\nExemplo: ' + prefix + cmd + ' WorldEdit');
-      if (!mcPlugin) return reply('💔 Sistema de plugins indisponível no momento.');
+      if (!q) return reply(MESSAGES.member.download.mcpluginMenu(prefix, cmd));
+      if (!mcPlugin) return reply(MESSAGES.member.download.mcpluginUnavailable);
       try {
-        await reply('🔍 Buscando plugin...');
+        await reply(MESSAGES.member.download.mcpluginSearching);
         mcPlugin(q).then(async (datz) => {
           if (!datz.ok) return reply(datz.msg);
           await bot.sendMessage(from, {
             image: { url: datz.image },
-            caption: `🔍 Encontrei esse plugin aqui:\n\n*Nome*: _${datz.name}_\n*Publicado por*: _${datz.creator}_\n*Descrição*: _${datz.desc}_\n*Link para download*: _${datz.url}_\n\n> 💖 `
+            caption: MESSAGES.member.download.mcpluginCaption(datz.name, datz.creator, datz.desc, datz.url)
           }, { quoted: info });
         }).catch((e) => {
           console.error('Erro mcplugin:', e);
@@ -296,12 +296,12 @@ export default {
     }
 
     if (cmd === 'kwai') {
-      if (!q) return reply(`📱 Envie o link do Kwai!`);
+      if (!q) return reply(MESSAGES.member.download.kwaiMenu);
       try {
         kwai.dl(q).then(async (res) => {
           if (!res.ok || !res.data || !res.data.length) return reply(MESSAGES.error.general);
           const item = res.data[0];
-          await bot.sendMessage(from, { video: item.buff || { url: item.url }, caption: `✨ Kwai Video: ${item.metadata?.titulo || ''}` }, { quoted: info });
+          await bot.sendMessage(from, { video: item.buff || { url: item.url }, caption: MESSAGES.member.download.kwaiCaption(item.metadata?.titulo) }, { quoted: info });
         }).catch(() => reply(MESSAGES.error.general));
       } catch (e) { reply(MESSAGES.error.general); }
       return;
@@ -309,9 +309,9 @@ export default {
 
     if (['zipbot', 'zip-bot', 'botzip', 'bot-zip', 'downloadbot', 'download-bot', 'github', 'repo', 'repositorio', 'source', 'sourcecode', 'source-code', 'git-bot', 'git-hub'].includes(cmd)) {
       try {
-        await reply('📦 Baixando código-fonte...');
+        await reply(MESSAGES.member.download.sourceCodeDownloading);
         const zipUrl = 'https://github.com/L1ghtzin/chainy/archive/refs/heads/main.zip';
-        await bot.sendMessage(from, { document: { url: zipUrl }, fileName: 'chainy-bot.zip', mimetype: 'application/zip', caption: `📂 *Código-fonte*` }, { quoted: info });
+        await bot.sendMessage(from, { document: { url: zipUrl }, fileName: 'chainy-bot.zip', mimetype: 'application/zip', caption: MESSAGES.member.download.sourceCodeCaption }, { quoted: info });
       } catch (e) { reply(MESSAGES.error.general); }
       return;
     }

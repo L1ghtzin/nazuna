@@ -37,9 +37,9 @@ export default {
       await optimizer.saveJsonWithCache(groupFile || buildGroupFilePath(from), groupData);
       
       if (groupData.modolite) {
-        await reply('🔞 *Modo Lite ativado!* O conteúdo inapropriado para crianças será filtrado neste grupo.');
+        await reply(MESSAGES.admin.modolite.on);
       } else {
-        await reply('🔓 *Modo Lite desativado!* O conteúdo do menu de brincadeiras será exibido completamente.');
+        await reply(MESSAGES.admin.modolite.off);
       }
     } catch (e) {
       console.error(e);

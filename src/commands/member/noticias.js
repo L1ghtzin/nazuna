@@ -13,19 +13,19 @@ export default {
     MESSAGES
   }) => {
     try {
-      if (!q) return reply(`📰 *Pesquisa de Notícias*\n\n❌ Digite o que deseja pesquisar.\n\n📝 *Uso:* ${prefix}${command} <termo>\n\n📌 *Exemplo:*\n${prefix}${command} tecnologia brasil`);
+      if (!q) return reply(MESSAGES.member.noticias.usage(prefix, command));
       
-      await reply('📰 Buscando notícias...');
+      await reply(MESSAGES.member.noticias.searching);
       
       const newsResult = await searchNews(q, 10);
       
       if (!newsResult.ok) {
-        return reply(`💔 Nenhuma notícia encontrada.`);
+        return reply(MESSAGES.member.noticias.notFound);
       }
       
       const { query: newsQuery, results: newsResults } = newsResult;
       
-      let newsText = `📰 *Notícias sobre:* "${newsQuery}"\n\n`;
+      let newsText = MESSAGES.member.noticias.header(newsQuery);
       
       newsResults.slice(0, 8).forEach((news, index) => {
         newsText += `*${index + 1}. ${news.title}*\n`;

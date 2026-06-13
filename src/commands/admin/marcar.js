@@ -37,16 +37,16 @@ export default {
       if (!data.mark) data.mark = {};
 
       let membros = AllgroupMembers.filter(m => !['0', 'games'].includes(data.mark[m]));
-      if (!membros.length) return reply('❌ Nenhum membro para mencionar.');
+      if (!membros.length) return reply(MESSAGES.admin.marcar.empty);
 
       const configMarcar = loadMassMentionConfig();
       if (configMarcar[from]?.enabled && AllgroupMembers.length >= MASS_MENTION_THRESHOLD) {
         registerMassMentionUse(from);
       }
 
-      let msg = `📢 *Membros mencionados:* ${q ? `\n💬 *Mensagem:* ${q}` : ''}\n\n`;
+      let msg = MESSAGES.admin.marcar.membersHeader(q);
       return await bot.sendMessage(from, { 
-        text: msg + membros.map(m => `👉 @${getUserName(m)}`).join('\n'), 
+        text: msg + membros.map(m => MESSAGES.admin.marcar.memberItem(getUserName(m))).join('\n'), 
         mentions: membros 
       });
     }
@@ -55,11 +55,11 @@ export default {
     // 🛡️ MENCIONAR/LISTAR ADMINS
     // ═══════════════════════════════════════════════════════════════
     if (['admin', 'adm', 'adms', 'admins', 'listadm', 'listadms', 'listadministradores', 'totais', 'totaisadms'].includes(cmd)) {
-      let text = `🛡️ *ADMINISTRADORES DO GRUPO*\n\n💬 *Mensagem:* ${q || 'Nenhuma'}\n👤 *Por:* ${pushname}\n\n`;
+      let text = MESSAGES.admin.marcar.adminsHeader(q, pushname);
       for (let adm of groupAdmins) {
-        text += `• @${adm.split('@')[0]}\n`;
+        text += MESSAGES.admin.marcar.adminItem(adm.split('@')[0]);
       }
-      text += `\n📊 *Total:* ${groupAdmins.length}`;
+      text += MESSAGES.admin.marcar.adminsTotal(groupAdmins.length);
       return await bot.sendMessage(from, { text, mentions: groupAdmins });
     }
   }

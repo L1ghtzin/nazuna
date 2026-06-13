@@ -50,7 +50,7 @@ export default {
 
     try {
       if (!q) {
-        return reply(`🧮 *Calculadora Científica*\n\n${prefix}calc <expressão> - Calcula expressão\n${prefix}calc converter <valor> <de> <para>\n\n*Operadores:* + - * / ^ % !\n*Funções:* sin, cos, tan, sqrt, log, abs, ceil, floor\n*Constantes:* pi, e, phi\n\n*Exemplos:*\n${prefix}calc 2+2*3\n${prefix}calc sqrt(144)\n${prefix}calc sin(45)\n${prefix}calc 5!\n${prefix}calc converter 100 km mi`);
+        return reply(MESSAGES.member.calculadora.menu(prefix));
       }
       
       if (args[0]?.toLowerCase() === 'converter' || args[0]?.toLowerCase() === 'convert') {
@@ -59,7 +59,7 @@ export default {
         const para = args[3]?.toLowerCase();
         
         if (isNaN(valor) || !de || !para) {
-          return reply(`💔 Formato inválido.\nUso correto: ${prefix}calc converter 100 km mi`);
+          return reply(MESSAGES.member.calculadora.invalidFormat(prefix));
         }
         
         // Conversões básicas de exemplo
@@ -77,22 +77,22 @@ export default {
         const chave = `${de}_${para}`;
         if (convs[chave]) {
           const resultado = convs[chave](valor);
-          return reply(`🔄 *Conversão*\n\n${valor} ${de} = ${resultado.toFixed(2)} ${para}`);
+          return reply(MESSAGES.member.calculadora.conversionResult(valor, de, resultado, para));
         } else {
-          return reply(`💔 Conversão não suportada. Tente: km<>mi, c<>f, m<>cm, kg<>lb`);
+          return reply(MESSAGES.member.calculadora.unsupportedConversion);
         }
       }
       
       const res = calcMath(q);
       if (res !== null && !isNaN(res)) {
-        await reply(`🧮 *Calculadora*\n\nExpressão: ${q}\nResultado: *${res}*`);
+        await reply(MESSAGES.member.calculadora.calcResult(q, res));
       } else {
-        await reply(`💔 Expressão matemática inválida.`);
+        await reply(MESSAGES.member.calculadora.invalidMath);
       }
       
     } catch (e) {
       console.error('Erro na calculadora:', e);
-      reply(`💔 Expressão matemática inválida.`);
+      reply(MESSAGES.member.calculadora.invalidMath);
     }
   }
 };

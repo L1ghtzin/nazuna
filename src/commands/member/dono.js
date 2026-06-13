@@ -10,13 +10,7 @@ export default {
   , MESSAGES }) => {
     try {
       const numeroDonoFormatado = numerodono ? String(numerodono).replace(/\D/g, '') : 'Não configurado';
-      const TextinDonoInfo = `╔═══ ⚡ *DONO DO BOT* ⚡ ═════
-║
-║ 👤 *Nome:* ${nomedono}
-║ 📞 *Contato:* wa.me/${numeroDonoFormatado}
-║
-╚══════════════════════════`;
-      await reply(TextinDonoInfo);
+      await reply(MESSAGES.member.dono.info(nomedono, numeroDonoFormatado));
     } catch (e) {
       console.error(e);
       await reply(MESSAGES.error.general);

@@ -18,13 +18,13 @@ export default {
       if (groupData.afkUsers && groupData.afkUsers[sender]) {
         delete groupData.afkUsers[sender];
         fs.writeFileSync(groupFile, JSON.stringify(groupData, null, 2));
-        await reply(`👋 Bem-vindo(a) de volta! Seu status AFK foi removido.`);
+        await reply(MESSAGES.member.voltei.welcomeBack);
       } else {
-        await reply("Você não estava AFK.");
+        await reply(MESSAGES.member.voltei.notAfk);
       }
     } catch (e) {
       console.error('Erro no comando voltei:', e);
-      await reply("Ocorreu um erro ao remover AFK 💔");
+      await reply(MESSAGES.error.general);
     }
   }
 };

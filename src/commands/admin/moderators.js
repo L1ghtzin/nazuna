@@ -14,73 +14,73 @@ export default {
     groupData.allowedModCommands = groupData.allowedModCommands || [];
 
     if (['addmod'].includes(cmd)) {
-      if (!menc_os2) return reply(`Marque o usuário que deseja promover a moderador. Ex: ${prefix}addmod @usuário`);
+      if (!menc_os2) return reply(MESSAGES.admin.moderators.addUsage(prefix));
       const modToAdd = menc_os2;
       
       if (groupData.moderators.includes(modToAdd)) {
-        return reply(`@${getUserName(modToAdd)} já é um moderador.`, { mentions: [modToAdd] });
+        return reply(MESSAGES.admin.moderators.alreadyMod(getUserName(modToAdd)), { mentions: [modToAdd] });
       }
       groupData.moderators.push(modToAdd);
       await optimizer.saveJsonWithCache(groupFile, groupData);
-      return reply(`✅ @${getUserName(modToAdd)} foi promovido a moderador do grupo!`, { mentions: [modToAdd] });
+      return reply(MESSAGES.admin.moderators.addSuccess(getUserName(modToAdd)), { mentions: [modToAdd] });
     }
 
     if (['delmod', 'rmmod'].includes(cmd)) {
-      if (!menc_os2) return reply(`Marque o usuário que deseja remover de moderador. Ex: ${prefix}delmod @usuário`);
+      if (!menc_os2) return reply(MESSAGES.admin.moderators.delUsage(prefix));
       const modToRemove = menc_os2;
       const modIndex = groupData.moderators.indexOf(modToRemove);
       if (modIndex === -1) {
-        return reply(`@${getUserName(modToRemove)} não é um moderador.`, { mentions: [modToRemove] });
+        return reply(MESSAGES.admin.moderators.notMod(getUserName(modToRemove)), { mentions: [modToRemove] });
       }
       groupData.moderators.splice(modIndex, 1);
       await optimizer.saveJsonWithCache(groupFile, groupData);
-      return reply(`✅ @${getUserName(modToRemove)} não é mais um moderador do grupo.`, { mentions: [modToRemove] });
+      return reply(MESSAGES.admin.moderators.delSuccess(getUserName(modToRemove)), { mentions: [modToRemove] });
     }
 
     if (['listmods', 'modlist', 'listmod'].includes(cmd)) {
       if (groupData.moderators.length === 0) {
-        return reply("🛡️ Não há moderadores definidos para este grupo.");
+        return reply(MESSAGES.admin.moderators.listEmpty);
       }
-      let modsMessage = `🛡️ *Moderadores do Grupo ${groupName}* 🛡️\n\n`;
+      let modsMessage = MESSAGES.admin.moderators.listHeader(groupName);
       const mentionedUsers = [];
       groupData.moderators.forEach(modJid => {
-        modsMessage += `➥ @${getUserName(modJid)}\n`;
+        modsMessage += MESSAGES.admin.moderators.listItem(getUserName(modJid));
         mentionedUsers.push(modJid);
       });
       return reply(modsMessage, { mentions: mentionedUsers });
     }
 
     if (['grantmodcmd', 'addmodcmd', 'grantmodcmds'].includes(cmd)) {
-      if (!q) return reply(`Por favor, especifique o comando para permitir aos moderadores. Ex: ${prefix}grantmodcmd ban`);
+      if (!q) return reply(MESSAGES.admin.moderators.grantUsage(prefix));
       const cmdToAllow = q.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, "").replaceAll(prefix, "");
       
       if (groupData.allowedModCommands.includes(cmdToAllow)) {
-        return reply(`Comando "${cmdToAllow}" já está permitido para moderadores.`);
+        return reply(MESSAGES.admin.moderators.alreadyGranted(cmdToAllow));
       }
       groupData.allowedModCommands.push(cmdToAllow);
       await optimizer.saveJsonWithCache(groupFile, groupData);
-      return reply(`✅ Moderadores agora podem usar o comando: ${prefix}${cmdToAllow}`);
+      return reply(MESSAGES.admin.moderators.grantSuccess(prefix, cmdToAllow));
     }
 
     if (['revokemodcmd', 'delmodcmd', 'rmmodcmd', 'revokemodcmds'].includes(cmd)) {
-      if (!q) return reply(`Por favor, especifique o comando para proibir aos moderadores. Ex: ${prefix}revokemodcmd ban`);
+      if (!q) return reply(MESSAGES.admin.moderators.revokeUsage(prefix));
       const cmdToDeny = q.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, "").replaceAll(prefix, "");
       const cmdIndex = groupData.allowedModCommands.indexOf(cmdToDeny);
       if (cmdIndex === -1) {
-        return reply(`Comando "${cmdToDeny}" não estava permitido para moderadores.`);
+        return reply(MESSAGES.admin.moderators.notGranted(cmdToDeny));
       }
       groupData.allowedModCommands.splice(cmdIndex, 1);
       await optimizer.saveJsonWithCache(groupFile, groupData);
-      return reply(`✅ Moderadores não podem mais usar o comando: ${prefix}${cmdToDeny}`);
+      return reply(MESSAGES.admin.moderators.revokeSuccess(prefix, cmdToDeny));
     }
 
     if (['listmodcmds', 'listmodcmd'].includes(cmd)) {
       if (groupData.allowedModCommands.length === 0) {
-        return reply("🔧 Nenhum comando específico permitido para moderadores neste grupo.");
+        return reply(MESSAGES.admin.moderators.cmdsEmpty);
       }
-      let cmdsMessage = `🔧 *Comandos Permitidos para Moderadores em ${groupName}* 🔧\n\n`;
+      let cmdsMessage = MESSAGES.admin.moderators.cmdsHeader(groupName);
       groupData.allowedModCommands.forEach(c => {
-        cmdsMessage += `➥ ${prefix}${c}\n`;
+        cmdsMessage += MESSAGES.admin.moderators.cmdsItem(prefix, c);
       });
       return reply(cmdsMessage);
     }

@@ -41,7 +41,7 @@ export default {
           qualidade = 'Ruim';
         }
         
-        return reply(MESSAGES.tools.ping(statusEmoji, speedConverted.toFixed(3), statusCor, qualidade, uptimeBot));
+        return reply(MESSAGES.member.tools.ping(statusEmoji, speedConverted.toFixed(3), statusCor, qualidade, uptimeBot));
       } catch (e) {
         console.error("Erro no comando ping:", e);
         return reply(MESSAGES.error.general);
@@ -50,15 +50,7 @@ export default {
 
     // --- TOIMG ---
     if (cmd === 'toimg') {
-      if (!isQuotedSticker) return reply(`╭⊱ 🖼️ *CONVERTER* 🖼️ ⊱╮
-│
-│ ❌ Marque uma figurinha para
-│    converter em imagem!
-│
-│ 💡 Responda uma figurinha com:
-│ ${prefix}toimg
-│
-╰━━━━━━━━━━━━━━━━━━━━━━━━╯`);
+      if (!isQuotedSticker) return reply(MESSAGES.member.tools.toimgUsage(prefix));
       try {
         const buff = await getFileBuffer(info.message.extendedTextMessage.contextInfo.quotedMessage.stickerMessage, 'sticker');
         return bot.sendMessage(from, { image: buff }, { quoted: info });
@@ -99,7 +91,7 @@ export default {
         const admins = groupMeta.participants.filter(p => p.admin).length;
         const creation = groupMeta.creation ? new Date(groupMeta.creation * 1000).toLocaleDateString('pt-BR') : 'Desconhecido';
 
-        let msg = `📊 *Estatísticas do Grupo*\n\n📛 *Nome:* ${groupMeta.subject}\n📅 *Criado em:* ${creation}\n\n👥 *Membros:* ${members}\n👑 *Admins:* ${admins}\n👤 *Comuns:* ${members - admins}`;
+        let msg = MESSAGES.member.tools.groupstats(groupMeta.subject, creation, members, admins);
         return reply(msg);
       } catch (e) {
         return reply(MESSAGES.error.general);
@@ -108,28 +100,28 @@ export default {
 
     // --- DICIONARIO ---
     if (['dicionario', 'dictionary'].includes(command)) {
-      if (!q) return reply(`📔 Qual palavra você quer procurar?`);
-      return reply("📔 Procurando...").then(async () => {
+      if (!q) return reply(MESSAGES.member.tools.dicionarioUsage);
+      return reply(MESSAGES.member.tools.dicionarioSearching).then(async () => {
         try {
           const { Dicionário } = await import('../../funcs/utils/dicionario.js');
           const res = await Dicionário(q.trim());
           if (res && res.significados.length > 0) {
-            let msg = `📘✨ *Significado de "${res.palavra}":*\n\n*📚 Classe:* ${res.classe || 'N/A'}\n\n*📖 Significados:*\n${res.significados.slice(0, 3).map((s, i) => `${i+1}. ${s}`).join('\n')}`;
+            let msg = MESSAGES.member.tools.dicionarioResult(res.palavra, res.classe, res.significados.slice(0, 3).map((s, i) => `${i+1}. ${s}`).join('\n'));
             return reply(msg);
           }
           throw new Error();
-        } catch (e) { return reply(`💔 Palavra não encontrada.`); }
+        } catch (e) { return reply(MESSAGES.member.tools.dicionarioNotFound); }
       });
     }
 
     // --- VERIFICADOR DE URL ---
     if (['verificarurl', 'checkurl', 'urlsafe', 'linkseguro'].includes(command)) {
-      if (!q) return reply(`🔒 *Verificador de Links*\n\n💡 *Como usar:*\n• ${prefix}verificarurl <link>\n\n✨ Verifica se um link é seguro ou malicioso.`);
+      if (!q) return reply(MESSAGES.member.tools.urlUsage(prefix));
       
       let urlToCheck = q.trim().toLowerCase().replace(/^https?:\/\//, '').replace(/\/$/, '');
       const domain = urlToCheck.split('/')[0];
 
-      await reply('🔍 Verificando segurança do link... Aguarde!');
+      await reply(MESSAGES.member.tools.urlChecking);
 
       try {
         const response = await axios.get(`https://api.fishfish.gg/v1/domains/${encodeURIComponent(domain)}`, {
@@ -138,9 +130,9 @@ export default {
         });
 
         if (response.status === 404) {
-          return reply(`✅ *Link Verificado*\n\n🔗 *Domínio:* ${domain}\n\n🟢 *Status:* Não encontrado em listas de ameaças\n\n⚠️ *Nota:* Isso não garante 100% de segurança.`);
+          return reply(MESSAGES.member.tools.urlSafe(domain));
         } else if (response.data) {
-          return reply(`🚨 *ALERTA DE SEGURANÇA* 🚨\n\n🔗 *Domínio:* ${domain}\n🔴 *Status:* MALICIOSO\n⚠️ *Ameaça:* ${response.data.category || 'Phishing/Malware'}\n\n❌ NÃO ACESSE ESTE LINK!`);
+          return reply(MESSAGES.member.tools.urlMalicious(domain, response.data.category || 'Phishing/Malware'));
         }
       } catch (e) {
         return reply(MESSAGES.error.general);
@@ -149,12 +141,12 @@ export default {
 
     // --- HORÓSCOPO ---
     if (['horoscopo', 'signo'].includes(command)) {
-      if (!q) return reply(`💔 Você precisa informar um signo para buscar a previsão.`);
+      if (!q) return reply(MESSAGES.member.tools.horoscopoUsage);
       const signos = ["aries", "touro", "gemeos", "cancer", "leao", "virgem", "libra", "escorpiao", "sagitario", "capricornio", "aquario", "peixes"];
       const queryNormalizada = normalizarTexto ? normalizarTexto(q) : q.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
       
       if (!signos.includes(queryNormalizada)) {
-        return reply(`💔 Signo inválido! Os signos disponíveis são: Áries, Touro, Gêmeos, Câncer, Leão, Virgem, Libra, Escorpião, Sagitário, Capricórnio, Aquário, Peixes.`);
+        return reply(MESSAGES.member.tools.horoscopoInvalid);
       }
 
       try {
@@ -163,7 +155,7 @@ export default {
         if (!res.data?.response) return reply(MESSAGES.error.general);
         const previsao = res.data.response;
         const emojis = { aries: "♈", touro: "♉", gemeos: "♊", cancer: "♋", leao: "♌", virgem: "♍", libra: "♎", escorpiao: "♏", sagitario: "♐", capricornio: "♑", aquario: "♒", peixes: "♓" };
-        const legenda = `🔮 *HORÓSCOPO* 🔮\n\n${emojis[queryNormalizada] || "🔮"} *Signo:* ${queryNormalizada.toUpperCase()}\n✨ *Previsão do Dia:*\n${previsao}`;
+        const legenda = MESSAGES.member.tools.horoscopoResult(emojis[queryNormalizada] || "🔮", queryNormalizada, previsao);
         return reply(legenda);
       } catch (e) {
         return reply(MESSAGES.error.general);
@@ -171,14 +163,14 @@ export default {
     }
 
     if (command === 'signos') {
-      return reply(`🔮 *Signos do Zodíaco*\n\n♈ *Áries*\n♉ *Touro*\n♊ *Gêmeos*\n♋ *Câncer*\n♌ *Leão*\n♍ *Virgem*\n♎ *Libra*\n♏ *Escorpião*\n♐ *Sagitário*\n♑ *Capricórnio*\n♒ *Aquário*\n♓ *Peixes*\n\nUse ${prefix}horoscopo <signo>!`);
+      return reply(MESSAGES.member.tools.signosList(prefix));
     }
 
     // --- TOTALCMD ---
     if (['totalcmd', 'totalcomando'].includes(cmd)) {
       const { getTotalCommands } = await import('../../utils/dynamicCommand.js');
       const total = await getTotalCommands();
-      return reply(`📊 *Total de comandos registrados:* *${total}*`);
+      return reply(MESSAGES.member.tools.totalcmd(total));
     }
 
     // --- HORAMUNDIAL ---
@@ -190,19 +182,19 @@ export default {
           axios.get(`http://worldtimeapi.org/api/timezone/Asia/${city}`))
         );
         const data = res.data;
-        return reply(`⌚ *Hora em ${city.replace('_', ' ')}*\n\n📅 Data: ${data.datetime.split('T')[0]}\n⏰ Hora: ${data.datetime.split('T')[1].substring(0, 8)}\n🌐 Fuso: ${data.timezone}`);
+        return reply(MESSAGES.member.tools.worldtime(city, data.datetime.split('T')[0], data.datetime.split('T')[1].substring(0, 8), data.timezone));
       } catch (e) {
-        return reply(`💔 Cidade não encontrada ou erro na API. Use: America/Sao_Paulo`);
+        return reply(MESSAGES.member.tools.worldtimeNotFound);
       }
     }
 
     // --- VERIFICADOR DE URL ---
     if (['verificar', 'checklink', 'scanlink', 'urlscan'].includes(cmd)) {
-      if (!q) return reply(`Use: ${prefix}${cmd} <url>`);
+      if (!q) return reply(MESSAGES.member.tools.scanlinkUsage(prefix, cmd));
       const url = q.trim().startsWith('http') ? q.trim() : `https://${q.trim()}`;
-      await reply('🔍 Escaneando link... Aguarde.');
+      await reply(MESSAGES.member.tools.scanlinkScanning);
       try {
-        return reply(`✅ Link Verificado: ${url}\n\nStatus: SEGURO 🛡️`);
+        return reply(MESSAGES.member.tools.scanlinkSafe(url));
       } catch (e) { return reply("Erro ao verificar."); }
     }
   },

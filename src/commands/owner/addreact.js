@@ -7,8 +7,8 @@ export default {
   usage: `${global.prefix}addreact <trigger> <emoji>`,
   handle: async ({  reply, isOwner, args, prefix , MESSAGES }) => {
     try {
-      if (!isOwner) return reply('Apenas o dono pode adicionar reacts.');
-      if (args.length < 2) return reply('Uso: ' + prefix + 'addreact trigger emoji');
+      if (!isOwner) return reply(MESSAGES.permission.ownerOnly);
+      if (args.length < 2) return reply(MESSAGES.owner.addreact.missingParams(prefix, 'addreact'));
       const trigger = args[0];
       const emoji = args[1];
       const result = addCustomReact(trigger, emoji);

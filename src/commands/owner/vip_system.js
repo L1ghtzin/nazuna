@@ -1,5 +1,3 @@
-
-
 export default {
   name: "vip_system",
   description: "Gerenciamento de comandos VIP",
@@ -27,20 +25,20 @@ export default {
     // ⚙️ GERENCIAMENTO
     // ═══════════════════════════════════════════════════════════════
     if (['addcmdvip', 'addvipcommand', 'adicionarcmdvip'].includes(cmd)) {
-      if (!q) return reply(`Uso: ${prefix}${cmd} <cmd> | <desc> | <cat>\nEx: ${prefix}${cmd} play | Baixar música | download`);
+      if (!q) return reply(MESSAGES.owner.vip_system.add.usage(prefix, cmd));
       const [name, desc, cat] = q.split('|').map(p => p.trim());
       const res = vipCommandsManager.addVipCommand(name, desc, cat || 'outros', name);
       return reply(res.message);
     }
 
     if (['removecmdvip', 'rmcmdvip', 'delcmdvip'].includes(cmd)) {
-      if (!q) return reply(`Uso: ${prefix}${cmd} <comando>`);
+      if (!q) return reply(MESSAGES.owner.vip_system.remove.usage(prefix, cmd));
       const res = vipCommandsManager.removeVipCommand(q.trim());
       return reply(res.message);
     }
 
     if (['togglecmdvip', 'ativarcmdvip', 'desativarcmdvip'].includes(cmd)) {
-      if (!args[0] || !args[1]) return reply(`Uso: ${prefix}togglecmdvip <cmd> <on/off>`);
+      if (!args[0] || !args[1]) return reply(MESSAGES.owner.vip_system.toggle.usage(prefix));
       const enabled = ['on', 'ativar'].includes(args[1].toLowerCase());
       const res = vipCommandsManager.toggleVipCommand(args[0].trim(), enabled);
       return reply(res.message);
@@ -48,7 +46,7 @@ export default {
 
     if (['statsvip', 'vipstats', 'estatísticasvip'].includes(cmd)) {
       const stats = vipCommandsManager.getVipStats();
-      return reply(`📊 *STATS VIP*\n\nTotal: ${stats.total}\nAtivos: ${stats.enabled}\nCategorias: ${stats.categories.length}`);
+      return reply(MESSAGES.owner.vip_system.stats(stats.total, stats.enabled, stats.categories.length));
     }
   }
 };
