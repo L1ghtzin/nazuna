@@ -32,29 +32,31 @@ export default {
             if (degradation.changed) saveEconomy(econ);
 
             if (me.pets.length === 0) {
-                let text = `╭━━━⊱ 🐾 *SISTEMA DE PETS* ⊱━━━╮\n│ Você ainda não tem companheiros!\n╰━━━━━━━━━━━━━━━━━━━━╯\n\n`;
-                text += `🦊 *PETS DISPONÍVEIS:*\n  *Lobo* - Veloz e leal\n🐉 *Dragão* - Poderoso e raro\n🔥 *Fênix* - Imortal e místico\n🐯 *Tigre* - Feroz e forte\n🦅 *Águia* - Ágil e preciso\n\n💡 Use ${prefix}adotar <nome> para começar!`;
-                return reply(text);
+                return reply(MESSAGES.rpg.pets.noPets(prefix));
             }
 
-            let text = `╭━━━⊱ 🐾 *MEUS PETS* ⊱━━━╮\n│ Treinador: *${pushname}*\n│ Total de Pets: ${me.pets.length}/5\n╰━━━━━━━━━━━━━━━━━━━━╯\n\n`;
+            let text = MESSAGES.rpg.pets.myPetsHeader(pushname, me.pets.length);
             me.pets.forEach((pet, i) => {
                 const hungerBar = '█'.repeat(Math.floor(pet.hunger / 10)) + '░'.repeat(10 - Math.floor(pet.hunger / 10));
                 const moodBar = '█'.repeat(Math.floor(pet.mood / 10)) + '░'.repeat(10 - Math.floor(pet.mood / 10));
                 let statusEmoji = pet.hunger < 20 ? ' ⚠️ FOME CRÍTICA' : pet.hunger < 40 ? ' 🍖 Com fome' : '';
                 if (pet.mood < 20) statusEmoji += ' 😢 TRISTE';
 
-                text += `${i + 1}. ${pet.emoji} *${pet.name}*${pet.evolutions ? ` ${'⭐'.repeat(pet.evolutions)}` : ''}${statusEmoji}\n`;
-                text += `┌─────────────────\n│ 📊 Level ${pet.level} | 💫 ${pet.exp}/${pet.level * 100} EXP\n│ ❤️ HP: ${pet.hp}/${pet.maxHp}\n│ ⚔️ ATK: ${pet.attack} | 🛡️ DEF: ${pet.defense}\n`;
-                text += `│ 🏆 ${pet.wins || 0}V | 💀 ${pet.losses || 0}D\n│ 🍖 Fome: ${hungerBar} ${pet.hunger}%\n│ 😊 Humor: ${moodBar} ${pet.mood}%\n└─────────────────\n\n`;
+                const evolutions = pet.evolutions ? ` ${'⭐'.repeat(pet.evolutions)}` : '';
+                text += MESSAGES.rpg.pets.petItem(
+                  i + 1, pet.emoji, pet.name, evolutions, statusEmoji, 
+                  pet.level, pet.exp, pet.level * 100, pet.hp, pet.maxHp, 
+                  pet.attack, pet.defense, pet.wins || 0, pet.losses || 0, 
+                  hungerBar, pet.hunger, moodBar, pet.mood
+                );
             });
-            text += `🎮 *COMANDOS:* ${prefix}alimentar <nº>, ${prefix}treinar <nº>, ${prefix}evoluirpet <nº>, ${prefix}renomearpet <nº> <nome>, ${prefix}batalhapet <nº> @user`;
+            text += MESSAGES.rpg.pets.commands(prefix);
             return reply(text);
         }
 
         if (sub === 'adotar' || sub === 'adopt') {
             if (!me.pets) me.pets = [];
-            if (me.pets.length >= 5) return reply('🐾 Você já tem o máximo de 5 pets!');
+            if (me.pets.length >= 5) return reply(MESSAGES.rpg.pets.maxPets);
 
             const petTypes = {
                 lobo: { emoji: '🐺', name: 'Lobo', type: 'lobo', hp: 100, attack: 15, defense: 10, speed: 18, cost: 5000, desc: 'Veloz e leal', element: 'normal' },
@@ -68,30 +70,30 @@ export default {
             const type = matchParam(inputType, petTypes) || findKeyIgnoringAccents(petTypes, inputType);
 
             if (!type || !petTypes[type]) {
-                let text = `╭━━━⊱ 🐾 *LOJA DE PETS* ⊱━━━╮\n╰━━━━━━━━━━━━━━━━━━━━╯\n\n`;
+                let text = MESSAGES.rpg.pets.storeHeader;
                 Object.entries(petTypes).forEach(([key, pet]) => {
-                    text += `${pet.emoji} *${pet.name}*\n│ Preço: ${fmt(pet.cost)}\n│ ❤️ HP: ${pet.hp} | ⚔️ ATK: ${pet.attack} | 🛡️ DEF: ${pet.defense}\n└─────────────────\n\n`;
+                    text += MESSAGES.rpg.pets.storeItem(pet.emoji, pet.name, fmt(pet.cost), pet.hp, pet.attack, pet.defense);
                 });
-                return reply(text + `💡 Use ${prefix}adotar <nome>`);
+                return reply(text + MESSAGES.rpg.pets.storeFooter(prefix));
             }
 
             const pet = petTypes[type];
-            if (me.wallet < pet.cost) return reply(`💰 Você precisa de *${fmt(pet.cost)}*! Saldo: ${fmt(me.wallet)}`);
+            if (me.wallet < pet.cost) return reply(MESSAGES.rpg.pets.insufficientFunds(fmt(pet.cost), fmt(me.wallet)));
 
             me.wallet -= pet.cost;
             me.pets.push({ ...pet, level: 1, maxHp: pet.hp, exp: 0, hunger: 100, mood: 100, wins: 0, losses: 0, equipment: {}, evolutions: 0, lastUpdate: Date.now() });
             saveEconomy(econ);
-            return reply(`🎉 Você adotou ${pet.emoji} *${pet.name}*!\n\n💡 Use ${prefix}pets para ver seus companheiros.`);
+            return reply(MESSAGES.rpg.pets.adopted(pet.emoji, pet.name, prefix));
         }
 
         if (sub === 'alimentar' || sub === 'feed') {
             const index = parseInt(q) - 1;
-            if (isNaN(index) || index < 0 || index >= (me.pets?.length || 0)) return reply(`💔 Pet inválido! Escolha o número do pet em ${prefix}pets.`);
+            if (isNaN(index) || index < 0 || index >= (me.pets?.length || 0)) return reply(MESSAGES.rpg.pets.invalidPetNumber(prefix));
             
             const pet = me.pets[index];
             const foodCost = 100;
-            if (me.wallet < foodCost) return reply(`💰 Você precisa de ${fmt(foodCost)} para alimentar!`);
-            if (pet.hunger >= 100) return reply(`🍖 ${pet.emoji} *${pet.name}* já está satisfeito!`);
+            if (me.wallet < foodCost) return reply(MESSAGES.rpg.pets.needFoodMoney(fmt(foodCost)));
+            if (pet.hunger >= 100) return reply(MESSAGES.rpg.pets.fullPet(pet.emoji, pet.name));
 
             me.wallet -= foodCost;
             pet.hunger = Math.min(100, pet.hunger + 30 + Math.floor(Math.random() * 20));
@@ -100,18 +102,18 @@ export default {
             if (pet.hp < pet.maxHp) pet.hp = Math.min(pet.maxHp, pet.hp + Math.floor(pet.maxHp * 0.1));
             
             saveEconomy(econ);
-            return reply(`🍖 ${pet.emoji} *${pet.name}* comeu!\n😊 Humor: ${pet.mood}/100\n🍖 Fome: ${pet.hunger}/100`);
+            return reply(MESSAGES.rpg.pets.fed(pet.emoji, pet.name, pet.mood, pet.hunger));
         }
 
         if (sub === 'treinar' || sub === 'train') {
             const index = parseInt(q) - 1;
-            if (isNaN(index) || index < 0 || index >= (me.pets?.length || 0)) return reply(`💔 Pet inválido!`);
+            if (isNaN(index) || index < 0 || index >= (me.pets?.length || 0)) return reply(MESSAGES.rpg.pets.invalidPet);
             
             const pet = me.pets[index];
-            if (pet.hunger < 30) return reply(`🍖 ${pet.emoji} *${pet.name}* está com fome!`);
+            if (pet.hunger < 30) return reply(MESSAGES.rpg.pets.hungryPet(pet.emoji, pet.name));
             
             const now = Date.now();
-            if (pet.lastTrain && (now - pet.lastTrain) < 3600000) return reply(`⏰ ${pet.emoji} *${pet.name}* está cansado!`);
+            if (pet.lastTrain && (now - pet.lastTrain) < 3600000) return reply(MESSAGES.rpg.pets.tiredPet(pet.emoji, pet.name));
 
             const expGain = 50 + Math.floor(Math.random() * 30);
             pet.exp += expGain;
@@ -127,31 +129,31 @@ export default {
                 pet.hp = pet.maxHp;
                 pet.exp = 0;
                 saveEconomy(econ);
-                return reply(`⭐ *PET EVOLUIU!* 🐾 *${pet.name}* alcançou o nível ${pet.level}!`);
+                return reply(MESSAGES.rpg.pets.evolved(pet.name, pet.level));
             }
 
             saveEconomy(econ);
-            return reply(`💪 ${pet.emoji} *${pet.name}* treinou!\n✨ EXP: +${expGain}\n📊 Progresso: ${pet.exp}/${pet.level * 100}`);
+            return reply(MESSAGES.rpg.pets.trained(pet.emoji, pet.name, expGain, pet.exp, pet.level * 100));
         }
 
         if (sub === 'renomearpet' || sub === 'renamepet') {
             const argsList = q.split(' ');
             const index = parseInt(argsList[0]) - 1;
             const newName = argsList.slice(1).join(' ').substring(0, 20);
-            if (isNaN(index) || !newName) return reply(`💔 Use: ${prefix}renomearpet <nº> <nome>`);
+            if (isNaN(index) || !newName) return reply(MESSAGES.rpg.pets.renameUsage(prefix));
             
             const pet = me.pets[index];
-            if (me.wallet < 500) return reply(`💰 Renomear custa 500 moedas!`);
+            if (me.wallet < 500) return reply(MESSAGES.rpg.pets.renameCost);
             me.wallet -= 500;
             const oldName = pet.name;
             pet.name = newName;
             saveEconomy(econ);
-            return reply(`✏️ ${pet.emoji} *${oldName}* agora se chama *${pet.name}*!`);
+            return reply(MESSAGES.rpg.pets.renamed(pet.emoji, oldName, pet.name));
         }
 
         if (sub === 'evoluirpet' || sub === 'evolve') {
             const index = parseInt(q) - 1;
-            if (isNaN(index) || index < 0 || index >= (me.pets?.length || 0)) return reply(`💔 Pet inválido! Escolha o número do pet em ${prefix}pets.`);
+            if (isNaN(index) || index < 0 || index >= (me.pets?.length || 0)) return reply(MESSAGES.rpg.pets.invalidPetNumber(prefix));
             
             const pet = me.pets[index];
             if (!pet.evolutions) pet.evolutions = 0;
@@ -186,19 +188,19 @@ export default {
 
             const petEvolutions = evolutionData[pet.type];
             if (!petEvolutions || pet.evolutions >= petEvolutions.length) {
-                return reply(`❌ ${pet.emoji} *${pet.name}* já atingiu sua forma máxima!`);
+                return reply(MESSAGES.rpg.pets.maxEvolution(pet.emoji, pet.name));
             }
 
             const nextEvolution = petEvolutions[pet.evolutions];
             if (pet.level < nextEvolution.reqLevel) {
-                return reply(`❌ ${pet.emoji} *${pet.name}* precisa estar no nível ${nextEvolution.reqLevel}!\n\n📊 Nível atual: ${pet.level}`);
+                return reply(MESSAGES.rpg.pets.needLevelToEvolve(pet.emoji, pet.name, nextEvolution.reqLevel, pet.level));
             }
 
             if (!me.inventory) me.inventory = {};
             const hasStone = me.inventory['pedra_evolucao'] && me.inventory['pedra_evolucao'] >= 1;
 
             if (!hasStone) {
-                return reply(`❌ Você precisa de uma *Pedra da Evolução* para evoluir seu pet!\n\n🛒 Compre na ${prefix}loja ou ganhe em batalhas de pets.`);
+                return reply(MESSAGES.rpg.pets.needStone(prefix));
             }
 
             me.inventory['pedra_evolucao']--;
@@ -223,39 +225,43 @@ export default {
             
             saveEconomy(econ);
             
-            let text = `╭━━━⊱ ✨ *EVOLUÇÃO CONCLUÍDA!* ✨ ⊱━━━╮\n│\n│ ${oldEmoji} ➜ ${pet.emoji}\n│\n│ 🎉 *${oldName}* evoluiu para\n│ 🌟 *${pet.name}*!\n│\n╰━━━━━━━━━━━━━━━━━━━━━━━━━━╯\n\n`;
-            text += `📊 *NOVOS ATRIBUTOS:*\n\n⚔️ *ATK:* ${oldStats.attack} ➜ ${pet.attack} *(+${nextEvolution.atkBonus})*\n🛡️ *DEF:* ${oldStats.defense} ➜ ${pet.defense} *(+${nextEvolution.defBonus})*\n`;
-            text += `❤️ *HP:* ${oldStats.maxHp} ➜ ${pet.maxHp} *(+${nextEvolution.hpBonus})*\n⚡ *SPD:* ${oldStats.speed} ➜ ${pet.speed} *(+${nextEvolution.spdBonus})*\n\n`;
+            let text = MESSAGES.rpg.pets.evolutionComplete(oldEmoji, pet.emoji, oldName, pet.name);
+            text += MESSAGES.rpg.pets.evolutionStats(
+              oldStats.attack, pet.attack, nextEvolution.atkBonus,
+              oldStats.defense, pet.defense, nextEvolution.defBonus,
+              oldStats.maxHp, pet.maxHp, nextEvolution.hpBonus,
+              oldStats.speed, pet.speed, nextEvolution.spdBonus
+            );
             
             if (pet.evolutions < petEvolutions.length) {
                 const next = petEvolutions[pet.evolutions];
-                text += `🔮 *Próxima Evolução:* ${next.name} ${next.emoji}\n📊 *Requisito:* Nível ${next.reqLevel}\n`;
+                text += MESSAGES.rpg.pets.nextEvolution(next.name, next.emoji, next.reqLevel);
             } else {
-                text += `👑 *${pet.name}* atingiu sua FORMA FINAL!`;
+                text += MESSAGES.rpg.pets.finalEvolution(pet.name);
             }
             
             return reply(text);
         }
 
         if (sub === 'batalhapet' || sub === 'petbattle') {
-            if (!menc_jid2 || !menc_jid2[0]) return reply(`⚔️ Mencione um adversário para batalhar!\nEx: ${prefix}batalhapet 1 @user`);
+            if (!menc_jid2 || !menc_jid2[0]) return reply(MESSAGES.rpg.pets.battleMentionArgs(prefix));
             
             let target = menc_jid2[0];
             if (isValidJid(target)) {
                 target = await getLidFromJidCached(bot, target) || target;
             }
 
-            if (target === sender) return reply(`💔 Você não pode batalhar contra seus próprios pets!`);
+            if (target === sender) return reply(MESSAGES.rpg.pets.cantBattleSelf);
 
             const argsList = q.split(' ');
             const index = parseInt(argsList[0]) - 1;
-            if (isNaN(index) || index < 0 || index >= (me.pets?.length || 0)) return reply(`💔 Seu pet é inválido!`);
+            if (isNaN(index) || index < 0 || index >= (me.pets?.length || 0)) return reply(MESSAGES.rpg.pets.invalidPet);
             
             const opponent = getEcoUser(econ, target);
-            if (!opponent.pets || opponent.pets.length === 0) return reply(`😢 O adversário não tem pets!`);
+            if (!opponent.pets || opponent.pets.length === 0) return reply(MESSAGES.rpg.pets.oppNoPets);
 
             const myPet = me.pets[index];
-            if (myPet.hp < myPet.maxHp * 0.2) return reply(`⚠️ ${myPet.emoji} *${myPet.name}* está muito fraco para batalhar! Alimente-o e espere recuperar vida!`);
+            if (myPet.hp < myPet.maxHp * 0.2) return reply(MESSAGES.rpg.pets.weakPet(myPet.emoji, myPet.name));
             
             const oppPet = opponent.pets[Math.floor(Math.random() * opponent.pets.length)];
             
@@ -263,7 +269,7 @@ export default {
             const PET_BATTLE_COOLDOWN = 10 * 60 * 1000;
             if (me.lastPetBattle && (now - me.lastPetBattle) < PET_BATTLE_COOLDOWN) {
                 const remaining = Math.ceil((PET_BATTLE_COOLDOWN - (now - me.lastPetBattle)) / 60000);
-                return reply(`⏰ Você acabou de batalhar. Aguarde *${remaining} minutos*.`);
+                return reply(MESSAGES.rpg.pets.battleCooldown(remaining));
             }
 
             if (!me.inventory) me.inventory = {};
@@ -300,16 +306,17 @@ export default {
             let turn = 0;
             const maxTurns = 15;
             
-            let battleLog = `╭━━━⊱ ⚔️ *BATALHA DE PETS!* ⚔️ ⊱━━━╮\n\n`;
-            battleLog += `${myPet.emoji} *${myPet.name}* (Lv.${myPet.level})\n❤️ ${myHp}/${myPet.maxHp} | ⚔️ ${myStats.totalAtk} | 🛡️ ${myStats.totalDef} | ⚡ ${myStats.totalSpd}\n`;
-            if (hasAdvantage) battleLog += `✨ *VANTAGEM DE TIPO!*\n`;
-            battleLog += `\n🆚\n\n${oppPet.emoji} *${oppPet.name}* (Lv.${oppPet.level})\n❤️ ${oppHp}/${oppPet.maxHp} | ⚔️ ${oppStats.totalAtk} | 🛡️ ${oppStats.totalDef} | ⚡ ${oppStats.totalSpd}\n`;
-            if (oppHasAdvantage) battleLog += `✨ *VANTAGEM DE TIPO!*\n`;
-            battleLog += `\n╰━━━━━━━━━━━━━━━━━━━━━━━━━╯\n\n⚡ *INÍCIO DA BATALHA!*\n\n`;
+            let battleLog = MESSAGES.rpg.pets.battleLogStart;
+            battleLog += MESSAGES.rpg.pets.battleLogFighter(myPet.emoji, myPet.name, myPet.level, myHp, myPet.maxHp, myStats.totalAtk, myStats.totalDef, myStats.totalSpd);
+            if (hasAdvantage) battleLog += MESSAGES.rpg.pets.typeAdvantage;
+            battleLog += MESSAGES.rpg.pets.battleLogVs;
+            battleLog += MESSAGES.rpg.pets.battleLogFighter(oppPet.emoji, oppPet.name, oppPet.level, oppHp, oppPet.maxHp, oppStats.totalAtk, oppStats.totalDef, oppStats.totalSpd);
+            if (oppHasAdvantage) battleLog += MESSAGES.rpg.pets.typeAdvantage;
+            battleLog += MESSAGES.rpg.pets.battleLogBegin;
 
             while (myHp > 0 && oppHp > 0 && turn < maxTurns) {
                 turn++;
-                battleLog += `━━━ *Turno ${turn}* ━━━\n`;
+                battleLog += MESSAGES.rpg.pets.battleTurn(turn);
                 
                 const attackers = myFirst ? 
                   [{ pet: myPet, stats: myStats, hp: myHp, isMe: true }, { pet: oppPet, stats: oppStats, hp: oppHp, isMe: false }] :
@@ -330,16 +337,10 @@ export default {
                     
                     if (attacker.isMe) {
                         oppHp -= baseDmg;
-                        battleLog += `⚔️ ${attacker.pet.emoji} ${attacker.pet.name} atacou!\n`;
-                        if (advantage) battleLog += `   ✨ *SUPER EFETIVO!*\n`;
-                        if (isCrit) battleLog += `   💥 *CRÍTICO!*\n`;
-                        battleLog += `   💔 Dano: ${baseDmg}\n   ❤️ HP Oponente: ${Math.max(0, oppHp)}/${oppPet.maxHp}\n`;
+                        battleLog += MESSAGES.rpg.pets.attackMyPet(attacker.pet.emoji, attacker.pet.name, advantage, isCrit, baseDmg, Math.max(0, oppHp), oppPet.maxHp);
                     } else {
                         myHp -= baseDmg;
-                        battleLog += `🛡️ ${attacker.pet.emoji} ${attacker.pet.name} contra-atacou!\n`;
-                        if (advantage) battleLog += `   ✨ *SUPER EFETIVO!*\n`;
-                        if (isCrit) battleLog += `   💥 *CRÍTICO!*\n`;
-                        battleLog += `   💔 Dano: ${baseDmg}\n   ❤️ Seu HP: ${Math.max(0, myHp)}/${myPet.maxHp}\n`;
+                        battleLog += MESSAGES.rpg.pets.attackOppPet(attacker.pet.emoji, attacker.pet.name, advantage, isCrit, baseDmg, Math.max(0, myHp), myPet.maxHp);
                     }
                 }
                 battleLog += `\n`;
@@ -369,9 +370,9 @@ export default {
                     }
                 }
 
-                battleLog += `╭━━━⊱ 🏆 *VITÓRIA!* 🏆 ⊱━━━╮\n│ ${myPet.emoji} *${myPet.name}* venceu!\n╰━━━━━━━━━━━━━━━━━━━━━━━╯\n\n`;
-                battleLog += `📊 *RECOMPENSAS:*\n💰 Moedas: +${reward.toLocaleString()}\n✨ EXP: +${expGain}\n`;
-                if (itemDropped) battleLog += `🎁 Item dropado: *${itemDropped}*\n`;
+                battleLog += MESSAGES.rpg.pets.battleVictory(myPet.emoji, myPet.name);
+                battleLog += MESSAGES.rpg.pets.battleRewards(reward.toLocaleString(), expGain);
+                if (itemDropped) battleLog += MESSAGES.rpg.pets.itemDrop(itemDropped);
 
                 if (myPet.exp >= myPet.level * 100) {
                     myPet.level++;
@@ -383,12 +384,12 @@ export default {
                     myPet.maxHp += hpGain;
                     myPet.hp = myPet.maxHp;
                     myPet.exp = 0;
-                    battleLog += `\n╭━━━⊱ ⭐ *LEVEL UP!* ⭐ ⊱━━━╮\n│ ${myPet.emoji} ${myPet.name} → Lv.${myPet.level}\n│ ⚔️ ATK +${atkGain} | 🛡️ DEF +${defGain} | ❤️ HP +${hpGain}\n╰━━━━━━━━━━━━━━━━━━━━━━━╯`;
+                    battleLog += MESSAGES.rpg.pets.battleLevelUp(myPet.emoji, myPet.name, myPet.level, atkGain, defGain, hpGain);
                 }
             } else {
                 oppPet.wins = (oppPet.wins || 0) + 1;
                 myPet.losses = (myPet.losses || 0) + 1;
-                battleLog += `╭━━━⊱ 💀 *DERROTA!* 💀 ⊱━━━╮\n│ ${oppPet.emoji} *${oppPet.name}* venceu!\n╰━━━━━━━━━━━━━━━━━━━━━━━╯\n\n💪 Continue treinando para melhorar!`;
+                battleLog += MESSAGES.rpg.pets.battleDefeat(oppPet.emoji, oppPet.name);
             }
 
             myPet.hunger = Math.max(0, myPet.hunger - 20);
@@ -401,30 +402,30 @@ export default {
         }
 
         if (sub === 'apostarpet' || sub === 'petbet') {
-            if (!menc_jid2 || !menc_jid2[0]) return reply(`❌ Marque alguém para apostar!\n\n💡 Uso: ${prefix}apostarpet <valor> <nº pet> @user`);
+            if (!menc_jid2 || !menc_jid2[0]) return reply(MESSAGES.rpg.pets.betMentionArgs(prefix));
             
             let target = menc_jid2[0];
             if (isValidJid(target)) {
                 target = await getLidFromJidCached(bot, target) || target;
             }
 
-            if (target === sender) return reply('❌ Você não pode apostar contra si mesmo!');
+            if (target === sender) return reply(MESSAGES.rpg.pets.betCantSelf);
             
             const argsArr = q.split(' ');
             const betAmount = parseInt(argsArr[0]) || 0;
             const petIndex = parseInt(argsArr[1]) - 1;
             
-            if (betAmount <= 0) return reply('❌ Informe um valor válido para apostar!');
-            if (betAmount > me.wallet) return reply('❌ Você não tem dinheiro suficiente na carteira!');
+            if (betAmount <= 0) return reply(MESSAGES.rpg.pets.betInvalidAmount);
+            if (betAmount > me.wallet) return reply(MESSAGES.rpg.pets.betNoMoneyMe);
             
             const opponent = getEcoUser(econ, target);
-            if (betAmount > opponent.wallet) return reply('❌ Seu oponente não tem dinheiro suficiente!');
+            if (betAmount > opponent.wallet) return reply(MESSAGES.rpg.pets.betNoMoneyOpp);
             
-            if (!me.pets || me.pets.length === 0) return reply('🐾 Você não tem pets!');
-            if (!opponent.pets || opponent.pets.length === 0) return reply('❌ Seu oponente não tem pets!');
+            if (!me.pets || me.pets.length === 0) return reply(MESSAGES.rpg.pets.betNoPetsMe);
+            if (!opponent.pets || opponent.pets.length === 0) return reply(MESSAGES.rpg.pets.betNoPetsOpp);
             
             if (isNaN(petIndex) || petIndex < 0 || petIndex >= me.pets.length) {
-                return reply(`❌ Pet inválido! Use ${prefix}pets para ver seus pets.`);
+                return reply(MESSAGES.rpg.pets.betInvalidPetIndex(prefix));
             }
             
             const myPet = me.pets[petIndex];
@@ -442,19 +443,19 @@ export default {
             }
             
             const won = myHp > oppHp;
-            let resultMsg = `╭━━━⊱ 🎰 *APOSTA DE PETS* ⊱━━━╮\n\n${myPet.emoji} *${myPet.name}* (Lv.${myPet.level}) VS ${oppPet.emoji} *${oppPet.name}* (Lv.${oppPet.level})\n\n💰 Aposta: ${betAmount.toLocaleString()}\n\n`;
+            let resultMsg = MESSAGES.rpg.pets.betHeader(myPet.emoji, myPet.name, myPet.level, oppPet.emoji, oppPet.name, oppPet.level, betAmount.toLocaleString());
             
             if (won) {
                 me.wallet += betAmount;
                 opponent.wallet -= betAmount;
-                resultMsg += `🏆 *VOCÊ VENCEU!*\n💰 Ganhou: +${betAmount.toLocaleString()}`;
+                resultMsg += MESSAGES.rpg.pets.betWon(betAmount.toLocaleString());
             } else {
                 me.wallet -= betAmount;
                 opponent.wallet += betAmount;
-                resultMsg += `💀 *VOCÊ PERDEU!*\n💸 Perdeu: -${betAmount.toLocaleString()}`;
+                resultMsg += MESSAGES.rpg.pets.betLost(betAmount.toLocaleString());
             }
             
-            resultMsg += `\n╰━━━━━━━━━━━━━━━━━━━━━━╯`;
+            resultMsg += MESSAGES.rpg.pets.betFooter;
             saveEconomy(econ);
             return reply(resultMsg, { mentions: [target] });
         }

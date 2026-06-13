@@ -17,8 +17,8 @@ export default {
     getEcoUser,
     MESSAGES
   }) => {
-    if (!isGroup) return reply('⚔️ Este comando funciona apenas em grupos com Modo RPG ativo.');
-    if (!groupData.modorpg) return reply(`⚔️ Modo RPG desativado! Use ${prefix}modorpg para ativar.`);
+    if (!isGroup) return reply(MESSAGES.rpg.groupOnly);
+    if (!groupData.modorpg) return reply(MESSAGES.rpg.disabled(prefix));
     
     const econ = loadEconomy();
     const me = getEcoUser(econ, sender);
@@ -31,45 +31,45 @@ export default {
     
     // --- CRIAR TORNEIO ---
     if (q === 'criar' && isGroupAdmins) {
-      if (tournament.active) return reply(`💔 Já existe um torneio ativo!`);
+      if (tournament.active) return reply(MESSAGES.rpg.tournament.alreadyActive);
       tournament.active = true;
       tournament.participants = [];
       tournament.startTime = Date.now();
       tournament.prize = 50000;
       saveEconomy(econ);
-      return reply(`╭━━━⊱ 🏆 *TORNEIO ABERTO!* ⊱━━━╮\n⚔️ Um torneio foi iniciado!\n💰 Prêmio: ${tournament.prize.toLocaleString()}\n💡 Use ${prefix}torneio entrar`);
+      return reply(MESSAGES.rpg.tournament.opened(tournament.prize.toLocaleString(), prefix));
     }
 
-    if (!tournament.active) return reply(`💔 Não há torneio ativo! Admins: Use ${prefix}torneio criar`);
+    if (!tournament.active) return reply(MESSAGES.rpg.tournament.noneActive(prefix));
 
     // --- ENTRAR ---
     if (q === 'entrar') {
-      if (tournament.participants.includes(sender)) return reply(`💔 Você já está inscrito!`);
+      if (tournament.participants.includes(sender)) return reply(MESSAGES.rpg.tournament.alreadyEntered);
       const entryCost = 5000;
-      if (me.wallet < entryCost) return reply(`💰 Você precisa de ${entryCost.toLocaleString()} moedas!`);
+      if (me.wallet < entryCost) return reply(MESSAGES.rpg.insufficientCoins(entryCost.toLocaleString()));
       
       me.wallet -= entryCost;
       tournament.participants.push(sender);
       tournament.prize += entryCost;
       saveEconomy(econ);
-      return reply(`✅ Você entrou no torneio!\n👥 Participantes: ${tournament.participants.length}\n💰 Prêmio acumulado: ${tournament.prize.toLocaleString()}`);
+      return reply(MESSAGES.rpg.tournament.joined(tournament.participants.length, tournament.prize.toLocaleString()));
     }
 
     // --- INICIAR ---
     if (q === 'iniciar' && isGroupAdmins) {
-      if (tournament.participants.length < 2) return reply(`💔 Precisa de pelo menos 2 participantes!`);
+      if (tournament.participants.length < 2) return reply(MESSAGES.rpg.tournament.needMorePlayers);
       
       let fighters = [...tournament.participants];
       let round = 1;
-      let results = `╭━━━⊱ 🏆 *TORNEIO* ⊱━━━╮\n\n`;
+      let results = MESSAGES.rpg.tournament.header;
       
       while (fighters.length > 1) {
-        results += `⚔️ *RODADA ${round}*\n`;
+        results += MESSAGES.rpg.tournament.roundStart(round);
         const nextRound = [];
         for (let i = 0; i < fighters.length; i += 2) {
           if (i + 1 < fighters.length) {
             const winner = Math.random() > 0.5 ? fighters[i] : fighters[i + 1];
-            results += `@${fighters[i].split('@')[0]} vs @${fighters[i + 1].split('@')[0]} → ✅ @${winner.split('@')[0]}\n`;
+            results += MESSAGES.rpg.tournament.matchResult(fighters[i].split('@')[0], fighters[i + 1].split('@')[0], winner.split('@')[0]);
             nextRound.push(winner);
           } else {
             nextRound.push(fighters[i]);
@@ -82,7 +82,7 @@ export default {
       const winner = fighters[0];
       const winnerData = getEcoUser(econ, winner);
       winnerData.wallet += tournament.prize;
-      results += `\n🏆 *CAMPEÃO:* @${winner.split('@')[0]}\n💰 Prêmio: ${tournament.prize.toLocaleString()}`;
+      results += MESSAGES.rpg.tournament.champion(winner.split('@')[0], tournament.prize.toLocaleString());
       
       tournament.active = false;
       const allParticipants = [...tournament.participants];
@@ -92,9 +92,9 @@ export default {
     }
 
     // --- VER INFO ---
-    let text = `╭━━━⊱ 🏆 *TORNEIO ATIVO* ⊱━━━╮\n👥 Participantes: ${tournament.participants.length}\n💰 Prêmio: ${tournament.prize.toLocaleString()}\n\n📋 *INSCRITOS:*\n`;
-    tournament.participants.slice(0, 10).forEach((p, i) => text += `${i + 1}. @${p.split('@')[0]}\n`);
-    text += `\n💡 Use ${prefix}torneio entrar`;
+    let text = MESSAGES.rpg.tournament.infoMenu + MESSAGES.rpg.tournament.infoStats(tournament.participants.length, tournament.prize.toLocaleString());
+    tournament.participants.slice(0, 10).forEach((p, i) => text += MESSAGES.rpg.tournament.participantLine(i + 1, p.split('@')[0]));
+    text += MESSAGES.rpg.tournament.footer(prefix);
     return reply(text, { mentions: tournament.participants.slice(0, 10) });
   }
 };

@@ -18,8 +18,8 @@ export default {
     getEcoUser,
     MESSAGES
   }) => {
-    if (!isGroup) return reply('⚔️ Este comando funciona apenas em grupos com Modo RPG ativo.');
-    if (!groupData.modorpg) return reply(`⚔️ Modo RPG desativado! Use ${prefix}modorpg para ativar.`);
+    if (!isGroup) return reply(MESSAGES.rpg.groupOnly);
+    if (!groupData.modorpg) return reply(MESSAGES.rpg.disabled(prefix));
     
     const premiumItems = {
       'titulo_lendario': { name: '🏅 Título Lendário', price: 500000, desc: 'Título exclusivo no perfil' },
@@ -36,9 +36,9 @@ export default {
 
     // --- VER LOJA ---
     if (command === 'lojapremium' || command === 'premiumshop' || command === 'lojadeluxo') {
-      let text = `╭━━━⊱ 💎 *LOJA PREMIUM* ⊱━━━╮\n╰━━━━━━━━━━━━━━━━━━━━━━━━━╯\n\n`;
+      let text = MESSAGES.rpg.shop.premiumMenu;
       Object.entries(premiumItems).forEach(([id, item]) => {
-        text += `${item.name}\n   💰 ${item.price.toLocaleString()} moedas\n   📝 ${item.desc}\n   🛒 ${prefix}comprarpremium ${id}\n\n`;
+        text += MESSAGES.rpg.shop.premiumItemLine(item.name, item.price.toLocaleString(), item.desc, prefix, id);
       });
       return reply(text);
     }
@@ -46,17 +46,17 @@ export default {
     // --- COMPRAR ---
     if (command === 'comprarpremium' || command === 'buypremium') {
       const rawItemId = (args[0] || '');
-      if (!rawItemId) return reply(`💔 Informe o item! Veja a loja: ${prefix}lojapremium`);
+      if (!rawItemId) return reply(MESSAGES.rpg.shop.missingItemArgs(prefix));
       
       const itemId = findKeyIgnoringAccents(premiumItems, rawItemId) || normalizeParam(rawItemId).replace(/\s+/g, '_');
       const item = premiumItems[itemId];
-      if (!item) return reply(`💔 Item não encontrado! Veja a loja: ${prefix}lojapremium`);
+      if (!item) return reply(MESSAGES.rpg.shop.itemNotFoundArgs(prefix));
       
       const econ = loadEconomy();
       const me = getEcoUser(econ, sender);
       
       if (me.wallet < item.price) {
-        return reply(`💔 Saldo insuficiente! Necessário: ${item.price.toLocaleString()}`);
+        return reply(MESSAGES.rpg.shop.insufficientFunds(item.price.toLocaleString()));
       }
       
       me.wallet -= item.price;
@@ -70,7 +70,7 @@ export default {
       if (item.income) me.dailyIncome = (me.dailyIncome || 0) + item.income;
       
       saveEconomy(econ);
-      return reply(`╭━━━⊱ ✅ *COMPRA PREMIUM* ⊱━━━╮\n│ 🛒 ${item.name}\n│ 💰 -${item.price.toLocaleString()}\n╰━━━━━━━━━━━━━━━━━━━━━━━━━╯`);
+      return reply(MESSAGES.rpg.shop.buyPremium(item.name, item.price.toLocaleString()));
     }
   }
 };

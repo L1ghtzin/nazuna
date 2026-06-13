@@ -16,8 +16,8 @@ export default {
     getEcoUser,
     MESSAGES
   }) => {
-    if (!isGroup) return reply('⚔️ Este comando funciona apenas em grupos com Modo RPG ativo.');
-    if (!groupData.modorpg) return reply(`⚔️ Modo RPG desativado! Use ${prefix}modorpg para ativar.`);
+    if (!isGroup) return reply(MESSAGES.rpg.groupOnly);
+    if (!groupData.modorpg) return reply(MESSAGES.rpg.disabled(prefix));
     
     const econ = loadEconomy();
     const me = getEcoUser(econ, sender);
@@ -31,7 +31,7 @@ export default {
       const remaining = oneDay - (now - me.streak.lastClaim);
       const hours = Math.floor(remaining / 3600000);
       const mins = Math.floor((remaining % 3600000) / 60000);
-      return reply(`⏰ Você já coletou seu daily hoje! Volte em ${hours}h ${mins}min.`);
+      return reply(MESSAGES.rpg.streak.alreadyClaimed(hours, mins));
     }
 
     if (now - me.streak.lastClaim < oneDay * 2) {
@@ -45,6 +45,6 @@ export default {
     me.streak.lastClaim = now;
     
     saveEconomy(econ);
-    return reply(`🔥 *STREAK DIÁRIO* 🔥\n\nDia: ${me.streak.current}\n💰 Recompensa: +${reward.toLocaleString()} moedas\n\n✨ Volte amanhã para aumentar seu streak!`);
+    return reply(MESSAGES.rpg.streak.claimed(me.streak.current, reward.toLocaleString()));
   }
 };

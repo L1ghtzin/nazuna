@@ -19,8 +19,8 @@ export default {
     timeLeft,
     MESSAGES
   }) => {
-    if (!isGroup) return reply('⚔️ Este comando funciona apenas em grupos com Modo RPG ativo.');
-    if (!groupData.modorpg) return reply(`⚔️ Modo RPG desativado! Use ${prefix}modorpg para ativar.`);
+    if (!isGroup) return reply(MESSAGES.rpg.groupOnly);
+    if (!groupData.modorpg) return reply(MESSAGES.rpg.disabled(prefix));
     
     const econ = loadEconomy();
     const me = getEcoUser(econ, sender);
@@ -29,62 +29,49 @@ export default {
     // --- MEUSTATS ---
     if (command === 'meustats' || command === 'mystats' || command === 'statsrpg') {
       const totalWealth = (me.wallet || 0) + (me.bank || 0);
-      let text = `╭━━━⊱ 📊 *RPG STATS* ⊱━━━╮\n`;
-      text += `│ 👤 ${pushname}\n`;
-      text += `╰━━━━━━━━━━━━━━━━━━━━╯\n\n`;
-      text += `💰 *FINANÇAS*\n`;
-      text += `├ Carteira: ${me.wallet.toLocaleString()}\n`;
-      text += `├ Banco: ${me.bank.toLocaleString()}\n`;
-      text += `├ Total: ${totalWealth.toLocaleString()}\n\n`;
-      text += `⚔️ *COMBATE*\n`;
-      text += `├ Vitórias: ${me.battlesWon || 0}\n`;
-      text += `├ Derrotas: ${me.battlesLost || 0}\n`;
-      text += `└ Level: ${me.level || 1}\n\n`;
-      text += `⭐ Reputação: ${me.reputation?.points || 0}`;
-      return reply(text);
+      return reply(MESSAGES.rpg.social.stats(
+        pushname, 
+        me.wallet.toLocaleString(), 
+        me.bank.toLocaleString(), 
+        totalWealth.toLocaleString(), 
+        me.battlesWon || 0, 
+        me.battlesLost || 0, 
+        me.level || 1, 
+        me.reputation?.points || 0
+      ));
     }
 
     // --- ABRAÇAR ---
     if (command === 'abracarrpg' || command === 'hugrpg') {
-      if (!target) return reply(`💔 Marque alguém para abraçar!`);
-      if (target === sender) return reply(`💔 Você não pode se abraçar!`);
-      const actions = [
-        `${pushname} deu um abraço caloroso em @${target.split('@')[0]}! 🤗`,
-        `${pushname} abraçou @${target.split('@')[0]} com muito carinho! 💕`,
-        `Um abraço apertado de ${pushname} para @${target.split('@')[0]}! 🫂`
-      ];
-      return reply(actions[Math.floor(Math.random() * actions.length)], { mentions: [target] });
+      if (!target) return reply(MESSAGES.rpg.social.needTarget('abraçar'));
+      if (target === sender) return reply(MESSAGES.rpg.social.cantTargetSelf('abraçar'));
+      const acts = MESSAGES.rpg.social.hug;
+      return reply(acts[Math.floor(Math.random() * acts.length)](pushname, target.split('@')[0]), { mentions: [target] });
     }
 
     // --- BEIJAR ---
     if (command === 'beijarrpg' || command === 'kissrpg') {
-      if (!target) return reply(`💔 Marque alguém para beijar!`);
-      if (target === sender) return reply(`💔 Você não pode se beijar!`);
-      const actions = [
-        `${pushname} deu um beijo em @${target.split('@')[0]}! 😘`,
-        `${pushname} beijou @${target.split('@')[0]} apaixonadamente! 💋`
-      ];
-      return reply(actions[Math.floor(Math.random() * actions.length)], { mentions: [target] });
+      if (!target) return reply(MESSAGES.rpg.social.needTarget('beijar'));
+      if (target === sender) return reply(MESSAGES.rpg.social.cantTargetSelf('beijar'));
+      const acts = MESSAGES.rpg.social.kiss;
+      return reply(acts[Math.floor(Math.random() * acts.length)](pushname, target.split('@')[0]), { mentions: [target] });
     }
 
     // --- BATER ---
     if (command === 'baterrpg' || command === 'taparpg' || command === 'slaprpg') {
-      if (!target) return reply(`💔 Marque alguém para dar um tapa!`);
-      if (target === sender) return reply(`💔 Você não pode bater em si mesmo!`);
-      const actions = [
-        `${pushname} deu um tapa em @${target.split('@')[0]}! 👋💥`,
-        `PAH! ${pushname} acertou @${target.split('@')[0]} em cheio! 😤`
-      ];
-      return reply(actions[Math.floor(Math.random() * actions.length)], { mentions: [target] });
+      if (!target) return reply(MESSAGES.rpg.social.needTarget('dar um tapa'));
+      if (target === sender) return reply(MESSAGES.rpg.social.cantHitSelf);
+      const acts = MESSAGES.rpg.social.slap;
+      return reply(acts[Math.floor(Math.random() * acts.length)](pushname, target.split('@')[0]), { mentions: [target] });
     }
 
     // --- PROTEGER ---
     if (command === 'proteger' || command === 'protect') {
-      if (!target) return reply(`💔 Marque alguém para proteger!`);
-      if (target === sender) return reply(`💔 Você não pode se proteger assim!`);
+      if (!target) return reply(MESSAGES.rpg.social.needTarget('proteger'));
+      if (target === sender) return reply(MESSAGES.rpg.social.cantProtectSelf);
       
       const protectCost = 2000;
-      if (me.wallet < protectCost) return reply(`💰 Você precisa de ${protectCost.toLocaleString()} moedas!`);
+      if (me.wallet < protectCost) return reply(MESSAGES.rpg.insufficientCoins(protectCost.toLocaleString()));
       
       me.wallet -= protectCost;
       const targetData = getEcoUser(econ, target);
@@ -93,37 +80,33 @@ export default {
       targetData.protection.until = Date.now() + 3600000; // 1 hora
       
       saveEconomy(econ);
-      return reply(`🛡️ ${pushname} está protegendo @${target.split('@')[0]} por 1 hora!`, { mentions: [target] });
+      return reply(MESSAGES.rpg.social.protect(pushname, target.split('@')[0]), { mentions: [target] });
     }
 
     // --- REPUTAÇÃO ---
     if (command === 'reputacao' || command === 'rep' || command === 'reputation') {
       if (!me.reputation) me.reputation = { points: 0, upvotes: 0, downvotes: 0, karma: 0, fame: 0 };
       
-      let text = `╭━━━⊱ ⭐ *REPUTAÇÃO* ⊱━━━╮\n│ ${pushname}\n╰━━━━━━━━━━━━━━━━━━━━╯\n\n`;
-      text += `⭐ Pontos: ${me.reputation.points}\n`;
-      text += `👍 Votos Positivos: ${me.reputation.upvotes}\n`;
-      text += `👎 Votos Negativos: ${me.reputation.downvotes}\n`;
-      text += `☯️ Karma: ${me.reputation.karma}\n`;
-      text += `🌟 Fama: ${me.reputation.fame}\n\n`;
-      
       const repLevel = Math.floor(me.reputation.points / 100);
       const ranks = ['Novato', 'Conhecido', 'Respeitado', 'Famoso', 'Lendário'];
-      text += `🏅 Classificação: *${ranks[Math.min(repLevel, ranks.length - 1)]}*\n\n`;
-      text += `💡 Use ${prefix}votar @user para dar reputação`;
+      const rank = ranks[Math.min(repLevel, ranks.length - 1)];
       
-      return reply(text);
+      return reply(MESSAGES.rpg.social.reputation(
+        pushname, me.reputation.points, me.reputation.upvotes, 
+        me.reputation.downvotes, me.reputation.karma, me.reputation.fame, 
+        rank, prefix
+      ));
     }
 
     // --- VOTAR ---
     if (command === 'votar' || command === 'vote') {
-      if (!target) return reply(`💔 Marque alguém para votar!`);
-      if (target === sender) return reply(`💔 Você não pode votar em si mesmo!`);
+      if (!target) return reply(MESSAGES.rpg.social.needTarget('votar'));
+      if (target === sender) return reply(MESSAGES.rpg.social.cantTargetSelf('votar'));
       
       if (!me.lastVote) me.lastVote = {};
       const now = Date.now();
       if (me.lastVote[target] && (now - me.lastVote[target]) < 86400000) {
-        return reply(`⏰ Você já votou nesta pessoa hoje! Aguarde ${timeLeft(me.lastVote[target] + 86400000)}.`);
+        return reply(MESSAGES.rpg.social.alreadyVoted(timeLeft(me.lastVote[target] + 86400000)));
       }
       
       const targetData = getEcoUser(econ, target);
@@ -136,7 +119,7 @@ export default {
       
       me.lastVote[target] = now;
       saveEconomy(econ);
-      return reply(`👍 ${pushname} deu reputação para @${target.split('@')[0]}!`, { mentions: [target] });
+      return reply(MESSAGES.rpg.social.voted(pushname, target.split('@')[0]), { mentions: [target] });
     }
   }
 };
