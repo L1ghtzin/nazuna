@@ -60,7 +60,9 @@ async function getInfo(url) {
     const cached = getCached(`mediafire:${url}`);
     if (cached) return { ok: true, ...cached, cached: true };
 
-    console.log(`[MediaFire] Obtendo informações de: ${url}`);
+    if (process.env.DEBUG_MODE === 'true') {
+      console.log(`[MediaFire] Obtendo informações de: ${url}`);
+    }
 
     let html, link = null;
 
@@ -76,7 +78,9 @@ async function getInfo(url) {
       });
       html = response.data;
     } catch (directError) {
-      console.log('[MediaFire] Acesso direto falhou, tentando via Google Translate');
+      if (process.env.DEBUG_MODE === 'true') {
+        console.log('[MediaFire] Acesso direto falhou, tentando via Google Translate');
+      }
       
       const pathPart = url.replace(/https?:\/\/(www\.)?mediafire\.com\/?/, '');
       const translateUrl = `https://www-mediafire-com.translate.goog/${pathPart}?_x_tr_sl=en&_x_tr_tl=fr&_x_tr_hl=en&_x_tr_pto=wapp`;

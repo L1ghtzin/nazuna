@@ -24,7 +24,9 @@ export default {
 
       // Aguarda 2 segundos para garantir que a mensagem foi enviada
       setTimeout(() => {
-        console.log('[RESTART] Reiniciando bot via comando...');
+        if (process.env.DEBUG_MODE === 'true') {
+          console.log('[RESTART] Reiniciando bot via comando...');
+        }
         process.exit(0); // Exit code 0 indica reinício intencional
       }, 2000);
       

@@ -1,7 +1,8 @@
 export async function processAntiLink(context) {
     const { 
         bot, info, isGroup, sender, groupData, budy2, isGroupAdmin, isOwner, 
-        isBotAdmin, from, getUserName, isUserWhitelisted, reply, AllgroupMembers, parceriasData, idInArray
+        isBotAdmin, from, getUserName, isUserWhitelisted, reply, AllgroupMembers, parceriasData, idInArray,
+        MESSAGES
     } = context;
 
     const isParceiro = !!(parceriasData?.active && parceriasData?.partners?.[sender]);
@@ -39,11 +40,11 @@ export async function processAntiLink(context) {
                 delete: { remoteJid: from, fromMe: false, id: info.key.id, participant: sender }
               }).catch(()=>{});
               
-              await reply(`🔗 @${getUserName(sender)}, links de outros grupos não são permitidos. Você foi removido do grupo.`, {
+              await reply(MESSAGES.middleware.antiLink.groupRemoved(getUserName(sender)), {
                 mentions: [sender]
               });
             } else {
-              await reply(`🔗 Atenção, @${getUserName(sender)}! Links de outros grupos não são permitidos. Não consigo remover você, mas evite compartilhar esses links.`, {
+              await reply(MESSAGES.middleware.antiLink.groupWarned(getUserName(sender)), {
                 mentions: [sender]
               });
             }
@@ -83,11 +84,11 @@ export async function processAntiLink(context) {
                 delete: { remoteJid: from, fromMe: false, id: info.key.id, participant: sender }
               }).catch(()=>{});
               
-              await reply(`📢 @${getUserName(sender)}, links de canais não são permitidos. Você foi removido do grupo.`, {
+              await reply(MESSAGES.middleware.antiLink.channelRemoved(getUserName(sender)), {
                 mentions: [sender]
               });
             } else {
-              await reply(`📢 Atenção, @${getUserName(sender)}! Links de canais não são permitidos. Não consigo remover você, mas evite compartilhar esses links.`, {
+              await reply(MESSAGES.middleware.antiLink.channelWarned(getUserName(sender)), {
                 mentions: [sender]
               });
             }
@@ -129,7 +130,7 @@ export async function processAntiLink(context) {
               delete: { remoteJid: from, fromMe: false, id: info.key.id, participant: sender }
             }).catch(()=>{});
             
-            await reply(`🔗 @${getUserName(sender)}, links não são permitidos. Você foi removido do grupo.`, {
+            await reply(MESSAGES.middleware.antiLink.linkRemoved(getUserName(sender)), {
               mentions: [sender]
             });
           } else {
@@ -137,7 +138,7 @@ export async function processAntiLink(context) {
               delete: { remoteJid: from, fromMe: false, id: info.key.id, participant: sender }
             }).catch(()=>{});
             
-            await reply(`🔗 Atenção, @${getUserName(sender)}! Links não são permitidos. Não consigo remover você, mas evite enviar links.`, {
+            await reply(MESSAGES.middleware.antiLink.linkWarned(getUserName(sender)), {
               mentions: [sender]
             });
           }

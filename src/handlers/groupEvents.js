@@ -5,6 +5,7 @@ import CaptchaIndex, { loadCaptchaJson } from '../utils/captchaIndex.js';
 import { getPerformanceOptimizer } from '../utils/performanceOptimizer.js';
 import { resolveParticipant } from '../utils/resolveParticipant.js';
 import { checkAntifake, logAntifakeAction } from '../utils/antifakeGuard.js';
+import { MESSAGES } from '../utils/messages.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -166,7 +167,7 @@ export async function handleGroupParticipantsUpdate(ChainySock, inf) {
                         
                         // Se o grupo não tem modo de aprovação, envia uma mensagem direta
                         if (!groupMetadata.approveNewParticipants && !groupMetadata.joinApprovalMode) {
-                            const msgAntiFake = `🚫 O usuário @${antifakeResult.number} foi removido pelo AntiFake.\nMotivo: Utilizando número estrangeiro (${antifakeResult.reason}).`;
+                            const msgAntiFake = MESSAGES.handlers.groupEvents.antifakeRemoved(antifakeResult.number, antifakeResult.reason);
                             await ChainySock.sendMessage(from, { 
                                 text: msgAntiFake, 
                                 mentions: [participant] 
@@ -224,7 +225,7 @@ export async function handleGroupParticipantsUpdate(ChainySock, inf) {
                         CaptchaIndex.add(typeIds, from, answer, expiresAt, participantNumber);
 
                         await ChainySock.sendMessage(from, {
-                            text: `🔐 *VERIFICAÇÃO*\n\nOlá @${participantNumber}\n\n❓ ${num1} + ${num2} = ?\n\n⏱️ 5 minutos.`,
+                            text: MESSAGES.handlers.groupEvents.captchaVerification(participantNumber, num1, num2),
                             mentions: [`${participantNumber}@s.whatsapp.net`]
                         });
 
@@ -241,7 +242,7 @@ export async function handleGroupParticipantsUpdate(ChainySock, inf) {
                     
                     if (removalReasons.length) {
                         await ChainySock.sendMessage(from, {
-                            text: `🚫 Removidos:\n- ${removalReasons.join('\n- ')}`,
+                            text: MESSAGES.handlers.groupEvents.removedList(removalReasons.join('\n- ')),
                             mentions: membersToRemove
                         }).catch(() => {});
                     }
@@ -282,8 +283,8 @@ export async function handleGroupParticipantsUpdate(ChainySock, inf) {
                     const userNum = user.split('@')[0];
                     const autorNum = autor ? autor.split('@')[0] : 'desconhecido';
                     const texto = inf.action === 'promote'
-                        ? `⬆️ @${userNum} virou ADM por @${autorNum}`
-                        : `⬇️ @${userNum} deixou de ser ADM por @${autorNum}`;
+                        ? MESSAGES.handlers.groupEvents.promote(userNum, autorNum)
+                        : MESSAGES.handlers.groupEvents.demote(userNum, autorNum);
 
                     await ChainySock.sendMessage(from, {
                         text: texto,
@@ -377,7 +378,7 @@ export async function handleGroupJoinRequest(ChainySock, inf) {
             CaptchaIndex.add(typeIds, from, answer, expiresAt, nome);
 
             await ChainySock.sendMessage(from, {
-                text: `🔐 *VERIFICAÇÃO DE SEGURANÇA*\n\n👋 Olá @${numero}!\n\nPara garantir que você não é um bot, resolva:\n❓ *${num1} + ${num2} = ?*\n\n⏱️ Você tem 5 minutos ou será removido.`,
+                text: MESSAGES.handlers.groupEvents.captchaSecurityVerification(numero, num1, num2),
                 mentions: [participantJid]
             });
         }

@@ -13,6 +13,179 @@ export const rpgMessages = {
   rankingFooter: "\n✨ Continue jogando para subir no rank!",
   groupOnly: '⚔️ Este comando funciona apenas em grupos com Modo RPG ativo.',
   disabled: (prefix) => `⚔️ Modo RPG desativado! Use ${prefix}modorpg para ativar.`,
+  transferSelfError: '❌ Você não pode transferir para si mesmo.',
+  invalidAmount: '❌ Informe um valor válido.',
+  jobNotFound: (prefix) => `❌ Vaga inexistente. Use ${prefix}vagas para ver disponíveis.`,
+  relationEndPermission: '🚫 Apenas os envolvidos ou um administrador podem encerrar o relacionamento de terceiros.',
+  
+  quests: {
+    noRewards: '💔 Nenhuma recompensa disponível para reivindicar! Complete as missões primeiro.',
+    claimed: (count, reward, exp) => `╭━━━⊱ ✅ *RECOMPENSAS* ⊱━━━╮\n\n🎉 Você reivindicou ${count} missão(ões)!\n\n💰 Dinheiro: +${reward}\n✨ EXP: +${exp}\n\n╰━━━━━━━━━━━━━━━━━━━━╯`
+  },
+  
+  house: {
+    noHouse: '❌ Você não tem uma casa!',
+    decorNotFound: '❌ Decoração não encontrada!',
+    decorAlreadyOwned: '❌ Você já tem essa decoração!',
+    invalidType: '❌ Tipo inválido!\n\n🏘️ Tipos: barraca, cabana, casa, mansao, castelo',
+    insufficientFunds: (cost, name) => `💰 Você precisa de ${cost} para comprar ${name}!`,
+    bought: (emoji, name, storage, income) => `╭━━━⊱ 🎉 *CASA COMPRADA* ⊱━━━╮\n\n${emoji} Você comprou uma *${name}*!\n\n📦 Armazenamento: +${storage}\n💰 Renda: ${income}/dia\n\n╰━━━━━━━━━━━━━━━━━━━━╯`,
+    cooldownCollect: (hours, mins) => `⏰ Próxima coleta em: ${hours}h ${mins}min`,
+    collected: (emoji, name, amount, days) => `💰 *RENDA COLETADA*\n\n${emoji} ${name}\n💵 +${amount} (${days} dias)`,
+    decorCost: (cost) => `💰 Você precisa de ${cost}!`,
+    decorAdded: (emoji, name, value, bonus) => `🎨 *DECORAÇÃO ADICIONADA*\n\n${emoji} ${name}\n✨ +${value} ${bonus}`,
+    usageInfo: (prefix) => `💡 Use: ${prefix}casa para ver opções`
+  },
+  
+  forge: {
+    pickaxePerfect: '🛠️ Sua picareta já está em perfeito estado.',
+    noPickaxe: '💔 Você não possui uma picareta para reparar.',
+    repairCost: (cost) => `💰 O conserto custa ${cost}.`,
+    repairSuccess: (dur, max) => `🛠️ Picareta reparada com sucesso! Durabilidade: ${dur}/${max}.`,
+    missingMaterials: (item, qty) => `💔 Faltam materiais: ${item} x${qty}.`,
+    insufficientGold: '💔 Gold insuficiente.',
+    forgedAndEquipped: (name) => `⚒️ Você forjou e equipou ${name}!`,
+    forgedItem: (name) => `⚒️ Você forjou ${name}!`,
+    cooldown: (time) => `⏳ Aguarde ${time} para forjar novamente.`,
+    insufficientCoins: '💰 Você precisa de 150 moedas.',
+    forgeSuccess: (gain) => `⚒️ Forja bem-sucedida! Lucro ${gain}.`,
+    forgeFailed: '🔥 A forja falhou.',
+    recipesHeader: (gold) => `╭━━━⊱ ⚒️ *RECEITAS DE FORJA* ⊱━━━╮\n│ 💰 Seu gold: ${gold}\n╰━━━━━━━━━━━━━━━━━━━━╯\n\n`,
+    noRecipes: '💔 Nenhuma receita disponível.',
+    recipesTitle: '📜 *RECEITAS DISPONÍVEIS*\n\n',
+    recipeLine: (name, cost, matsText, prefix, key) => `🔸 *${name}*\n   💰 Custo: ${cost}\n   📦 Materiais: ${matsText}\n   💡 Forjar: ${prefix}forjar ${key}\n\n`
+  },
+  
+  clans: {
+    needClanWar: '🏰 Você precisa estar em um clã para declarar guerra!',
+    leaderOnlyWar: '👑 Apenas o líder pode declarar guerra!',
+    leaderOnlyInvite: '👑 Apenas o líder pode convidar membros.',
+    leaderOnlyKick: '👑 Apenas o líder pode expulsar membros.',
+    dissolved: '🗑️ Você saiu e o clã foi dissolvido pois não há mais membros.',
+    left: '✅ Você saiu do clã.',
+    leaderOnlyRemoveInvite: '👑 Apenas o líder pode remover convites.',
+    noClans: '📊 Nenhum clã registrado.',
+    createUsage: (prefix) => `❗ Use: ${prefix}criarcla <nome do clã>`,
+    alreadyInClan: '💔 Você já pertence a um clã!',
+    invalidNameLen: '💔 Nome do clã precisa ter entre 3 e 24 caracteres.',
+    nameTaken: '💔 Já existe um clã com esse nome!',
+    createCost: (cost) => `💰 Você precisa de ${cost} moedas para criar um clã.`,
+    created: (name, leader, cost) => `🏰 Clã *${name}* criado com sucesso!\n\n👑 Líder: ${leader}\n💰 Custo: ${cost}`,
+    notInClan: (prefix) => `💔 Você não faz parte de nenhum clã. Use: ${prefix}cla <nome do clã> para consultar outro clã.`,
+    noClanCatalog: (prefix) => `💔 Clã não encontrado. Use ${prefix}criarcla <nome> para criar o seu!`,
+    depositUsage: (prefix) => `💔 Informe um valor válido para depositar! Ex: ${prefix}depositarcla 5000`,
+    noMoney: '💰 Você não tem moedas suficientes na carteira!',
+    deposited: (amount, bank) => `🏰 Você depositou *${amount}* moedas no banco do clã!\n💰 Banco atual: *${bank}* moedas.`,
+    inviteUsage: (prefix) => `❗ Marque um membro para convidar. Ex: ${prefix}convidar @user`,
+    inviteSelf: '💔 Você já está no clã!',
+    targetInClan: '💔 Este usuário já pertence a um clã.',
+    invitePending: '💔 Este usuário já tem um convite pendente.',
+    invited: (target, prefix, id) => `📨 Convite enviado para @${target}!\nUse ${prefix}aceitarconvite ${id} para aceitar.`,
+    acceptNoInvites: '💔 Você não possui convites pendentes para clãs.',
+    acceptMultiple: (prefix) => `🔎 Você possui múltiplos convites. Use: ${prefix}aceitarconvite <clanId>`,
+    acceptNotFound: '💔 Clã não encontrado ou sem convite pendente.',
+    acceptAlreadyIn: '💔 Você já faz parte de um clã. Saia do atual primeiro.',
+    accepted: (name) => `✅ Você entrou para o clã *${name}*!`,
+    rejectNoInvites: '💔 Você não possui convites pendentes para clãs.',
+    rejectMultiple: (prefix) => `🔎 Você possui múltiplos convites. Use: ${prefix}recusarconvite <clanId>`,
+    rejectNotFound: '💔 Clã não encontrado ou sem convite pendente.',
+    rejected: (name) => `❗ Você recusou o convite do clã *${name}*.`,
+    kickUsage: (prefix) => `❗ Marque um membro para expulsar. Ex: ${prefix}expulsar @user`,
+    kickSelf: '💔 Você não pode se expulsar. Use sair para transferir liderança.',
+    kickNotMember: '💔 Este usuário não é membro do seu clã.',
+    kicked: (target, name) => `🗑️ @${target} foi expulso do clã *${name}*.`,
+    leaveLeaderTransfer: (newLeader) => `🔁 Você deixou o clã e a liderança foi transferida para @${newLeader}.`,
+    removeInviteUsage: (prefix) => `❗ Marque um usuário para remover o convite. Ex: ${prefix}rmconvite @user`,
+    removeInviteNoPending: '💔 Este usuário não tem um convite pendente.',
+    removeInviteSuccess: (target) => `🗑️ Convite removido para @${target}.`
+  },
+  
+  admin: {
+    noPlayers: '📊 Nenhum jogador registrado.',
+    resetSuccess: '⚠️ Sistema RPG resetado globalmente!',
+    rpgaddUsage: (prefix) => `💔 Uso: ${prefix}rpgadd @user <valor>`,
+    rpgaddSuccess: (amount, target) => `💰 Adicionado ${amount} para @${target}`,
+    rpgremoveUsage: (prefix) => `💔 Uso: ${prefix}rpgremove @user <valor>`,
+    rpgremoveSuccess: (amount, target) => `💸 Removido ${amount} de @${target}`,
+    rpgsetlevelUsage: (prefix) => `💔 Uso: ${prefix}rpgsetlevel @user <nivel>`,
+    rpgsetlevelSuccess: (level, target) => `📊 Nível de @${target} definido para ${level}`,
+    mentionPlayer: '💔 Marque um usuário!',
+    playerResetSuccess: (target) => `🗑️ Jogador @${target} resetado.`,
+    playerNotFound: '💔 Jogador não encontrado.',
+    stats: (users, money) => `📊 *STATS RPG*\n\n👥 Jogadores: ${users}\n💰 Circulação: ${money}`,
+    resetConfirm: (prefix) => `⚠️ Use ${prefix}rpgresetglobal confirmar para resetar TUDO.`
+  },
+  
+  crafting: {
+    maxEnchant: '❌ Sua arma já está no encantamento máximo (+10)!',
+    confirmNeed: '❌ Use "confirmar" para prosseguir',
+    noWeapon: (prefix) => `❌ Você não tem uma arma equipada!\n\n💡 Use ${prefix}equipar para equipar uma arma`,
+    crystalsNeeded: (crystals) => `💎 Você precisa de ${crystals}x cristais!`,
+    craftCritFail: (emoji, name, level) => `💀 *FALHA CRÍTICA!*\n\n⚠️ Sua arma foi destruída no processo...\n\n❌ Você perdeu: ${emoji} ${name} +${level}`,
+    craftFail: (cost, crystals) => `❌ *FALHA!*\n\n⚠️ O encantamento falhou, mas sua arma permaneceu intacta.\n\n💸 Perdeu: ${cost}\n💎 Perdeu: ${crystals}x cristais`,
+    emptyInventory: '❌ Seu inventário está vazio!\n\n💡 Consiga equipamentos em masmorras',
+    insufficientFunds: (cost) => `💰 Você precisa de ${cost} moedas!`,
+    equipUsage: (prefix) => `💔 Informe o item: ${prefix}equipar <item>`,
+    itemNotFound: '💔 Item não encontrado no inventário!',
+    cantEquip: '💔 Este item não pode ser equipado!',
+    equippedSuccess: (name, slot) => `✅ Você equipou *${name}* no slot ${slot}!`,
+    invalidSlot: '💔 Informe um slot válido: arma, armadura, helmet, boots, shield, accessory',
+    unequippedSuccess: (itemId) => `✅ *${itemId}* desequipado!`,
+    noPets: '🐾 Você não tem pets!',
+    equipPetUsage: (prefix) => `❌ Pet inválido!\n\n💡 Uso: ${prefix}equippet <nº pet> <item>`,
+    equipPetItemUsage: (prefix) => `❌ Informe o item!\n\n💡 Uso: ${prefix}equippet <nº pet> <item>`,
+    unequipPetUsage: (prefix) => `❌ Pet inválido!\n\n💡 Uso: ${prefix}desequiparpet <nº pet> <slot>\n📦 Slots: arma, armadura, escudo, acessorio, potao`,
+    petNoEquip: (emoji, name) => `❌ ${emoji} *${name}* não tem equipamentos equipados!`,
+    petInvalidSlot: '❌ Slot inválido ou sem item equipado! Escolha entre: arma, armadura, escudo, acessorio, potao',
+    unequippedPetSuccess: (itemKey, emoji, name) => `✅ *${itemKey}* foi removido de ${emoji} *${name}* e devolvido ao seu inventário!`,
+    needWeaponToEnchant: '💔 Você precisa de uma arma equipada para encantar!',
+    enchantCost: (cost) => `💰 Encantar custa ${cost} moedas!`,
+    enchantSuccess: '✨ *SUCESSO!* Sua arma brilhou intensamente! (+5 ATK)',
+    enchantFailed: '💨 *FALHA!* O encantamento se dissipou no ar...'
+  },
+  
+  market: {
+    empty: '🛒 O mercado está vazio. Use listar para anunciar algo.',
+    noOffers: '📭 Você não tem anúncios.',
+    emptyPlayerSales: '📦 Você não tem nenhum item à venda!',
+    useList: (prefix) => `Use: ${prefix}listar item <key> <qtd> <preco> | ${prefix}listar mat <material> <qtd> <preco>`,
+    invalidQtyPrice: '💔 Quantidade e preço inválidos.',
+    notEnoughItems: '💔 Você não possui itens suficientes.',
+    notEnoughMaterials: '💔 Você não possui materiais suficientes.',
+    missingId: '💔 Informe o ID do anúncio.',
+    notFound: '💔 Anúncio não encontrado.',
+    cancelOnlySeller: '💔 Apenas o vendedor pode cancelar.',
+    buyOwnError: '💔 Você não pode comprar seu próprio anúncio.',
+    listSuccess: (id, name, qty, price) => `📢 Anúncio #${id} criado: ${name} x${qty} por ${price}.`,
+    cancelSuccess: (id) => `💔 Anúncio #${id} cancelado e itens devolvidos.`,
+    buySuccess: (tax, priceMinusTax, seller) => `🛒 Compra realizada! Taxa de ${tax} aplicada. Vendedor @${seller} recebeu ${priceMinusTax}.`
+  },
+  
+  economy: {
+    noAuctions: '🏛️ Nenhum leilão ativo.',
+    lotteryHeader: (jackpot, tickets, prefix) => `╭━━━⊱ 🎫 *LOTERIA* ⊱━━━╮\n💰 Jackpot: ${jackpot}\n🎟️ Seus bilhetes: ${tickets}\n💵 Preço: 10.000/cada\n\n💡 Use ${prefix}loteria comprar <qtd>`,
+    insufficientFunds: '💰 Saldo insuficiente!',
+    boughtTickets: (qty) => `✅ Você comprou ${qty} bilhetes!`,
+    raceUsage: (prefix) => `💡 Use ${prefix}corrida <valor> <1-5>`,
+    raceWon: (winner, win) => `🏁 Cavalo ${winner} venceu! Você ganhou ${win}! 🏇`,
+    raceLost: (winner, bet) => `🏁 Cavalo ${winner} venceu! Você perdeu ${bet}. 🐎`,
+    taxReport: (wealth, tax) => `🏦 *TRIBUTOS*\n\nSua riqueza: ${wealth}\nImposto devido: ${tax}\n\n✅ Tudo em dia!`,
+    donateUsage: (prefix) => `💡 Use ${prefix}doar <valor>`,
+    donated: (amount) => `💝 Obrigado! Você doou ${amount} para o tesouro.`,
+    giftUsage: (prefix) => `💡 Use ${prefix}presente @user <valor>`,
+    giftSuccess: (amount, target) => `🎁 Você enviou ${amount} moedas para @${target}!`
+  },
+  
+  properties: {
+    useBuy: (prefix) => `Use: ${prefix}comprarpropriedade <tipo>`,
+    notFound: 'Propriedade inexistente.',
+    alreadyOwned: 'Você já possui essa propriedade.',
+    none: 'Você não possui propriedades.',
+    upkeepInsufficient: (name, upkeep) => `Saldo insuficiente para pagar manutenção de ${name} (${upkeep}).`,
+    buySuccess: (name) => `✅ Você comprou ${name}!`,
+    collectSuccess: (gold, mats) => `✅ Coleta concluída! +${gold} gold${mats ? ` | Materiais: ${mats}` : ''}`
+  },
+  
   tournament: {
     alreadyActive: "💔 Já existe um torneio ativo!",
     opened: (prize, prefix) => `╭━━━⊱ 🏆 *TORNEIO ABERTO!* ⊱━━━╮\n⚔️ Um torneio foi iniciado!\n💰 Prêmio: ${prize}\n💡 Use ${prefix}torneio entrar`,
@@ -29,10 +202,12 @@ export const rpgMessages = {
     participantLine: (i, p) => `${i}. @${p}\n`,
     footer: (prefix) => `\n💡 Use ${prefix}torneio entrar`
   },
+  
   streak: {
     alreadyClaimed: (hours, mins) => `⏰ Você já coletou seu daily hoje! Volte em ${hours}h ${mins}min.`,
     claimed: (day, reward) => `🔥 *STREAK DIÁRIO* 🔥\n\nDia: ${day}\n💰 Recompensa: +${reward} moedas\n\n✨ Volte amanhã para aumentar seu streak!`
   },
+  
   social: {
     stats: (name, wallet, bank, total, won, lost, level, repPoints) => `╭━━━⊱ 📊 *RPG STATS* ⊱━━━╮\n│ 👤 ${name}\n╰━━━━━━━━━━━━━━━━━━━━╯\n\n💰 *FINANÇAS*\n├ Carteira: ${wallet}\n├ Banco: ${bank}\n├ Total: ${total}\n\n⚔️ *COMBATE*\n├ Vitórias: ${won}\n├ Derrotas: ${lost}\n└ Level: ${level}\n\n⭐ Reputação: ${repPoints}`,
     needTarget: (action) => `💔 Marque alguém para ${action}!`,
@@ -57,6 +232,7 @@ export const rpgMessages = {
     alreadyVoted: (time) => `⏰ Você já votou nesta pessoa hoje! Aguarde ${time}.`,
     voted: (p1, p2) => `👍 ${p1} deu reputação para @${p2}!`
   },
+  
   skills: {
     menu: (name) => `╭━━━⊱ 📚 *HABILIDADES* ⊱━━━╮\n│ ${name}\n╰━━━━━━━━━━━━━━━━━━━━╯\n\n`,
     item: (name, level, xp, nextXp) => `• ${name}: Nível ${level} (${xp}/${nextXp})\n`,
@@ -66,9 +242,10 @@ export const rpgMessages = {
       `⚔️ *COMBATE*\n├ Batalhas vencidas: ${battlesWon}\n├ Batalhas perdidas: ${battlesLost}\n├ Duelos: ${duels}\n└ Crimes: ${crimes}\n\n` +
       `⛏️ *TRABALHO*\n├ Trabalhos: ${work}\n├ Mineração: ${mine}\n├ Pesca: ${fish}\n└ Caça: ${hunt}\n\n` +
       `🎲 *APOSTAS*\n├ Ganhou: ${gambleWin}\n├ Perdeu: ${gambleLoss}\n└ Saldo: ${gambleNet}\n\n` +
-      `📈 *PROGRESSO*\n├ Level: ${level}\n├ Prestige: ${prestige}\n├ Conquistas: ${achievements}\n├ Pets: ${pets}\n└ Itens Premium: ${premiumItems}\n\n` +
+      `📈 *PROGRESSO*\n├ Level: ${level}\n├ Prestige: ${prestige}\n├ Conquistas: ${achievements}\n├ Itens Premium: ${premiumItems}\n└ Pets: ${pets}\n\n` +
       `⭐ *REPUTAÇÃO*\n├ Pontos: ${repPoints}\n├ Karma: ${karma}\n└ Fama: ${fame}`
   },
+  
   shop: {
     premiumMenu: `╭━━━⊱ 💎 *LOJA PREMIUM* ⊱━━━╮\n╰━━━━━━━━━━━━━━━━━━━━━━━━━╯\n\n`,
     premiumItemLine: (name, price, desc, prefix, id) => `${name}\n   💰 ${price} moedas\n   📝 ${desc}\n   🛒 ${prefix}comprarpremium ${id}\n\n`,
@@ -77,6 +254,7 @@ export const rpgMessages = {
     insufficientFunds: (price) => `💔 Saldo insuficiente! Necessário: ${price}`,
     buyPremium: (name, price) => `╭━━━⊱ ✅ *COMPRA PREMIUM* ⊱━━━╮\n│ 🛒 ${name}\n│ 💰 -${price}\n╰━━━━━━━━━━━━━━━━━━━━━━━━━╯`
   },
+  
   pets: {
     noPets: (prefix) => `╭━━━⊱ 🐾 *SISTEMA DE PETS* ⊱━━━╮\n│ Você ainda não tem companheiros!\n╰━━━━━━━━━━━━━━━━━━━━╯\n\n🦊 *PETS DISPONÍVEIS:*\n  *Lobo* - Veloz e leal\n🐉 *Dragão* - Poderoso e raro\n🔥 *Fênix* - Imortal e místico\n🐯 *Tigre* - Feroz e forte\n🦅 *Águia* - Ágil e preciso\n\n💡 Use ${prefix}adotar <nome> para começar!`,
     myPetsHeader: (pushname, amount) => `╭━━━⊱ 🐾 *MEUS PETS* ⊱━━━╮\n│ Treinador: *${pushname}*\n│ Total de Pets: ${amount}/5\n╰━━━━━━━━━━━━━━━━━━━━╯\n\n`,
@@ -140,5 +318,54 @@ export const rpgMessages = {
     betWon: (bet) => `🏆 *VOCÊ VENCEU!*\n💰 Ganhou: +${bet}`,
     betLost: (bet) => `💀 *VOCÊ PERDEU!*\n💸 Perdeu: -${bet}`,
     betFooter: `\n╰━━━━━━━━━━━━━━━━━━━━━━╯`
+  },
+  
+  relationship: {
+    disableBn: '💔 O modo brincadeira está desativado neste grupo.',
+    needTarget: (cmd) => `💔 Marque a pessoa que você deseja pedir em ${cmd}.`,
+    cantTargetSelf: '💔 Você não pode pedir a si mesmo em relacionamento!',
+    noActiveOrMention: '💔 Você não marcou ninguém e não possui relacionamento ativo no momento.',
+    consultDifferent: '💔 Selecione pessoas diferentes para consultar.',
+    noCouples: (prefix) => `💔 Não há casais neste grupo ainda!\n\n💡 Use ${prefix}casar @pessoa para se casar!`,
+    noActiveRelation: '💔 Você não possui relacionamento ativo para encerrar.',
+    endDifferent: '💔 Selecione pessoas diferentes.',
+    endPermission: '🚫 Apenas os envolvidos ou um administrador podem encerrar o relacionamento de terceiros.',
+    betrayNeedTarget: (prefix) => `💔 Você precisa marcar alguém para trair! Exemplo: ${prefix}trair @pessoa`,
+    betraySelf: '💔 Você não pode trair a si mesmo... isso não faz sentido! 🤨',
+    historyNoActive: '💔 Você não possui relacionamento ativo para consultar o histórico.'
+  },
+  casino: {
+    usageApostar: (prefix, command) => `💡 Use ${prefix}${command} <valor>`,
+    minBet: (amount = 100) => `💡 Aposta mínima é de ${amount} gold.`,
+    insufficientFunds: '💰 Saldo insuficiente na carteira!',
+    wonAposta: (amount) => `🎉 Você venceu a aposta e ganhou ${amount} gold!`,
+    lostAposta: (amount) => `💀 Você perdeu ${amount} gold na aposta.`,
+    usageCoinflip: (prefix) => `💡 Use ${prefix}coinflip <cara|coroa> <valor>`,
+    insufficientCoinflip: '💰 Saldo insuficiente!',
+    wonCoinflip: (result, amount) => `🪙 Caiu *${result}*! Você ganhou ${amount}!`,
+    lostCoinflip: (result, amount) => `🪙 Caiu *${result}*! Você perdeu ${amount}.`,
+    usageRoleta: (prefix) => `💡 Use ${prefix}roleta <red|black|green> <valor>`,
+    wonRoleta: (result, amount, mult) => `🎰 Resultado: *${result.toUpperCase()}*! Você ganhou ${amount}! (${mult}x)`,
+    lostRoleta: (result, amount) => `🎰 Resultado: *${result.toUpperCase()}*! Você perdeu ${amount}.\n🎰 A roleta parece viciada...`,
+    cooldownSlots: (time) => `⏳ Aguarde ${time} para jogar slots novamente.`,
+    usageSlots: (prefix) => `💡 Use ${prefix}slots <valor>`,
+    jackpotSlots: (symbol, amount, mult) => `🎉 *JACKPOT!* Você alinhou 3 ${symbol} e ganhou *${amount}* gold! (${mult}x)`,
+    pairSlots: (amount) => `✨ *PAR!* Você combinou 2 símbolos e ganhou *${amount}* gold! (1.5x)`,
+    lostSlots: (amount) => `💀 Você perdeu *${amount}* gold. A sorte não está com você!`,
+    usageDados: (prefix) => `💡 Use ${prefix}dados <valor>`,
+    dadosResult: (playerScore, botScore, resultMsg) => `🎲 Você: ${playerScore}\n🎲 Bot: ${botScore}\n\n${resultMsg}`,
+    dadosWon: (amount) => `🎉 Você ganhou ${amount}!`,
+    dadosLost: (amount) => `💀 Você perdeu ${amount}.`,
+    dadosTie: '🤝 Empate!',
+    usageCrash: (prefix) => `💡 Use ${prefix}crash <valor>`,
+    crashResult: (exit, crash, resultMsg) => `🚀 Você saiu em: ${exit}x\n💥 Crash em: ${crash}x\n\n${resultMsg}`,
+    crashWon: (amount) => `🎉 Você ganhou ${amount}!`,
+    crashLost: (amount) => `💀 Você perdeu ${amount}.`,
+    usageBlackjack: (prefix) => `💡 Use ${prefix}blackjack <valor>`,
+    blackjackResult: (playerCards, playerSum, dealerCards, dealerSum, resultMsg) => `🃏 *BLACKJACK*\n\nSua mão: ${playerCards} = *${playerSum}*\nMesa: ${dealerCards} = *${dealerSum}*\n\n${resultMsg}`,
+    bjBust: (amount) => `💀 *BUST!* Você estourou e perdeu ${amount}.\n🃏 Que azar...`,
+    bjWon: (amount) => `🎉 *VITÓRIA RARA!* Você ganhou ${amount}!`,
+    bjTie: (amount) => `🤝 *EMPATE!*\n💸 Taxa de empate: -${amount}`,
+    bjLost: (amount) => `💀 *MESA VENCEU!* Você perdeu ${amount}.\n🃏 O dealer parece ter sorte demais...`
   }
 };

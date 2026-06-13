@@ -28,14 +28,14 @@ export default {
     // mas aqui estamos usando groupData.modorpg ou similar se for parte do RPG.
     // No index.js estava usando !isModoBn.
     const isModoBn = groupData.modobn || groupData.modobrincadeira || true; 
-    if (!isModoBn) return reply(`💔 O modo brincadeira está desativado neste grupo.`);
+    if (!isModoBn) return reply(MESSAGES.rpg.relationship.disableBn);
 
 
 
     // --- PEDIDOS (Namoro, Casamento, Brincadeira) ---
     if (['namoro', 'namorar', 'casamento', 'casar', 'brincadeira'].includes(command)) {
-      if (!menc_os2) return reply(`💔 Marque a pessoa que você deseja pedir em ${command}.`);
-      if (menc_os2 === sender) return reply(`💔 Você não pode pedir a si mesmo em relacionamento!`);
+      if (!menc_os2) return reply(MESSAGES.rpg.relationship.needTarget(command));
+      if (menc_os2 === sender) return reply(MESSAGES.rpg.relationship.cantTargetSelf);
 
       const type = command.includes('casar') || command === 'casamento' ? 'casamento' : 
                    command.includes('namor') ? 'namoro' : 'brincadeira';
@@ -66,12 +66,12 @@ export default {
         userTwo = menc_os2;
       } else {
         const activePair = relationshipManager.getActivePairForUser(sender);
-        if (!activePair) return reply(`💔 Você não marcou ninguém e não possui relacionamento ativo no momento.`);
+        if (!activePair) return reply(MESSAGES.rpg.relationship.noActiveOrMention);
         userOne = sender;
         userTwo = activePair.partnerId;
       }
 
-      if (userOne === userTwo) return reply(`💔 Selecione pessoas diferentes para consultar.`);
+      if (userOne === userTwo) return reply(MESSAGES.rpg.relationship.consultDifferent);
 
       const summary = relationshipManager.getRelationshipSummary(userOne, userTwo);
       return bot.sendMessage(from, {
@@ -90,7 +90,7 @@ export default {
       );
       
       if (groupCouples.length === 0) {
-        return reply(`💔 Não há casais neste grupo ainda!\n\n💡 Use ${prefix}casar @pessoa para se casar!`);
+        return reply(MESSAGES.rpg.relationship.noCouples(prefix));
       }
       
       let text = `╭━━━⊱ 💕 *CASAIS DO GRUPO* ⊱━━━╮\n│\n`;
@@ -116,16 +116,16 @@ export default {
         userTwo = menc_os2;
       } else {
         const activePair = relationshipManager.getActivePairForUser(sender);
-        if (!activePair) return reply(`💔 Você não possui relacionamento ativo para encerrar.`);
+        if (!activePair) return reply(MESSAGES.rpg.relationship.noActiveRelation);
         userOne = sender;
         userTwo = activePair.partnerId;
       }
 
-      if (userOne === userTwo) return reply(`💔 Selecione pessoas diferentes.`);
+      if (userOne === userTwo) return reply(MESSAGES.rpg.relationship.endDifferent);
 
       const participants = [userOne, userTwo];
       if (!participants.includes(sender) && !isGroupAdmin && !isOwner) {
-        return reply('🚫 Apenas os envolvidos ou um administrador podem encerrar o relacionamento de terceiros.');
+        return reply(MESSAGES.rpg.relationship.endPermission);
       }
 
       const endResult = relationshipManager.endRelationship(userOne, userTwo, sender);
@@ -137,8 +137,8 @@ export default {
 
     // --- TRAIÇÃO ---
     if (['trair', 'traicao'].includes(command)) {
-      if (!menc_os2) return reply(`💔 Você precisa marcar alguém para trair! Exemplo: ${prefix}trair @pessoa`);
-      if (menc_os2 === sender) return reply(`💔 Você não pode trair a si mesmo... isso não faz sentido! 🤨`);
+      if (!menc_os2) return reply(MESSAGES.rpg.relationship.betrayNeedTarget(prefix));
+      if (menc_os2 === sender) return reply(MESSAGES.rpg.relationship.betraySelf);
 
       const betrayalResult = relationshipManager.createBetrayalRequest(sender, menc_os2, from, prefix);
       return bot.sendMessage(from, {
@@ -159,7 +159,7 @@ export default {
         userTwo = menc_os2;
       } else {
         const activePair = relationshipManager.getActivePairForUser(sender);
-        if (!activePair) return reply(`💔 Você não possui relacionamento ativo para consultar o histórico.`);
+        if (!activePair) return reply(MESSAGES.rpg.relationship.historyNoActive);
         userOne = sender;
         userTwo = activePair.partnerId;
       }

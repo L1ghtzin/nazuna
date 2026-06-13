@@ -69,7 +69,9 @@ async function getInfo(url) {
     if (cached) return { ok: true, ...cached, cached: true };
 
     const fileId = extractFileId(url);
-    console.log(`[GDrive] Obtendo informações do arquivo ID: ${fileId}`);
+    if (process.env.DEBUG_MODE === 'true') {
+      console.log(`[GDrive] Obtendo informações do arquivo ID: ${fileId}`);
+    }
 
     // Requisição para obter informações do arquivo
     const response = await axios.post(

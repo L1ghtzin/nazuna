@@ -18,8 +18,8 @@ export default {
     getEcoUser,
     MESSAGES
   }) => {
-    if (!isGroup) return reply('⚔️ Este comando funciona apenas em grupos com Modo RPG ativo.');
-    if (!groupData.modorpg) return reply(`⚔️ Modo RPG desativado! Use ${prefix}modorpg para ativar.`);
+    if (!isGroup) return reply(MESSAGES.rpg.groupOnly);
+    if (!groupData.modorpg) return reply(MESSAGES.rpg.disabled(prefix));
     
     const econ = loadEconomy();
     const me = getEcoUser(econ, sender);
@@ -27,13 +27,13 @@ export default {
     // --- ENCANTAR ---
     if (command === 'encantar' || command === 'enchant') {
       if (!me.equipment || !me.equipment.weapon) {
-        return reply(`❌ Você não tem uma arma equipada!\n\n💡 Use ${prefix}equipar para equipar uma arma`);
+        return reply(MESSAGES.rpg.crafting.noWeapon(prefix));
       }
       
       const weapon = me.equipment.weapon;
       const enchantLevel = weapon.enchant || 0;
       
-      if (enchantLevel >= 10) return reply('❌ Sua arma já está no encantamento máximo (+10)!');
+      if (enchantLevel >= 10) return reply(MESSAGES.rpg.crafting.maxEnchant);
       
       const cost = (enchantLevel + 1) * 5000;
       const crystals = (enchantLevel + 1) * 3;
@@ -55,11 +55,11 @@ export default {
         return reply(text);
       }
       
-      if (args[0].toLowerCase() !== 'confirmar') return reply('❌ Use "confirmar" para prosseguir');
+      if (args[0].toLowerCase() !== 'confirmar') return reply(MESSAGES.rpg.crafting.confirmNeed);
       
-      if ((me.wallet || 0) < cost) return reply(`💰 Você precisa de ${cost.toLocaleString('pt-BR')} moedas!`);
+      if ((me.wallet || 0) < cost) return reply(MESSAGES.rpg.crafting.insufficientFunds(cost.toLocaleString('pt-BR')));
       if (!me.materials || (me.materials.cristal || 0) < crystals) {
-        return reply(`💎 Você precisa de ${crystals}x cristais!`);
+        return reply(MESSAGES.rpg.crafting.crystalsNeeded(crystals));
       }
       
       me.wallet -= cost;
@@ -86,10 +86,10 @@ export default {
         if (enchantLevel >= 5 && Math.random() < 0.3) {
           delete me.equipment.weapon;
           saveEconomy(econ);
-          return reply(`💀 *FALHA CRÍTICA!*\n\n⚠️ Sua arma foi destruída no processo...\n\n❌ Você perdeu: ${weapon.emoji || ''} ${weapon.name} +${enchantLevel}`);
+          return reply(MESSAGES.rpg.crafting.craftCritFail(weapon.emoji || '', weapon.name, enchantLevel));
         } else {
           saveEconomy(econ);
-          return reply(`❌ *FALHA!*\n\n⚠️ O encantamento falhou, mas sua arma permaneceu intacta.\n\n💸 Perdeu: ${cost.toLocaleString('pt-BR')}\n💎 Perdeu: ${crystals}x cristais`);
+          return reply(MESSAGES.rpg.crafting.craftFail(cost.toLocaleString('pt-BR'), crystals));
         }
       }
     }
@@ -97,7 +97,7 @@ export default {
     // --- DESMONTAR ---
     if (command === 'desmontar' || command === 'dismantle') {
       if (!me.inventory || Object.keys(me.inventory).length === 0) {
-        return reply(`❌ Seu inventário está vazio!\n\n💡 Consiga equipamentos em masmorras`);
+        return reply(MESSAGES.rpg.crafting.emptyInventory);
       }
       
       if (!args[0]) {

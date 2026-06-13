@@ -5,7 +5,7 @@ export async function processAutomation(context) {
         bot, info, isGroup, sender, groupData, type, budy2, body, isCmd, isGroupAdmin, isBotAdmin, 
         from, getUserName, isUserWhitelisted, reply, getMediaInfo, getFileBuffer, upload, 
         handleAutoDownload, youtube, tiktok, igdl, kwai, facebook, pinterest, spotify, soundcloud,
-        sendSticker, pushname, nomebot, nomedono, antifloodData
+        sendSticker, pushname, nomebot, nomedono, antifloodData, MESSAGES
     } = context;
 
     // 1. Anti-Porn (Image Only)
@@ -36,18 +36,18 @@ export async function processAutomation(context) {
               const isHentai = scores.Hentai >= hentaiThreshold;
               if (isPorn || isHentai) {
                 const reason = isPorn ? 'Pornografia' : 'Hentai';
-                await reply(`🚨 Conteúdo impróprio detectado! (${reason})`);
+                await reply(MESSAGES.middleware.automation.pornDetected(reason));
                 if (isBotAdmin) {
                   try {
                     await bot.sendMessage(from, { delete: info.key });
                     await bot.groupParticipantsUpdate(from, [sender], 'remove');
-                    await reply(`🔞 @${getUserName(sender)}, conteúdo impróprio detectado. Você foi removido do grupo.`, { mentions: [sender] });
+                    await reply(MESSAGES.middleware.automation.pornRemoved(getUserName(sender)), { mentions: [sender] });
                   } catch (adminError) {
                     console.error(`Erro ao remover usuário por anti-porn: ${adminError}`);
-                    await reply(`⚠️ Não consegui remover @${getUserName(sender)} automaticamente. Admins, por favor, verifiquem!`, { mentions: [sender] });
+                    await reply(MESSAGES.middleware.automation.pornRemoveError(getUserName(sender)), { mentions: [sender] });
                   }
                 } else {
-                  await reply(`@${getUserName(sender)} enviou conteúdo impróprio (${reason}), mas não posso removê-lo sem ser admin.`, { mentions: [sender] });
+                  await reply(MESSAGES.middleware.automation.pornAdminNeeded(getUserName(sender), reason), { mentions: [sender] });
                 }
                 return { stopProcessing: true };
               }
@@ -65,7 +65,7 @@ export async function processAutomation(context) {
         try {
           await bot.sendMessage(from, { delete: { remoteJid: from, fromMe: false, id: info.key.id, participant: sender } });
           await bot.groupParticipantsUpdate(from, [sender], 'remove');
-          await reply(`🗺️ @${getUserName(sender)}, localização não permitida. Você foi removido do grupo.`, { mentions: [sender] });
+          await reply(MESSAGES.middleware.automation.locationRemoved(getUserName(sender)), { mentions: [sender] });
           return { stopProcessing: true };
         } catch (e) {
           console.error("Erro no anti-location:", e);
@@ -80,7 +80,7 @@ export async function processAutomation(context) {
       const lastCmd = antifloodData[from].users[sender]?.lastCmd || 0;
       const interval = antifloodData[from].interval * 1000;
       if (now - lastCmd < interval) {
-        await reply(`⏳ Aguarde ${Math.ceil((interval - (now - lastCmd)) / 1000)} segundos antes de usar outro comando.`);
+        await reply(MESSAGES.middleware.automation.floodCooldown(Math.ceil((interval - (now - lastCmd)) / 1000)));
         return { stopProcessing: true };
       }
       antifloodData[from].users[sender] = { lastCmd: now };
@@ -92,7 +92,7 @@ export async function processAutomation(context) {
         try {
           await bot.sendMessage(from, { delete: { remoteJid: from, fromMe: false, id: info.key.id, participant: sender } });
           await bot.groupParticipantsUpdate(from, [sender], 'remove');
-          await reply(`📄 @${getUserName(sender)}, documentos não são permitidos. Você foi removido do grupo.`, { mentions: [sender] });
+          await reply(MESSAGES.middleware.automation.documentRemoved(getUserName(sender)), { mentions: [sender] });
           return { stopProcessing: true };
         } catch (e) {
           console.error("Erro no anti-document:", e);

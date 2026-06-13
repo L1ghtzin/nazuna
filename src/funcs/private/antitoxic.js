@@ -3,6 +3,7 @@ import { debouncedSaveJson } from '../../utils/helpers.js';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { MESSAGES } from '../../utils/messages.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -76,7 +77,7 @@ const saveAntitoxic = (data) => {
 
 // --- CONFIGURAÇÃO DO GRUPO ---
 
-const enableAntitoxic = (groupId, action = CONFIG.DEFAULT_ACTION) => {
+const enableAntitoxic = (groupId, action = CONFIG.DEFAULT_ACTION, prefix = '/') => {
     if (!CONFIG.ACTIONS.includes(action)) {
         action = CONFIG.DEFAULT_ACTION;
     }
@@ -93,12 +94,7 @@ const enableAntitoxic = (groupId, action = CONFIG.DEFAULT_ACTION) => {
     
     return {
         success: true,
-        message: `🛡️ *ANTITOXIC ATIVADO*\n\n` +
-                 `O sistema monitorará ativamente as conversas em busca de palavras ofensivas.\n\n` +
-                 `📌 *Configuração:*\n` +
-                 `• Ação: ${action}\n` +
-                 `• Sensibilidade: ${CONFIG.THRESHOLD}%\n\n` +
-                 `💡 Use /antitoxic off para desativar.`
+        message: MESSAGES.funcs.antiToxic.enabled(action, CONFIG.THRESHOLD, prefix)
     };
 };
 
@@ -111,8 +107,7 @@ const disableAntitoxic = (groupId) => {
     
     return {
         success: true,
-        message: `🛡️ *ANTITOXIC DESATIVADO*\n\n` +
-                 `O sistema de detecção de toxicidade foi desativado neste grupo.`
+        message: MESSAGES.funcs.antiToxic.disabled
     };
 };
 
@@ -120,13 +115,13 @@ const setAntitoxicAction = (groupId, action) => {
     if (!CONFIG.ACTIONS.includes(action)) {
         return {
             success: false,
-            message: `❌ Ação inválida!\n\nAções disponíveis: ${CONFIG.ACTIONS.join(', ')}`
+            message: MESSAGES.funcs.antiToxic.invalidAction(CONFIG.ACTIONS.join(', '))
         };
     }
     
     const data = loadAntitoxic();
     if (!data.groups[groupId] || !data.groups[groupId].enabled) {
-        return { success: false, message: '❌ O antitoxic não está ativado neste grupo!' };
+        return { success: false, message: MESSAGES.funcs.antiToxic.notEnabled };
     }
     
     data.groups[groupId].action = action;
@@ -134,19 +129,19 @@ const setAntitoxicAction = (groupId, action) => {
     
     return {
         success: true,
-        message: `🛡️ *ANTITOXIC*\n\nAção alterada para: *${action}*`
+        message: MESSAGES.funcs.antiToxic.actionChanged(action)
     };
 };
 
 const setAntitoxicThreshold = (groupId, threshold) => {
     const value = parseInt(threshold);
     if (isNaN(value) || value < 1 || value > 100) {
-        return { success: false, message: '❌ Sensibilidade deve ser entre 1 e 100!' };
+        return { success: false, message: MESSAGES.funcs.antiToxic.invalidThreshold };
     }
     
     const data = loadAntitoxic();
     if (!data.groups[groupId] || !data.groups[groupId].enabled) {
-        return { success: false, message: '❌ O antitoxic não está ativado neste grupo!' };
+        return { success: false, message: MESSAGES.funcs.antiToxic.notEnabled };
     }
     
     data.groups[groupId].threshold = value;
@@ -154,12 +149,11 @@ const setAntitoxicThreshold = (groupId, threshold) => {
     
     return {
         success: true,
-        message: `🛡️ *ANTITOXIC*\n\nSensibilidade alterada para: *${value}%*\n\n` +
-                 `💡 Quanto maior, menos mensagens serão marcadas.`
+        message: MESSAGES.funcs.antiToxic.thresholdChanged(value)
     };
 };
 
-const getAntitoxicStatus = (groupId) => {
+const getAntitoxicStatus = (groupId, prefix = '/') => {
     const data = loadAntitoxic();
     const group = data.groups[groupId];
     
@@ -167,22 +161,21 @@ const getAntitoxicStatus = (groupId) => {
         return {
             success: true,
             enabled: false,
-            message: `🛡️ *ANTITOXIC*\n\n❌ Desativado neste grupo.\n\n💡 Use /antitoxic on para ativar.`
+            message: MESSAGES.funcs.antiToxic.statusDisabled(prefix)
         };
     }
     
     return {
         success: true,
         enabled: true,
-        message: `🛡️ *ANTITOXIC*\n\n` +
-                 `✅ Status: Ativado\n` +
-                 `⚡ Ação: ${group.action}\n` +
-                 `📊 Sensibilidade: ${group.threshold}%\n\n` +
-                 `📈 *Estatísticas:*\n` +
-                 `• Detectadas: ${group.stats.detected}\n` +
-                 `• Avisos: ${group.stats.warned}\n` +
-                 `• Apagadas: ${group.stats.deleted}\n` +
-                 `• Mutes: ${group.stats.muted}`
+        message: MESSAGES.funcs.antiToxic.statusEnabled(
+            group.action,
+            group.threshold,
+            group.stats.detected,
+            group.stats.warned,
+            group.stats.deleted,
+            group.stats.muted
+        )
     };
 };
 
@@ -284,29 +277,21 @@ const processMessage = async (groupId, userId, message) => {
 const generateWarningMessage = (userId, result) => {
     if (result.action === 'avisar') {
         return {
-            text: `🛡️ *ANTITOXIC*\n\n` +
-                     `⚠️ @${getUserName(userId)}, evite usar palavras ofensivas no grupo.\n\n` +
-                     `📌 ${result.reason}\n` +
-                     `⚡ Avisos: ${result.warningCount}/${result.maxWarnings}`,
+            text: MESSAGES.funcs.antiToxic.warnMsg(getUserName(userId), result.reason, result.warningCount, result.maxWarnings),
             mentions: [userId]
         };
     }
     
     if (result.action === 'apagar') {
         return {
-            text: `🛡️ *ANTITOXIC*\n\n` +
-                     `🗑️ Mensagem de @${getUserName(userId)} foi removida.\n\n` +
-                     `📌 ${result.reason}`,
+            text: MESSAGES.funcs.antiToxic.deleteMsg(getUserName(userId), result.reason),
             mentions: [userId]
         };
     }
     
     if (result.action === 'mute') {
         return {
-            text: `🛡️ *ANTITOXIC*\n\n` +
-                     `🔇 O usuário @${getUserName(userId)} foi mutado por quebrar as regras de convivência.\n\n` +
-                     `📌 ${result.reason}\n\n` +
-                     `⚠️ _Atenção: Enquanto estiver mutado, qualquer tentativa de enviar mensagem resultará em banimento._`,
+            text: MESSAGES.funcs.antiToxic.muteMsg(getUserName(userId), result.reason),
             mentions: [userId]
         };
     }
@@ -332,12 +317,12 @@ const handleCommand = async (bot, from, args, groupData, { reply, prefix }) => {
     const val = args[1] ? args[1].toLowerCase() : '';
 
     if (!arg || arg === 'status') {
-        const status = getAntitoxicStatus(from);
+        const status = getAntitoxicStatus(from, prefix);
         return reply(status.message);
     }
 
     if (arg === 'on' || arg === 'ativar') {
-        const result = enableAntitoxic(from);
+        const result = enableAntitoxic(from, CONFIG.DEFAULT_ACTION, prefix);
         return reply(result.message);
     }
 
@@ -348,7 +333,7 @@ const handleCommand = async (bot, from, args, groupData, { reply, prefix }) => {
 
     if (arg === 'acao' || arg === 'ação' || arg === 'action') {
         if (!val) {
-            return reply(`❓ Informe a ação.\nAções: ${CONFIG.ACTIONS.join(', ')}\nEx: ${prefix}antitoxic acao apagar`);
+            return reply(MESSAGES.funcs.antiToxic.missingAction(CONFIG.ACTIONS.join(', '), prefix));
         }
         const result = setAntitoxicAction(from, val);
         return reply(result.message);
@@ -356,18 +341,13 @@ const handleCommand = async (bot, from, args, groupData, { reply, prefix }) => {
 
     if (arg === 'sensibilidade' || arg === 'nivel' || arg === 'threshold') {
         if (!val) {
-            return reply(`❓ Informe o valor (1-100).\nEx: ${prefix}antitoxic sensibilidade 70`);
+            return reply(MESSAGES.funcs.antiToxic.missingThreshold(prefix));
         }
         const result = setAntitoxicThreshold(from, val);
         return reply(result.message);
     }
 
-    return reply(`❓ Subcomando inválido.\nUse:\n` +
-                 `• ${prefix}antitoxic on\n` +
-                 `• ${prefix}antitoxic off\n` +
-                 `• ${prefix}antitoxic status\n` +
-                 `• ${prefix}antitoxic acao [avisar/apagar/mute]\n` +
-                 `• ${prefix}antitoxic sensibilidade [1-100]`);
+    return reply(MESSAGES.funcs.antiToxic.invalidSubcommand(prefix));
 };
 
 export {

@@ -53,7 +53,9 @@ export default {
         await reply(report);
         
         setTimeout(() => {
-          console.log('[REVIVERQR] Reiniciando bot após limpeza de sessão...');
+          if (process.env.DEBUG_MODE === 'true') {
+            console.log('[REVIVERQR] Reiniciando bot após limpeza de sessão...');
+          }
           process.exit(0);
         }, 3000);
       } else {

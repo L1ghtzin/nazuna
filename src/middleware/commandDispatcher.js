@@ -10,7 +10,7 @@ export async function dispatchCommand(ctx) {
   const {
     isCmd, command, reply, bot, info, from, prefix, groupPrefix,
     pushname, sender, isOwner, isPremium, budy2, isAutoRepo, body,
-    getUserName, args, q
+    getUserName, args, q, MESSAGES
   } = ctx;
 
   // === LIMITES DE COMANDO ===
@@ -21,7 +21,7 @@ export async function dispatchCommand(ctx) {
 
   // === VERIFICAÇÃO VIP ===
   if (isCmd && vipCommandsManager.isVipCommand(command) && !isPremium) {
-    await reply(`🔒 *Comando VIP Exclusivo*\n\nEste comando é apenas para usuários VIP/Premium!\n\n💎 Use ${prefix}menuvip para ver os comandos VIP!\n📞 Contate o dono: ${prefix}dono`);
+    await reply(MESSAGES.middleware.commandDispatcher.vipOnly(prefix));
     return;
   }
 

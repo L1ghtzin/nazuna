@@ -3,6 +3,9 @@ import { loadGroupData, persistGroupData } from '../utils/groupManager.js';
 import { loadLevelingSafe, getLevelingUser } from '../utils/database/leveling.js';
 import { GRUPOS_DIR } from '../utils/paths.js';
 import { NUMERODONO } from '../config.js';
+import { MESSAGES } from '../utils/messages.js';
+
+const DEBUG_MODE = process.env.DEBUG_MODE === 'true';
 
 // ── Constantes & Caches ──────────────────────────────────────────
 
@@ -134,15 +137,15 @@ function buildAlertMessage(flags, userName, participant, groupOwner) {
     const actionText = actionParts.length > 0 ? actionParts.join(' e ') : 'uma ação de segurança foi tomada';
     const mentions = [participant];
     
-    let groupMsg = `🚨 *SISTEMA DE SEGURANÇA* 🚨\n\n@${userName} enviou uma mensagem na qual o bot não conseguiu ler o tipo ou conteúdo (Mensagem Criptografada/Stealth). Como resposta, ${actionText}.`;
+    let groupMsg = MESSAGES.middleware.antiStealth.alert(userName, actionText);
 
     if (flags.avisar && groupOwner) {
         const ownerName = groupOwner.split('@')[0];
         mentions.push(groupOwner);
-        groupMsg += `\n\n👑 @${ownerName}, atenção! Possível ataque Stealth detectado.`;
+        groupMsg += MESSAGES.middleware.antiStealth.alertOwnerWarning(ownerName);
     }
 
-    groupMsg += `\n\n_Se você acha que isso foi um engano, entre em contato com um administrador._`;
+    groupMsg += MESSAGES.middleware.antiStealth.alertFooter;
     
     return { groupMsg, mentions };
 }
@@ -157,11 +160,7 @@ async function notifyBotOwner(ChainySock, flags, groupName, userName, participan
     
     try {
         await ChainySock.sendMessage(donoJid, {
-            text: `⚠️ *ALERTA ANTI-STEALTH* ⚠️\n\n` +
-                  `🛡️ Ataque detectado!\n\n` +
-                  `👥 *Grupo:* ${groupName}\n` +
-                  `👤 *Infrator:* @${userName}\n` +
-                  `⚡ *Ações:* ${acoesFeitas.join(' | ') || 'Nenhuma'}`,
+            text: MESSAGES.middleware.antiStealth.ownerNotification(groupName, userName, acoesFeitas.join(' | ') || 'Nenhuma'),
             mentions: [participant]
         });
     } catch (e) {
@@ -179,7 +178,7 @@ function scheduleGroupReopening(ChainySock, groupJid, flags, groupName) {
         try {
             await ChainySock.groupSettingUpdate(groupJid, 'not_announcement');
             await ChainySock.sendMessage(groupJid, { 
-                text: `✅ *O período de segurança de ${flags.tempo} minutos acabou.*\n\nO grupo foi reaberto e todos podem voltar a conversar livremente.`
+                text: MESSAGES.middleware.antiStealth.periodEnded(flags.tempo)
             });
         } catch (e) {
             console.error(`[ANTI-STEALTH] Erro ao reabrir ${groupName}:`, e.message);
@@ -213,7 +212,9 @@ async function executeAction(ChainySock, groupJid, participant, config) {
     await notifyBotOwner(ChainySock, flags, groupName, userName, participant);
     scheduleGroupReopening(ChainySock, groupJid, flags, groupName);
 
-    console.log(`[ANTI-STEALTH] 🛡️ [${groupName}] Ação executada contra @${userName}`);
+    if (DEBUG_MODE) {
+        console.log(`[ANTI-STEALTH] 🛡️ [${groupName}] Ação executada contra @${userName}`);
+    }
 }
 
 // ── Controle de Eventos de Mensagem ─────────────────────────────
@@ -229,7 +230,9 @@ function handleResolvedLag(msgId, groupJid, participant) {
     const strikes = userStrikes.get(strikeKey);
     if (strikes && strikes.count > 0) strikes.count--;
     
-    console.log(`[ANTI-STEALTH] 🟢 Falso Positivo Evitado! Mensagem de @${participant.split('@')[0]} decriptada via retry (Era apenas Lag).`);
+    if (DEBUG_MODE) {
+        console.log(`[ANTI-STEALTH] 🟢 Falso Positivo Evitado! Mensagem de @${participant.split('@')[0]} decriptada via retry (Era apenas Lag).`);
+    }
 }
 
 async function processStealthDetection(ChainySock, msgId, groupJid, participant, config, groupData, groupFilePath, performanceOptimizer) {
@@ -245,7 +248,9 @@ async function processStealthDetection(ChainySock, msgId, groupJid, participant,
     // --- SISTEMA DE PREVENÇÃO DE FALSOS POSITIVOS ---
     // Membros que já conversam bastante costumam ter problemas reais de criptografia do WhatsApp.
     if (messageCount >= 30) {
-        console.log(`[ANTI-STEALTH] 🟢 Falso Positivo Evitado: @${userName} é membro ativo (${messageCount} msgs). Ignorando mensagem indecriptável.`);
+        if (DEBUG_MODE) {
+            console.log(`[ANTI-STEALTH] 🟢 Falso Positivo Evitado: @${userName} é membro ativo (${messageCount} msgs). Ignorando mensagem indecriptável.`);
+        }
         for (const [id, p] of pendingPunishments.entries()) {
             if (p.participant === participant && p.groupJid === groupJid) {
                 clearTimeout(p.timer);
@@ -257,7 +262,9 @@ async function processStealthDetection(ChainySock, msgId, groupJid, participant,
 
     // Membros que mal conversaram e enviam stealth são quase 100% de chance de ser ataque.
     if (messageCount < 5) {
-        console.log(`[ANTI-STEALTH] 🔴 Ataque Stealth de conta suspeita: @${userName} tem apenas ${messageCount} mensagens. Punição Imediata!`);
+        if (DEBUG_MODE) {
+            console.log(`[ANTI-STEALTH] 🔴 Ataque Stealth de conta suspeita: @${userName} tem apenas ${messageCount} mensagens. Punição Imediata!`);
+        }
         
         // Remove qualquer timer pendente para esse usuário/grupo, se houver
         for (const [id, p] of pendingPunishments.entries()) {
@@ -281,7 +288,9 @@ async function processStealthDetection(ChainySock, msgId, groupJid, participant,
     userStrikes.set(strikeKey, strikes);
     
     if (strikes.count < flags.limite) {
-        console.log(`[ANTI-STEALTH] ⚠️ Strike ${strikes.count}/${flags.limite} para @${userName} no grupo ${groupJid}`);
+        if (DEBUG_MODE) {
+            console.log(`[ANTI-STEALTH] ⚠️ Strike ${strikes.count}/${flags.limite} para @${userName} no grupo ${groupJid}`);
+        }
         persistGroupData(true, groupJid, groupFilePath, groupData, performanceOptimizer);
         return;
     }
@@ -290,7 +299,9 @@ async function processStealthDetection(ChainySock, msgId, groupJid, participant,
         .some(p => p.participant === participant && p.groupJid === groupJid);
     
     if (isSpammingStealth) {
-        console.log(`[ANTI-STEALTH] 🔴 Ataque Stealth Múltiplo detectado de @${userName}. Punição Imediata!`);
+        if (DEBUG_MODE) {
+            console.log(`[ANTI-STEALTH] 🔴 Ataque Stealth Múltiplo detectado de @${userName}. Punição Imediata!`);
+        }
         for (const [id, p] of pendingPunishments.entries()) {
             if (p.participant === participant && p.groupJid === groupJid) {
                 clearTimeout(p.timer);
@@ -306,7 +317,9 @@ async function processStealthDetection(ChainySock, msgId, groupJid, participant,
         return;
     }
 
-    console.log(`[ANTI-STEALTH] ⏳ Punição pendente para @${userName}. Aguardando 15s por retry (Lag Detection)...`);
+    if (DEBUG_MODE) {
+        console.log(`[ANTI-STEALTH] ⏳ Punição pendente para @${userName}. Aguardando 15s por retry (Lag Detection)...`);
+    }
     
     const timer = setTimeout(async () => {
         pendingPunishments.delete(msgId);
@@ -371,8 +384,8 @@ async function toggleAntiStealthStatus(sub, groupData, groupFilePath, optimizer,
     await optimizer.saveJsonWithCache(groupFilePath, groupData);
     
     return reply(groupData.antistealth 
-        ? `🛡️ *ANTI-STEALTH ATIVADO*\n\nO sistema irá proteger o grupo contra mensagens Stealth.\n\n📌 *Ação configurada:*\n${describeAction(config.action)}\n\n💡 Use _${prefix}antistealth acao_ para configurar.`
-        : `✅ *ANTI-STEALTH DESATIVADO*\n\nA proteção contra mensagens Stealth foi desligada.`);
+        ? MESSAGES.middleware.antiStealth.activated(describeAction(config.action), prefix)
+        : MESSAGES.middleware.antiStealth.desactivated);
 }
 
 function showAntiStealthStatus(groupData, config, from, reply) {
@@ -380,15 +393,8 @@ function showAntiStealthStatus(groupData, config, from, reply) {
     const timerAtivo = activeTimers.has(from) ? '\n⏱️ Timer de reabertura ativo' : '';
     
     return reply(
-        `🛡️ *ANTI-STEALTH — STATUS*\n\n` +
-        `📌 Status: ${status}\n` +
-        `⚡ Ação: ${config.action}${timerAtivo}\n` +
-        `🎯 Limite de Strikes: ${config.limit || 1}\n\n` +
-        `📋 *O que vai acontecer:*\n${describeAction(config.action)}\n\n` +
-        `📊 *Estatísticas:*\n` +
-        `• Detectadas: ${config.stats.detected}\n` +
-        `• Bans: ${config.stats.banned}\n` +
-        `• Fechamentos: ${config.stats.closed}`
+        MESSAGES.middleware.antiStealth.statusTitle +
+        MESSAGES.middleware.antiStealth.statusBody(status, config.action, timerAtivo, config.limit || 1, describeAction(config.action), config.stats)
     );
 }
 
@@ -400,58 +406,32 @@ async function configureAntiStealthAction(val, from, groupData, groupFilePath, o
                 activeTimers.delete(from);
             }
             await ChainySock.groupSettingUpdate(from, 'not_announcement');
-            return reply(`✅ O grupo foi *ABERTO* novamente.`);
+            return reply(MESSAGES.middleware.antiStealth.groupOpened);
         } catch (e) {
-            return reply(`❌ Erro ao abrir o grupo: ${e.message}`);
+            return reply(MESSAGES.middleware.antiStealth.openError(e.message));
         }
     }
 
     if (!val || !isValidAction(val)) {
-        return reply(
-            `🛡️ *ANTI-STEALTH — CONFIGURAR AÇÃO*\n\n` +
-            `Escolha o que o bot deve fazer ao detectar um ataque:\n\n` +
-            `1️⃣ *banir* — Remove o infrator do grupo na hora\n` +
-            `2️⃣ *fechar* — Fecha o grupo por 5 minutos para conter o ataque\n` +
-            `3️⃣ *avisar* — Apenas avisa o dono do bot no PV (não pune o usuário)\n\n` +
-            `💡 *Como usar:*\n` +
-            `• _${prefix}antistealth acao 1_ (ou banir)\n` +
-            `• _${prefix}antistealth acao 2_ (ou fechar)\n` +
-            `• _${prefix}antistealth acao 3_ (ou avisar)\n\n` +
-            `🔧 Use _${prefix}antistealth acao abrir_ para destrancar o grupo caso tenha fechado.`
-        );
+        return reply(MESSAGES.middleware.antiStealth.configActionMenu(prefix));
     }
 
     config.action = val;
     await optimizer.saveJsonWithCache(groupFilePath, groupData);
     
-    return reply(
-        `🛡️ *ANTI-STEALTH — AÇÃO CONFIGURADA*\n\n` +
-        `⚡ Ação: *${val}*\n\n` +
-        `📋 *O que vai acontecer ao detectar stealth:*\n${describeAction(val)}`
-    );
+    return reply(MESSAGES.middleware.antiStealth.actionConfigured(val, describeAction(val)));
 }
 
 async function configureAntiStealthStrikes(val, groupData, groupFilePath, optimizer, reply, prefix, config) {
     const num = parseInt(val, 10);
     if (isNaN(num) || num < 1 || num > 10) {
-        return reply(
-            `🛡️ *ANTI-STEALTH — CONFIGURAR STRIKES*\n\n` +
-            `Defina a quantidade de mensagens Stealth/Ciphertext que um usuário pode enviar antes de ser punido (entre 1 e 10).\n\n` +
-            `💡 *Como usar:*\n` +
-            `• _${prefix}antistealth strikes 3_ (padrão)\n` +
-            `• _${prefix}antistealth strikes 1_ (punição imediata)\n\n` +
-            `📌 *Limite atual:* ${config.limit || 3} strike(s)`
-        );
+        return reply(MESSAGES.middleware.antiStealth.configStrikesMenu(prefix, config.limit || 3));
     }
 
     config.limit = num;
     await optimizer.saveJsonWithCache(groupFilePath, groupData);
 
-    return reply(
-        `🛡️ *ANTI-STEALTH — STRIKES CONFIGURADOS*\n\n` +
-        `🎯 Limite de strikes definido para: *${num}*\n` +
-        `O usuário será punido na *${num}ª* ocorrência de stealth.`
-    );
+    return reply(MESSAGES.middleware.antiStealth.strikesConfigured(num));
 }
 
 export async function handleAntistealthCommand({ 
@@ -485,14 +465,6 @@ export async function handleAntistealthCommand({
         case 'limit':
             return await configureAntiStealthStrikes(val, groupData, groupFilePath, optimizer, reply, prefix, config);
         default:
-            return reply(
-                `🛡️ *ANTI-STEALTH — COMANDOS*\n\n` +
-                `• _${prefix}antistealth_ — Ativar/desativar\n` +
-                `• _${prefix}antistealth on/off_ — Ativar/desativar\n` +
-                `• _${prefix}antistealth status_ — Ver status e estatísticas\n` +
-                `• _${prefix}antistealth acao_ — Configurar ação\n` +
-                `• _${prefix}antistealth strikes_ — Configurar limite de strikes\n` +
-                `• _${prefix}antistealth acao abrir_ — Abre o grupo`
-            );
+            return reply(MESSAGES.middleware.antiStealth.commandsMenu(prefix));
     }
 }

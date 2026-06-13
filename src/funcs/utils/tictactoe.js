@@ -204,13 +204,17 @@ class GameManager {
         for (const [groupId, game] of this.activeGames.entries()) {
             if (now - game.startTime > CONFIG.GAME_TIMEOUT_MS) {
                 this.activeGames.delete(groupId);
-                console.log(`[TTT Cleanup] Jogo expirado removido do grupo ${groupId}`);
+                if (process.env.DEBUG_MODE === 'true') {
+                    console.log(`[TTT Cleanup] Jogo expirado removido do grupo ${groupId}`);
+                }
             }
         }
         for (const [groupId, invitation] of this.pendingInvitations.entries()) {
             if (now - invitation.timestamp > CONFIG.INVITATION_TIMEOUT_MS) {
                 this.pendingInvitations.delete(groupId);
-                console.log(`[TTT Cleanup] Convite expirado removido do grupo ${groupId}`);
+                if (process.env.DEBUG_MODE === 'true') {
+                    console.log(`[TTT Cleanup] Convite expirado removido do grupo ${groupId}`);
+                }
             }
         }
     }

@@ -46,7 +46,9 @@ async function search(query, maxResults = 10) {
     const cached = getCached(`search:${query}:${maxResults}`);
     if (cached) return { ok: true, ...cached, cached: true };
 
-    console.log(`[Search] Pesquisando "${query}"`);
+    if (process.env.DEBUG_MODE === 'true') {
+      console.log(`[Search] Pesquisando "${query}"`);
+    }
 
     const searchUrl = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(query)}`;
 

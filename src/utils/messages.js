@@ -6,6 +6,9 @@ import { rpgMessages } from './messages/rpg.js';
 import { adminMessages } from './messages/admin.js';
 import { memberMessages } from './messages/member.js';
 import { ownerMessages } from './messages/owner.js';
+import { middlewareMessages } from './messages/middleware.js';
+import { handlersMessages } from './messages/handlers.js';
+import { funcsMessages } from './messages/funcs.js';
 
 export const MESSAGES = {
   error: {
@@ -44,6 +47,9 @@ export const MESSAGES = {
   admin: adminMessages,
   member: memberMessages,
   owner: ownerMessages,
+  middleware: middlewareMessages,
+  handlers: handlersMessages,
+  funcs: funcsMessages,
   tools: {
     ping: (statusEmoji, speed, statusCor, qualidade, uptimeBot) => `╭⊱ ⚡ *STATUS DA CONEXÃO* ⚡ ⊱╮
 │
@@ -67,6 +73,7 @@ export const MESSAGES = {
     antiPayment: (user) => `🛡️ *Anti-Payment:* Pagamento detectado!\n\n🚫 @${user} foi removido e o grupo foi fechado temporariamente por segurança.`,
     antiStatusAdmin: (user) => `🚫 @${user}, Status não são permitidos neste grupo. Você foi removido.`,
     antiStatusUser: (user, extra = '') => `🚫 @${user}, Status não são permitidos neste grupo!${extra}`,
+    antiFakeQuote: (user, messages) => `🛡️ Sistema Anti-Fake Quote ativado!\n\nO banimento de @${user} foi anulado pois ele é um membro veterano (${messages} msgs).\nIsso evita banimentos injustos caso alguém forje um status.`,
     minMessageAdmin: (min) => `🚫 Usuário removido por enviar mídia sem legenda suficiente (mínimo: ${min} caracteres).`,
     minMessageUser: "⚠️ Mídia sem legenda suficiente detectada, mas não sou admin para remover o usuário.",
     minMessageWarn: (min) => `⚠️ Advertência: Envie mídias com pelo menos ${min} caracteres na legenda para evitar remoção.`,

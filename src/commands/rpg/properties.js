@@ -19,8 +19,8 @@ export default {
     getEcoUser,
     MESSAGES
   }) => {
-    if (!isGroup) return reply('⚔️ Este comando funciona apenas em grupos com Modo RPG ativo.');
-    if (!groupData.modorpg) return reply(`⚔️ Modo RPG desativado! Use ${prefix}modorpg para ativar.`);
+    if (!isGroup) return reply(MESSAGES.rpg.groupOnly);
+    if (!groupData.modorpg) return reply(MESSAGES.rpg.disabled(prefix));
     
     const econ = loadEconomy();
     const me = getEcoUser(econ, sender);
@@ -52,34 +52,33 @@ export default {
           text += `  ${econ.propertiesCatalog[k]?.name || k} - desde ${last}\n`;
         }
       }
-      
       text += `\n💡 Use ${prefix}comprarpropriedade <tipo> e ${prefix}coletarpropriedades`;
       return reply(text);
     }
     
     if (command === 'comprarpropriedade' || command === 'cprop') {
       const key = (args[0] || '').toLowerCase(); 
-      if (!key) return reply(`Use: ${prefix}comprarpropriedade <tipo>`);
+      if (!key) return reply(MESSAGES.rpg.properties.useBuy(prefix));
       
       const prop = (econ.propertiesCatalog || {})[key]; 
-      if (!prop) return reply('Propriedade inexistente.');
+      if (!prop) return reply(MESSAGES.rpg.properties.notFound);
       
-      if (me.properties?.[key]?.owned) return reply('Você já possui essa propriedade.');
-      if ((me.wallet || 0) < prop.price) return reply('Saldo insuficiente.');
+      if (me.properties?.[key]?.owned) return reply(MESSAGES.rpg.properties.alreadyOwned);
+      if ((me.wallet || 0) < prop.price) return reply(MESSAGES.rpg.insufficientCoins(prop.price.toLocaleString('pt-BR')));
       
       me.wallet -= prop.price;
       if (!me.properties) me.properties = {};
       me.properties[key] = { owned: true, lastCollect: Date.now() };
       
       saveEconomy(econ);
-      return reply(`✅ Você comprou ${prop.name}!`);
+      return reply(MESSAGES.rpg.properties.buySuccess(prop.name));
     }
     
     if (command === 'coletarpropriedades') {
       const props = me.properties || {}; 
       const keys = Object.keys(props).filter(k => props[k].owned);
       
-      if (keys.length === 0) return reply('Você não possui propriedades.');
+      if (keys.length === 0) return reply(MESSAGES.rpg.properties.none);
       
       let totalGold = 0; 
       const matsGain = {};
@@ -92,7 +91,7 @@ export default {
         const upkeep = (meta.upkeepPerDay || 0) * days; 
         
         if ((me.wallet || 0) < upkeep) {
-          return reply(`Saldo insuficiente para pagar manutenção de ${meta.name} (${fmt(upkeep)}).`);
+          return reply(MESSAGES.rpg.properties.upkeepInsufficient(meta.name, fmt(upkeep)));
         }
         
         me.wallet -= upkeep;
@@ -114,12 +113,12 @@ export default {
       
       saveEconomy(econ);
       
-      let msg = `✅ Coleta concluída! +${fmt(totalGold)} gold`;
+      let matsStr = '';
       if (Object.keys(matsGain).length > 0) {
-        msg += ` | Materiais: ` + Object.entries(matsGain).map(([k, q]) => `${k} x${q}`).join(', ');
+        matsStr = Object.entries(matsGain).map(([k, q]) => `${k} x${q}`).join(', ');
       }
       
-      return reply(msg);
+      return reply(MESSAGES.rpg.properties.collectSuccess(fmt(totalGold), matsStr));
     }
   }
 };

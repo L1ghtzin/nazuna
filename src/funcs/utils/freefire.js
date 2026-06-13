@@ -23,7 +23,9 @@ async function sendLikes(playerId) {
       return { ok: false, msg: 'ID do jogador inválido. Deve conter apenas números.' };
     }
 
-    console.log(`[FreeFire] Enviando likes para UID: ${playerId}`);
+    if (process.env.DEBUG_MODE === 'true') {
+      console.log(`[FreeFire] Enviando likes para UID: ${playerId}`);
+    }
 
     const response = await axios.get(`${BASE_URL}/api/sendlikes`, {
       params: {

@@ -245,7 +245,7 @@ export default {
             text: MESSAGES.owner.rental_system.remove.groupWarning
           });
         } catch (error) {
-          console.log("Não foi possível notificar o grupo:", error.message);
+          console.error("Não foi possível notificar o grupo:", error.message);
         }
       } catch (error) {
         console.error("Erro no comando removeraluguel:", error);
@@ -306,7 +306,7 @@ export default {
             text: MESSAGES.owner.rental_system.extend.groupWarning(daysToAdd, newExpirationDate, daysLeft)
           });
         } catch (error) {
-          console.log("Não foi possível notificar o grupo:", error.message);
+          console.error("Não foi possível notificar o grupo:", error.message);
         }
       } catch (error) {
         console.error("Erro no comando estenderaluguel:", error);

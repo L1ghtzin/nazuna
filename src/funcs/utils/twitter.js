@@ -78,7 +78,9 @@ async function getInfo(url) {
     const cached = getCached(`twitter:${tweetId}`);
     if (cached) return { ok: true, ...cached, cached: true };
 
-    console.log(`[Twitter] Obtendo informações do tweet ID: ${tweetId}`);
+    if (process.env.DEBUG_MODE === 'true') {
+      console.log(`[Twitter] Obtendo informações do tweet ID: ${tweetId}`);
+    }
 
     const authorization = await getAuthorization();
 

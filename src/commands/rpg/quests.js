@@ -17,8 +17,8 @@ export default {
     command,
     MESSAGES
   }) => {
-    if (!isGroup) return reply('⚔️ Este comando funciona apenas em grupos com Modo RPG ativo.');
-    if (!groupData.modorpg) return reply(`⚔️ Modo RPG desativado! Use ${prefix}modorpg para ativar.`);
+    if (!isGroup) return reply(MESSAGES.rpg.groupOnly);
+    if (!groupData.modorpg) return reply(MESSAGES.rpg.disabled(prefix));
     
     const econ = loadEconomy();
     const me = getEcoUser(econ, sender);
@@ -70,11 +70,11 @@ export default {
       });
       
       if (claimedCount === 0) {
-        return reply(`💔 Nenhuma recompensa disponível para reivindicar! Complete as missões primeiro.`);
+        return reply(MESSAGES.rpg.quests.noRewards);
       }
       
       saveEconomy(econ);
-      return reply(`╭━━━⊱ ✅ *RECOMPENSAS* ⊱━━━╮\n\n🎉 Você reivindicou ${claimedCount} missão(ões)!\n\n💰 Dinheiro: +${totalReward.toLocaleString()}\n✨ EXP: +${totalExp}\n\n╰━━━━━━━━━━━━━━━━━━━━╯`);
+      return reply(MESSAGES.rpg.quests.claimed(claimedCount, totalReward.toLocaleString(), totalExp));
     }
     
     // Mostrar missões

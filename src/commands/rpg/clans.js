@@ -24,8 +24,8 @@ export default {
     MESSAGES,
     bot
   }) => {
-    if (!isGroup) return reply('⚔️ Este comando funciona apenas em grupos com Modo RPG ativo.');
-    if (!groupData.modorpg) return reply(`⚔️ Modo RPG desativado! Use ${prefix}modorpg para ativar.`);
+    if (!isGroup) return reply(MESSAGES.rpg.groupOnly);
+    if (!groupData.modorpg) return reply(MESSAGES.rpg.disabled(prefix));
 
     const econ = loadEconomy();
     const me = getEcoUser(econ, sender);
@@ -60,18 +60,18 @@ export default {
 
     // --- CRIAR CLÃ ---
     if (command === 'criarcla' || command === 'criarclã') {
-      if (!q) return reply(`❗ Use: ${prefix}criarcla <nome do clã>`);
-      if (me.clan) return reply(`💔 Você já pertence a um clã!`);
+      if (!q) return reply(MESSAGES.rpg.clans.createUsage(prefix));
+      if (me.clan) return reply(MESSAGES.rpg.clans.alreadyInClan);
 
       const clanName = q.trim();
-      if (clanName.length < 3 || clanName.length > 24) return reply(`💔 Nome do clã precisa ter entre 3 e 24 caracteres.`);
+      if (clanName.length < 3 || clanName.length > 24) return reply(MESSAGES.rpg.clans.invalidNameLen);
 
       const baseNormalized = normalizeClanName(clanName);
       const nameTaken = Object.values(econ.clans || {}).some(c => c.name && normalizeClanName(c.name) === baseNormalized);
-      if (nameTaken) return reply(`💔 Já existe um clã com esse nome!`);
+      if (nameTaken) return reply(MESSAGES.rpg.clans.nameTaken);
 
       const clanCost = 20000;
-      if ((me.wallet || 0) < clanCost) return reply(`💰 Você precisa de ${clanCost.toLocaleString()} moedas para criar um clã.`);
+      if ((me.wallet || 0) < clanCost) return reply(MESSAGES.rpg.clans.createCost(clanCost.toLocaleString()));
 
       me.wallet -= clanCost;
       const clanId = 'CLAN_' + Date.now();
@@ -91,14 +91,14 @@ export default {
       
       me.clan = clanId;
       saveEconomy(econ);
-      return reply(`🏰 Clã *${clanName}* criado com sucesso!\n\n👑 Líder: ${pushname}\n💰 Custo: ${clanCost.toLocaleString()}`);
+      return reply(MESSAGES.rpg.clans.created(clanName, pushname, clanCost.toLocaleString()));
     }
 
     // --- MEU CLÃ / INFO CLÃ ---
     if (command === 'meucla' || command === 'meuclã' || command === 'cla' || command === 'claninfo') {
       let clanObj = null;
       if (!q) {
-        if (!me.clan) return reply(`💔 Você não faz parte de nenhum clã. Use: ${prefix}cla <nome do clã> para consultar outro clã.`);
+        if (!me.clan) return reply(MESSAGES.rpg.clans.notInClan(prefix));
         clanObj = econ.clans[me.clan];
         if (!clanObj) { me.clan = null; saveEconomy(econ); return reply(MESSAGES.rpg.clanNotFound); }
       } else {
@@ -108,7 +108,7 @@ export default {
       }
 
       if (!clanObj) {
-        return reply(`💔 Clã não encontrado. Use ${prefix}criarcla <nome> para criar o seu!`);
+        return reply(MESSAGES.rpg.clans.noClanCatalog(prefix));
       }
 
       let text = `╭━━━⊱ 🏰 *${clanObj.name.toUpperCase()}* ⊱━━━╮\n`;
@@ -141,24 +141,24 @@ export default {
     // --- DEPOSITAR NO CLÃ ---
     if (command === 'depositarcla' || command === 'depcla') {
       const clan = getMyClan();
-      if (!clan) return reply(`💔 Você não faz parte de nenhum clã.`);
+      if (!clan) return reply(MESSAGES.rpg.clans.notInClan(prefix));
 
       const amount = parseInt(args[0]);
-      if (isNaN(amount) || amount <= 0) return reply(`💔 Informe um valor válido para depositar! Ex: ${prefix}depositarcla 5000`);
-      if (me.wallet < amount) return reply(`💰 Você não tem moedas suficientes na carteira!`);
+      if (isNaN(amount) || amount <= 0) return reply(MESSAGES.rpg.clans.depositUsage(prefix));
+      if (me.wallet < amount) return reply(MESSAGES.rpg.clans.noMoney);
 
       me.wallet -= amount;
       clan.bank = (clan.bank || 0) + amount;
       
       saveEconomy(econ);
-      return reply(`🏰 Você depositou *${amount.toLocaleString()}* moedas no banco do clã!\n💰 Banco atual: *${clan.bank.toLocaleString()}* moedas.`);
+      return reply(MESSAGES.rpg.clans.deposited(amount.toLocaleString(), clan.bank.toLocaleString()));
     }
 
     // --- GUERRA ---
     if (command === 'guerra' || command === 'war' || command === 'guerracla') {
       const clan = getMyClan();
-      if (!clan) return reply('🏰 Você precisa estar em um clã para declarar guerra!');
-      if (clan.leader !== sender) return reply('👑 Apenas o líder pode declarar guerra!');
+      if (!clan) return reply(MESSAGES.rpg.clans.needClanWar);
+      if (clan.leader !== sender) return reply(MESSAGES.rpg.clans.leaderOnlyWar);
       
       let text = `╭━━━⊱ ⚔️ *GUERRA DE CLÃS* ⊱━━━╮\n│ Seu Clã: *${clan.name}*\n╰━━━━━━━━━━━━━━━━━━━━╯\n\n`;
       text += `💡 Em breve: Sistema de guerras entre clãs!\n\n`;
@@ -170,26 +170,26 @@ export default {
     // --- CONVIDAR ---
     if (command === 'convidar' || command === 'invite' || command === 'convite') {
       const clan = getMyClan();
-      if (!clan) return reply(`💔 Você não faz parte de nenhum clã.`);
-      if (clan.leader !== sender) return reply('👑 Apenas o líder pode convidar membros.');
+      if (!clan) return reply(MESSAGES.rpg.clans.notInClan(prefix));
+      if (clan.leader !== sender) return reply(MESSAGES.rpg.clans.leaderOnlyInvite);
 
       let target = (menc_jid2 && menc_jid2[0]) || null;
-      if (!target) return reply(`❗ Marque um usuário para convidar. Ex: ${prefix}convidar @user`);
+      if (!target) return reply(MESSAGES.rpg.clans.inviteUsage(prefix));
       
       const rawTargetJid = target;
       target = await normalizeUserId(bot, target);
-      if (target === sender) return reply(`💔 Você já está no clã!`);
+      if (target === sender) return reply(MESSAGES.rpg.clans.inviteSelf);
 
       const targetUser = getEcoUser(econ, target);
-      if (targetUser.clan) return reply(`💔 Este usuário já pertence a um clã.`);
+      if (targetUser.clan) return reply(MESSAGES.rpg.clans.targetInClan);
 
       if (!Array.isArray(clan.pendingInvites)) clan.pendingInvites = [];
-      if (idInList(target, clan.pendingInvites)) return reply(`💔 Este usuário já tem um convite pendente.`);
+      if (idInList(target, clan.pendingInvites)) return reply(MESSAGES.rpg.clans.invitePending);
 
       clan.pendingInvites.push(target);
       saveEconomy(econ);
       
-      await reply(`📨 Convite enviado para @${rawTargetJid.split('@')[0]}!\nUse ${prefix}aceitarconvite ${clan.id} para aceitar.`, { mentions: [rawTargetJid] });
+      await reply(MESSAGES.rpg.clans.invited(rawTargetJid.split('@')[0], prefix, clan.id), { mentions: [rawTargetJid] });
       return;
     }
 
@@ -197,12 +197,12 @@ export default {
     if (command === 'aceitarconvite' || command === 'aceitarrpg') {
       const rawJid = getRawJid();
       const clansWithInvite = Object.values(econ.clans || {}).filter(c => Array.isArray(c.pendingInvites) && (idInList(sender, c.pendingInvites) || idInList(rawJid, c.pendingInvites)));
-      if (!q && clansWithInvite.length === 0) return reply(`💔 Você não possui convites pendentes para clãs.`);
+      if (!q && clansWithInvite.length === 0) return reply(MESSAGES.rpg.clans.acceptNoInvites);
       
       let clanObj = null;
       if (!q) {
         if (clansWithInvite.length === 1) clanObj = clansWithInvite[0];
-        else return reply(`🔎 Você possui múltiplos convites. Use: ${prefix}aceitarconvite <clanId>`);
+        else return reply(MESSAGES.rpg.clans.acceptMultiple(prefix));
       } else {
         const qTrim = q.trim();
         const qLower = qTrim.toLowerCase();
@@ -210,10 +210,10 @@ export default {
       }
 
       if (!clanObj || !Array.isArray(clanObj.pendingInvites) || (!idInList(sender, clanObj.pendingInvites) && !idInList(rawJid, clanObj.pendingInvites))) {
-        return reply(`💔 Clã não encontrado ou sem convite pendente.`);
+        return reply(MESSAGES.rpg.clans.acceptNotFound);
       }
 
-      if (me.clan) return reply(`💔 Você já faz parte de um clã. Saia do atual primeiro.`);
+      if (me.clan) return reply(MESSAGES.rpg.clans.acceptAlreadyIn);
 
       clanObj.members = clanObj.members || [];
       if (!clanObj.members.includes(sender)) clanObj.members.push(sender);
@@ -222,19 +222,19 @@ export default {
       me.clan = clanObj.id;
       
       saveEconomy(econ);
-      return reply(`✅ Você entrou para o clã *${clanObj.name}*!`);
+      return reply(MESSAGES.rpg.clans.accepted(clanObj.name));
     }
 
     // --- RECUSAR CONVITE ---
     if (command === 'recusarconvite' || command === 'recusar') {
       const rawJid = getRawJid();
       const clansWithInvite = Object.values(econ.clans || {}).filter(c => Array.isArray(c.pendingInvites) && (idInList(sender, c.pendingInvites) || idInList(rawJid, c.pendingInvites)));
-      if (!q && clansWithInvite.length === 0) return reply(`💔 Você não possui convites pendentes para clãs.`);
+      if (!q && clansWithInvite.length === 0) return reply(MESSAGES.rpg.clans.rejectNoInvites);
 
       let clanObj = null;
       if (!q) {
         if (clansWithInvite.length === 1) clanObj = clansWithInvite[0];
-        else return reply(`🔎 Você possui múltiplos convites. Use: ${prefix}recusarconvite <clanId>`);
+        else return reply(MESSAGES.rpg.clans.rejectMultiple(prefix));
       } else {
         const qTrim = q.trim();
         const qLower = qTrim.toLowerCase();
@@ -242,29 +242,29 @@ export default {
       }
 
       if (!clanObj || !Array.isArray(clanObj.pendingInvites) || (!idInList(sender, clanObj.pendingInvites) && !idInList(rawJid, clanObj.pendingInvites))) {
-        return reply(`💔 Clã não encontrado ou sem convite pendente.`);
+        return reply(MESSAGES.rpg.clans.rejectNotFound);
       }
 
       clanObj.pendingInvites = removeIdFromList(sender, clanObj.pendingInvites);
       clanObj.pendingInvites = removeIdFromList(rawJid, clanObj.pendingInvites);
       saveEconomy(econ);
-      return reply(`❗ Você recusou o convite do clã *${clanObj.name}*.`);
+      return reply(MESSAGES.rpg.clans.rejected(clanObj.name));
     }
 
     // --- EXPULSAR ---
     if (command === 'expulsar' || command === 'kickcla') {
       const clan = getMyClan();
-      if (!clan) return reply(`💔 Você não faz parte de nenhum clã.`);
-      if (clan.leader !== sender) return reply('👑 Apenas o líder pode expulsar membros.');
+      if (!clan) return reply(MESSAGES.rpg.clans.notInClan(prefix));
+      if (clan.leader !== sender) return reply(MESSAGES.rpg.clans.leaderOnlyKick);
 
       let target = (menc_jid2 && menc_jid2[0]) || null;
-      if (!target) return reply(`❗ Marque um membro para expulsar. Ex: ${prefix}expulsar @user`);
+      if (!target) return reply(MESSAGES.rpg.clans.kickUsage(prefix));
       
       const rawTargetJid = target;
       target = await normalizeUserId(bot, target);
-      if (target === sender) return reply(`💔 Você não pode se expulsar. Use sair para transferir liderança.`);
+      if (target === sender) return reply(MESSAGES.rpg.clans.kickSelf);
 
-      if (!idInList(target, clan.members)) return reply(`💔 Este usuário não é membro do seu clã.`);
+      if (!idInList(target, clan.members)) return reply(MESSAGES.rpg.clans.kickNotMember);
 
       clan.members = removeIdFromList(target, clan.members);
       const targetUser = getEcoUser(econ, target);
@@ -277,13 +277,13 @@ export default {
       }
 
       saveEconomy(econ);
-      return reply(`🗑️ @${rawTargetJid.split('@')[0]} foi expulso do clã *${clan.name}*.`, { mentions: [rawTargetJid] });
+      return reply(MESSAGES.rpg.clans.kicked(rawTargetJid.split('@')[0], clan.name), { mentions: [rawTargetJid] });
     }
 
     // --- SAIR DO CLÃ ---
     if (command === 'sair') {
       const clan = getMyClan();
-      if (!clan) return reply(`💔 Você não faz parte de nenhum clã.`);
+      if (!clan) return reply(MESSAGES.rpg.clans.notInClan(prefix));
       
       const rawJid = getRawJid();
 
@@ -298,14 +298,14 @@ export default {
           delete econ.clans[clan.id];
           me.clan = null;
           saveEconomy(econ);
-          return reply('🗑️ Você saiu e o clã foi dissolvido pois não há mais membros.');
+          return reply(MESSAGES.rpg.clans.dissolved);
         } else {
           const newLeader = remaining[0];
           clan.leader = newLeader;
           clan.members = remaining;
           me.clan = null;
           saveEconomy(econ);
-          return reply(`🔁 Você deixou o clã e a liderança foi transferida para @${newLeader.split('@')[0]}.`, { mentions: [newLeader] });
+          return reply(MESSAGES.rpg.clans.leaveLeaderTransfer(newLeader.split('@')[0]), { mentions: [newLeader] });
         }
       }
 
@@ -319,32 +319,32 @@ export default {
       }
       
       saveEconomy(econ);
-      return reply('✅ Você saiu do clã.');
+      return reply(MESSAGES.rpg.clans.left);
     }
 
     // --- REMOVER CONVITE ---
     if (command === 'rmconvite' || command === 'removerconvite') {
       const clan = getMyClan();
-      if (!clan) return reply(`💔 Você não faz parte de nenhum clã.`);
-      if (clan.leader !== sender) return reply('👑 Apenas o líder pode remover convites.');
+      if (!clan) return reply(MESSAGES.rpg.clans.notInClan(prefix));
+      if (clan.leader !== sender) return reply(MESSAGES.rpg.clans.leaderOnlyRemoveInvite);
 
       let target = (menc_jid2 && menc_jid2[0]) || null;
-      if (!target) return reply(`❗ Marque um usuário para remover o convite. Ex: ${prefix}rmconvite @user`);
+      if (!target) return reply(MESSAGES.rpg.clans.removeInviteUsage(prefix));
       
       const rawTargetJid = target;
       target = await normalizeUserId(bot, target);
       
-      if (!Array.isArray(clan.pendingInvites) || !idInList(target, clan.pendingInvites)) return reply(`💔 Este usuário não tem um convite pendente.`);
+      if (!Array.isArray(clan.pendingInvites) || !idInList(target, clan.pendingInvites)) return reply(MESSAGES.rpg.clans.removeInviteNoPending);
 
       clan.pendingInvites = removeIdFromList(target, clan.pendingInvites);
       saveEconomy(econ);
-      return reply(`🗑️ Convite removido para @${rawTargetJid.split('@')[0]}.`, { mentions: [rawTargetJid] });
+      return reply(MESSAGES.rpg.clans.removeInviteSuccess(rawTargetJid.split('@')[0]), { mentions: [rawTargetJid] });
     }
 
     // --- RANK CLÃS ---
     if (command === 'rankcla' || command === 'rankclã') {
       const allClans = Object.values(econ.clans || {});
-      if (allClans.length === 0) return reply('📊 Nenhum clã registrado.');
+      if (allClans.length === 0) return reply(MESSAGES.rpg.clans.noClans);
 
       const ranked = allClans.sort((a, b) => (b.level || 1) - (a.level || 1) || (b.exp || 0) - (a.exp || 0)).slice(0, 10);
       let text = `╭━━━⊱ 🏆 *TOP CLÃS* ⊱━━━╮\n╰━━━━━━━━━━━━━━━━━━━━╯\n\n`;

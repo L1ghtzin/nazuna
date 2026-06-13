@@ -51,8 +51,8 @@ export default {
         relationshipManager,
     MESSAGES
   }) => {
-        if (!isGroup) return reply('⚔️ Os comandos RPG funcionam apenas em grupos.');
-        if (!groupData.modorpg) return reply(`⚔️ *Modo RPG desativado!*\n\n🔒 Este recurso está disponível apenas quando o Modo RPG está ativado.\n🔐 *Administradores* podem ativar com: ${prefix}modorpg\n\n💡 Use ${prefix}menurpg para ver todos os comandos!`);
+        if (!isGroup) return reply(MESSAGES.rpg.core.groupOnly);
+        if (!groupData.modorpg) return reply(MESSAGES.rpg.core.disabled(prefix));
 
         const econ = loadEconomy();
         ensureEconomyDefaults(econ);
@@ -212,56 +212,56 @@ export default {
             return reply(text, mentions.length > 0 ? { mentions } : undefined);
         }
 
-        if (sub === 'carteira') return reply(`╭━━━⊱ 💰 *CARTEIRA* 💰 ⊱━━━╮\n│\n│ 💵 Saldo: ${fmt(me.wallet)}\n│\n╰━━━━━━━━━━━━━━━━━━━━━━╯`);
-        if (sub === 'banco') return reply(`╭━━━⊱ 🏦 *BANCO* 🏦 ⊱━━━╮\n│\n│ 💳 Saldo: ${fmt(me.bank)}\n│ 📊 Limite: ${fmt(bankCapacity)}\n│\n╰━━━━━━━━━━━━━━━━━━━━╯`);
+        if (sub === 'carteira') return reply(MESSAGES.rpg.core.wallet(fmt(me.wallet)));
+        if (sub === 'banco') return reply(MESSAGES.rpg.core.bank(fmt(me.bank), fmt(bankCapacity)));
 
         if (sub === 'depositar' || sub === 'dep') {
             const amount = parseAmount(args[0], me.wallet);
-            if (!amount || amount <= 0) return reply(`💔 Informe um valor.`);
-            if (amount > me.wallet) return reply(`💔 Você não tem tudo isso na carteira.`);
+            if (!amount || amount <= 0) return reply(MESSAGES.rpg.core.deposit.invalidAmount);
+            if (amount > me.wallet) return reply(MESSAGES.rpg.core.deposit.insufficientFunds);
             const space = bankCapacity - me.bank;
             const toDep = Math.min(amount, space);
-            if (toDep <= 0) return reply(`╭━━━⊱ ⚠️ *BANCO CHEIO* ⚠️ ⊱━━━╮\n│\n│ Seu limite bancário foi atingido.\n│ Compre mais espaço ou melhore\n│ sua conta!\n│\n╰━━━━━━━━━━━━━━━━━━━━━━━╯`);
+            if (toDep <= 0) return reply(MESSAGES.rpg.core.deposit.bankFull);
             me.wallet -= toDep; me.bank += toDep;
             saveEconomy(econ);
-            return reply(`╭━━━⊱ 🏦 *DEPÓSITO* 🏦 ⊱━━━╮\n│\n│ ✅ Sucesso!\n│\n│ 💵 Valor: ${fmt(toDep)}\n│ 💰 Saldo no banco: ${fmt(me.bank)}\n│\n╰━━━━━━━━━━━━━━━━━━━━━╯`);
+            return reply(MESSAGES.rpg.core.deposit.success(fmt(toDep), fmt(me.bank)));
         }
 
         if (sub === 'sacar' || sub === 'saque') {
             const amount = parseAmount(args[0], me.bank);
-            if (!amount || amount <= 0) return reply(`💔 Informe um valor.`);
-            if (amount > me.bank) return reply(`💔 Saldo insuficiente no banco.`);
+            if (!amount || amount <= 0) return reply(MESSAGES.rpg.core.withdraw.invalidAmount);
+            if (amount > me.bank) return reply(MESSAGES.rpg.core.withdraw.insufficientFunds);
             const taxa = Math.floor(amount * 0.05);
             me.bank -= amount; me.wallet += (amount - taxa);
             saveEconomy(econ);
-            return reply(`╭━━━⊱ 🏧 *SAQUE* 🏧 ⊱━━━╮\n│\n│ ✅ Sucesso!\n│\n│ 💵 Valor sacado: ${fmt(amount)}\n│ 📉 Taxa (5%): ${fmt(taxa)}\n│ 💰 Recebido: ${fmt(amount - taxa)}\n│\n╰━━━━━━━━━━━━━━━━━━━╯`);
+            return reply(MESSAGES.rpg.core.withdraw.success(fmt(amount), fmt(taxa), fmt(amount - taxa)));
         }
 
         if (sub === 'transferir' || sub === 'pix') {
             const mentioned = menc_jid2?.[0];
-            if (!mentioned) return reply(`╭━━━⊱ 💸 *TRANSFERÊNCIA* 💸 ⊱━━━╮\n│\n│ 👥 Marque um usuário e informe\n│    o valor a transferir\n│\n│ ⚠️ *Taxa de transferência: 15%*\n│\n│ 📝 *Exemplo:*\n│ ${prefix}${sub} @user 100\n│ ${prefix}${sub} 100 @user\n│\n╰━━━━━━━━━━━━━━━━━━━━━━━╯`);
-            if (mentioned === sender) return reply('❌ Você não pode transferir para si mesmo.');
+            if (!mentioned) return reply(MESSAGES.rpg.core.transfer.usage(prefix, sub));
+            if (mentioned === sender) return reply(MESSAGES.rpg.core.transfer.selfError);
             // Busca o valor numérico entre os args, ignorando a menção
             const rawArgs = q ? q.trim().split(/\s+/) : [];
             const numericArg = rawArgs.find(a => !a.startsWith('@') && (/^\d+/.test(a) || a === 'tudo' || a === 'all' || a === 'metade' || a === 'half'));
             const amount = parseAmount(numericArg, me.wallet);
-            if (!isFinite(amount) || amount <= 0) return reply('❌ Informe um valor válido.');
+            if (!isFinite(amount) || amount <= 0) return reply(MESSAGES.rpg.core.transfer.invalidAmount);
             // TAXA DE TRANSFERÊNCIA: 15%
             const taxa = Math.floor(amount * 0.15);
             const totalNeeded = amount + taxa;
-            if (totalNeeded > me.wallet) return reply(`❌ Você não tem saldo suficiente.\n💰 Valor: ${fmt(amount)}\n💸 Taxa (15%): ${fmt(taxa)}\n📊 Total necessário: ${fmt(totalNeeded)}\n💼 Seu saldo: ${fmt(me.wallet)}`);
+            if (totalNeeded > me.wallet) return reply(MESSAGES.rpg.core.transfer.insufficientFunds(fmt(amount), fmt(taxa), fmt(totalNeeded), fmt(me.wallet)));
             const other = getEcoUser(econ, mentioned);
             me.wallet -= totalNeeded;
             other.wallet += amount;
             saveEconomy(econ);
-            return reply(`╭━━━⊱ ✅ *TRANSFERÊNCIA* ✅ ⊱━━━╮\n│\n│ 💸 Transferido: ${fmt(amount)}\n│ 💰 Taxa (15%): ${fmt(taxa)}\n│ 📊 Total debitado: ${fmt(totalNeeded)}\n│ 👤 Para: @${mentioned.split('@')[0]}\n│\n╰━━━━━━━━━━━━━━━━━━━━━━━━╯`, { mentions: [mentioned] });
+            return reply(MESSAGES.rpg.core.transfer.success(fmt(amount), fmt(taxa), fmt(totalNeeded), mentioned.split('@')[0]), { mentions: [mentioned] });
         }
 
         if (sub === 'minerar' || sub === 'mine') {
             const cd = me.cooldowns?.mine || 0;
-            if (Date.now() < cd) return reply(`⏳ Aguarde ${timeLeft(cd)} para minerar novamente.`);
+            if (Date.now() < cd) return reply(MESSAGES.rpg.core.mining.cooldown(timeLeft(cd)));
             const pk = getActivePickaxe(me);
-            if (!pk) return reply(`⛏️ Você precisa de uma picareta para minerar. Compre na ${prefix}loja (ex: ${prefix}comprar pickaxe_bronze) ou repare com ${prefix}reparar.`);
+            if (!pk) return reply(MESSAGES.rpg.core.mining.needPickaxe(prefix));
             // Cálculo de ouro com base na picareta e bônus (BALANCEADO)
             const tierMult = PICKAXE_TIER_MULT[pk.tier] || 1.0;
             const base = 100 + Math.floor(Math.random() * 101); // 100-200
@@ -295,12 +295,12 @@ export default {
             saveEconomy(econ);
             let dropTxt = Object.entries(drops).filter(([, q]) => q > 0).map(([k, q]) => `${k} x${q}`).join(', ');
             const broke = pk.dur === 0 && before > 0;
-            return reply(`⛏️ Você minerou e ganhou ${fmt(total)} ${bonus > 0 ? `(bônus ${fmt(bonus)})` : ''}!\n📦 Drops: ${dropTxt || '—'}\n🛠️ Picareta: ${pk.dur}/${me.tools.pickaxe.max}${broke ? ' — quebrou!' : ''}`);
+            return reply(MESSAGES.rpg.core.mining.success(fmt(total), bonus > 0 ? `(bônus ${fmt(bonus)})` : '', dropTxt || '—', pk.dur, me.tools.pickaxe.max, broke));
         }
 
         if (sub === 'trabalhar' || sub === 'work') {
             const cd = me.cooldowns?.work || 0;
-            if (Date.now() < cd) return reply(`╭━━━⊱ ⏳ *COOLDOWN* ⏳ ⊱━━━╮\n│\n│ ⚠️ Você está de folga!\n│ ⏰ Retorne em: ${timeLeft(cd)}\n│\n╰━━━━━━━━━━━━━━━━━━━━━╯`);
+            if (Date.now() < cd) return reply(MESSAGES.rpg.core.working.cooldown(timeLeft(cd)));
             const job = econ.jobCatalog?.[me.job] || { min: 50, max: 100 };
             const gain = job.min + Math.floor(Math.random() * (job.max - job.min + 1));
             const bonus = Math.floor(gain * (workBonus || 0));
@@ -314,8 +314,8 @@ export default {
             me.stats.workCount = (me.stats.workCount || 0) + 1;
             const levelUpRes = checkEcoLevelUp(me);
             saveEconomy(econ);
-            let msg = `╭━━━⊱ 💼 *TRABALHO* 💼 ⊱━━━╮\n│\n│ ✅ Turno finalizado!\n│\n│ 💰 Salário: ${fmt(gain)}\n│ 📈 Bônus: ${fmt(bonus)}\n│ 💵 Total: ${fmt(gain + bonus)}\n│ ✨ +20 XP\n│\n╰━━━━━━━━━━━━━━━━━━━━━╯`;
-            if (levelUpRes.leveledUp) msg += `\n\n🌟 *LEVEL UP!* Você agora é nível ${levelUpRes.newLevel}!`;
+            let msg = MESSAGES.rpg.core.working.success(fmt(gain), fmt(bonus), fmt(gain + bonus));
+            if (levelUpRes.leveledUp) msg += MESSAGES.rpg.core.working.levelUp(levelUpRes.newLevel);
             return reply(msg);
         }
 
@@ -369,17 +369,17 @@ export default {
               };
             }
 
-            let txt = '╭━━━⊱ 💼 *VAGAS DE EMPREGO* 💼 ⊱━━━╮\n│\n';
+            let txt = MESSAGES.rpg.core.employment.catalogHeader;
             Object.entries(jobs).forEach(([k, j]) => {
-              txt += `│ 🔹 *${k}*\n│   ${j.name}\n│   💰 ${fmt(j.min)}-${fmt(j.max)}\n│\n`;
+              txt += MESSAGES.rpg.core.employment.catalogItem(k, j.name, fmt(j.min), fmt(j.max));
             });
-            txt += `╰━━━━━━━━━━━━━━━━━━━━━━━━━━━╯\n\n💡 Use: ${prefix}emprego <vaga>`;
+            txt += MESSAGES.rpg.core.employment.catalogFooter(prefix);
             return reply(txt);
         }
 
         if (sub === 'emprego') {
             const rawKey = (args[0] || '');
-            if (!rawKey) return reply(`╭━━━⊱ 💼 *EMPREGO* 💼 ⊱━━━╮\n│\n│ ❌ Informe a vaga desejada\n│\n│ 📋 Ver vagas: ${prefix}vagas\n│\n│ 💡 Exemplo:\n│ ${prefix}emprego vendedor\n│\n╰━━━━━━━━━━━━━━━━━━━━━╯`);
+            if (!rawKey) return reply(MESSAGES.rpg.core.employment.usage(prefix));
 
             const defaultJobs = {
               "estagiario": { name: "Estagiário", min: 80, max: 140 },
@@ -391,7 +391,7 @@ export default {
             const jobCatalog = (econ.jobCatalog && Object.keys(econ.jobCatalog).length) ? econ.jobCatalog : defaultJobs;
             const key = findKeyIgnoringAccents(jobCatalog, rawKey) || normalizeParam(rawKey);
             const job = jobCatalog[key];
-            if (!job) return reply('❌ Vaga inexistente. Use ' + prefix + 'vagas para ver disponíveis.');
+            if (!job) return reply(MESSAGES.rpg.jobNotFound(prefix));
 
             if (!econ.jobCatalog || Object.keys(econ.jobCatalog).length === 0) {
               econ.jobCatalog = jobCatalog;
@@ -399,18 +399,18 @@ export default {
 
             me.job = key;
             saveEconomy(econ);
-            return reply(`╭━━━⊱ ✅ *CONTRATADO!* ✅ ⊱━━━╮\n│\n│ 💼 Emprego: ${job.name}\n│ 💰 Ganhos: ${fmt(job.min)}-${fmt(job.max)}\n│\n│ 🏢 Use ${prefix}trabalhar\n│    para receber seu salário!\n│\n╰━━━━━━━━━━━━━━━━━━━━━━━╯`);
+            return reply(MESSAGES.rpg.core.employment.hired(job.name, fmt(job.min), fmt(job.max), prefix));
         }
 
         if (sub === 'demitir') {
             me.job = null;
             saveEconomy(econ);
-            return reply(`╭━━━⊱ 👋 *DEMISSÃO* 👋 ⊱━━━╮\n│\n│ ✅ Você pediu demissão\n│\n│ 💼 Veja novas vagas: ${prefix}vagas\n│\n╰━━━━━━━━━━━━━━━━━━━━━━╯`);
+            return reply(MESSAGES.rpg.core.employment.resigned(prefix));
         }
 
         if (sub === 'pescar' || sub === 'fish') {
             const cd = me.cooldowns?.fish || 0;
-            if (Date.now() < cd) return reply(`⏳ Aguarde ${timeLeft(cd)} para pescar novamente.`);
+            if (Date.now() < cd) return reply(MESSAGES.rpg.core.fishing.cooldown(timeLeft(cd)));
             const base = 80 + Math.floor(Math.random() * 121); // 80-200 (BALANCEADO)
             const skillB = getSkillBonus(me, 'fishing');
             const bonus = Math.floor(base * ((fishBonus || 0) + skillB));
@@ -431,22 +431,13 @@ export default {
             
             saveEconomy(econ);
             
-            let fishText = `╭━━━⊱ 🎣 *PESCOU!* 🎣 ⊱━━━╮\n`;
-            fishText += `│\n`;
-            fishText += `│ 💰 Ganhou: *${fmt(total)}*\n`;
-            if (bonus > 0) {
-                fishText += `│ ✨ Bônus: *+${fmt(bonus)}*\n`;
-            }
-            fishText += `│ 🐟 Peixe: *+${fishQty}*\n`;
-            fishText += `│\n`;
-            fishText += `╰━━━━━━━━━━━━━━━━━━━━━╯`;
-            
-            return reply(fishText);
+            const bonusText = bonus > 0 ? `│ ✨ Bônus: *+${fmt(bonus)}*\n` : '';
+            return reply(MESSAGES.rpg.core.fishing.success(fmt(total), bonusText, fishQty));
         }
 
         if (sub === 'explorar' || sub === 'explore') {
             const cd = me.cooldowns?.explore || 0;
-            if (Date.now() < cd) return reply(`⏳ Aguarde ${timeLeft(cd)} para explorar novamente.`);
+            if (Date.now() < cd) return reply(MESSAGES.rpg.core.exploring.cooldown(timeLeft(cd)));
             const base = 100 + Math.floor(Math.random() * 151); // 100-250 (BALANCEADO)
             const skillB = getSkillBonus(me, 'exploring');
             const bonus = Math.floor(base * ((exploreBonus || 0) + skillB));
@@ -470,24 +461,14 @@ export default {
             
             saveEconomy(econ);
             
-            let exploreText = `╭━━━⊱ 🧭 *EXPLOROU!* 🧭 ⊱━━━╮\n`;
-            exploreText += `│\n`;
-            exploreText += `│ 💰 Ganhou: *${fmt(total)}*\n`;
-            if (bonus > 0) {
-                exploreText += `│ ✨ Bônus: *+${fmt(bonus)}*\n`;
-            }
-            if (Object.keys(matsGain).length > 0) {
-                exploreText += `│ 📦 Materiais: ` + Object.entries(matsGain).map(([k, q]) => `${k} x${q}`).join(', ') + `\n`;
-            }
-            exploreText += `│\n`;
-            exploreText += `╰━━━━━━━━━━━━━━━━━━━━━╯`;
-            
-            return reply(exploreText);
+            const bonusText = bonus > 0 ? `│ ✨ Bônus: *+${fmt(bonus)}*\n` : '';
+            const matsText = Object.keys(matsGain).length > 0 ? `│ 📦 Materiais: ` + Object.entries(matsGain).map(([k, q]) => `${k} x${q}`).join(', ') + `\n` : '';
+            return reply(MESSAGES.rpg.core.exploring.success(fmt(total), bonusText, matsText));
         }
 
         if (sub === 'cacar' || sub === 'caçar' || sub === 'hunt') {
             const cd = me.cooldowns?.hunt || 0;
-            if (Date.now() < cd) return reply(`⏳ Aguarde ${timeLeft(cd)} para caçar novamente.`);
+            if (Date.now() < cd) return reply(MESSAGES.rpg.core.hunting.cooldown(timeLeft(cd)));
             const base = 22 + Math.floor(Math.random() * 34); // 22-55 (nerfado)
             const skillB = getSkillBonus(me, 'hunting');
             const bonus = Math.floor(base * ((huntBonus || 0) + skillB) * 0.4); // bônus reduzido 60%
@@ -509,28 +490,17 @@ export default {
             
             saveEconomy(econ);
             
-            let huntText = `╭━━━⊱ 🏹 *CAÇOU!* 🏹 ⊱━━━╮\n`;
-            huntText += `│\n`;
-            huntText += `│ 💰 Ganhou: *${fmt(total)}*\n`;
-            if (bonus > 0) {
-                huntText += `│ ✨ Bônus: *+${fmt(bonus)}*\n`;
-            }
-            huntText += `│ 🥩 Carne: *+${meatQty}*\n`;
-            if (Object.keys(huntMats).length > 0) {
-                huntText += `│ 📦 Materiais: ` + Object.entries(huntMats).map(([k, q]) => `${k} x${q}`).join(', ') + `\n`;
-            }
-            huntText += `│\n`;
-            huntText += `╰━━━━━━━━━━━━━━━━━━━━━╯`;
-            
-            return reply(huntText);
+            const bonusText = bonus > 0 ? `│ ✨ Bônus: *+${fmt(bonus)}*\n` : '';
+            const matsText = Object.keys(huntMats).length > 0 ? `│ 📦 Materiais: ` + Object.entries(huntMats).map(([k, q]) => `${k} x${q}`).join(', ') + `\n` : '';
+            return reply(MESSAGES.rpg.core.hunting.success(fmt(total), bonusText, meatQty, matsText));
         }
 
         if (sub === 'resetrpg' && isOwner) {
             const target = menc_jid2?.[0];
-            if (!target) return reply(`💔 Marque alguém.`);
+            if (!target) return reply(MESSAGES.rpg.core.reset.needMention);
             delete econ.users[target];
             saveEconomy(econ);
-            return reply(`✅ Dados resetados para @${target.split('@')[0]}.`, { mentions: [target] });
+            return reply(MESSAGES.rpg.core.reset.success(target.split('@')[0]), { mentions: [target] });
         }
     }
 };

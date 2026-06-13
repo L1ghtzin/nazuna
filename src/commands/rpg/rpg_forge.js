@@ -32,20 +32,17 @@ export default {
         
         // List recipes
         if (!rawCraftKey && (command === 'forjar' || command === 'forge')) {
-            let text = `╭━━━⊱ ⚒️ *RECEITAS DE FORJA* ⊱━━━╮\n│ 💰 Seu gold: ${fmt(me.wallet)}\n╰━━━━━━━━━━━━━━━━━━━━╯\n\n`;
+            let text = MESSAGES.rpg.forge.recipesHeader(fmt(me.wallet));
             const recipes = econ.recipes || {};
             if (Object.keys(recipes).length === 0) {
-                text += `💔 Nenhuma receita disponível.`;
+                text += MESSAGES.rpg.forge.noRecipes;
             } else {
-                text += `📜 *RECEITAS DISPONÍVEIS*\n\n`;
+                text += MESSAGES.rpg.forge.recipesTitle;
                 for (const [key, recipe] of Object.entries(recipes)) {
                     const item = econ.shop[key];
                     if (!item) continue;
-                    text += `🔸 *${item.name || key}*\n   💰 Custo: ${fmt(recipe.gold || 0)}\n`;
-                    if (recipe.requires) {
-                        text += `   📦 Materiais: ` + Object.entries(recipe.requires).map(([m, q]) => `${m} x${q}`).join(', ') + `\n`;
-                    }
-                    text += `   💡 Forjar: ${prefix}forjar ${key}\n\n`;
+                    const matsText = recipe.requires ? Object.entries(recipe.requires).map(([m, q]) => `${m} x${q}`).join(', ') : '—';
+                    text += MESSAGES.rpg.forge.recipeLine(item.name || key, fmt(recipe.gold || 0), matsText, prefix, key);
                 }
             }
             return reply(text);
@@ -54,16 +51,16 @@ export default {
         // Repair logic
         if (command === 'reparar' || command === 'repair') {
             const pick = me.tools?.pickaxe;
-            if (!pick) return reply(`💔 Você não possui uma picareta para reparar.`);
-            if (pick.dur >= pick.max) return reply('🛠️ Sua picareta já está em perfeito estado.');
+            if (!pick) return reply(MESSAGES.rpg.forge.noPickaxe);
+            if (pick.dur >= pick.max) return reply(MESSAGES.rpg.forge.pickaxePerfect);
             
             const cost = 200;
-            if (me.wallet < cost) return reply(`💰 O conserto custa ${fmt(cost)}.`);
+            if (me.wallet < cost) return reply(MESSAGES.rpg.forge.repairCost(fmt(cost)));
             
             me.wallet -= cost;
             pick.dur = pick.max;
             saveEconomy(econ);
-            return reply(`🛠️ Picareta reparada com sucesso! Durabilidade: ${pick.max}/${pick.max}.`);
+            return reply(MESSAGES.rpg.forge.repairSuccess(pick.max, pick.max));
         }
 
         // Craft from recipe
@@ -72,9 +69,9 @@ export default {
             const rec = econ.recipes[craftKey];
             const reqs = rec.requires || {};
             for (const [mk, mq] of Object.entries(reqs)) {
-                if ((me.materials?.[mk] || 0) < mq) return reply(`💔 Faltam materiais: ${mk} x${mq}.`);
+                if ((me.materials?.[mk] || 0) < mq) return reply(MESSAGES.rpg.forge.missingMaterials(mk, mq));
             }
-            if (me.wallet < (rec.gold || 0)) return reply(`💔 Gold insuficiente.`);
+            if (me.wallet < (rec.gold || 0)) return reply(MESSAGES.rpg.forge.insufficientGold);
 
             for (const [mk, mq] of Object.entries(reqs)) me.materials[mk] -= mq;
             me.wallet -= (rec.gold || 0);
@@ -83,19 +80,19 @@ export default {
             if (item?.type === 'tool' && item.toolType === 'pickaxe') {
                 me.tools.pickaxe = { tier: item.tier, dur: item.durability, max: item.durability, key: craftKey };
                 saveEconomy(econ);
-                return reply(`⚒️ Você forjou e equipou ${item.name}!`);
+                return reply(MESSAGES.rpg.forge.forgedAndEquipped(item.name));
             }
             
             me.inventory[craftKey] = (me.inventory[craftKey] || 0) + 1;
             saveEconomy(econ);
-            return reply(`⚒️ Você forjou ${item?.name || craftKey}!`);
+            return reply(MESSAGES.rpg.forge.forgedItem(item?.name || craftKey));
         }
 
         // Minigame forge (fallback for 'forjar' without recipe)
         if (command === 'forjar' || command === 'forge') {
             const cd = me.cooldowns?.forge || 0;
-            if (Date.now() < cd) return reply(`⏳ Aguarde ${timeLeft(cd)} para forjar novamente.`);
-            if (me.wallet < 150) return reply(`💰 Você precisa de 150 moedas.`);
+            if (Date.now() < cd) return reply(MESSAGES.rpg.forge.cooldown(timeLeft(cd)));
+            if (me.wallet < 150) return reply(MESSAGES.rpg.forge.insufficientCoins);
             
             me.wallet -= 150;
             if (Math.random() < 0.35) {
@@ -104,11 +101,11 @@ export default {
                 me.wallet += (gain + bonus);
                 me.cooldowns.forge = Date.now() + 25 * 60 * 1000;
                 saveEconomy(econ);
-                return reply(`⚒️ Forja bem-sucedida! Lucro ${fmt(gain + bonus)}.`);
+                return reply(MESSAGES.rpg.forge.forgeSuccess(fmt(gain + bonus)));
             } else {
                 me.cooldowns.forge = Date.now() + 25 * 60 * 1000;
                 saveEconomy(econ);
-                return reply(`🔥 A forja falhou.`);
+                return reply(MESSAGES.rpg.forge.forgeFailed);
             }
         }
     }

@@ -1,6 +1,7 @@
 import pathz from 'path';
 import { readJsonFileAsync, writeJsonFileAsync } from '../utils/asyncFs.js';
 import CaptchaIndex, { getCaptcha, removeCaptcha } from '../utils/captchaIndex.js';
+import { MESSAGES } from '../utils/messages.js';
 
 
 /**
@@ -34,7 +35,7 @@ export async function handleCaptchaResponse(bot, sender, body, isGroup, info, re
     if (debug) console.log('[CAPTCHA] EXPIRADO');
     try {
       await bot.sendMessage(isCapUser.groupId, {
-        text: `⏰ @${senderNormalized} demorou demais e foi removido.`,
+        text: MESSAGES.middleware.captcha.expired(senderNormalized),
         mentions: [isCapUser.idOrigin]
       });
       await bot.groupParticipantsUpdate(
@@ -43,7 +44,7 @@ export async function handleCaptchaResponse(bot, sender, body, isGroup, info, re
         'remove'
       );
     } catch (e) {
-      console.log('[ERRO EXPIRAÇÃO]:', e.message);
+      console.error('[ERRO EXPIRAÇÃO]:', e.message);
     }
     CaptchaIndex.remove(senderNormalized);
     return true; // Interrompe
@@ -82,20 +83,20 @@ export async function handleCaptchaResponse(bot, sender, body, isGroup, info, re
             }
         } catch (e) {
             await bot.sendMessage(isCapUser.groupId, {
-              text: `✅ @${senderNormalized} liberado com sucesso!`,
+              text: MESSAGES.middleware.captcha.released(senderNormalized),
               mentions: [isCapUser.idOrigin]
             });
         }
       } else {
         await bot.sendMessage(isCapUser.groupId, {
-          text: `✅ @${senderNormalized} liberado com sucesso!`,
+          text: MESSAGES.middleware.captcha.released(senderNormalized),
           mentions: [isCapUser.idOrigin]
         });
       }
     } catch (e) {
-      console.log('[ERRO WELCOME PÓS-CAPTCHA]:', e.message);
+      console.error('[ERRO WELCOME PÓS-CAPTCHA]:', e.message);
       await bot.sendMessage(isCapUser.groupId, {
-        text: `✅ @${senderNormalized} liberado com sucesso!`,
+        text: MESSAGES.middleware.captcha.released(senderNormalized),
         mentions: [isCapUser.idOrigin]
       }).catch(() => {});
     }

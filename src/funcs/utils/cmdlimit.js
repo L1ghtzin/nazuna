@@ -5,13 +5,14 @@ import {
   checkCommandLimit,
   formatTimeLeft
 } from '../../utils/database.js';
+import { MESSAGES } from '../../utils/messages.js';
 
 async function cmdLimitAdd(bot, from, q, reply, prefix, isOwnerOrSub) {
-  if (!isOwnerOrSub) return reply("🚫 Apenas o Dono pode limitar comandos!");
+  if (!isOwnerOrSub) return reply(MESSAGES.funcs.cmdLimit.onlyOwnerLimit);
   
   const args = q.split(' ');
   if (args.length < 3) {
-    return reply(`❌ Formato inválido!\n\nUse: ${prefix}cmdlimitar <comando> <usos> <tempo>\n\nExemplo: ${prefix}cmdlimitar sticker 3 1h\n\n📝 Formatos de tempo aceitos:\n• 30s (30 segundos)\n• 10m (10 minutos)\n• 1h (1 hora)\n• 2d (2 dias)`);
+    return reply(MESSAGES.funcs.cmdLimit.invalidFormat(prefix));
   }
   
   const commandName = args[0];
@@ -23,10 +24,10 @@ async function cmdLimitAdd(bot, from, q, reply, prefix, isOwnerOrSub) {
 }
 
 async function cmdLimitRemove(bot, from, q, reply, prefix, isOwnerOrSub) {
-  if (!isOwnerOrSub) return reply("🚫 Apenas o Dono pode remover limites de comandos!");
+  if (!isOwnerOrSub) return reply(MESSAGES.funcs.cmdLimit.onlyOwnerRemoveLimit);
   
   if (!q) {
-    return reply(`❌ Especifique o comando!\n\nUse: ${prefix}cmddeslimitar <comando>\n\nExemplo: ${prefix}cmddeslimitar sticker`);
+    return reply(MESSAGES.funcs.cmdLimit.specifyCommand(prefix));
   }
   
   const result = removeCommandLimit(q.trim());
@@ -34,16 +35,16 @@ async function cmdLimitRemove(bot, from, q, reply, prefix, isOwnerOrSub) {
 }
 
 async function cmdLimitList(bot, from, q, reply, prefix, isOwnerOrSub) {
-  if (!isOwnerOrSub) return reply("🚫 Apenas o Dono pode ver os limites!");
+  if (!isOwnerOrSub) return reply(MESSAGES.funcs.cmdLimit.onlyOwnerViewLimits);
   
   const limits = getCommandLimits();
   const commandNames = Object.keys(limits);
   
   if (commandNames.length === 0) {
-    return reply("📝 Nenhum comando com limite configurado!");
+    return reply(MESSAGES.funcs.cmdLimit.noLimits);
   }
   
-  let message = "🚫 *COMANDOS LIMITADOS*\n\n";
+  let message = MESSAGES.funcs.cmdLimit.listHeader;
   
   for (const cmdName of commandNames) {
     const limit = limits[cmdName];
@@ -55,10 +56,7 @@ async function cmdLimitList(bot, from, q, reply, prefix, isOwnerOrSub) {
     message += `  📅 Criado: ${new Date(limit.createdAt).toLocaleDateString('pt-BR')}\n\n`;
   }
   
-  message += "ℹ️ *Como funciona:*\n";
-  message += "• Cada usuário tem seu próprio limite\n";
-  message += "• Quando atinge o limite, deve aguardar o período\n";
-  message += "• O tempo reset é individual por usuário";
+  message += MESSAGES.funcs.cmdLimit.listFooter;
   
   return reply(message);
 }

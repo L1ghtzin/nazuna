@@ -17,8 +17,8 @@ export default {
     getEcoUser,
     MESSAGES
   }) => {
-    if (!isGroup) return reply('⚔️ Este comando funciona apenas em grupos com Modo RPG ativo.');
-    if (!groupData.modorpg) return reply(`⚔️ Modo RPG desativado! Use ${prefix}modorpg para ativar.`);
+    if (!isGroup) return reply(MESSAGES.rpg.groupOnly);
+    if (!groupData.modorpg) return reply(MESSAGES.rpg.disabled(prefix));
     
     const econ = loadEconomy();
     const me = getEcoUser(econ, sender);
@@ -69,7 +69,7 @@ export default {
         text += `• ${prefix}casa coletar - Coletar renda\n`;
         text += `• ${prefix}casa decorar <item>\n`;
       } else {
-        text += `❌ Você não tem uma casa!\n\n`;
+        text += `${MESSAGES.rpg.house.noHouse}\n\n`;
         text += `🏘️ *CASAS DISPONÍVEIS:*\n\n`;
         for (const [id, data] of Object.entries(casas)) {
           text += `${data.emoji} *${data.name}*\n`;
@@ -85,12 +85,12 @@ export default {
     if (sub === 'comprar') {
       const tipo = args[1]?.toLowerCase();
       if (!tipo || !casas[tipo]) {
-        return reply(`❌ Tipo inválido!\n\n🏘️ Tipos: barraca, cabana, casa, mansao, castelo`);
+        return reply(MESSAGES.rpg.house.invalidType);
       }
 
       const casa = casas[tipo];
       if (me.wallet < casa.price) {
-        return reply(`💰 Você precisa de ${casa.price.toLocaleString()} para comprar ${casa.name}!`);
+        return reply(MESSAGES.rpg.house.insufficientFunds(casa.price.toLocaleString(), casa.name));
       }
 
       me.wallet -= casa.price;
@@ -98,12 +98,12 @@ export default {
       me.house.lastCollect = Date.now();
 
       saveEconomy(econ);
-      return reply(`╭━━━⊱ 🎉 *CASA COMPRADA* ⊱━━━╮\n\n${casa.emoji} Você comprou uma *${casa.name}*!\n\n📦 Armazenamento: +${casa.bonus.storage}\n💰 Renda: ${casa.renda}/dia\n\n╰━━━━━━━━━━━━━━━━━━━━╯`);
+      return reply(MESSAGES.rpg.house.bought(casa.emoji, casa.name, casa.bonus.storage, casa.renda));
     }
 
     // Coletar renda
     if (sub === 'coletar') {
-      if (!me.house.type) return reply('❌ Você não tem uma casa!');
+      if (!me.house.type) return reply(MESSAGES.rpg.house.noHouse);
 
       const casa = casas[me.house.type];
       const agora = Date.now();
@@ -114,7 +114,7 @@ export default {
         const tempoRestante = 86400000 - tempoPassado;
         const horas = Math.floor(tempoRestante / 3600000);
         const minutos = Math.floor((tempoRestante % 3600000) / 60000);
-        return reply(`⏰ Próxima coleta em: ${horas}h ${minutos}min`);
+        return reply(MESSAGES.rpg.house.cooldownCollect(horas, minutos));
       }
 
       const rendaTotal = Math.min(diasPassados, 7) * casa.renda; // Máximo 7 dias acumulados
@@ -122,12 +122,12 @@ export default {
       me.house.lastCollect = agora;
 
       saveEconomy(econ);
-      return reply(`💰 *RENDA COLETADA*\n\n${casa.emoji} ${casa.name}\n💵 +${rendaTotal.toLocaleString()} (${Math.min(diasPassados, 7)} dias)`);
+      return reply(MESSAGES.rpg.house.collected(casa.emoji, casa.name, rendaTotal.toLocaleString(), Math.min(diasPassados, 7)));
     }
 
     // Decorar
     if (sub === 'decorar') {
-      if (!me.house.type) return reply('❌ Você não tem uma casa!');
+      if (!me.house.type) return reply(MESSAGES.rpg.house.noHouse);
 
       const decId = args[1]?.toLowerCase();
       if (!decId) {
@@ -141,21 +141,21 @@ export default {
         return reply(text);
       }
 
-      if (!decoracoes[decId]) return reply('❌ Decoração não encontrada!');
+      if (!decoracoes[decId]) return reply(MESSAGES.rpg.house.invalidDecor);
       
       if (!me.house.decorations) me.house.decorations = [];
-      if (me.house.decorations.includes(decId)) return reply('❌ Você já tem essa decoração!');
+      if (me.house.decorations.includes(decId)) return reply(MESSAGES.rpg.house.decorAlreadyOwned);
 
       const dec = decoracoes[decId];
-      if (me.wallet < dec.price) return reply(`💰 Você precisa de ${dec.price.toLocaleString()}!`);
+      if (me.wallet < dec.price) return reply(MESSAGES.rpg.house.decorCost(dec.price.toLocaleString()));
 
       me.wallet -= dec.price;
       me.house.decorations.push(decId);
 
       saveEconomy(econ);
-      return reply(`🎨 *DECORAÇÃO ADICIONADA*\n\n${dec.emoji} ${dec.name}\n✨ +${dec.value} ${dec.bonus}`);
+      return reply(MESSAGES.rpg.house.decorAdded(dec.emoji, dec.name, dec.value, dec.bonus));
     }
 
-    return reply(`💡 Use: ${prefix}casa para ver opções`);
+    return reply(MESSAGES.rpg.house.usageInfo(prefix));
   }
 };

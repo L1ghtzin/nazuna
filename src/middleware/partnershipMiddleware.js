@@ -12,7 +12,8 @@ export async function processPartnership({
   parceriasData,
   getUserName,
   reply,
-  saveParceriasData
+  saveParceriasData,
+  MESSAGES
 }) {
   // SISTEMA DE PARCERIA
   if (isGroup && parceriasData.active && !isGroupAdmin && body.includes('chat.whatsapp.com') && !info.key.fromMe) {
@@ -25,7 +26,7 @@ export async function processPartnership({
         await bot.sendMessage(from, {
           delete: info.key
         });
-        await reply(`@${getUserName(sender)}, você atingiu o limite de ${partnerData.limit} links de grupos.`, {
+        await reply(MESSAGES.middleware.partnership.limitReached(getUserName(sender), partnerData.limit), {
           mentions: [sender]
         });
         return true;
@@ -34,7 +35,7 @@ export async function processPartnership({
       await bot.sendMessage(from, {
         delete: info.key
       });
-      await reply(`@${getUserName(sender)}, você não é um parceiro e não pode enviar links de grupos.`, {
+      await reply(MESSAGES.middleware.partnership.notPartner(getUserName(sender)), {
         mentions: [sender]
       });
       return true;

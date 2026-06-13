@@ -14,7 +14,8 @@ export async function processSecurity({
   antipalavra,
   groupData,
   groupFile,
-  optimizer
+  optimizer,
+  MESSAGES
 }) {
   // AntiToxic
   if (isGroup && !isGroupAdmin && antitoxic && antitoxic.isEnabled && antitoxic.isEnabled(from) && body) {
@@ -50,14 +51,13 @@ export async function processSecurity({
         const detectionResult = antipalavra.checkMessage(from, body);
         
         if (detectionResult && detectionResult.detected) {
-          console.log(`[ANTIPALAVRA] Palavra detectada: "${detectionResult.palavra}" de @${sender.split('@')[0]}`);
+          if (process.env.DEBUG_MODE === 'true') {
+            console.log(`[ANTIPALAVRA] Palavra detectada: "${detectionResult.palavra}" de @${sender.split('@')[0]}`);
+          }
           
           if (!isBotAdmin) {
             await bot.sendMessage(from, {
-              text: `⚠️ *ANTIPALAVRA - DETECÇÃO*\n\n` +
-                `👤 @${sender.split('@')[0]} usou uma palavra proibida!\n` +
-                `⚠️ Palavra: "${detectionResult.palavra}"\n\n` +
-                `❌ Não posso banir pois não sou administrador!`,
+              text: MESSAGES.middleware.antipalavra.detectedNoAdmin(sender.split('@')[0], detectionResult.palavra),
               mentions: [sender]
             }).catch(err => console.error('[ANTIPALAVRA] Erro ao enviar notificação:', err.message));
             return true;
@@ -74,11 +74,7 @@ export async function processSecurity({
           antipalavra.registerBan(from, sender, detectionResult.palavra);
           
           await bot.sendMessage(from, {
-            text: `🚫 *ANTIPALAVRA - BANIMENTO AUTOMÁTICO*\n\n` +
-            `👤 Usuário: @${sender.split('@')[0]}\n` +
-            `⚠️ Palavra detectada: "${detectionResult.palavra}"\n` +
-            `🔨 Ação: Banimento automático\n\n` +
-            `_O sistema antipalavra protege este grupo._`,
+            text: MESSAGES.middleware.antipalavra.banned(sender.split('@')[0], detectionResult.palavra),
             mentions: [sender]
           }).catch(err => console.error('[ANTIPALAVRA] Erro ao enviar notificação:', err.message));
           

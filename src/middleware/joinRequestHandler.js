@@ -1,6 +1,7 @@
 import pathz from 'path';
 import { readJsonFileAsync, writeJsonFileAsync } from '../utils/asyncFs.js';
 import { addCaptcha, removeCaptcha } from '../utils/captchaIndex.js';
+import { MESSAGES } from '../utils/messages.js';
 
 /**
  * Middleware para processar solicitações de entrada de grupos (join requests via messageStubType)
@@ -53,7 +54,9 @@ export async function handleJoinRequest(bot, info, from, isGroup, GRUPOS_DIR, de
       });
     }
     
-    console.log(`[JOIN REQUEST] Nova solicitação detectada: ${participantJid} (ação: ${action})`);
+    if (debug) {
+      console.log(`[JOIN REQUEST] Nova solicitação detectada: ${participantJid} (ação: ${action})`);
+    }
     
     // Processa apenas novas solicitações (action === 'created')
     if (action === 'created') {
@@ -69,11 +72,7 @@ export async function handleJoinRequest(bot, info, from, isGroup, GRUPOS_DIR, de
           const num2 = Math.floor(Math.random() * 10) + 1;
           const correctAnswer = num1 + num2;
           
-          const captchaMessage = `🤖 *Verificação de Entrada no Grupo*\n\n` +
-            `Você solicitou entrada no grupo *${groupNameCaptcha}*.\n\n` +
-            `Para confirmar que você é humano, resolva esta conta:\n\n` +
-            `❓ *${num1} + ${num2} = ?*\n\n` +
-            `Responda apenas com o número da resposta.`;
+          const captchaMessage = MESSAGES.middleware.joinRequest.captchaChallenge(groupNameCaptcha, num1, num2);
           
           // Salva captcha pendente
           groupSettings.pendingCaptchas = groupSettings.pendingCaptchas || {};
@@ -104,7 +103,9 @@ export async function handleJoinRequest(bot, info, from, isGroup, GRUPOS_DIR, de
           
           try {
             await bot.sendMessage(participantJid, { text: captchaMessage });
-            console.log(`[JOIN REQUEST] Captcha enviado para ${participantJid}`);
+            if (debug) {
+              console.log(`[JOIN REQUEST] Captcha enviado para ${participantJid}`);
+            }
           } catch (err) {
             console.error(`[JOIN REQUEST] Erro ao enviar captcha para ${participantJid}:`, err);
           }
@@ -112,12 +113,14 @@ export async function handleJoinRequest(bot, info, from, isGroup, GRUPOS_DIR, de
           // Auto-aceitar sem captcha
           try {
             await bot.groupRequestParticipantsUpdate(from, [participantJid], 'approve');
-            console.log(`[JOIN REQUEST] ✅ Aprovado automaticamente: ${participantJid}`);
+            if (debug) {
+              console.log(`[JOIN REQUEST] ✅ Aprovado automaticamente: ${participantJid}`);
+            }
             
             // Notificação X9
             if (groupSettings.x9) {
               await bot.sendMessage(from, {
-                text: `✅ *X9 Report:* @${participantJid.split('@')[0]} foi aprovado automaticamente (auto-aceitar ativo).`,
+                text: MESSAGES.middleware.joinRequest.approved(participantJid.split('@')[0]),
                 mentions: [participantJid],
               }).catch(err => console.error(`❌ Erro ao enviar X9: ${err.message}`));
             }
@@ -130,7 +133,7 @@ export async function handleJoinRequest(bot, info, from, isGroup, GRUPOS_DIR, de
         if (groupSettings.x9) {
           try {
             await bot.sendMessage(from, {
-              text: `📬 *X9 Report:* Nova solicitação de entrada detectada.\n👤 Usuário: @${participantJid.split('@')[0]}\n\nAprovação manual necessária.`,
+              text: MESSAGES.middleware.joinRequest.pending(participantJid.split('@')[0]),
               mentions: [participantJid],
             }).catch(err => console.error(`❌ Erro ao enviar X9: ${err.message}`));
           } catch (err) {
@@ -155,7 +158,7 @@ export async function handleJoinRequest(bot, info, from, isGroup, GRUPOS_DIR, de
         const statusText = action === 'revoked' ? 'cancelou a solicitação' : 'teve a solicitação recusada';
         try {
           await bot.sendMessage(from, {
-            text: `🔔 *X9 Report:* @${participantJid.split('@')[0]} ${statusText}.`,
+            text: MESSAGES.middleware.joinRequest.statusUpdate(participantJid.split('@')[0], statusText),
             mentions: [participantJid],
           }).catch(err => console.error(`❌ Erro ao enviar X9: ${err.message}`));
         } catch (err) {

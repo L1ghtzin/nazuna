@@ -19,12 +19,13 @@ export async function processAccessControl({
   reply,
   loadGlobalBlacklist,
   globalBlocks,
-  isBotAdmin
+  isBotAdmin,
+  MESSAGES
 }) {
   // Verificação de usuários bloqueados no grupo
   if (isGroup && groupData.blockedUsers && (isUserInMap(groupData.blockedUsers, sender) || groupData.blockedUsers[getUserName(sender)]) && isCmd) {
     const blockedReason = groupData.blockedUsers[sender] ? groupData.blockedUsers[sender].reason : groupData.blockedUsers[getUserName(sender)].reason;
-    await reply(`🚫 Você não tem permissão para usar comandos neste grupo.\nMotivo: ${blockedReason}`);
+    await reply(MESSAGES.middleware.accessControl.blockedInGroup(blockedReason));
     return true;
   }
 
@@ -32,25 +33,28 @@ export async function processAccessControl({
   const globalBlacklist = loadGlobalBlacklist();
   if (isCmd && sender && globalBlacklist.users && (isUserInMap(globalBlacklist.users, sender) || globalBlacklist.users[getUserName(sender)])) {
     const blacklistEntry = globalBlacklist.users[sender] || globalBlacklist.users[getUserName(sender)];
-    await reply(`🚫 Você está na blacklist global e não pode usar comandos.\nMotivo: ${blacklistEntry.reason}\nAdicionado por: ${blacklistEntry.addedBy}\nData: ${new Date(blacklistEntry.addedAt).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })}`);
+    const dateStr = new Date(blacklistEntry.addedAt).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+    await reply(MESSAGES.middleware.accessControl.globalBlacklist(blacklistEntry.reason, blacklistEntry.addedBy, dateStr));
     return true;
   }
   
   // Blacklist do Grupo
   if (isGroup && isCmd && groupData.blacklist && (groupData.blacklist[sender] || groupData.blacklist[getUserName(sender)])) {
     const blacklistEntry = groupData.blacklist[sender] || groupData.blacklist[getUserName(sender)];
-    await reply(`🚫 Você está na blacklist deste grupo e não pode usar comandos.\nMotivo: ${blacklistEntry.reason}\nData: ${new Date(blacklistEntry.date || blacklistEntry.timestamp).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })}`);
+    const dateStr = new Date(blacklistEntry.date || blacklistEntry.timestamp).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+    await reply(MESSAGES.middleware.accessControl.groupBlacklist(blacklistEntry.reason, dateStr));
     return true;
   }
 
   // Bloqueios Globais (User/Command)
   if (sender && sender.includes('@') && globalBlocks.users && (globalBlocks.users[sender] || globalBlocks.users[getUserName(sender)]) && isCmd) {
-    await reply(`🚫 Parece que você está bloqueado de usar meus comandos globalmente.\nMotivo: ${globalBlocks.users[sender] ? globalBlocks.users[sender].reason : globalBlocks.users[getUserName(sender)].reason}`);
+    const reason = globalBlocks.users[sender] ? globalBlocks.users[sender].reason : globalBlocks.users[getUserName(sender)].reason;
+    await reply(MESSAGES.middleware.accessControl.globalBlocked(reason));
     return true;
   }
 
   if (isCmd && globalBlocks.commands && globalBlocks.commands[command]) {
-    await reply(`🚫 O comando *${command}* está temporariamente desativado globalmente.\nMotivo: ${globalBlocks.commands[command].reason}`);
+    await reply(MESSAGES.middleware.accessControl.globalCommandDisabled(command, globalBlocks.commands[command].reason));
     return true;
   }
 
@@ -76,7 +80,7 @@ export async function processAccessControl({
       if (userData.count > groupData.messageLimit.limit) {
         if (groupData.messageLimit.action === 'ban' && isBotAdmin) {
           await bot.groupParticipantsUpdate(from, [sender], 'remove');
-          await reply(`🚨 @${getUserName(sender)} foi banido por exceder o limite de ${groupData.messageLimit.limit} mensagens em ${groupData.messageLimit.interval}s!`, {
+          await reply(MESSAGES.middleware.accessControl.floodBanned(getUserName(sender), groupData.messageLimit.limit, groupData.messageLimit.interval), {
             mentions: [sender]
           });
           delete groupData.messageLimit.users[sender];
@@ -86,14 +90,14 @@ export async function processAccessControl({
           const warnings = groupData.messageLimit.warnings[sender];
           if (warnings >= 3 && isBotAdmin) {
             await bot.groupParticipantsUpdate(from, [sender], 'remove');
-            await reply(`🚨 @${getUserName(sender)} foi banido por exceder o limite de mensagens (${groupData.messageLimit.limit} em ${groupData.messageLimit.interval}s) 3 vezes!`, {
+            await reply(MESSAGES.middleware.accessControl.floodBannedWarnings(getUserName(sender), groupData.messageLimit.limit, groupData.messageLimit.interval), {
               mentions: [sender]
             });
             delete groupData.messageLimit.warnings[sender];
             delete groupData.messageLimit.users[sender];
             return true;
           } else {
-            await reply(`⚠️ @${getUserName(sender)}, você excedeu o limite de ${groupData.messageLimit.limit} mensagens em ${groupData.messageLimit.interval}s! Advertência ${warnings}/3.`, {
+            await reply(MESSAGES.middleware.accessControl.floodWarning(getUserName(sender), groupData.messageLimit.limit, groupData.messageLimit.interval, warnings), {
               mentions: [sender]
             });
             return true;

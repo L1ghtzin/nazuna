@@ -10,7 +10,7 @@ export async function handleCustomCommand(ctx) {
     isGroup, isOwner, isGroupAdmin, isOnlyAdmin, body, budy2,
     from, groupPrefix, nomedono, numerodono, nomebot, pushname,
     groupName, groupMetadata, quotedMessageContent, menc_os2,
-    info, reply, bot, getUserName, optimizer, args, q
+    info, reply, bot, getUserName, optimizer, args, q, MESSAGES
   } = ctx;
   let { isCmd, command } = ctx;
 
@@ -55,11 +55,11 @@ export async function handleCustomCommand(ctx) {
     const settings = customCmd.settings || {};
 
     // Verificações de permissão
-    if (settings.ownerOnly && !isOwner) { await reply('🚫 Este comando só pode ser usado pelo dono do bot.'); return true; }
-    if (settings.adminOnly && !isGroup) { await reply('🚫 Este comando só pode ser usado por admins (em grupos).'); return true; }
-    if (settings.adminOnly && isGroup && !isGroupAdmin) { await reply('🚫 Este comando só pode ser usado por admins.'); return true; }
-    if (settings.context === 'group' && !isGroup) { await reply('⚠️ Comando restrito a grupos.'); return true; }
-    if (settings.context === 'private' && isGroup) { await reply('⚠️ Comando restrito ao privado.'); return true; }
+    if (settings.ownerOnly && !isOwner) { await reply(MESSAGES.middleware.customCommand.ownerOnly); return true; }
+    if (settings.adminOnly && !isGroup) { await reply(MESSAGES.middleware.customCommand.adminOnlyGroup); return true; }
+    if (settings.adminOnly && isGroup && !isGroupAdmin) { await reply(MESSAGES.middleware.customCommand.adminOnly); return true; }
+    if (settings.context === 'group' && !isGroup) { await reply(MESSAGES.middleware.customCommand.groupOnly); return true; }
+    if (settings.context === 'private' && isGroup) { await reply(MESSAGES.middleware.customCommand.privateOnly); return true; }
 
     // Processar parâmetros
     const allArgs = ctx.q || '';
@@ -80,12 +80,12 @@ export async function handleCustomCommand(ctx) {
         if (p.required && (val === undefined || val === '')) missing.push(p.name);
         if (val !== undefined && val !== '') {
           const check = validateParamValue(val, p);
-          if (!check.ok) { await reply(`❌ Parâmetro inválido: ${check.message}`); return true; }
+          if (!check.ok) { await reply(MESSAGES.middleware.customCommand.invalidParam(check.message)); return true; }
         }
       }
       if (missing.length) {
         const usage = customCmd.usage || buildUsageFromParams(customCmd.trigger, settings.params);
-        await reply(`❌ Parâmetros ausentes: ${missing.join(', ')}\nUso: ${usage}`);
+        await reply(MESSAGES.middleware.customCommand.missingParams(missing.join(', '), usage));
         return true;
       }
     }
@@ -136,7 +136,7 @@ export async function handleCustomCommand(ctx) {
     return true;
   } catch (error) {
     console.error('Erro ao executar comando personalizado:', error);
-    await reply('❌ Erro ao executar comando personalizado.');
+    await reply(MESSAGES.middleware.customCommand.executionError);
     return true;
   }
 }

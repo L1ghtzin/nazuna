@@ -18,7 +18,9 @@ async function removeBg(url) {
       return { ok: false, msg: 'URL da imagem é obrigatória' };
     }
 
-    console.log('[RemoveBG] Processando imagem...');
+    if (process.env.DEBUG_MODE === 'true') {
+      console.log('[RemoveBG] Processando imagem...');
+    }
 
     const response = await axios.get(`${API_BASE}/removebg`, {
       params: { url },
@@ -54,7 +56,9 @@ async function upscale(url, scale = 2) {
       return { ok: false, msg: 'URL da imagem é obrigatória' };
     }
 
-    console.log(`[Upscale] Processando imagem (${scale}x)...`);
+    if (process.env.DEBUG_MODE === 'true') {
+      console.log(`[Upscale] Processando imagem (${scale}x)...`);
+    }
 
     const response = await axios.get(`${API_BASE}/upscale`, {
       params: { url, scale },

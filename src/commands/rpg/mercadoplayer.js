@@ -17,8 +17,8 @@ export default {
     getEcoUser,
     MESSAGES
   }) => {
-    if (!isGroup) return reply('⚔️ Este comando funciona apenas em grupos com Modo RPG ativo.');
-    if (!groupData.modorpg) return reply(`⚔️ Modo RPG desativado! Use ${prefix}modorpg para ativar.`);
+    if (!isGroup) return reply(MESSAGES.rpg.groupOnly);
+    if (!groupData.modorpg) return reply(MESSAGES.rpg.disabled(prefix));
 
     const econ = loadEconomy();
     const me = getEcoUser(econ, sender);
@@ -126,7 +126,7 @@ export default {
       const meusAnuncios = econ.playerMarket.listings.filter(l => l.seller === sender);
       
       if (meusAnuncios.length === 0) {
-        return reply('📦 Você não tem nenhum item à venda!');
+        return reply(MESSAGES.rpg.market.emptyPlayerSales);
       }
       
       let text = `🛒 *SEUS ANÚNCIOS*\n\n`;

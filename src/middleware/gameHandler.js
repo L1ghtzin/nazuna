@@ -9,7 +9,8 @@ export async function processGames({
   isGroupAdmin,
   reply,
   tictactoe,
-  connect4
+  connect4,
+  MESSAGES
 }) {
   // TicTacToe (Jogo da Velha)
   if (tictactoe && tictactoe.hasPendingInvitation(from) && budy2) {
@@ -26,7 +27,7 @@ export async function processGames({
   if (tictactoe && tictactoe.hasActiveGame(from) && budy2) {
     if (['tttend', 'rv', 'fimjogo'].includes(budy2.toLowerCase().trim())) {
       if (!isGroupAdmin) {
-        reply("⚠️ Apenas administradores podem encerrar um jogo da velha em andamento.");
+        reply(MESSAGES.middleware.games.tttOnlyAdmin);
         return true; // Interrompe o processamento
       }
       const result = tictactoe.endGame(from);
@@ -64,7 +65,7 @@ export async function processGames({
   if (connect4 && connect4.hasActiveGame && connect4.hasActiveGame(from) && budy2) {
     if (['c4end', 'fimc4'].includes(budy2.toLowerCase().trim())) {
       if (!isGroupAdmin) {
-        await reply("⚠️ Apenas administradores podem encerrar um Connect4 em andamento.");
+        await reply(MESSAGES.middleware.games.c4OnlyAdmin);
         return true;
       }
       const result = connect4.endGame(from);

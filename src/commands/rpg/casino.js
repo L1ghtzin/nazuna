@@ -12,7 +12,6 @@ export default {
     sender, 
     prefix, 
     command,
-    q, 
     args,
     loadEconomy, 
     saveEconomy, 
@@ -21,48 +20,48 @@ export default {
     fmt,
     MESSAGES
   }) => {
-    if (!isGroup) return reply('⚔️ Este comando funciona apenas em grupos com Modo RPG ativo.');
-    if (!groupData.modorpg) return reply(`⚔️ Modo RPG desativado! Use ${prefix}modorpg para ativar.`);
+    if (!isGroup) return reply(MESSAGES.rpg.groupOnly);
+    if (!groupData.modorpg) return reply(MESSAGES.rpg.disabled(prefix));
     
     const econ = loadEconomy();
     const me = getEcoUser(econ, sender);
 
     // --- APOSTA SIMPLES ---
     if (command === 'apostar' || command === 'bet') {
-      if (!args[0]) return reply(`💡 Use ${prefix}${command} <valor>`);
+      if (!args[0]) return reply(MESSAGES.rpg.casino.usageApostar(prefix, command));
       const bet = parseAmount(args[0], me.wallet);
       if (!isFinite(bet) || bet <= 0) return reply(MESSAGES.error.invalid('valor'));
-      if (bet < 100) return reply(`💡 Aposta mínima é de 100 gold.`);
-      if (me.wallet < bet) return reply('💰 Saldo insuficiente na carteira!');
+      if (bet < 100) return reply(MESSAGES.rpg.casino.minBet(100));
+      if (me.wallet < bet) return reply(MESSAGES.rpg.casino.insufficientFunds);
 
       const won = Math.random() < 0.45;
       if (won) {
         me.wallet += bet;
         saveEconomy(econ);
-        return reply(`🎉 Você venceu a aposta e ganhou ${fmt(bet)} gold!`);
+        return reply(MESSAGES.rpg.casino.wonAposta(fmt(bet)));
       }
 
       me.wallet -= bet;
       saveEconomy(econ);
-      return reply(`💀 Você perdeu ${fmt(bet)} gold na aposta.`);
+      return reply(MESSAGES.rpg.casino.lostAposta(fmt(bet)));
     }
 
     // --- COINFLIP ---
     if (command === 'coinflip' || command === 'moeda') {
       const choice = resolveParamAlias(args[0]);
       const bet = parseInt(args[1]) || 0;
-      if (!['cara', 'coroa'].includes(choice) || bet < 100) return reply(`💡 Use ${prefix}coinflip <cara|coroa> <valor>`);
-      if (me.wallet < bet) return reply('💰 Saldo insuficiente!');
+      if (!['cara', 'coroa'].includes(choice) || bet < 100) return reply(MESSAGES.rpg.casino.usageCoinflip(prefix));
+      if (me.wallet < bet) return reply(MESSAGES.rpg.casino.insufficientCoinflip);
       
       const win = Math.random() < 0.48; // 48% chance
       const result = win ? choice : (choice === 'cara' ? 'coroa' : 'cara');
       
       if (win) {
         me.wallet += bet;
-        reply(`🪙 Caiu *${result}*! Você ganhou ${bet.toLocaleString()}!`);
+        reply(MESSAGES.rpg.casino.wonCoinflip(result, bet.toLocaleString()));
       } else {
         me.wallet -= bet;
-        reply(`🪙 Caiu *${result}*! Você perdeu ${bet.toLocaleString()}.`);
+        reply(MESSAGES.rpg.casino.lostCoinflip(result, bet.toLocaleString()));
       }
       saveEconomy(econ);
       return;
@@ -72,8 +71,8 @@ export default {
     if (command === 'roleta') {
       const color = args[0]?.toLowerCase();
       const bet = parseInt(args[1]) || 0;
-      if (!['red', 'black', 'green'].includes(color) || bet < 100) return reply(`💡 Use ${prefix}roleta <red|black|green> <valor>`);
-      if (me.wallet < bet) return reply('💰 Saldo insuficiente!');
+      if (!['red', 'black', 'green'].includes(color) || bet < 100) return reply(MESSAGES.rpg.casino.usageRoleta(prefix));
+      if (me.wallet < bet) return reply(MESSAGES.rpg.casino.insufficientFunds);
 
       // ROLETA NERFADA (Portado do Chainy Original)
       const rand = Math.random();
@@ -92,10 +91,10 @@ export default {
         const mult = result === 'green' ? 5 : 1.5;
         const win = Math.floor(bet * mult);
         me.wallet += win - bet;
-        reply(`🎰 Resultado: *${result.toUpperCase()}*! Você ganhou ${win.toLocaleString()}! (${mult}x)`);
+        reply(MESSAGES.rpg.casino.wonRoleta(result, win.toLocaleString(), mult));
       } else {
         me.wallet -= bet;
-        reply(`🎰 Resultado: *${result.toUpperCase()}*! Você perdeu ${bet.toLocaleString()}.\n🎰 A roleta parece viciada...`);
+        reply(MESSAGES.rpg.casino.lostRoleta(result, bet.toLocaleString()));
       }
       saveEconomy(econ);
       return;
@@ -105,13 +104,13 @@ export default {
     if (['slots', 'slotmachine', 'cacaniquel'].includes(command)) {
       // Cooldown de 10 segundos
       const cdSlots = me.cooldowns?.slots || 0;
-      if (Date.now() < cdSlots) return reply(`⏳ Aguarde ${timeLeft(cdSlots)} para jogar slots novamente.`);
+      if (Date.now() < cdSlots) return reply(MESSAGES.rpg.casino.cooldownSlots(timeLeft(cdSlots)));
 
-      if (!args[0]) return reply(`💡 Use ${prefix}slots <valor>`);
+      if (!args[0]) return reply(MESSAGES.rpg.casino.usageSlots(prefix));
       const bet = parseAmount(args[0], me.wallet);
       if (!isFinite(bet) || bet <= 0) return reply(MESSAGES.error.invalid('valor'));
-      if (bet < 100) return reply(`💡 Aposta mínima é de 100 gold.`);
-      if (me.wallet < bet) return reply('💰 Saldo insuficiente na carteira!');
+      if (bet < 100) return reply(MESSAGES.rpg.casino.minBet(100));
+      if (me.wallet < bet) return reply(MESSAGES.rpg.casino.insufficientFunds);
 
       // SLOTS COM PESOS (PORTADO DO TOKYO/ORIGINAL)
       const symbols = ['🍒', '🍋', '🍉', '⭐', '🔔', '🍇', '🍊', '🍓'];
@@ -142,14 +141,14 @@ export default {
         const multi = slot1 === '🍒' ? 5 : slot1 === '🍋' ? 8 : slot1 === '🍉' ? 12 : slot1 === '⭐' ? 20 : slot1 === '🔔' ? 15 : slot1 === '🍇' ? 10 : slot1 === '🍊' ? 6 : 4;
         const win = Math.floor(bet * multi);
         me.wallet += win;
-        msg += `🎉 *JACKPOT!* Você alinhou 3 ${slot1} e ganhou *${fmt(win)}* gold! (${multi}x)`;
+        msg += MESSAGES.rpg.casino.jackpotSlots(slot1, fmt(win), multi);
       } else if (slot1 === slot2 || slot2 === slot3 || slot1 === slot3) {
         const win = Math.floor(bet * 1.5);
         me.wallet += win - bet;
-        msg += `✨ *PAR!* Você combinou 2 símbolos e ganhou *${fmt(win)}* gold! (1.5x)`;
+        msg += MESSAGES.rpg.casino.pairSlots(fmt(win));
       } else {
         me.wallet -= bet;
-        msg += `💀 Você perdeu *${fmt(bet)}* gold. A sorte não está com você!`;
+        msg += MESSAGES.rpg.casino.lostSlots(fmt(bet));
       }
       saveEconomy(econ);
       return reply(msg);
@@ -158,52 +157,53 @@ export default {
     // --- DADOS ---
     if (command === 'dados' || command === 'dice') {
       const bet = parseInt(args[0]) || 0;
-      if (bet < 100) return reply(`💡 Use ${prefix}dados <valor>`);
-      if (me.wallet < bet) return reply('💰 Saldo insuficiente!');
+      if (bet < 100) return reply(MESSAGES.rpg.casino.usageDados(prefix));
+      if (me.wallet < bet) return reply(MESSAGES.rpg.casino.insufficientCoinflip);
 
       const p1 = Math.floor(Math.random() * 6) + 1;
       const b1 = Math.floor(Math.random() * 6) + 1;
       
-      let msg = `🎲 Você: ${p1}\n🎲 Bot: ${b1}\n\n`;
+      let resultMsg = '';
       if (p1 > b1) {
         me.wallet += bet;
-        msg += `🎉 Você ganhou ${bet.toLocaleString()}!`;
+        resultMsg = MESSAGES.rpg.casino.dadosWon(bet.toLocaleString());
       } else if (p1 < b1) {
         me.wallet -= bet;
-        msg += `💀 Você perdeu ${bet.toLocaleString()}.`;
+        resultMsg = MESSAGES.rpg.casino.dadosLost(bet.toLocaleString());
       } else {
-        msg += `🤝 Empate!`;
+        resultMsg = MESSAGES.rpg.casino.dadosTie;
       }
       saveEconomy(econ);
-      return reply(msg);
+      return reply(MESSAGES.rpg.casino.dadosResult(p1, b1, resultMsg));
     }
 
     // --- CRASH ---
     if (command === 'crash') {
       const bet = parseInt(args[0]) || 0;
-      if (bet < 100) return reply(`💡 Use ${prefix}crash <valor>`);
-      if (me.wallet < bet) return reply('💰 Saldo insuficiente!');
+      if (bet < 100) return reply(MESSAGES.rpg.casino.usageCrash(prefix));
+      if (me.wallet < bet) return reply(MESSAGES.rpg.casino.insufficientCoinflip);
 
       const crash = (1 + Math.random() * 2).toFixed(2);
       const exit = (1 + Math.random() * 2).toFixed(2);
       
-      let msg = `🚀 Você saiu em: ${exit}x\n💥 Crash em: ${crash}x\n\n`;
+      let resultMsg = '';
       if (parseFloat(exit) < parseFloat(crash)) {
         const win = Math.floor(bet * (parseFloat(exit) - 1));
         me.wallet += win;
-        msg += `🎉 Você ganhou ${win.toLocaleString()}!`;
+        resultMsg = MESSAGES.rpg.casino.crashWon(win.toLocaleString());
       } else {
         me.wallet -= bet;
-        msg += `💀 Você perdeu ${bet.toLocaleString()}.`;
+        resultMsg = MESSAGES.rpg.casino.crashLost(bet.toLocaleString());
       }
       saveEconomy(econ);
-      return reply(msg);
+      return reply(MESSAGES.rpg.casino.crashResult(exit, crash, resultMsg));
     }
+
     // --- BLACKJACK ---
     if (command === 'blackjack' || command === 'bj') {
       const bet = parseInt(args[0]) || 0;
-      if (bet < 100) return reply(`💡 Use ${prefix}blackjack <valor>`);
-      if (me.wallet < bet) return reply('💰 Saldo insuficiente!');
+      if (bet < 100) return reply(MESSAGES.rpg.casino.usageBlackjack(prefix));
+      if (me.wallet < bet) return reply(MESSAGES.rpg.casino.insufficientCoinflip);
 
       // BLACKJACK NERFADO: Dealer tem cartas viciadas
       const getPlayerCard = () => {
@@ -251,28 +251,25 @@ export default {
       const pSum = getValue(pCards);
       const bSum = getValue(bCards);
 
-      let msg = `🃏 *BLACKJACK*\n\n`;
-      msg += `Sua mão: ${pCards.join(' ')} = *${pSum}*\n`;
-      msg += `Mesa: ${bCards.join(' ')} = *${bSum}*\n\n`;
-
+      let resultMsg = '';
       if (pSum > 21) {
         me.wallet -= bet;
-        msg += `💀 *BUST!* Você estourou e perdeu ${bet.toLocaleString()}.\n🃏 Que azar...`;
+        resultMsg = MESSAGES.rpg.casino.bjBust(bet.toLocaleString());
       } else if (bSum > 21 || pSum > bSum) {
         const winnings = pSum === 21 && pCards.length === 2 ? Math.floor(bet * 1.8) : Math.floor(bet * 1.4);
         me.wallet += winnings - bet;
-        msg += `🎉 *VITÓRIA RARA!* Você ganhou ${(winnings - bet).toLocaleString()}!`;
+        resultMsg = MESSAGES.rpg.casino.bjWon((winnings - bet).toLocaleString());
       } else if (pSum === bSum) {
         const loss = Math.floor(bet * 0.3);
         me.wallet -= loss;
-        msg += `🤝 *EMPATE!*\n💸 Taxa de empate: -${loss.toLocaleString()}`;
+        resultMsg = MESSAGES.rpg.casino.bjTie(loss.toLocaleString());
       } else {
         me.wallet -= bet;
-        msg += `💀 *MESA VENCEU!* Você perdeu ${bet.toLocaleString()}.\n🃏 O dealer parece ter sorte demais...`;
+        resultMsg = MESSAGES.rpg.casino.bjLost(bet.toLocaleString());
       }
       
       saveEconomy(econ);
-      return reply(msg);
+      return reply(MESSAGES.rpg.casino.blackjackResult(pCards.join(' '), pSum, bCards.join(' '), bSum, resultMsg));
     }
   }
 };

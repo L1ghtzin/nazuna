@@ -20,8 +20,8 @@ export default {
     reply, isGroup, groupData, sender, prefix, command, args, menc_os2, bot,
     MESSAGES
   }) => {
-        if (!isGroup) return reply('⚔️ Este comando funciona apenas em grupos com Modo RPG ativo.');
-        if (!groupData.modorpg) return reply(`⚔️ Modo RPG desativado! Use ${prefix}modorpg para ativar.`);
+        if (!isGroup) return reply(MESSAGES.rpg.groupOnly);
+        if (!groupData.modorpg) return reply(MESSAGES.rpg.disabled(prefix));
 
         const mentioned = menc_os2;
         const econ = loadEconomy();
@@ -30,11 +30,11 @@ export default {
         const sub = command.toLowerCase();
 
         if (sub === 'assaltar' || sub === 'roubar') {
-            if (!mentioned) return reply(`💔 Marque alguém para assaltar.`);
-            if (mentioned === sender) return reply(`💔 Você não pode assaltar a si mesmo.`);
+            if (!mentioned) return reply(MESSAGES.rpg.crime.needTarget);
+            if (mentioned === sender) return reply(MESSAGES.rpg.crime.cantTargetSelf);
 
             const cd = me.cooldowns?.rob || 0;
-            if (Date.now() < cd) return reply(`╭━━━⊱ ⏳ *COOLDOWN* ⏳ ⊱━━━╮\n│\n│ ⚠️ Você está se escondendo!\n│ ⏰ Aguarde: ${timeLeft(cd)}\n│\n╰━━━━━━━━━━━━━━━━━━━━━╯`);
+            if (Date.now() < cd) return reply(MESSAGES.rpg.crime.cooldownRob(timeLeft(cd)));
 
             const target = getEcoUser(econ, mentioned);
             const maxSteal = Math.min(target.wallet, 300);
@@ -42,7 +42,7 @@ export default {
             if (maxSteal <= 0) {
                 me.cooldowns.rob = Date.now() + 10 * 60 * 1000;
                 saveEconomy(econ);
-                return reply(`╭━━━⊱ 📭 *FRACASSO* 📭 ⊱━━━╮\n│\n│ A vítima não tem dinheiro\n│ na carteira.\n│\n╰━━━━━━━━━━━━━━━━━━━━━╯`);
+                return reply(MESSAGES.rpg.crime.victimNoMoney);
             }
 
             const chance = Math.random();
@@ -52,7 +52,7 @@ export default {
                 me.wallet += amt;
                 me.cooldowns.rob = Date.now() + 10 * 60 * 1000;
                 saveEconomy(econ);
-                return reply(`╭━━━⊱ 🦹 *ASSALTO* 🦹 ⊱━━━╮\n│\n│ ✅ Sucesso no roubo!\n│\n│ 👤 Vítima: @${mentioned.split('@')[0]}\n│ 💰 Roubado: ${fmt(amt)}\n│\n╰━━━━━━━━━━━━━━━━━━━━━╯`, { mentions: [mentioned] });
+                return reply(MESSAGES.rpg.crime.robSuccess(mentioned.split('@')[0], fmt(amt)), { mentions: [mentioned] });
             } else {
                 const multa = 80 + Math.floor(Math.random() * 121);
                 const pay = Math.min(me.wallet, multa);
@@ -60,13 +60,13 @@ export default {
                 target.wallet += pay;
                 me.cooldowns.rob = Date.now() + 10 * 60 * 1000;
                 saveEconomy(econ);
-                return reply(`╭━━━⊱ 🚨 *PRESO!* 🚨 ⊱━━━╮\n│\n│ ❌ Você foi pego tentando\n│ roubar @${mentioned.split('@')[0]}!\n│\n│ 💸 Multa: ${fmt(pay)}\n│\n╰━━━━━━━━━━━━━━━━━━━━━╯`, { mentions: [mentioned] });
+                return reply(MESSAGES.rpg.crime.robFailed(mentioned.split('@')[0], fmt(pay)), { mentions: [mentioned] });
             }
         }
 
         if (sub === 'crime') {
             const cd = me.cooldowns?.crime || 0; 
-            if (Date.now() < cd) return reply(`⏳ Aguarde ${timeLeft(cd)} para tentar de novo.`);
+            if (Date.now() < cd) return reply(MESSAGES.rpg.crime.cooldownCrime(timeLeft(cd)));
             
             if (Math.random() < 0.18) {
                 const gain = 40 + Math.floor(Math.random() * 61);
@@ -81,14 +81,14 @@ export default {
                 if (!me.stats) me.stats = {};
                 me.stats.totalCrimes = (me.stats.totalCrimes || 0) + 1;
                 saveEconomy(econ);
-                return reply(`╭━━━⊱ 🕵️ *CRIME* 🕵️ ⊱━━━╮\n│ ✅ Crime bem-sucedido!\n│ 💰 Lucrou: ${fmt(totalGain)}\n╰━━━━━━━━━━━━━━━━━━━━━╯`);
+                return reply(MESSAGES.rpg.crime.crimeSuccess(fmt(totalGain)));
             } else {
                 const fine = 200 + Math.floor(Math.random() * 401);
                 const pay = Math.min(me.wallet, fine);
                 me.wallet -= pay;
                 me.cooldowns.crime = Date.now() + 30 * 60 * 1000;
                 saveEconomy(econ);
-                return reply(`╭━━━⊱ 🚔 *PEGO!* 🚔 ⊱━━━╮\n│ ❌ Você foi pego!\n│ 💸 Multa: ${fmt(pay)}\n╰━━━━━━━━━━━━━━━━━━━━╯`);
+                return reply(MESSAGES.rpg.crime.crimeFailed(fmt(pay)));
             }
         }
     }

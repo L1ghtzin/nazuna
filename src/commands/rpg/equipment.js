@@ -40,8 +40,8 @@ export default {
     getEcoUser,
     MESSAGES
   }) => {
-    if (!isGroup) return reply('⚔️ Este comando funciona apenas em grupos com Modo RPG ativo.');
-    if (!groupData.modorpg) return reply(`⚔️ Modo RPG desativado! Use ${prefix}modorpg para ativar.`);
+    if (!isGroup) return reply(MESSAGES.rpg.groupOnly);
+    if (!groupData.modorpg) return reply(MESSAGES.rpg.disabled(prefix));
     
     const econ = loadEconomy();
     const me = getEcoUser(econ, sender);
@@ -62,13 +62,13 @@ export default {
     // --- EQUIPAR ---
     if (command === 'equipar' || command === 'equip') {
       const itemId = q?.toLowerCase().trim();
-      if (!itemId) return reply(`💔 Informe o item: ${prefix}equipar <item>`);
+      if (!itemId) return reply(MESSAGES.rpg.crafting.equipUsage(prefix));
       
       const foundItemId = Object.keys(me.inventory).find(k => k.toLowerCase().includes(itemId) && me.inventory[k] > 0);
-      if (!foundItemId) return reply(`💔 Item não encontrado no inventário!`);
+      if (!foundItemId) return reply(MESSAGES.rpg.crafting.itemNotFound);
       
       const item = shop[foundItemId];
-      if (!item || item.type !== 'equipment') return reply(`💔 Este item não pode ser equipado!`);
+      if (!item || item.type !== 'equipment') return reply(MESSAGES.rpg.crafting.cantEquip);
       
       const slot = item.slot || 'accessory';
       if (me.equipment[slot]) me.inventory[me.equipment[slot]] = (me.inventory[me.equipment[slot]] || 0) + 1;
@@ -78,13 +78,13 @@ export default {
       
       recalcEquipmentBonuses(me, shop);
       saveEconomy(econ);
-      return reply(`✅ Você equipou *${item.name}* no slot ${slot}!`);
+      return reply(MESSAGES.rpg.crafting.equippedSuccess(item.name, slot));
     }
 
     // --- DESEQUIPAR ---
     if (command === 'desequipar' || command === 'unequip') {
       const slot = args[0]?.toLowerCase();
-      if (!slot || !me.equipment[slot]) return reply(`💔 Informe um slot válido: arma, armadura, helmet, boots, shield, accessory`);
+      if (!slot || !me.equipment[slot]) return reply(MESSAGES.rpg.crafting.invalidSlot);
       
       const itemId = me.equipment[slot];
       me.inventory[itemId] = (me.inventory[itemId] || 0) + 1;
@@ -92,21 +92,21 @@ export default {
       
       recalcEquipmentBonuses(me, shop);
       saveEconomy(econ);
-      return reply(`✅ *${itemId}* desequipado!`);
+      return reply(MESSAGES.rpg.crafting.unequippedSuccess(itemId));
     }
 
     // --- EQUIPAR ITEM NO PET ---
     if (command === 'equiparpet' || command === 'equippet') {
-      if (!me.pets || me.pets.length === 0) return reply('🐾 Você não tem pets!');
+      if (!me.pets || me.pets.length === 0) return reply(MESSAGES.rpg.crafting.noPets);
       
       const petIndex = parseInt(args[0]) - 1;
       const itemIdQuery = args.slice(1).join('_').toLowerCase();
       
       if (isNaN(petIndex) || petIndex < 0 || petIndex >= me.pets.length) {
-        return reply(`❌ Pet inválido!\n\n💡 Uso: ${prefix}equippet <nº pet> <item>`);
+        return reply(MESSAGES.rpg.crafting.equipPetUsage(prefix));
       }
       if (!itemIdQuery) {
-        return reply(`❌ Informe o item!\n\n💡 Uso: ${prefix}equippet <nº pet> <item>`);
+        return reply(MESSAGES.rpg.crafting.equipPetItemUsage(prefix));
       }
       
       const pet = me.pets[petIndex];
@@ -160,18 +160,18 @@ export default {
 
     // --- DESEQUIPAR ITEM DO PET ---
     if (command === 'desequiparpet' || command === 'unequippet') {
-      if (!me.pets || me.pets.length === 0) return reply('🐾 Você não tem pets!');
+      if (!me.pets || me.pets.length === 0) return reply(MESSAGES.rpg.crafting.noPets);
       
       const petIndex = parseInt(args[0]) - 1;
       const slot = args[1]?.toLowerCase();
       
       if (isNaN(petIndex) || petIndex < 0 || petIndex >= me.pets.length) {
-        return reply(`❌ Pet inválido!\n\n💡 Uso: ${prefix}desequiparpet <nº pet> <slot>\n📦 Slots: arma, armadura, escudo, acessorio, potao`);
+        return reply(MESSAGES.rpg.crafting.unequipPetUsage(prefix));
       }
       
       const pet = me.pets[petIndex];
       if (!pet.equipment || Object.keys(pet.equipment).length === 0) {
-        return reply(`❌ ${pet.emoji || '🐾'} *${pet.name}* não tem equipamentos equipados!`);
+        return reply(MESSAGES.rpg.crafting.petNoEquip(pet.emoji || '🐾', pet.name));
       }
       
       // Normaliza slot informado pelo usuário
@@ -183,7 +183,7 @@ export default {
       else if (slot.includes('poca') || slot.includes('pot')) targetSlot = 'potion';
       
       if (!targetSlot || !pet.equipment[targetSlot]) {
-        return reply(`❌ Slot inválido ou sem item equipado! Escolha entre: arma, armadura, escudo, acessorio, potao`);
+        return reply(MESSAGES.rpg.crafting.petInvalidSlot);
       }
       
       const itemKey = pet.equipment[targetSlot];
@@ -191,17 +191,17 @@ export default {
       delete pet.equipment[targetSlot];
       
       saveEconomy(econ);
-      return reply(`✅ *${itemKey}* foi removido de ${pet.emoji || '🐾'} *${pet.name}* e devolvido ao seu inventário!`);
+      return reply(MESSAGES.rpg.crafting.unequippedPetSuccess(itemKey, pet.emoji || '🐾', pet.name));
     }
 
     // --- ENCANTAR ---
     if (command === 'encantar' || command === 'enchant') {
-      if (!me.equipment.weapon) return reply(`💔 Você precisa de uma arma equipada para encantar!`);
+      if (!me.equipment.weapon) return reply(MESSAGES.rpg.crafting.needWeaponToEnchant);
       const weaponId = me.equipment.weapon;
       const weapon = shop[weaponId];
       
       const cost = 5000;
-      if (me.wallet < cost) return reply(`💰 Encantar custa ${cost} moedas!`);
+      if (me.wallet < cost) return reply(MESSAGES.rpg.crafting.enchantCost(cost));
       
       me.wallet -= cost;
       const success = Math.random() > 0.4;
@@ -209,10 +209,10 @@ export default {
         me.attackBonus += 5;
         me.power += 5;
         saveEconomy(econ);
-        return reply(`✨ *SUCESSO!* Sua arma brilhou intensamente! (+5 ATK)`);
+        return reply(MESSAGES.rpg.crafting.enchantSuccess);
       } else {
         saveEconomy(econ);
-        return reply(`💨 *FALHA!* O encantamento se dissipou no ar...`);
+        return reply(MESSAGES.rpg.crafting.enchantFailed);
       }
     }
   }

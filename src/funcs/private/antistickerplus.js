@@ -8,6 +8,7 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { MESSAGES } from '../../utils/messages.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -77,12 +78,12 @@ export const checkSticker = async (bot, from, info, groupData, { isGroupAdmin, i
             if (groupData.antistickerplus_remover && isBotAdmin) {
                 await bot.groupParticipantsUpdate(from, [sender], 'remove');
                 await reply(
-                    `🚫 @${getUserName(sender)}, figurinhas Lottie (WhatsApp Plus) não são permitidas neste grupo. Você foi removido!`,
+                    MESSAGES.funcs.antiSticker.warnAdmin(getUserName(sender)),
                     { mentions: [sender] }
                 );
             } else {
                 await reply(
-                    `⚠️ @${getUserName(sender)}, figurinhas Lottie (WhatsApp Plus) não são permitidas neste grupo!`,
+                    MESSAGES.funcs.antiSticker.warnUser(getUserName(sender)),
                     { mentions: [sender] }
                 );
             }
@@ -109,14 +110,10 @@ export const handleCommand = async (bot, from, args, groupData, { reply, prefix 
         }
 
         const status = groupData.antistickerplus ? 'ativado ✅' : 'desativado ❌';
-        let msg = `🛡️ *AntiSticker Plus:* ${status}\n\n`;
-        
-        if (groupData.antistickerplus) {
-            msg += `Ação atual: ${groupData.antistickerplus_remover ? 'Remover usuário 🔨' : 'Apenas apagar 🗑️'}\n\n`;
-            msg += `*Configuração:* \n`;
-            msg += `• ${prefix}antistickerplus apagar\n`;
-            msg += `• ${prefix}antistickerplus remover`;
-        }
+        const actionMsg = groupData.antistickerplus 
+            ? (groupData.antistickerplus_remover ? MESSAGES.funcs.antiSticker.actionRemove : MESSAGES.funcs.antiSticker.actionDelete)
+            : '';
+        const msg = MESSAGES.funcs.antiSticker.status(status, actionMsg, prefix);
 
         saveGroupData(from, groupData);
         return reply(msg);
@@ -127,7 +124,7 @@ export const handleCommand = async (bot, from, args, groupData, { reply, prefix 
         groupData.antistickerplus_apagar = true;
         groupData.antistickerplus_remover = false;
         saveGroupData(from, groupData);
-        return reply('✅ Configurado para apenas *apagar* figurinhas Lottie.');
+        return reply(MESSAGES.funcs.antiSticker.configApagar);
     }
 
     if (arg === 'remover') {
@@ -135,10 +132,10 @@ export const handleCommand = async (bot, from, args, groupData, { reply, prefix 
         groupData.antistickerplus_remover = true;
         groupData.antistickerplus_apagar = false;
         saveGroupData(from, groupData);
-        return reply('✅ Configurado para *remover* quem enviar figurinhas Lottie.');
+        return reply(MESSAGES.funcs.antiSticker.configRemover);
     }
 
-    return reply(`❓ Subcomando inválido.\nUse: ${prefix}antistickerplus [apagar/remover] ou apenas ${prefix}antistickerplus para ligar/desligar.`);
+    return reply(MESSAGES.funcs.antiSticker.invalidSubcommand(prefix));
 };
 
 export default {
