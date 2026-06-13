@@ -173,7 +173,6 @@ ${middleBorder}${menuItemIcon}${prefix}antipvmsg
 ${middleBorder}${menuItemIcon}${prefix}antispamcmd
 ${middleBorder}${menuItemIcon}${prefix}viewmsg
 ${middleBorder}${menuItemIcon}${prefix}modoliteglobal
-${middleBorder}${menuItemIcon}${prefix}iaclear
 ${middleBorder}${menuItemIcon}${prefix}limpardb
 ${middleBorder}${menuItemIcon}${prefix}limparrankg
 ${middleBorder}${menuItemIcon}${prefix}reviverqr

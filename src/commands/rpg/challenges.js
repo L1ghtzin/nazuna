@@ -3,7 +3,7 @@ import { ensureUserPeriodChallenges, isPeriodCompleted } from "../../utils/datab
 export default {
   name: "desafios",
   description: "Desafios semanais e mensais do RPG",
-  commands: ["desafiomensal", "desafiosemanal"],
+  commands: ["desafio", "desafiomensal", "desafiosemanal"],
   usage: "{prefix}desafiosemanal [coletar]",
   handle: async ({ 
     reply, 
@@ -29,10 +29,10 @@ export default {
     const sub = command.toLowerCase();
 
     ensureUserPeriodChallenges(me);
-    const show = sub === 'desafiosemanal' ? me.weeklyChallenge : me.monthlyChallenge;
+    const show = sub === 'desafiomensal' ? me.monthlyChallenge : me.weeklyChallenge;
     const labels = { mine: 'Minerações', work: 'Trabalhos', fish: 'Pescarias', explore: 'Explorações', hunt: 'Caçadas', crimeSuccess: 'Crimes OK' };
     
-    let text = `🎯 Desafio ${sub === 'desafiosemanal' ? 'Semanal' : 'Mensal'}\n\n`;
+    let text = `🎯 Desafio ${sub === 'desafiomensal' ? 'Mensal' : 'Semanal'}\n\n`;
     for (const t of (show.tasks || [])) {
       text += `  ${labels[t.type] || t.type}: ${t.progress || 0}/${t.target}\n`;
     }
@@ -51,7 +51,7 @@ export default {
       show.claimed = true; 
       saveEconomy(econ);
       
-      return reply(`🎁 Você coletou ${fmt(show.reward)} do ${sub === 'desafiosemanal' ? 'desafio semanal' : 'desafio mensal'}!`);
+      return reply(`🎁 Você coletou ${fmt(show.reward)} do ${sub === 'desafiomensal' ? 'desafio mensal' : 'desafio semanal'}!`);
     }
     
     return reply(text);

@@ -2,7 +2,7 @@
 export default {
   name: "investir",
   description: "Sistema de investimentos e mercado financeiro",
-  commands: ["invest", "investir"],
+  commands: ["invest", "investir", "sell"],
   usage: "{prefix}investir",
   handle: async ({ 
     reply, 
@@ -10,6 +10,7 @@ export default {
     groupData, 
     sender, 
     prefix, 
+    command,
     pushname, 
     args,
     q,
@@ -50,12 +51,14 @@ export default {
       econ.stockMarket.lastUpdate = now;
     }
 
-    const command = args[0]?.toLowerCase();
+    const cmd = command.toLowerCase();
+    const subcommand = args[0]?.toLowerCase();
 
     // --- VENDER (pode ser comando direto ou subcomando de investir) ---
-    if (command === 'sell' || command === 'vender' || (args[0]?.toLowerCase() === 'vender' || args[0]?.toLowerCase() === 'sell')) {
-      const rawStockType = (args[0] === 'vender' || args[0] === 'sell') ? args[1]?.toLowerCase() : args[0]?.toLowerCase();
-      const amount = parseInt((args[0] === 'vender' || args[0] === 'sell') ? args[2] : args[1]) || 1;
+    if (cmd === 'sell' || ['sell', 'vender'].includes(subcommand)) {
+      const isDirectSell = cmd === 'sell';
+      const rawStockType = (isDirectSell ? args[0] : args[1])?.toLowerCase();
+      const amount = parseInt(isDirectSell ? args[1] : args[2]) || 1;
 
       const aliases = {
         'tecnologia': 'tech', 'tech': 'tech',

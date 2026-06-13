@@ -1,7 +1,7 @@
 export default {
   name: "rpg",
   description: "Comandos de RPG e Economia",
-  commands: ["achievementsbn", "box", "caixa", "conquistasbn", "denunciar", "denuncias", "gerarqrbn", "giftbn", "inventory", "lerqr", "medalhasbn", "nota", "notas", "note", "notes", "presentebn", "qrcode", "qrcodebn", "rankrep", "readqr", "repbn", "report", "reports", "reputacaobn", "scanqr", "toprep"],
+  commands: ["achievementsbn", "box", "caixa", "conquistasbn", "denunciar", "denuncias", "gerarqrbn", "giftbn", "inventory", "lerqr", "medalhasbn", "nota", "notas", "note", "notes", "presente", "presentebn", "qrcodebn", "rankrep", "readqr", "repbn", "report", "reports", "reputacaobn", "scanqr", "toprep"],
   handle: async ({ 
     bot, from, info, command, args, reply, prefix, pushname, sender, menc_os2,
     gifts, reputation, qrcode, achievements, notes,
@@ -124,13 +124,13 @@ export default {
     // ═══════════════════════════════════════════════════════════════
     // 📱 QR CODE
     // ═══════════════════════════════════════════════════════════════
-    if (['qrcodebn', 'gerarqrbn', 'qrcode'].includes(cmd)) {
+    if (['qrcodebn', 'gerarqrbn'].includes(cmd)) {
       if (!qrcode) return reply("Sistema de QR Code indisponível.");
       if (!q) return reply(`💔 Digite o texto!\nEx: ${prefix}qrcode https://google.com`);
       
       const result = await qrcode.generateQRCode(q, 300, prefix);
       if (result.success) {
-        await bot.sendMessage(from, { image: { url: result.url }, caption: `📱 *QR Code gerado!*\n\nConteúdo: ${q}` }, { quoted: info });
+        await bot.sendMessage(from, { image: result.buffer, caption: `📱 *QR Code gerado!*\n\nConteúdo: ${q}` }, { quoted: info });
       } else {
         reply(result.message);
       }

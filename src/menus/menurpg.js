@@ -84,7 +84,7 @@ ${middleBorder}${menuItemIcon}${prefix}coinflip <cara|coroa> <valor>
 ${middleBorder}${menuItemIcon}${prefix}crash <valor>
 ${middleBorder}${menuItemIcon}${prefix}slots <valor>
 ${middleBorder}${menuItemIcon}${prefix}apostar <valor>
-${middleBorder}${menuItemIcon}${prefix}roleta <valor> <cor>
+${middleBorder}${menuItemIcon}${prefix}roleta <cor> <valor>
 ${middleBorder}${menuItemIcon}${prefix}blackjack <valor>
 ${middleBorder}${menuItemIcon}${prefix}loteria
 ${middleBorder}${menuItemIcon}${prefix}loteria comprar <qtd>

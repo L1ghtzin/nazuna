@@ -3,7 +3,7 @@
 export default {
   name: "vip_system",
   description: "Gerenciamento de comandos VIP",
-  commands: ["addcmdvip", "addvipcommand", "adicionarcmdvip", "ativarcmdvip", "comandosvip", "delcmdvip", "desativarcmdvip", "estatisticasvip", "infovip", "listcmdvip", "listvipcommands", "menuvip", "removecmdvip", "removevipcommand", "rmcmdvip", "statsvip", "togglecmdvip", "vip", "vipinfo", "vipmenu", "vipstats"],
+  commands: ["addcmdvip", "addvipcommand", "adicionarcmdvip", "ativarcmdvip", "comandosvip", "delcmdvip", "desativarcmdvip", "estatisticasvip", "infovip", "listcmdvip", "listvipcommands", "removecmdvip", "removevipcommand", "rmcmdvip", "statsvip", "togglecmdvip", "vip", "vipinfo", "vipmenu", "vipstats"],
   handle: async ({ 
     reply, command, args, q, isOwner, isPremium, prefix, pushname,
     vipCommandsManager, menuVIP, getMenuDesignWithDefaults, nomebot,

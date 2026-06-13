@@ -8,6 +8,7 @@ const __dirname = path.dirname(__filename);
 const COMMANDS_DIR = path.resolve(__dirname, '../commands');
 
 let commandImports = null;
+let duplicateCommandAliases = [];
 
 function readDirectoryRecursive(dir) {
   const results = [];
@@ -32,6 +33,31 @@ function readDirectoryRecursive(dir) {
 
 let commandLookupMap = null;
 
+function formatCommandPath(filePath) {
+  return path.relative(COMMANDS_DIR, filePath).replace(/\\/g, '/');
+}
+
+function registerCommandAlias(alias, type, command) {
+  const normalizedAlias = String(alias).toLowerCase();
+  const existing = commandLookupMap.get(normalizedAlias);
+
+  if (existing) {
+    const duplicate = {
+      alias: normalizedAlias,
+      first: formatCommandPath(existing.command.__filePath),
+      duplicate: formatCommandPath(command.__filePath)
+    };
+    duplicateCommandAliases.push(duplicate);
+    console.error(
+      `[COMMANDS] Alias duplicado "${normalizedAlias}" ignorado em ${duplicate.duplicate}; ` +
+      `ja registrado em ${duplicate.first}.`
+    );
+    return;
+  }
+
+  commandLookupMap.set(normalizedAlias, { type, command });
+}
+
 export async function readCommandImports() {
   if (commandImports) return commandImports;
   
@@ -46,35 +72,32 @@ export async function readCommandImports() {
 
   commandImports = {};
   commandLookupMap = new Map();
+  duplicateCommandAliases = [];
 
-  await Promise.all(
-    subdirectories.sort().map(async (subdir) => {
-      const subdirectoryPath = path.join(COMMANDS_DIR, subdir);
+  for (const subdir of subdirectories.sort()) {
+    const subdirectoryPath = path.join(COMMANDS_DIR, subdir);
+    const files = [];
 
-      const files = await Promise.all(
-        readDirectoryRecursive(subdirectoryPath).sort().map(async (filePath) => {
-          try {
-            const module = await import(pathToFileURL(filePath).href);
-            const cmd = module.default ?? module;
-            if (cmd && typeof cmd === 'object') {
-              cmd.__filePath = filePath;
-              if (cmd.commands && Array.isArray(cmd.commands)) {
-                for (const c of cmd.commands) {
-                  commandLookupMap.set(c.toLowerCase(), { type: subdir, command: cmd });
-                }
-              }
+    for (const filePath of readDirectoryRecursive(subdirectoryPath).sort()) {
+      try {
+        const module = await import(pathToFileURL(filePath).href);
+        const cmd = module.default ?? module;
+        if (cmd && typeof cmd === 'object') {
+          cmd.__filePath = filePath;
+          if (Array.isArray(cmd.commands)) {
+            for (const c of cmd.commands) {
+              registerCommandAlias(c, subdir, cmd);
             }
-            return cmd;
-          } catch (err) {
-            console.error(`Erro ao importar comando de ${filePath}:`, err);
-            return null;
           }
-        }),
-      );
+        }
+        files.push(cmd);
+      } catch (err) {
+        console.error(`Erro ao importar comando de ${filePath}:`, err);
+      }
+    }
 
-      commandImports[subdir] = files.filter(Boolean);
-    }),
-  );
+    commandImports[subdir] = files.filter(Boolean);
+  }
 
   return commandImports;
 }
@@ -135,4 +158,14 @@ export async function getAllCommandList() {
         }
     }
     return Array.from(names);
+}
+
+export async function getTotalCommands() {
+    const commandList = await getAllCommandList();
+    return commandList.length;
+}
+
+export async function getDuplicateCommandAliases() {
+    await readCommandImports();
+    return [...duplicateCommandAliases];
 }

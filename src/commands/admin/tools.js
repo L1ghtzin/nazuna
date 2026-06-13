@@ -3,7 +3,7 @@
 export default {
   name: "admintools",
   description: "Ferramentas administrativas adicionais",
-  commands: ["add", "blockuser", "buscar", "criar", "d", "del", "deletar", "delete", "fixar", "mention", "nota", "note", "pin", "remover", "search", "unblockuser", "ver", "view"],
+  commands: ["blockuser", "d", "del", "deletar", "delete", "mention", "unblockuser"],
   usage: "{prefix}mention Olá grupo!",
   handle: async ({  
     bot, 

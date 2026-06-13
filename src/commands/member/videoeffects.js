@@ -10,7 +10,7 @@ const __dirname = path.dirname(__filename);
 export default {
   name: "videoeffects",
   description: "Aplica efeitos em vídeos",
-  commands: ["espelhar", "fastvid", "glitch", "mirror", "pretoebranco", "reversevid", "rotacionar", "rotate", "sepia", "slowvid", "tomp3", "videobw", "videolento", "videoloop", "videomudo", "videorapido", "videoreverso", "videoslow"],
+  commands: ["espelhar", "fastvid", "mirror", "pretoebranco", "reversevid", "rotacionar", "rotate", "sepia", "slowvid", "tomp3", "videobw", "videolento", "videoloop", "videomudo", "videorapido", "videoreverso", "videoslow"],
   usage: "{prefix}videorapido (responda a um vídeo)",
   handle: async ({  
     bot, 
@@ -63,7 +63,7 @@ export default {
           ffmpegArgs = ['-i', media, '-an', ran];
         } else {
           const effect = videoEffects[command];
-          if (['sepia', 'espelhar', 'rotacionar', 'zoom', 'glitch', 'videobw', 'pretoebranco'].includes(command)) {
+          if (['sepia', 'espelhar', 'rotacionar', 'zoom', 'videobw', 'pretoebranco'].includes(command)) {
             ffmpegArgs = ['-i', media, '-vf', effect, ran];
           } else {
             ffmpegArgs = ['-i', media, '-filter_complex', effect, '-map', '[v]', '-map', '[a]', ran];

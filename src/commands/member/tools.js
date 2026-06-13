@@ -4,7 +4,7 @@ import axios from 'axios';
 export default {
   name: "tools",
   description: "Ferramentas úteis",
-  commands: ["checklink", "checkurl", "dicionario", "dictionary", "estatisticas", "fusohorario", "groupstats", "horamundial", "horoscopo", "linkseguro", "ping", "rmbg", "sbg", "scanlink", "sfundo", "signo", "signos", "statsgrupo", "toimg", "totalcmd", "totalcomando", "upscale", "urlsafe", "urlscan", "verificar", "verificarurl", "worldtime"],
+  commands: ["checklink", "checkurl", "estatisticas", "fusohorario", "groupstats", "horamundial", "horoscopo", "linkseguro", "ping", "rmbg", "sbg", "scanlink", "sfundo", "signo", "signos", "statsgrupo", "toimg", "totalcmd", "totalcomando", "upscale", "urlsafe", "urlscan", "verificar", "verificarurl", "worldtime"],
   usage: "{prefix}verificarurl <link>",
   handle: async ({
     bot, from, info, reply, args, q, normalizarTexto, prefix, command, isGroup, getCachedGroupMetadata,
@@ -122,8 +122,8 @@ export default {
       if (!q) return reply(`📔 Qual palavra você quer procurar?`);
       return reply("📔 Procurando...").then(async () => {
         try {
-          const { Dicionary } = await import('../../services/spider-x-api.js');
-          const res = await Dicionary(q.trim());
+          const { Dicionario } = await import('../../funcs/utils/dicionario.js');
+          const res = await Dicionario(q.trim());
           if (res && res.significados.length > 0) {
             let msg = `📘✨ *Significado de "${res.palavra}":*\n\n*📚 Classe:* ${res.classe || 'N/A'}\n\n*📖 Significados:*\n${res.significados.slice(0, 3).map((s, i) => `${i+1}. ${s}`).join('\n')}`;
             return reply(msg);

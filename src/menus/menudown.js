@@ -24,7 +24,6 @@ ${menuTopBorder}${separatorIcon} *${searchMenuTitle}*
 ${middleBorder}
 ${middleBorder}${menuItemIcon}${prefix}google
 ${middleBorder}${menuItemIcon}${prefix}noticias
-${middleBorder}${menuItemIcon}${prefix}apps
 ${middleBorder}${menuItemIcon}${prefix}dicionario
 ${middleBorder}${menuItemIcon}${prefix}wikipedia
 ${bottomBorder}

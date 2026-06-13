@@ -5,7 +5,7 @@ import { getAllCommandList } from '../../utils/dynamicCommand.js';
 export default {
   name: "owner",
   description: "Comandos exclusivos do dono do bot",
-  commands: ["blockcmdg", "blockuserg", "botoff", "boton", "listblocks", "reviverqr", "seradm", "sermembro", "tm", "unblockcmdg", "unblockuserg"],
+  commands: ["blockcmdg", "blockuserg", "botoff", "boton", "listblocks", "seradm", "sermembro", "tm", "unblockcmdg", "unblockuserg"],
   handle: async ({ 
     bot, from, info, command, q, reply, prefix, sender, pushname,
     botState, globalBlocks, transmissao,

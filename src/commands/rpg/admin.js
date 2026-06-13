@@ -2,7 +2,7 @@
 export default {
   name: "rpgadmin",
   description: "Comandos administrativos do RPG",
-  commands: ["adicionardinheiro", "adicionaritem", "definirnivelrpg", "estatisticasrpg", "globalrank", "rankglobal", "removerdinheiro", "removeritem", "resetarjogador", "resetrpgglobal", "rpgadd", "rpgadditem", "rpgaddmoney", "rpgremove", "rpgremoveitem", "rpgremovemoney", "rpgresetglobal", "rpgresetplayer", "rpgsetlevel", "rpgstatistics", "rpgstats", "setlevel", "topglobal", "toprpgglobal"],
+  commands: ["adicionardinheiro", "adicionaritem", "definirnivelrpg", "estatisticasrpg", "globalrank", "rankglobal", "removerdinheiro", "removeritem", "resetarjogador", "resetrpgglobal", "rpgadd", "rpgadditem", "rpgaddmoney", "rpgremove", "rpgremoveitem", "rpgremovemoney", "rpgresetglobal", "rpgresetplayer", "rpgsetlevel", "rpgstatistics", "rpgstats", "topglobal", "toprpgglobal"],
   usage: "{prefix}rankglobal",
   handle: async ({ 
     reply, 
@@ -75,7 +75,7 @@ export default {
     }
 
     // --- SET LEVEL ---
-    if (command === 'rpgsetlevel' || command === 'setlevel' || command === 'definirnivelrpg') {
+    if (command === 'rpgsetlevel' || command === 'definirnivelrpg') {
       const target = (menc_jid2 && menc_jid2[0]) || null;
       const newLevel = parseInt(args[args.length - 1]) || 0;
       if (!target || newLevel < 1) return reply(`💔 Uso: ${prefix}rpgsetlevel @user <nivel>`);

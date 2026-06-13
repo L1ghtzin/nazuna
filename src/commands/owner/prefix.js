@@ -4,7 +4,7 @@ import { CONFIG_FILE } from '../../utils/paths.js';
 export default {
   name: "prefix",
   description: "Altera o prefixo global do bot",
-  commands: ["prefix", "prefixo", "setprefix"],
+  commands: ["prefix", "prefixo"],
   usage: `${global.prefixo}prefix <novo_prefixo>`,
   handle: async ({
     reply,

@@ -3,7 +3,7 @@ import { resolveParamAlias, timeLeft } from "../../utils/helpers.js";
 export default {
   name: "casino",
   description: "Jogos de azar e cassino do RPG",
-  commands: ["bet", "blackjack", "bj", "coinflip", "crash", "dados", "dice", "moeda", "roleta", "slots", "slotmachine", "cacaniquel"],
+  commands: ["apostar", "bet", "blackjack", "bj", "coinflip", "crash", "dados", "dice", "moeda", "roleta", "slots", "slotmachine", "cacaniquel"],
   usage: "{prefix}roleta <cor> <valor>",
   handle: async ({ 
     reply, 
@@ -26,6 +26,26 @@ export default {
     
     const econ = loadEconomy();
     const me = getEcoUser(econ, sender);
+
+    // --- APOSTA SIMPLES ---
+    if (command === 'apostar' || command === 'bet') {
+      if (!args[0]) return reply(`ðŸ’¡ Use ${prefix}${command} <valor>`);
+      const bet = parseAmount(args[0], me.wallet);
+      if (!isFinite(bet) || bet <= 0) return reply(MESSAGES.error.invalid('valor'));
+      if (bet < 100) return reply(`ðŸ’¡ Aposta mÃ­nima Ã© de 100 gold.`);
+      if (me.wallet < bet) return reply('ðŸ’° Saldo insuficiente na carteira!');
+
+      const won = Math.random() < 0.45;
+      if (won) {
+        me.wallet += bet;
+        saveEconomy(econ);
+        return reply(`ðŸŽ‰ Voce venceu a aposta e ganhou ${fmt(bet)} gold!`);
+      }
+
+      me.wallet -= bet;
+      saveEconomy(econ);
+      return reply(`ðŸ’€ Voce perdeu ${fmt(bet)} gold na aposta.`);
+    }
 
     // --- COINFLIP ---
     if (command === 'coinflip' || command === 'moeda') {

@@ -1,7 +1,7 @@
 export default {
   name: "leveling",
   description: "Sistema de níveis e experiência por mensagens",
-  commands: ["leveling", "level", "rank", "ranking", "addxp", "delxp", "setlevel"],
+  commands: ["leveling", "level", "rank", "ranking", "ranklevel", "ranklvl", "rankinglevel", "levels", "toplevels", "addxp", "delxp", "setlevel"],
   handle: async ({ 
     bot, from, info, command, q, args, reply, prefix, pushname, sender, menc_os2,
     isGroup, isGroupAdmin, isOwner, groupData, groupFile, getUserName, optimizer,
@@ -43,7 +43,7 @@ export default {
       return reply(text);
     }
 
-    if (['rank', 'ranking'].includes(cmd)) {
+    if (['rank', 'ranking', 'ranklevel', 'ranklvl', 'rankinglevel', 'levels', 'toplevels'].includes(cmd)) {
       const data = loadLevelingSafe();
       const users = Object.entries(data).sort((a, b) => (b[1].xp || 0) - (a[1].xp || 0)).slice(0, 10);
       if (!users.length) return reply("Vazio.");

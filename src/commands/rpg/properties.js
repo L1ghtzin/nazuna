@@ -3,7 +3,7 @@ import { giveMaterial } from "../../utils/database.js";
 export default {
   name: "properties",
   description: "Sistema de propriedades e negócios",
-  commands: ["coletarpropriedades", "comprarpropriedade", "propriedades"],
+  commands: ["coletarpropriedades", "comprarpropriedade", "propriedades", "cprop", "cprops"],
   usage: "{prefix}propriedades",
   handle: async ({ 
     reply, 
@@ -26,7 +26,7 @@ export default {
     const me = getEcoUser(econ, sender);
     const fmt = (n) => Number(n || 0).toLocaleString('pt-BR');
 
-    if (command === 'propriedades') {
+    if (command === 'propriedades' || command === 'cprops') {
       const keys = Object.keys(econ.propertiesCatalog || {});
       let text = '🏠 Propriedades disponíveis\n\n';
       
@@ -57,7 +57,7 @@ export default {
       return reply(text);
     }
     
-    if (command === 'comprarpropriedade') {
+    if (command === 'comprarpropriedade' || command === 'cprop') {
       const key = (args[0] || '').toLowerCase(); 
       if (!key) return reply(`Use: ${prefix}comprarpropriedade <tipo>`);
       

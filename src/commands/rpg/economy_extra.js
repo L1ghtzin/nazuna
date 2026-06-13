@@ -3,7 +3,7 @@ import { timeLeft } from "../../utils/helpers.js";
 export default {
   name: "rpg-extra",
   description: "Sistemas extras de economia do RPG",
-  commands: ["boost", "buff", "cavalos", "corrida", "doacao", "doar", "donate", "gift", "impostos", "impulsionar", "leilao", "leilaorpg", "leiloar", "loteria", "lottery", "maiores", "mega", "taxes", "toprich", "topriqueza", "tributos"],
+  commands: ["boost", "buff", "cavalos", "corrida", "doacao", "doar", "donate", "gift", "impostos", "impulsionar", "leilao", "leilaorpg", "leiloar", "loteria", "lottery", "mega", "taxes", "tributos"],
   usage: "{prefix}loteria",
   handle: async ({ 
     reply, 
@@ -111,7 +111,7 @@ export default {
     }
 
     // --- PRESENTE ---
-    if (command === 'presente' || command === 'gift') {
+    if (command === 'gift') {
       const target = (menc_jid2 && menc_jid2[0]) || null;
       const amount = parseInt(args[1]) || 0;
       if (!target || amount < 100) return reply(`💡 Use ${prefix}presente @user <valor>`);

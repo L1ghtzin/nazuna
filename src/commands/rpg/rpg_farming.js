@@ -13,7 +13,7 @@ import {
 export default {
     name: "rpg_farming",
     description: "Sistema de plantação e colheita do RPG",
-    commands: ["plantacao", "plantação", "horta", "plantar", "plant", "farm", "colher", "harvest", "sementes"],
+    commands: ["plantacao", "plantação", "horta", "plantar", "plant", "farm", "cultivar", "colher", "harvest", "coletar", "sementes"],
     handle: async ({ 
     reply, isGroup, groupData, sender, prefix, command, args,
     MESSAGES
@@ -65,7 +65,7 @@ export default {
             return reply(text);
         }
 
-        if (sub === 'plantar' || sub === 'plant' || sub === 'farm') {
+        if (sub === 'plantar' || sub === 'plant' || sub === 'farm' || sub === 'cultivar') {
             const seedKey = (args[0] || '').toLowerCase();
             if (!seedKey) {
                 let text = '🌱 *SISTEMA DE PLANTAÇÃO*\n\n📦 *Sementes Disponíveis:*\n\n';
@@ -98,7 +98,7 @@ export default {
             return reply(`🌱 ${seed.name} plantado com sucesso!\n\n⏱️ Estará pronto para colher em ${Math.floor(seed.growTime / 60000)} minutos.\n🌾 Terrenos ocupados: ${me.farm.plots.length}/${me.farm.maxPlots}`);
         }
 
-        if (sub === 'colher' || sub === 'harvest') {
+        if (sub === 'colher' || sub === 'harvest' || sub === 'coletar') {
             me.farm = me.farm || { plots: [], maxPlots: 4, lastExpansion: 0 };
             if (me.farm.plots.length === 0) return reply(`🌾 Você não tem nada plantado!`);
 

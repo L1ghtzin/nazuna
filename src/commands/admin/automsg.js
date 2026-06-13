@@ -5,7 +5,7 @@ import fs from 'fs';
 export default {
   name: "automsg",
   description: "Gerencia o envio automático de mensagens agendadas",
-  commands: ["add", "automsg"],
+  commands: ["automsg"],
   usage: "{prefix}automsg help",
   handle: async ({ 
     bot, 

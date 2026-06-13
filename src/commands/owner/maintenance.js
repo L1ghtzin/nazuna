@@ -7,8 +7,7 @@ export default {
   description: "Comandos de manutenção e estilos do sistema",
   commands: [
     "limpardb", "limparrank", "resetrank", "limparrankg", "repairdb", 
-    "fixdb", "diagnosticrpg", "set", "style", "preview", "reset", "resetgold",
-    "apostarpet", "petbet"
+    "fixdb", "diagnosticrpg", "set", "style", "preview", "reset", "resetgold"
   ],
   handle: async ({ 
     bot, from, reply, isOwner, command, DATABASE_DIR, optimizer, nomedono,
