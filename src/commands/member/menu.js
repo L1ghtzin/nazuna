@@ -4,7 +4,7 @@ import pathz from 'path';
 export default {
   name: "menu",
   description: "Menus e guias do bot",
-  commands: ["admmenu", "alteradores", "changers", "changersmenu", "comandos", "commands", "downloadmenu", "downmenu", "ferramentas", "gamemenu", "help", "membermenu", "membmenu", "menu", "menuadm", "menuadmin", "menuadmins", "menualterador", "menualteradores", "menubn", "menubrincadeira", "menubrincadeiras", "menudono", "menudown", "menudownload", "menudownloads", "menuferramenta", "menuferramentas", "menufig", "menugeral", "menulogo", "menulogos", "menumemb", "menumembros", "menurpg", "menusticker", "menuvip", "ownermenu", "stickermenu", "tools", "toolsmenu"],
+  commands: ["admmenu", "alteradores", "changers", "changersmenu", "comandos", "commands", "downloadmenu", "downmenu", "ferramentas", "gamemenu", "help", "membermenu", "membmenu", "menu", "menuadm", "menuadmin", "menuadmins", "menualterador", "menualteradores", "menubn", "menubrincadeira", "menubrincadeiras", "menudono", "menudown", "menudownload", "menudownloads", "menuferramenta", "menuferramentas", "menufig", "menugeral", "menumemb", "menumembros", "menurpg", "menusticker", "menuvip", "ownermenu", "stickermenu", "tools", "toolsmenu"],
   handle: async ({ 
     bot, from, info, command, reply, prefix, pushname, isGroup,
     nomebot, menus, getGroupCustomization, isGroupCustomizationEnabled,
@@ -67,9 +67,6 @@ export default {
       }
       else if (['alteradores', 'menualterador', 'menualteradores', 'changersmenu', 'changers'].includes(cmd)) {
         await sendMenuWithMedia('alteradores', menus.menuAlterador);
-      }
-      else if (['menulogo', 'menulogos'].includes(cmd)) {
-        await sendMenuWithMedia('logos', menus.menuLogos);
       }
       else if (['menubn', 'menubrincadeira', 'menubrincadeiras', 'gamemenu'].includes(cmd)) {
         await sendMenuWithMedia('brincadeiras', menus.menubn);

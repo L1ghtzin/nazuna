@@ -410,7 +410,7 @@ export async function buildMessageContext(bot, info, store, messagesCache, renta
   // handleAutoDownload importado de handlers/autoDownload.js
   const {
     menu, menudown, menuadm, menubn, menuDono, menuMembros,
-    menuFerramentas, menuSticker, menuAlterador, menuLogos,
+    menuFerramentas, menuSticker, menuAlterador,
     menuTopCmd, menuRPG, menuVIP, menuBuscas, menuBrawlStars
   } = menus;
   const prefix = prefixo;
@@ -418,7 +418,7 @@ export async function buildMessageContext(bot, info, store, messagesCache, renta
 
   const {
     youtube, tiktok, pinterest, igdl, kwai, sendSticker, Dicionary, styleText,
-    Logos, Logos2, emojiMix, upload, mcPlugin, tictactoe, toolsJson, vabJson,
+    emojiMix, upload, mcPlugin, tictactoe, toolsJson, vabJson,
     Lyrics, commandStats, VerifyUpdate, temuScammer, relationshipManager,
     spotify, soundcloud, facebook, twitter, gdrive, mediafire, search, imagetools, freefire,
     // Novos módulos
@@ -853,9 +853,9 @@ export async function buildMessageContext(bot, info, store, messagesCache, renta
       // Módulos
       menus, modules: modulesExport, optimizer,
       youtube, tiktok, pinterest, igdl, kwai, sendSticker, Dicionary, styleText,
-      Logos, Logos2, emojiMix, upload, mcPlugin, tictactoe, toolsJson, vabJson,
+      emojiMix, upload, mcPlugin, tictactoe, toolsJson, vabJson,
       Lyrics, commandStats, VerifyUpdate, temuScammer, relationshipManager,
-      spotify, soundcloud, facebook, twitter, gdrive, mediafire,
+      spotify, soundcloud, facebook, twitter, gdrive, mediafire, freefire,
       connect4, uno, memoria, achievements, gifts, reputation, qrcode, notes,
       calculator, audioEdit, antitoxic, antipalavra, antistickerplus, transmissao,
       // Dados de cache

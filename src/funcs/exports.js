@@ -113,8 +113,6 @@ async function loadModules() {
         const [
             Dicionario, 
             styleTextMod,
-            LogosMod, 
-            LogosMod2, 
             verifyUpdateMod,
             emojiMixMod,
             uploadMod,
@@ -143,8 +141,6 @@ async function loadModules() {
         ] = await Promise.all([
             import('./utils/dicionario.js'), 
             import('./utils/gerarnick.js'),
-            import('./utils/logotipos.js'),
-            import('./utils/logotipos2.js'),
             import('./utils/update-verify.js'),
             import('./utils/emojimix.js'),
             import('./utils/upload.js'),
@@ -175,8 +171,6 @@ async function loadModules() {
         // Utils modules with null checking
         modules.Dicionary = Dicionario.default ?? Dicionario;
         modules.styleText = styleTextMod.default ?? styleTextMod;
-        modules.Logos = LogosMod.default ?? LogosMod;
-        modules.Logos2 = LogosMod2.default ?? LogosMod2;
         modules.VerifyUpdate = verifyUpdateMod.default ?? verifyUpdateMod;
         modules.emojiMix = emojiMixMod.default ?? emojiMixMod;
         modules.upload = uploadMod.default ?? uploadMod;
