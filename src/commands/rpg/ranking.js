@@ -28,7 +28,7 @@ export default {
             let text = '⚔️ 🏆 *RANKING DE RIQUEZA* 🏆 ⚔️\n\n';
             const mentions = [];
             arr.forEach(([id, total], i) => {
-                const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}.`;
+                const medal = ['🥇', '🥈', '🥉'][i] || `${i + 1}.`;
                 text += `${medal} @${id.split('@')[0]} — 💰 ${fmt(total)}\n`;
                 mentions.push(id);
             });

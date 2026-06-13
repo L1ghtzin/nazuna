@@ -249,7 +249,7 @@ const startAutoHorariosWorker = (bot) => {
                 const finalHour = baseHour + Math.floor(variation / 60);
                 const finalMinutes = Math.abs(variation % 60);
                 
-                const displayHour = finalHour < 0 ? 24 + finalHour : finalHour > 23 ? finalHour - 24 : finalHour;
+                const displayHour = (finalHour % 24 + 24) % 24;
                 return `${displayHour.toString().padStart(2, '0')}:${finalMinutes.toString().padStart(2, '0')}`;
               });
               

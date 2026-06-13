@@ -381,7 +381,7 @@ class MemoryManager {
         
         let message = '🧠 *RANKING - JOGO DA MEMÓRIA*\n\n';
         rankings.forEach((r, i) => {
-            const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}.`;
+            const medal = ['🥇', '🥈', '🥉'][i] || `${i + 1}.`;
             const minutes = Math.floor(r.timeTaken / 60);
             const seconds = r.timeTaken % 60;
             const timeStr = minutes > 0 ? `${minutes}m${seconds}s` : `${seconds}s`;

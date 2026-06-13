@@ -196,7 +196,7 @@ const getRepRanking = (limit = 10) => {
     
     let message = '📊 *RANKING DE REPUTAÇÃO*\n\n';
     rankings.forEach((user, i) => {
-        const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}.`;
+        const medal = ['🥇', '🥈', '🥉'][i] || `${i + 1}.`;
         const sign = user.total >= 0 ? '+' : '';
         message += `${medal} @${getUserName(user.userId)} - ${sign}${user.total}\n`;
     });
