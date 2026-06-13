@@ -75,9 +75,7 @@ async function getLidFromJidCached(bot, jid) {
   
   // 1. Verifica cache em memória primeiro (mais rápido)
   if (jidLidMemoryCache.has(jid)) {
-    const cachedLid = jidLidMemoryCache.get(jid);
-    // Remove :XX se existir no cache
-    return cachedLid.includes(':') ? cachedLid.split(':')[0] + '@lid' : cachedLid;
+    return removeDeviceId(jidLidMemoryCache.get(jid));
   }
   
   // 2. Se não está no cache, busca via API
@@ -87,9 +85,7 @@ async function getLidFromJidCached(bot, jid) {
       let lid = result[0].lid;
       
       // Remove :XX se existir
-      if (lid.includes(':')) {
-        lid = lid.split(':')[0] + '@lid';
-      }
+      lid = removeDeviceId(lid);
       
       // Salva no cache
       jidLidMemoryCache.set(jid, lid);
@@ -113,7 +109,7 @@ function getJidFromLid(lid) {
   
   for (const [jid, cachedLid] of jidLidMemoryCache.entries()) {
     // Normaliza para comparação (remove :XX se houver)
-    const normalizedCached = cachedLid.includes(':') ? cachedLid.split(':')[0] + '@lid' : cachedLid;
+    const normalizedCached = removeDeviceId(cachedLid);
     if (normalizedCached === lid) {
       return jid;
     }
@@ -143,30 +139,19 @@ async function convertIdsToLid(bot, ids) {
 // Verifica se dois IDs são equivalentes (ignora sufixo @lid/@s.whatsapp.net e :XX)
 function idsMatch(id1, id2) {
   if (!id1 || !id2) return false;
-  
-  // Remove :XX se existir (ex: 267955023654984:13@lid -> 267955023654984@lid)
-  const clean1 = id1.includes(':') ? id1.split(':')[0] + (id1.includes('@lid') ? '@lid' : '@s.whatsapp.net') : id1;
-  const clean2 = id2.includes(':') ? id2.split(':')[0] + (id2.includes('@lid') ? '@lid' : '@s.whatsapp.net') : id2;
-  
-  const base1 = clean1.split('@')[0];
-  const base2 = clean2.split('@')[0];
-  
+  const base1 = removeDeviceId(id1).split('@')[0];
+  const base2 = removeDeviceId(id2).split('@')[0];
   return base1 === base2;
 }
 
 // Verifica se um ID está presente em um array (comparação por base, ignora :XX)
 function idInArray(id, array) {
   if (!id || !Array.isArray(array)) return false;
-  
-  // Remove :XX se existir
-  const cleanId = id.includes(':') ? id.split(':')[0] + (id.includes('@lid') ? '@lid' : '@s.whatsapp.net') : id;
-  const baseId = cleanId.split('@')[0];
+  const baseId = removeDeviceId(id).split('@')[0];
   
   return array.some(item => {
     if (!item) return false;
-    // Remove :XX do item também
-    const cleanItem = item.includes(':') ? item.split(':')[0] + (item.includes('@lid') ? '@lid' : '@s.whatsapp.net') : item;
-    const baseItem = cleanItem.split('@')[0];
+    const baseItem = removeDeviceId(item).split('@')[0];
     return baseItem === baseId;
   });
 }
@@ -428,6 +413,10 @@ const isGroupId = (id) => id && typeof id === 'string' && id.endsWith('@g.us');
 const isUserId = (id) => id && typeof id === 'string' && (id.includes('@lid') || id.includes('@s.whatsapp.net'));
 const isValidLid = (str) => /^[a-zA-Z0-9_]+@lid$/.test(str);
 const isValidJid = (str) => /^\d+@s\.whatsapp\.net$/.test(str);
+const removeDeviceId = (id) => {
+  if (!id || typeof id !== 'string' || !id.includes(':')) return id;
+  return id.split(':')[0] + (id.includes('@lid') ? '@lid' : '@s.whatsapp.net');
+};
 
 // Função para extrair nome de usuário de LID/JID de forma compatível
 const getUserName = (userId) => {
