@@ -1,5 +1,5 @@
 /**
- * Pinterest - SystemZone + SiputZX + apisnodz
+ * Pinterest - SystemZone + SiputZX
  */
 import axios from 'axios';
 
