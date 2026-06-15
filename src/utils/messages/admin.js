@@ -218,8 +218,9 @@ export const adminMessages = {
       autoUsage: (prefix, cmd) => `Uso: ${prefix}${cmd} on/off`,
       autoToggle: (name, enabled) => `✅ ${name}: *${enabled ? 'ATIVADO' : 'DESATIVADO'}*`
     },
-    group_security: {
-      welcome: {
+  },
+  group_security: {
+    welcome: {
         on: '✅ *Boas-vindas ativadas!* Agora, novos membros serão recebidos com uma mensagem personalizada.\n📝 Para configurar a mensagem, use: *${prefix}legendabv*',
         off: '⚠️ *Boas-vindas desativadas!* O grupo não enviará mais mensagens para novos membros.',
         exitOn: '✅ *Despedidas ativadas!* Agora, o grupo se despedirá de quem sair.\n📝 Para configurar a mensagem, use: *${prefix}textsaiu*',
@@ -390,5 +391,4 @@ export const adminMessages = {
       offInfo: `📋 Modo X9 desativado.\nNenhuma ação administrativa será reportada no grupo.`,
       error: "❌ Ocorreu um erro ao configurar o modo X9."
     }
-  }
 };
