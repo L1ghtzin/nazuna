@@ -9,13 +9,6 @@ export default {
   , MESSAGES }) => {
     const cmd = command.toLowerCase();
 
-  handle: async ({ 
-    bot, from, info, command, q, args, reply, prefix, pushname, sender, menc_os2,
-    isGroup, isGroupAdmin, isOwner, groupData, groupFile, getUserName, optimizer,
-    loadLevelingSafe, saveLevelingSafe, getLevelingUser, calculateNextLevelXp, checkLevelUp, checkLevelDown
-  , MESSAGES }) => {
-    const cmd = command.toLowerCase();
-
     // ═══════════════════════════════════════════════════════════════
     // ⚙️ CONFIGURAÇÃO (ADMIN)
     // ═══════════════════════════════════════════════════════════════
@@ -44,7 +37,7 @@ export default {
 
     if (['rank', 'ranking', 'ranklevel', 'ranklvl', 'rankinglevel', 'levels', 'toplevels'].includes(cmd)) {
       const data = loadLevelingSafe();
-      const users = Object.entries(data).sort((a, b) => (b[1].xp || 0) - (a[1].xp || 0)).slice(0, 10);
+      const users = Object.entries(data.users || {}).sort((a, b) => (b[1].xp || 0) - (a[1].xp || 0)).slice(0, 10);
       if (!users.length) return reply(MESSAGES.member.leveling.emptyRank);
       let text = MESSAGES.member.leveling.rankHeader;
       for (let i = 0; i < users.length; i++) {
@@ -59,7 +52,7 @@ export default {
     if (['addxp', 'delxp', 'setlevel'].includes(cmd)) {
       if (!isOwner) return reply(MESSAGES.permission.ownerOnly);
       if (!menc_os2) return reply(MESSAGES.error.missing('alguém'));
-      const val = parseInt(q);
+      const val = parseInt(args.find(arg => /^-?\d+$/.test(arg)) ?? q, 10);
       if (isNaN(val)) return reply(MESSAGES.member.leveling.requireNumber);
       
       const data = loadLevelingSafe();
