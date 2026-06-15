@@ -532,6 +532,55 @@ async function cleanup() {
   }
 }
 
+async function getLatestRemoteCommit() {
+  try {
+    const response = await fetch('https://api.github.com/repos/L1ghtzin/chainy/commits?per_page=1', {
+      headers: { 
+        'Accept': 'application/vnd.github+json',
+        'User-Agent': 'ChainyBot-Updater'
+      },
+    });
+    if (!response.ok) {
+      throw new Error(`Erro ao buscar commits do GitHub: ${response.status} ${response.statusText}`);
+    }
+    const data = await response.json();
+    const latestCommit = data[0];
+    const sha = latestCommit?.sha;
+    
+    const linkHeader = response.headers.get('link');
+    const total = Number(linkHeader?.match(/page=(\d+)>;\s*rel="last"/)?.[1]) || 0;
+    
+    return { sha, total };
+  } catch (error) {
+    printWarning(`⚠️ Não foi possível verificar atualizações no GitHub: ${error.message}`);
+    return null;
+  }
+}
+
+async function getLocalCommit() {
+  let sha = null;
+  let total = 0;
+  
+  try {
+    const { stdout: shaStdout } = await execAsync('git rev-parse HEAD');
+    sha = shaStdout.trim();
+    
+    const { stdout: countStdout } = await execAsync('git rev-list --count HEAD');
+    total = Number(countStdout.trim()) || 0;
+    
+    return { sha, total };
+  } catch {
+    try {
+      const savePath = path.join(process.cwd(), 'dados', 'database', 'updateSave.json');
+      if (fsSync.existsSync(savePath)) {
+        const data = JSON.parse(await fs.readFile(savePath, 'utf8'));
+        return { sha: data.sha || null, total: data.total || 0 };
+      }
+    } catch {}
+  }
+  return { sha, total };
+}
+
 async function main() {
   let backupCreated = false;
   let downloadSuccessful = false;
@@ -541,8 +590,34 @@ async function main() {
   try {
     setupGracefulShutdown();
     await displayHeader();
-    // Ordem corrigida: backup -> download -> limpeza -> update -> restaura backup -> dependências -> cleanup
     await checkRequirements();
+
+    const forceUpdate = process.argv.includes('--force') || process.argv.includes('-f');
+    
+    if (!forceUpdate) {
+      printInfo('🔍 Verificando se há novas atualizações...');
+      const remote = await getLatestRemoteCommit();
+      const local = await getLocalCommit();
+      
+      if (remote && local && local.sha && remote.sha === local.sha) {
+        printMessage('✅ O bot já está na versão mais recente.');
+        printInfo(`   - SHA Local: ${local.sha.substring(0, 7)} (Total: ${local.total} commits)`);
+        printInfo(`   - SHA Remoto: ${remote.sha.substring(0, 7)} (Total: ${remote.total} commits)`);
+        console.log('\n');
+        printInfo('ℹ️ Nenhuma atualização necessária no momento.');
+        printDetail('💡 Dica: Para forçar uma reinstalação completa, execute com a flag --force');
+        
+        console.log('TRIGGER_ALREADY_UPDATED');
+        process.exit(0);
+      } else if (remote && local) {
+        printInfo(`📢 Nova atualização encontrada!`);
+        printInfo(`   - Versão Atual: ${local.sha ? local.sha.substring(0, 7) : 'Desconhecida'} (${local.total} commits)`);
+        printInfo(`   - Nova Versão: ${remote.sha.substring(0, 7)} (${remote.total} commits)`);
+      }
+    } else {
+      printInfo('⚡ Executando atualização forçada (--force)...');
+    }
+
     await confirmUpdate();
     await createBackup();
     backupCreated = true;
@@ -563,18 +638,15 @@ async function main() {
     await restoreBackup();
     await installDependencies(dependencyCheckResult);
     await cleanup();
-    printMessage('🔄 Buscando informações do último commit...');
     
-    const response = await fetch('https://api.github.com/repos/L1ghtzin/chainy/commits?per_page=1', {
-      headers: { Accept: 'application/vnd.github+json' },
-    });
-    if (!response.ok) {
-      throw new Error(`Erro ao buscar commits: ${response.status} ${response.statusText}`);
-    }
-    const linkHeader = response.headers.get('link');
-    const NumberUp = linkHeader?.match(/page=(\d+)>;\s*rel="last"/)?.[1];
-    const jsonUp = { total: Number(NumberUp) || 0 };
-    await fs.writeFile(path.join(process.cwd(), 'dados', 'database', 'updateSave.json'), JSON.stringify(jsonUp));
+    printMessage('💾 Salvando registro da atualização...');
+    const remoteInfo = await getLatestRemoteCommit() || { sha: null, total: 0 };
+    const jsonUp = { 
+      sha: remoteInfo.sha,
+      total: remoteInfo.total 
+    };
+    await fs.writeFile(path.join(process.cwd(), 'dados', 'database', 'updateSave.json'), JSON.stringify(jsonUp, null, 2));
+    
     printSeparator();
     printMessage('🎉 Atualização concluída com sucesso!');
     printMessage('🚀 Inicie o bot com: npm start');

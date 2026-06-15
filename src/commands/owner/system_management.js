@@ -47,6 +47,7 @@ export default {
 
         const activeTriggers = new Set();
         let sentMsg = null;
+        let alreadyUpdated = false;
 
         const buildStatusText = () => {
           let text = `⚙️ *PROCESSO DE ATUALIZAÇÃO DO BOT* ⚙️\n\n`;
@@ -110,6 +111,14 @@ export default {
           const str = data.toString();
           let changed = false;
           
+          if (str.includes('TRIGGER_ALREADY_UPDATED')) {
+            alreadyUpdated = true;
+            if (sentMsg?.key) {
+              await bot.sendMessage(from, { edit: sentMsg.key, text: `✅ *O BOT JÁ ESTÁ NA VERSÃO MAIS RECENTE!*\n\nNenhuma atualização necessária no momento.` }).catch(() => {});
+            }
+            return;
+          }
+          
           for (const stage of stages) {
             for (const trigger of stage.triggers) {
               if (str.includes(trigger) && !activeTriggers.has(trigger)) {
@@ -142,6 +151,9 @@ export default {
 
         updateProcess.on('close', async (code) => {
           if (code === 0) {
+            if (alreadyUpdated) {
+              return;
+            }
             setTimeout(() => process.exit(0), 3000);
           } else {
             const errText = MESSAGES.owner.system_management.update.finishedError(code);
