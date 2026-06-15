@@ -28,8 +28,8 @@ export default {
     if (!isGroup) return reply(MESSAGES.rpg.groupOnly);
     if (!groupData.modorpg) return reply(MESSAGES.rpg.disabled(prefix));
 
-    const econ = loadEconomy();
-    const me = getEcoUser(econ, sender);
+    let econ = loadEconomy();
+    let me = getEcoUser(econ, sender);
 
     // Helper: busca o JID bruto do remetente (para retrocompatibilidade JID/LID)
     const getRawJid = () => info?.key?.participant || info?.message?.participant || sender;
@@ -170,9 +170,9 @@ export default {
 
     // --- CONVIDAR ---
     if (command === 'convidar' || command === 'invite' || command === 'convite') {
-      const clan = getMyClan();
-      if (!clan) return reply(MESSAGES.rpg.clans.notInClan(prefix));
-      if (clan.leader !== sender) return reply(MESSAGES.rpg.clans.leaderOnlyInvite);
+      const clanCheck = getMyClan();
+      if (!clanCheck) return reply(MESSAGES.rpg.clans.notInClan(prefix));
+      if (clanCheck.leader !== sender) return reply(MESSAGES.rpg.clans.leaderOnlyInvite);
 
       let target = (menc_jid2 && menc_jid2[0]) || null;
       if (!target) return reply(MESSAGES.rpg.clans.inviteUsage(prefix));
@@ -180,6 +180,12 @@ export default {
       const rawTargetJid = target;
       target = await normalizeUserId(bot, target);
       if (target === sender) return reply(MESSAGES.rpg.clans.inviteSelf);
+
+      econ = loadEconomy();
+      me = getEcoUser(econ, sender);
+      const clan = getMyClan();
+      if (!clan) return reply(MESSAGES.rpg.clans.notInClan(prefix));
+      if (clan.leader !== sender) return reply(MESSAGES.rpg.clans.leaderOnlyInvite);
 
       const targetUser = getEcoUser(econ, target);
       if (targetUser.clan) return reply(MESSAGES.rpg.clans.targetInClan);
@@ -254,9 +260,9 @@ export default {
 
     // --- EXPULSAR ---
     if (command === 'expulsar' || command === 'kickcla') {
-      const clan = getMyClan();
-      if (!clan) return reply(MESSAGES.rpg.clans.notInClan(prefix));
-      if (clan.leader !== sender) return reply(MESSAGES.rpg.clans.leaderOnlyKick);
+      const clanCheck = getMyClan();
+      if (!clanCheck) return reply(MESSAGES.rpg.clans.notInClan(prefix));
+      if (clanCheck.leader !== sender) return reply(MESSAGES.rpg.clans.leaderOnlyKick);
 
       let target = (menc_jid2 && menc_jid2[0]) || null;
       if (!target) return reply(MESSAGES.rpg.clans.kickUsage(prefix));
@@ -264,6 +270,12 @@ export default {
       const rawTargetJid = target;
       target = await normalizeUserId(bot, target);
       if (target === sender) return reply(MESSAGES.rpg.clans.kickSelf);
+
+      econ = loadEconomy();
+      me = getEcoUser(econ, sender);
+      const clan = getMyClan();
+      if (!clan) return reply(MESSAGES.rpg.clans.notInClan(prefix));
+      if (clan.leader !== sender) return reply(MESSAGES.rpg.clans.leaderOnlyKick);
 
       if (!idInList(target, clan.members)) return reply(MESSAGES.rpg.clans.kickNotMember);
 
@@ -325,15 +337,21 @@ export default {
 
     // --- REMOVER CONVITE ---
     if (command === 'rmconvite' || command === 'removerconvite') {
-      const clan = getMyClan();
-      if (!clan) return reply(MESSAGES.rpg.clans.notInClan(prefix));
-      if (clan.leader !== sender) return reply(MESSAGES.rpg.clans.leaderOnlyRemoveInvite);
+      const clanCheck = getMyClan();
+      if (!clanCheck) return reply(MESSAGES.rpg.clans.notInClan(prefix));
+      if (clanCheck.leader !== sender) return reply(MESSAGES.rpg.clans.leaderOnlyRemoveInvite);
 
       let target = (menc_jid2 && menc_jid2[0]) || null;
       if (!target) return reply(MESSAGES.rpg.clans.removeInviteUsage(prefix));
       
       const rawTargetJid = target;
       target = await normalizeUserId(bot, target);
+      
+      econ = loadEconomy();
+      me = getEcoUser(econ, sender);
+      const clan = getMyClan();
+      if (!clan) return reply(MESSAGES.rpg.clans.notInClan(prefix));
+      if (clan.leader !== sender) return reply(MESSAGES.rpg.clans.leaderOnlyRemoveInvite);
       
       if (!Array.isArray(clan.pendingInvites) || !idInList(target, clan.pendingInvites)) return reply(MESSAGES.rpg.clans.removeInviteNoPending);
 

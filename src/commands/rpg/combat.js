@@ -26,8 +26,6 @@ export default {
     if (!isGroup) return reply(MESSAGES.rpg.groupOnly);
     if (!groupData.modorpg) return reply(MESSAGES.rpg.disabled(prefix));
     
-    const econ = loadEconomy();
-    const me = getEcoUser(econ, sender);
     const now = Date.now();
 
     // --- DUELO PVP ---
@@ -40,6 +38,9 @@ export default {
       }
       
       if (target === sender) return reply(`💔 Você não pode duelar consigo mesmo!`);
+      
+      const econ = loadEconomy();
+      const me = getEcoUser(econ, sender);
       
       if (me.lastDuel && (now - me.lastDuel) < 600000) {
         const remaining = Math.ceil((600000 - (now - me.lastDuel)) / 60000);
@@ -56,7 +57,7 @@ export default {
       let myHp = 200 + ((me.level || 1) * 10);
       let oppHp = 200 + ((opponent.level || 1) * 10);
       
-      let text = `╭━━━⊱ ⚔️ *DUELO* ⊱━━━╮\n│ ${pushname} VS @${target.split('@')[0]}\n╰━━━━━━━━━━━━━━━━━━━━╯\n\n`;
+      let text = `╭━━━⊱ ⚔️ *DUELO* ⊱━━━╮\n│ ${pushname} VS @${target?.split('@')?.[0] || 'desconhecido'}\n╰━━━━━━━━━━━━━━━━━━━━╯\n\n`;
       let turn = 0;
       let battle = '';
 
@@ -121,6 +122,8 @@ export default {
 
     // --- ARENA ---
     if (command === 'arena' || command === 'gladiador') {
+      const econ = loadEconomy();
+      const me = getEcoUser(econ, sender);
       if (me.lastArena && (now - me.lastArena) < 1800000) {
         const remaining = Math.ceil((1800000 - (now - me.lastArena)) / 60000);
         return reply(`⏰ A arena está fechada para você! Aguarde ${remaining} minutos.`);

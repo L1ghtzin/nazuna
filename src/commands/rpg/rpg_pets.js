@@ -21,9 +21,9 @@ export default {
   }) => {
         if (!isGroup || !groupData.modorpg) return;
 
-        const econ = loadEconomy();
+        let econ = loadEconomy();
         ensureEconomyDefaults(econ);
-        const me = getEcoUser(econ, sender);
+        let me = getEcoUser(econ, sender);
         const sub = command.toLowerCase();
 
         if (sub === 'pets' || sub === 'meuspets') {
@@ -253,6 +253,9 @@ export default {
 
             if (target === sender) return reply(MESSAGES.rpg.pets.cantBattleSelf);
 
+            econ = loadEconomy();
+            me = getEcoUser(econ, sender);
+
             const argsList = q.split(' ');
             const index = parseInt(argsList[0]) - 1;
             if (isNaN(index) || index < 0 || index >= (me.pets?.length || 0)) return reply(MESSAGES.rpg.pets.invalidPet);
@@ -410,6 +413,9 @@ export default {
             }
 
             if (target === sender) return reply(MESSAGES.rpg.pets.betCantSelf);
+            
+            econ = loadEconomy();
+            me = getEcoUser(econ, sender);
             
             const argsArr = q.split(' ');
             const betAmount = parseAmount(argsArr[0], me.wallet);

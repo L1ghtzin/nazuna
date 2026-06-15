@@ -69,7 +69,11 @@ export default {
         for (let i = 0; i < fighters.length; i += 2) {
           if (i + 1 < fighters.length) {
             const winner = Math.random() > 0.5 ? fighters[i] : fighters[i + 1];
-            results += MESSAGES.rpg.tournament.matchResult(fighters[i].split('@')[0], fighters[i + 1].split('@')[0], winner.split('@')[0]);
+            results += MESSAGES.rpg.tournament.matchResult(
+              fighters[i]?.split('@')?.[0] || 'desconhecido', 
+              fighters[i + 1]?.split('@')?.[0] || 'desconhecido', 
+              winner?.split('@')?.[0] || 'desconhecido'
+            );
             nextRound.push(winner);
           } else {
             nextRound.push(fighters[i]);
@@ -82,7 +86,7 @@ export default {
       const winner = fighters[0];
       const winnerData = getEcoUser(econ, winner);
       winnerData.wallet += tournament.prize;
-      results += MESSAGES.rpg.tournament.champion(winner.split('@')[0], tournament.prize.toLocaleString());
+      results += MESSAGES.rpg.tournament.champion(winner?.split('@')?.[0] || 'desconhecido', tournament.prize.toLocaleString());
       
       tournament.active = false;
       const allParticipants = [...tournament.participants];
@@ -93,7 +97,7 @@ export default {
 
     // --- VER INFO ---
     let text = MESSAGES.rpg.tournament.infoMenu + MESSAGES.rpg.tournament.infoStats(tournament.participants.length, tournament.prize.toLocaleString());
-    tournament.participants.slice(0, 10).forEach((p, i) => text += MESSAGES.rpg.tournament.participantLine(i + 1, p.split('@')[0]));
+    tournament.participants.slice(0, 10).forEach((p, i) => text += MESSAGES.rpg.tournament.participantLine(i + 1, p?.split('@')?.[0] || 'desconhecido'));
     text += MESSAGES.rpg.tournament.footer(prefix);
     return reply(text, { mentions: tournament.participants.slice(0, 10) });
   }

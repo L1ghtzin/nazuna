@@ -46,7 +46,7 @@ export default {
       if (!target) return reply(MESSAGES.rpg.social.needTarget('abraçar'));
       if (target === sender) return reply(MESSAGES.rpg.social.cantTargetSelf('abraçar'));
       const acts = MESSAGES.rpg.social.hug;
-      return reply(acts[Math.floor(Math.random() * acts.length)](pushname, target.split('@')[0]), { mentions: [target] });
+      return reply(acts[Math.floor(Math.random() * acts.length)](pushname, target?.split('@')?.[0] || 'desconhecido'), { mentions: [target] });
     }
 
     // --- BEIJAR ---
@@ -54,7 +54,7 @@ export default {
       if (!target) return reply(MESSAGES.rpg.social.needTarget('beijar'));
       if (target === sender) return reply(MESSAGES.rpg.social.cantTargetSelf('beijar'));
       const acts = MESSAGES.rpg.social.kiss;
-      return reply(acts[Math.floor(Math.random() * acts.length)](pushname, target.split('@')[0]), { mentions: [target] });
+      return reply(acts[Math.floor(Math.random() * acts.length)](pushname, target?.split('@')?.[0] || 'desconhecido'), { mentions: [target] });
     }
 
     // --- BATER ---
@@ -62,7 +62,7 @@ export default {
       if (!target) return reply(MESSAGES.rpg.social.needTarget('dar um tapa'));
       if (target === sender) return reply(MESSAGES.rpg.social.cantHitSelf);
       const acts = MESSAGES.rpg.social.slap;
-      return reply(acts[Math.floor(Math.random() * acts.length)](pushname, target.split('@')[0]), { mentions: [target] });
+      return reply(acts[Math.floor(Math.random() * acts.length)](pushname, target?.split('@')?.[0] || 'desconhecido'), { mentions: [target] });
     }
 
     // --- PROTEGER ---
@@ -80,7 +80,7 @@ export default {
       targetData.protection.until = Date.now() + 3600000; // 1 hora
       
       saveEconomy(econ);
-      return reply(MESSAGES.rpg.social.protect(pushname, target.split('@')[0]), { mentions: [target] });
+      return reply(MESSAGES.rpg.social.protect(pushname, target?.split('@')?.[0] || 'desconhecido'), { mentions: [target] });
     }
 
     // --- REPUTAÇÃO ---
@@ -119,7 +119,7 @@ export default {
       
       me.lastVote[target] = now;
       saveEconomy(econ);
-      return reply(MESSAGES.rpg.social.voted(pushname, target.split('@')[0]), { mentions: [target] });
+      return reply(MESSAGES.rpg.social.voted(pushname, target?.split('@')?.[0] || 'desconhecido'), { mentions: [target] });
     }
   }
 };

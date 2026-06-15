@@ -142,7 +142,7 @@ export async function execDynamicCommand(commandName, paramsHandler) {
         return true;
     } catch (error) {
         console.error(`Erro ao executar o comando ${commandName}:`, error);
-        await reply("Ocorreu um erro ao executar este comando ❌");
+        await reply(paramsHandler.MESSAGES?.error?.general || "Ocorreu um erro ao executar este comando ❌");
         return true;
     }
 }
