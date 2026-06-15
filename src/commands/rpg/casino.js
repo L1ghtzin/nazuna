@@ -49,8 +49,8 @@ export default {
     // --- COINFLIP ---
     if (command === 'coinflip' || command === 'moeda') {
       const choice = resolveParamAlias(args[0]);
-      const bet = parseInt(args[1]) || 0;
-      if (!['cara', 'coroa'].includes(choice) || bet < 100) return reply(MESSAGES.rpg.casino.usageCoinflip(prefix));
+      const bet = parseAmount(args[1], me.wallet);
+      if (!['cara', 'coroa'].includes(choice) || !isFinite(bet) || bet < 100) return reply(MESSAGES.rpg.casino.usageCoinflip(prefix));
       if (me.wallet < bet) return reply(MESSAGES.rpg.casino.insufficientCoinflip);
       
       const win = Math.random() < 0.48; // 48% chance
@@ -70,8 +70,8 @@ export default {
     // --- ROLETA ---
     if (command === 'roleta') {
       const color = args[0]?.toLowerCase();
-      const bet = parseInt(args[1]) || 0;
-      if (!['red', 'black', 'green'].includes(color) || bet < 100) return reply(MESSAGES.rpg.casino.usageRoleta(prefix));
+      const bet = parseAmount(args[1], me.wallet);
+      if (!['red', 'black', 'green'].includes(color) || !isFinite(bet) || bet < 100) return reply(MESSAGES.rpg.casino.usageRoleta(prefix));
       if (me.wallet < bet) return reply(MESSAGES.rpg.casino.insufficientFunds);
 
       // ROLETA NERFADA (Portado do Chainy Original)
@@ -156,8 +156,8 @@ export default {
 
     // --- DADOS ---
     if (command === 'dados' || command === 'dice') {
-      const bet = parseInt(args[0]) || 0;
-      if (bet < 100) return reply(MESSAGES.rpg.casino.usageDados(prefix));
+      const bet = parseAmount(args[0], me.wallet);
+      if (!isFinite(bet) || bet < 100) return reply(MESSAGES.rpg.casino.usageDados(prefix));
       if (me.wallet < bet) return reply(MESSAGES.rpg.casino.insufficientCoinflip);
 
       const p1 = Math.floor(Math.random() * 6) + 1;
@@ -179,8 +179,8 @@ export default {
 
     // --- CRASH ---
     if (command === 'crash') {
-      const bet = parseInt(args[0]) || 0;
-      if (bet < 100) return reply(MESSAGES.rpg.casino.usageCrash(prefix));
+      const bet = parseAmount(args[0], me.wallet);
+      if (!isFinite(bet) || bet < 100) return reply(MESSAGES.rpg.casino.usageCrash(prefix));
       if (me.wallet < bet) return reply(MESSAGES.rpg.casino.insufficientCoinflip);
 
       const crash = (1 + Math.random() * 2).toFixed(2);
@@ -201,8 +201,8 @@ export default {
 
     // --- BLACKJACK ---
     if (command === 'blackjack' || command === 'bj') {
-      const bet = parseInt(args[0]) || 0;
-      if (bet < 100) return reply(MESSAGES.rpg.casino.usageBlackjack(prefix));
+      const bet = parseAmount(args[0], me.wallet);
+      if (!isFinite(bet) || bet < 100) return reply(MESSAGES.rpg.casino.usageBlackjack(prefix));
       if (me.wallet < bet) return reply(MESSAGES.rpg.casino.insufficientCoinflip);
 
       // BLACKJACK NERFADO: Dealer tem cartas viciadas

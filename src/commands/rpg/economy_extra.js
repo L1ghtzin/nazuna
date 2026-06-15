@@ -18,6 +18,7 @@ export default {
     loadEconomy, 
     saveEconomy, 
     getEcoUser,
+    parseAmount,
     MESSAGES
   }) => {
     if (!isGroup) return reply(MESSAGES.rpg.groupOnly);
@@ -54,9 +55,9 @@ export default {
 
     // --- CORRIDA ---
     if (command === 'corrida' || command === 'cavalos') {
-      const bet = parseInt(args[0]) || 0;
+      const bet = parseAmount(args[0], me.wallet);
       const horse = parseInt(args[1]) || 0;
-      if (bet < 1000 || horse < 1 || horse > 5) return reply(MESSAGES.rpg.economy.raceUsage(prefix));
+      if (!isFinite(bet) || bet < 1000 || horse < 1 || horse > 5) return reply(MESSAGES.rpg.economy.raceUsage(prefix));
       if (me.wallet < bet) return reply(MESSAGES.rpg.economy.insufficientFunds);
       
       const winner = Math.floor(Math.random() * 5) + 1;
@@ -100,8 +101,8 @@ export default {
 
     // --- DOAR ---
     if (command === 'doar' || command === 'doacao') {
-      const amount = parseInt(args[0]) || 0;
-      if (amount < 1000) return reply(MESSAGES.rpg.economy.donateUsage(prefix));
+      const amount = parseAmount(args[0], me.wallet);
+      if (!isFinite(amount) || amount < 1000) return reply(MESSAGES.rpg.economy.donateUsage(prefix));
       if (me.wallet < amount) return reply(MESSAGES.rpg.economy.insufficientFunds);
       
       me.wallet -= amount;
@@ -113,8 +114,8 @@ export default {
     // --- PRESENTE ---
     if (command === 'gift') {
       const target = (menc_jid2 && menc_jid2[0]) || null;
-      const amount = parseInt(args[1]) || 0;
-      if (!target || amount < 100) return reply(MESSAGES.rpg.economy.giftUsage(prefix));
+      const amount = parseAmount(args[1], me.wallet);
+      if (!target || !isFinite(amount) || amount < 100) return reply(MESSAGES.rpg.economy.giftUsage(prefix));
       if (me.wallet < amount) return reply(MESSAGES.rpg.economy.insufficientFunds);
       
       me.wallet -= amount;

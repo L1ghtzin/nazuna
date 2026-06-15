@@ -17,7 +17,7 @@ export default {
     commands: ["pets", "meuspets", "adotar", "adopt", "alimentar", "feed", "treinar", "train", "evoluirpet", "evolve", "renomearpet", "renamepet", "batalhapet", "petbattle", "apostarpet", "petbet"],
     handle: async ({ 
     reply, isGroup, groupData, sender, prefix, command, args, q, pushname, menc_jid2,
-    MESSAGES, bot, getLidFromJidCached, isValidJid
+    MESSAGES, bot, getLidFromJidCached, isValidJid, parseAmount
   }) => {
         if (!isGroup || !groupData.modorpg) return;
 
@@ -412,10 +412,10 @@ export default {
             if (target === sender) return reply(MESSAGES.rpg.pets.betCantSelf);
             
             const argsArr = q.split(' ');
-            const betAmount = parseInt(argsArr[0]) || 0;
+            const betAmount = parseAmount(argsArr[0], me.wallet);
             const petIndex = parseInt(argsArr[1]) - 1;
             
-            if (betAmount <= 0) return reply(MESSAGES.rpg.pets.betInvalidAmount);
+            if (!isFinite(betAmount) || betAmount <= 0) return reply(MESSAGES.rpg.pets.betInvalidAmount);
             if (betAmount > me.wallet) return reply(MESSAGES.rpg.pets.betNoMoneyMe);
             
             const opponent = getEcoUser(econ, target);

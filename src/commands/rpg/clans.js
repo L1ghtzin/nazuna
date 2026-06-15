@@ -22,7 +22,8 @@ export default {
     saveEconomy, 
     getEcoUser,
     MESSAGES,
-    bot
+    bot,
+    parseAmount
   }) => {
     if (!isGroup) return reply(MESSAGES.rpg.groupOnly);
     if (!groupData.modorpg) return reply(MESSAGES.rpg.disabled(prefix));
@@ -143,8 +144,8 @@ export default {
       const clan = getMyClan();
       if (!clan) return reply(MESSAGES.rpg.clans.notInClan(prefix));
 
-      const amount = parseInt(args[0]);
-      if (isNaN(amount) || amount <= 0) return reply(MESSAGES.rpg.clans.depositUsage(prefix));
+      const amount = parseAmount(args[0], me.wallet);
+      if (!isFinite(amount) || amount <= 0) return reply(MESSAGES.rpg.clans.depositUsage(prefix));
       if (me.wallet < amount) return reply(MESSAGES.rpg.clans.noMoney);
 
       me.wallet -= amount;
