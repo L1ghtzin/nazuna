@@ -4,7 +4,8 @@ import {
     getEcoUser, 
     ensureEconomyDefaults, 
     fmt,
-    getUserName
+    getUserName,
+    parseAmount
 } from "../../utils/database.js";
 
 export default {
@@ -35,13 +36,15 @@ export default {
         if (sub === 'listar') {
             const kind = (args[0] || '').toLowerCase();
             if (!['item', 'mat', 'material'].includes(kind)) return reply(MESSAGES.rpg.market.useList(prefix));
-            const qty = parseInt(args[2]); 
-            const price = parseInt(args[3]);
-            if (!isFinite(qty) || qty <= 0 || !isFinite(price) || price <= 0) return reply(MESSAGES.rpg.market.invalidQtyPrice);
 
             if (kind === 'item') {
                 const key = (args[1] || '').toLowerCase();
-                if ((me.inventory?.[key] || 0) < qty) return reply(MESSAGES.rpg.market.notEnoughItems);
+                const have = me.inventory?.[key] || 0;
+                const qty = parseAmount(args[2], have);
+                const price = parseAmount(args[3], 999999999999);
+                if (isNaN(qty) || qty <= 0 || isNaN(price) || price <= 0) return reply(MESSAGES.rpg.market.invalidQtyPrice);
+                if (have < qty) return reply(MESSAGES.rpg.market.notEnoughItems);
+                
                 me.inventory[key] -= qty;
                 const id = econ.marketCounter++;
                 econ.market.push({ id, type: 'item', key, qty, price, seller: sender });
@@ -49,7 +52,12 @@ export default {
                 return reply(MESSAGES.rpg.market.listSuccess(id, key, qty, fmt(price)));
             } else {
                 const mat = (args[1] || '').toLowerCase();
-                if ((me.materials?.[mat] || 0) < qty) return reply(MESSAGES.rpg.market.notEnoughMaterials);
+                const have = me.materials?.[mat] || 0;
+                const qty = parseAmount(args[2], have);
+                const price = parseAmount(args[3], 999999999999);
+                if (isNaN(qty) || qty <= 0 || isNaN(price) || price <= 0) return reply(MESSAGES.rpg.market.invalidQtyPrice);
+                if (have < qty) return reply(MESSAGES.rpg.market.notEnoughMaterials);
+
                 me.materials[mat] -= qty;
                 const id = econ.marketCounter++;
                 econ.market.push({ id, type: 'mat', mat, qty, price, seller: sender });

@@ -17,6 +17,7 @@ export default {
     loadEconomy, 
     saveEconomy, 
     getEcoUser,
+    parseAmount,
     MESSAGES
   }) => {
     if (!isGroup) return reply(MESSAGES.rpg.groupOnly);
@@ -58,7 +59,6 @@ export default {
     if (cmd === 'sell' || ['sell', 'vender'].includes(subcommand)) {
       const isDirectSell = cmd === 'sell';
       const rawStockType = (isDirectSell ? args[0] : args[1])?.toLowerCase();
-      const amount = parseInt(isDirectSell ? args[1] : args[2]) || 1;
 
       const aliases = {
         'tecnologia': 'tech', 'tech': 'tech',
@@ -67,8 +67,14 @@ export default {
         'energia': 'energy', 'energy': 'energy'
       };
       const stockType = aliases[rawStockType];
+      const have = stockType ? (me.investments.stocks[stockType] || 0) : 0;
+      const amount = parseAmount(isDirectSell ? args[1] : args[2], have) || 1;
 
-      if (!stockType || !me.investments.stocks[stockType] || me.investments.stocks[stockType] < amount) {
+      if (isNaN(amount) || amount <= 0) {
+        return reply(MESSAGES.error.invalid('quantidade'));
+      }
+
+      if (!stockType || have < amount) {
         return reply(MESSAGES.error.notEnough('ações'));
       }
 
@@ -102,7 +108,6 @@ export default {
     
     if (args[0] === 'comprar' || (args[0] && aliasesForBuy[args[0]?.toLowerCase()])) {
       const rawStockType = (args[0] === 'comprar') ? args[1]?.toLowerCase() : args[0]?.toLowerCase();
-      const amount = parseInt((args[0] === 'comprar') ? args[2] : args[1]) || 1;
       const stockType = aliasesForBuy[rawStockType];
 
       if (!stockType || !econ.stockMarket.prices[stockType]) {
@@ -110,6 +115,13 @@ export default {
       }
 
       const price = Math.floor(econ.stockMarket.prices[stockType]);
+      const maxAffordable = Math.floor(me.wallet / price);
+      const amount = parseAmount((args[0] === 'comprar') ? args[2] : args[1], maxAffordable) || 1;
+
+      if (isNaN(amount) || amount <= 0) {
+        return reply(MESSAGES.error.invalid('quantidade'));
+      }
+
       const totalCost = price * amount;
 
       if (me.wallet < totalCost) {

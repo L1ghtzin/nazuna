@@ -15,6 +15,8 @@ export default {
     loadEconomy, 
     saveEconomy, 
     getEcoUser,
+    parseAmount,
+    fmt,
     MESSAGES
   }) => {
     if (!isGroup) return reply(MESSAGES.rpg.groupOnly);
@@ -41,7 +43,7 @@ export default {
         text += `📦 *ITENS À VENDA:*\n\n`;
         listings.slice(0, 15).forEach((item, i) => {
           text += `${i + 1}. *${item.name}* ${item.enchant ? `+${item.enchant}` : ''}\n`;
-          text += `   💰 ${item.price.toLocaleString()} | 👤 @${item.seller.split('@')[0]}\n`;
+          text += `   💰 ${fmt(item.price)} | 👤 @${item.seller.split('@')[0]}\n`;
         });
       }
       
@@ -56,9 +58,9 @@ export default {
     // Vender item
     if (sub === 'vender') {
       const itemName = args[1];
-      const preco = parseInt(args[2]);
+      const preco = parseAmount(args[2], 999999999999);
       
-      if (!itemName || !preco || preco < 100) {
+      if (!itemName || isNaN(preco) || preco < 100) {
         return reply(`💡 Use: ${prefix}mercadoplayer vender <item> <preço>\n\n⚠️ Preço mínimo: 100`);
       }
       
@@ -84,7 +86,7 @@ export default {
       });
       
       saveEconomy(econ);
-      return reply(`✅ *ITEM LISTADO*\n\n📦 ${itemName}\n💰 ${preco.toLocaleString()}\n\n⚠️ Taxa de ${econ.playerMarket.fee * 100}% será cobrada na venda`);
+      return reply(`✅ *ITEM LISTADO*\n\n📦 ${itemName}\n💰 ${fmt(preco)}\n\n⚠️ Taxa de ${econ.playerMarket.fee * 100}% será cobrada na venda`);
     }
 
     // Comprar item
@@ -99,7 +101,7 @@ export default {
       const listing = listings[index];
       
       if (me.wallet < listing.price) {
-        return reply(`💰 Você precisa de ${listing.price.toLocaleString()}!`);
+        return reply(`💰 Você precisa de ${fmt(listing.price)}!`);
       }
       
       // Processar compra
@@ -116,7 +118,7 @@ export default {
       econ.playerMarket.listings = econ.playerMarket.listings.filter(l => l.id !== listing.id);
       
       saveEconomy(econ);
-      return reply(`✅ *COMPRA REALIZADA*\n\n📦 ${listing.name}\n💰 -${listing.price.toLocaleString()}\n\n📬 Vendedor @${listing.seller.split('@')[0]} recebeu ${valorLiquido.toLocaleString()}`, {
+      return reply(`✅ *COMPRA REALIZADA*\n\n📦 ${listing.name}\n💰 -${fmt(listing.price)}\n\n📬 Vendedor @${listing.seller.split('@')[0]} recebeu ${fmt(valorLiquido)}`, {
         mentions: [listing.seller]
       });
     }
@@ -132,7 +134,7 @@ export default {
       let text = `🛒 *SEUS ANÚNCIOS*\n\n`;
       meusAnuncios.forEach((item, i) => {
         text += `${i + 1}. *${item.name}*\n`;
-        text += `   💰 ${item.price.toLocaleString()}\n\n`;
+        text += `   💰 ${fmt(item.price)}\n\n`;
       });
       
       text += `💡 Use ${prefix}mercadoplayer cancelar <nº> para cancelar`;

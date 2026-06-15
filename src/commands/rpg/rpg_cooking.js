@@ -8,7 +8,8 @@ import {
     updatePeriodChallenge, 
     updateQuestProgress,
     fmt,
-    timeLeft
+    timeLeft,
+    parseAmount
 } from "../../utils/database.js";
 
 export default {
@@ -140,10 +141,12 @@ export default {
         if (sub === 'vendercomida') {
             const foodKey = (args[0] || '').toLowerCase();
             me.cookedFood = me.cookedFood || {};
-            if (!foodKey) return reply(`💰 *VENDER COMIDA*\n\nUse: ${prefix}vendercomida <comida>\n\n💡 Veja suas comidas com ${prefix}comer`);
+            if (!foodKey) return reply(`💰 *VENDER COMIDA*\n\nUse: ${prefix}vendercomida <comida> <quantidade>\n\n💡 Veja suas comidas com ${prefix}comer`);
 
-            const qty = parseInt(args[1]) || 1;
-            if (!me.cookedFood[foodKey] || me.cookedFood[foodKey] < qty) return reply(`💔 Você não tem ${qty}x ${foodKey}.\n\n🍽️ Você tem: ${me.cookedFood[foodKey] || 0}`);
+            const have = me.cookedFood[foodKey] || 0;
+            const qty = parseAmount(args[1], have) || 1;
+            if (isNaN(qty) || qty <= 0) return reply(`💔 Quantidade inválida!`);
+            if (have < qty) return reply(`💔 Você não tem ${qty}x ${foodKey}.\n\n🍽️ Você tem: ${have}`);
 
             const recipe = econ.cookingRecipes?.[foodKey];
             if (!recipe) return reply(`💔 Receita não encontrada.`);
