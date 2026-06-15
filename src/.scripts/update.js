@@ -586,33 +586,37 @@ async function main() {
   let downloadSuccessful = false;
   let updateApplied = false;
   let dependencyCheckResult = null;
+  let remoteInfo = null;
   
   try {
     setupGracefulShutdown();
     await displayHeader();
     await checkRequirements();
 
+    // Fetch remote info once at the start to avoid delays or failures at the end
+    printInfo('🔍 Buscando informações da versão remota...');
+    remoteInfo = await getLatestRemoteCommit();
+
     const forceUpdate = process.argv.includes('--force') || process.argv.includes('-f');
     
     if (!forceUpdate) {
       printInfo('🔍 Verificando se há novas atualizações...');
-      const remote = await getLatestRemoteCommit();
       const local = await getLocalCommit();
       
-      if (remote && local && local.sha && remote.sha === local.sha) {
+      if (remoteInfo && local && local.sha && remoteInfo.sha === local.sha) {
         printMessage('✅ O bot já está na versão mais recente.');
         printInfo(`   - SHA Local: ${local.sha.substring(0, 7)} (Total: ${local.total} commits)`);
-        printInfo(`   - SHA Remoto: ${remote.sha.substring(0, 7)} (Total: ${remote.total} commits)`);
+        printInfo(`   - SHA Remoto: ${remoteInfo.sha.substring(0, 7)} (Total: ${remoteInfo.total} commits)`);
         console.log('\n');
         printInfo('ℹ️ Nenhuma atualização necessária no momento.');
         printDetail('💡 Dica: Para forçar uma reinstalação completa, execute com a flag --force');
         
         console.log('TRIGGER_ALREADY_UPDATED');
         process.exit(0);
-      } else if (remote && local) {
+      } else if (remoteInfo && local) {
         printInfo(`📢 Nova atualização encontrada!`);
         printInfo(`   - Versão Atual: ${local.sha ? local.sha.substring(0, 7) : 'Desconhecida'} (${local.total} commits)`);
-        printInfo(`   - Nova Versão: ${remote.sha.substring(0, 7)} (${remote.total} commits)`);
+        printInfo(`   - Nova Versão: ${remoteInfo.sha.substring(0, 7)} (${remoteInfo.total} commits)`);
       }
     } else {
       printInfo('⚡ Executando atualização forçada (--force)...');
@@ -640,10 +644,10 @@ async function main() {
     await cleanup();
     
     printMessage('💾 Salvando registro da atualização...');
-    const remoteInfo = await getLatestRemoteCommit() || { sha: null, total: 0 };
+    const finalRemoteInfo = remoteInfo || await getLatestRemoteCommit() || { sha: null, total: 0 };
     const jsonUp = { 
-      sha: remoteInfo.sha,
-      total: remoteInfo.total 
+      sha: finalRemoteInfo.sha,
+      total: finalRemoteInfo.total 
     };
     await fs.writeFile(path.join(process.cwd(), 'dados', 'database', 'updateSave.json'), JSON.stringify(jsonUp, null, 2));
     

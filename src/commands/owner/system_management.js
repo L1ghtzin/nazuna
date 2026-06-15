@@ -41,8 +41,8 @@ export default {
           { name: 'limpeza', label: '🧹 Limpando arquivos', triggers: ['Limpando arquivos'], doneTriggers: ['Limpeza concluída', 'Aplicando atualização', 'Atualização aplicada', 'Restaurando backup', 'Backup restaurado', 'Instalando dependências', 'Dependências instaladas', 'Atualização concluída'] },
           { name: 'aplicacao', label: '🚀 Aplicando nova versão', triggers: ['Aplicando atualização'], doneTriggers: ['Atualização aplicada', 'Restaurando backup', 'Backup restaurado', 'Instalando dependências', 'Dependências instaladas', 'Atualização concluída'] },
           { name: 'restauracao', label: '📂 Restaurando backup', triggers: ['Restaurando backup'], doneTriggers: ['Backup restaurado', 'Instalando dependências', 'Dependências instaladas', 'Atualização concluída'] },
-          { name: 'dependencias', label: '📦 Instalando dependências', triggers: ['Instalando dependências'], doneTriggers: ['Dependências instaladas', 'Atualização concluída'] },
-          { name: 'finalizacao', label: '🎉 Finalizando atualização', triggers: ['Dependências instaladas', 'Salvando registro'], doneTriggers: ['Atualização concluída'] }
+          { name: 'dependencias', label: '📦 Instalando dependências', triggers: ['Instalando dependências'], doneTriggers: ['Dependências instaladas', 'Dependências já estão atualizadas', 'Atualização concluída'] },
+          { name: 'finalizacao', label: '🎉 Finalizando atualização', triggers: ['Dependências instaladas', 'Dependências já estão atualizadas', 'Salvando registro'], doneTriggers: ['Atualização concluída'] }
         ];
 
         const activeTriggers = new Set();
@@ -152,7 +152,7 @@ export default {
             if (alreadyUpdated) {
               return;
             }
-            setTimeout(() => process.exit(0), 3000);
+            setTimeout(() => process.exit(0), 5000);
           } else {
             const errText = MESSAGES.owner.system_management.update.finishedError(code);
             if (sentMsg?.key) {
