@@ -279,7 +279,10 @@ export const adminMessages = {
         antiPaymentOn: '🛡️ *Anti-Payment* ativado!\n\n🔧 Ações automáticas:\n• 🔒 Fechar grupo temporariamente\n• 🚫 Banir o remetente\n• 🗑️ Limpar o chat\n• 🔓 Reabrir o grupo automaticamente\n\n💡 Admins, owners e whitelisted não são afetados.',
         antiPaymentOff: '🛡️ *Anti-Payment* desativado!',
         mediaVizuToggle: (feature, isVizu) => `🛡️ *${feature} (Vizu Única)*: ${isVizu ? '✅ Ativado! Mídias de visualização única também serão bloqueadas.' : '❌ Desativado! Apenas mídias normais serão bloqueadas.'}`,
-        mediaStatus: (feature, action, isVizu, cmds) => `🛡️ *${feature}* ativado!\n🔧 Ação atual: *${action === 'banir' ? 'Apagar + Banir 🔨' : 'Apenas apagar 🗑️'}*\n👁️ Bloquear Vizu Única: *${isVizu ? '✅ Sim' : '❌ Não'}*\n\n📝 Configurações:\n${cmds}`
+        mediaStatus: (feature, action, isVizu, cmds) => `🛡️ *${feature}* ativado!\n🔧 Ação atual: *${action === 'banir' ? 'Apagar + Banir 🔨' : 'Apenas apagar 🗑️'}*\n👁️ Bloquear Vizu Única: *${isVizu ? '✅ Sim' : '❌ Não'}*\n\n📝 Configurações:\n${cmds}`,
+        limitUpdate: (feature, limit) => `✅ Limite de advertências do ${feature} alterado para *${limit}*.`,
+        antifigOn: '✅ Antifig ativado! Figurinhas serão apagadas e o remetente receberá advertências.',
+        antifigOff: '✅ Antifig desativado! Figurinhas agora são permitidas.'
       }
     },
     linkgp: {

@@ -315,6 +315,26 @@ export default {
     // ═══════════════════════════════════════════════════════════════
     // 🛡️ PROTEÇÕES EXTRAS (ANTISTATUS, ANTISTICKERPLUS, ETC)
     // ═══════════════════════════════════════════════════════════════
+    if (['antifig'].includes(cmd)) {
+      if (!isGroup) return reply(MESSAGES.permission.groupOnly);
+      if (!isGroupAdmin) return reply(MESSAGES.permission.adminOnly);
+
+      try {
+        groupData.antifig = groupData.antifig || {};
+        groupData.antifig.enabled = !groupData.antifig.enabled;
+        
+        await optimizer.saveJsonWithCache(groupFile, groupData);
+        
+        if (groupData.antifig.enabled) {
+          return reply(MESSAGES.admin.group_security.protections.antifigOn);
+        }
+        return reply(MESSAGES.admin.group_security.protections.antifigOff);
+      } catch (e) {
+        console.error('Erro no comando antifig:', e);
+        return reply(MESSAGES.error?.generic || "Ocorreu um erro ao gerenciar o antifig 💔");
+      }
+    }
+
     if (cmd === 'antistatus') {
       if (!isGroup) return reply(MESSAGES.permission.groupOnly);
       if (!isGroupAdmin) return reply(MESSAGES.permission.adminOnly);
