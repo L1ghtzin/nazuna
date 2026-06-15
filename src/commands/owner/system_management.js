@@ -35,12 +35,12 @@ export default {
         }
 
         const stages = [
-          { name: 'requisitos', label: '🔍 Verificando requisitos do sistema', triggers: ['Verificando requisitos'], doneTriggers: ['Criando backup', 'Backup salvo', 'Baixando a versão', 'Download concluído', 'Limpando arquivos', 'Limpeza concluída', 'Aplicando atualização', 'Atualização aplicada', 'Restaurando backup', 'Backup restaurado', 'Instalando dependências', 'Dependências instaladas', 'Atualização concluída'] },
-          { name: 'backup', label: '📁 Criando backup de segurança', triggers: ['Criando backup'], doneTriggers: ['Backup salvo', 'Baixando a versão', 'Download concluído', 'Limpando arquivos', 'Limpeza concluída', 'Aplicando atualização', 'Atualização aplicada', 'Restaurando backup', 'Backup restaurado', 'Instalando dependências', 'Dependências instaladas', 'Atualização concluída'] },
-          { name: 'download', label: '📥 Baixando arquivos do GitHub', triggers: ['Baixando a versão'], doneTriggers: ['Download concluído', 'Limpando arquivos', 'Limpeza concluída', 'Aplicando atualização', 'Atualização aplicada', 'Restaurando backup', 'Backup restaurado', 'Instalando dependências', 'Dependências instaladas', 'Atualização concluída'] },
-          { name: 'limpeza', label: '🧹 Limpando arquivos antigos', triggers: ['Limpando arquivos'], doneTriggers: ['Limpeza concluída', 'Aplicando atualização', 'Atualização aplicada', 'Restaurando backup', 'Backup restaurado', 'Instalando dependências', 'Dependências instaladas', 'Atualização concluída'] },
+          { name: 'requisitos', label: '🔍 Verificando requisitos', triggers: ['Verificando requisitos'], doneTriggers: ['Criando backup', 'Backup salvo', 'Baixando a versão', 'Download concluído', 'Limpando arquivos', 'Limpeza concluída', 'Aplicando atualização', 'Atualização aplicada', 'Restaurando backup', 'Backup restaurado', 'Instalando dependências', 'Dependências instaladas', 'Atualização concluída'] },
+          { name: 'backup', label: '📁 Criando backup', triggers: ['Criando backup'], doneTriggers: ['Backup salvo', 'Baixando a versão', 'Download concluído', 'Limpando arquivos', 'Limpeza concluída', 'Aplicando atualização', 'Atualização aplicada', 'Restaurando backup', 'Backup restaurado', 'Instalando dependências', 'Dependências instaladas', 'Atualização concluída'] },
+          { name: 'download', label: '📥 Baixando do GitHub', triggers: ['Baixando a versão'], doneTriggers: ['Download concluído', 'Limpando arquivos', 'Limpeza concluída', 'Aplicando atualização', 'Atualização aplicada', 'Restaurando backup', 'Backup restaurado', 'Instalando dependências', 'Dependências instaladas', 'Atualização concluída'] },
+          { name: 'limpeza', label: '🧹 Limpando arquivos', triggers: ['Limpando arquivos'], doneTriggers: ['Limpeza concluída', 'Aplicando atualização', 'Atualização aplicada', 'Restaurando backup', 'Backup restaurado', 'Instalando dependências', 'Dependências instaladas', 'Atualização concluída'] },
           { name: 'aplicacao', label: '🚀 Aplicando nova versão', triggers: ['Aplicando atualização'], doneTriggers: ['Atualização aplicada', 'Restaurando backup', 'Backup restaurado', 'Instalando dependências', 'Dependências instaladas', 'Atualização concluída'] },
-          { name: 'restauracao', label: '📂 Restaurando dados preservados', triggers: ['Restaurando backup'], doneTriggers: ['Backup restaurado', 'Instalando dependências', 'Dependências instaladas', 'Atualização concluída'] },
+          { name: 'restauracao', label: '📂 Restaurando backup', triggers: ['Restaurando backup'], doneTriggers: ['Backup restaurado', 'Instalando dependências', 'Dependências instaladas', 'Atualização concluída'] },
           { name: 'dependencias', label: '📦 Instalando dependências', triggers: ['Instalando dependências'], doneTriggers: ['Dependências instaladas', 'Atualização concluída'] },
           { name: 'finalizacao', label: '🎉 Finalizando atualização', triggers: ['Dependências instaladas', 'Salvando registro'], doneTriggers: ['Atualização concluída'] }
         ];
@@ -62,16 +62,14 @@ export default {
 
           stages.forEach((stage, idx) => {
             let icon = '⚪';
-            let statusLabel = '';
             
             if (isStageDone(stage)) {
               icon = '✅';
             } else if (isStageActive(stage)) {
               icon = '⏳';
-              statusLabel = ' _(processando...)_';
             }
             
-            text += `${icon} *${idx + 1}.* ${stage.label}${statusLabel}\n`;
+            text += `${icon} *${idx + 1}.* ${stage.label}\n`;
           });
           
           if (activeTriggers.has('Atualização concluída')) {
