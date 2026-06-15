@@ -116,8 +116,15 @@ export default {
         endianness: os.endianness()
       };
       
-      const serverFreeMemory = (os.freemem() / 1024 / 1024 / 1024).toFixed(2);
-      const serverTotalMemory = (os.totalmem() / 1024 / 1024 / 1024).toFixed(2);
+      const serverFreeMemoryRaw = os.freemem();
+      const serverTotalMemoryRaw = os.totalmem();
+      const serverUsedMemoryRaw = Math.max(0, serverTotalMemoryRaw - serverFreeMemoryRaw);
+      const serverFreeMemory = (serverFreeMemoryRaw / 1024 / 1024 / 1024).toFixed(2);
+      const serverTotalMemory = (serverTotalMemoryRaw / 1024 / 1024 / 1024).toFixed(2);
+      const usedMemGb = serverUsedMemoryRaw / 1024 / 1024 / 1024;
+      const memPercent = serverTotalMemoryRaw > 0 ? (serverUsedMemoryRaw / serverTotalMemoryRaw) * 100 : 0;
+      const heapPercent = serverMemUsage.heapTotal > 0 ? (serverMemUsage.heapUsed / serverMemUsage.heapTotal) * 100 : 0;
+      const botNameCap = nomebot || 'Bot';
       const serverLoadAvg = os.loadavg();
       const serverCpuCount = os.cpus().length;
       const serverCpuModel = os.cpus()[0]?.model || 'Desconhecido';
@@ -145,6 +152,7 @@ export default {
       const diskTotal = diskInfo.totalGb;
       const diskUsed = diskInfo.usedGb;
       const diskUsagePercent = diskInfo.percentUsed;
+      const dp = Number.parseFloat(diskUsagePercent) || 0;
       
       const startUsage = process.cpuUsage();
       await new Promise(resolve => setTimeout(resolve, 1000));
@@ -232,7 +240,7 @@ export default {
       const rentalMode = isRentalModeActive && isRentalModeActive() ? '✅ Ativo' : `💔 Desativo`;
       const nodeV = process.version;
       const platform = os.platform();
-      const totalCmds = getTotalCommands ? getTotalCommands() : 0;
+      const totalCmds = getTotalCommands ? await getTotalCommands() : 0;
       
       const premLista = premiumListaZinha || {};
       const premiumUsers = Object.keys(premLista).filter(key => key.endsWith('@s.whatsapp.net')).length;
