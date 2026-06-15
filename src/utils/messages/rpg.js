@@ -17,7 +17,66 @@ export const rpgMessages = {
   invalidAmount: '❌ Informe um valor válido.',
   jobNotFound: (prefix) => `❌ Vaga inexistente. Use ${prefix}vagas para ver disponíveis.`,
   relationEndPermission: '🚫 Apenas os envolvidos ou um administrador podem encerrar o relacionamento de terceiros.',
-  
+
+  core: {
+    groupOnly: '⚔️ Este comando funciona apenas em grupos com Modo RPG ativo.',
+    disabled: (prefix) => `⚔️ Modo RPG desativado! Use ${prefix}modorpg para ativar.`,
+    wallet: (wallet) => `💰 *CARTEIRA* 💰\n\n💵 Dinheiro: *${wallet}* moedas.`,
+    bank: (bank, capacity) => `🏦 *BANCO RPG* 🏦\n\n💰 Saldo: *${bank}* moedas.\n📦 Limite: *${capacity}* moedas.`,
+    deposit: {
+      invalidAmount: '❌ Informe um valor válido para depositar.',
+      insufficientFunds: '❌ Você não tem essa quantidade de moedas na carteira.',
+      bankFull: '❌ Seu banco está cheio ou o valor depositado excederia a capacidade.',
+      success: (amount, total) => `✅ Você depositou *${amount}* moedas no banco!\n💰 Saldo atual: *${total}* moedas.`
+    },
+    withdraw: {
+      invalidAmount: '❌ Informe um valor válido para sacar.',
+      insufficientFunds: '❌ Você não tem essa quantidade de moedas no banco.',
+      success: (amount, fee, net) => `✅ Você sacou *${amount}* moedas!\n💸 Taxa de 5%: *${fee}* moedas.\n💵 Recebido na carteira: *${net}* moedas.`
+    },
+    transfer: {
+      usage: (prefix, sub) => `💡 Uso correto: *${prefix}${sub} @user <valor>*`,
+      selfError: '❌ Você não pode transferir para si mesmo.',
+      invalidAmount: '❌ Informe um valor válido para transferir.',
+      insufficientFunds: (amount, fee, total, wallet) => `❌ Saldo insuficiente!\n\n💸 Valor a transferir: ${amount}\n🌾 Taxa de 15%: ${fee}\n💰 Total necessário: ${total}\n💵 Seu saldo: ${wallet}`,
+      success: (amount, fee, total, target) => `✅ Transferência realizada com sucesso!\n\n👥 Destinatário: @${target}\n💵 Valor enviado: *${amount}* moedas\n💸 Taxa (15%): *${fee}* moedas\n💰 Total debitado: *${total}* moedas.`
+    },
+    mining: {
+      cooldown: (time) => `⏳ Você está cansado para minerar. Aguarde ${time}.`,
+      needPickaxe: (prefix) => `💔 Você precisa de uma picareta equipada para minerar! Use *${prefix}loja* ou *${prefix}forjar*.`,
+      success: (gain, bonusText, drops, dur, max, broke) => `⛏️ *MINERAÇÃO* ⛏️\n\n🪙 Gold ganho: *${gain}* moedas ${bonusText}\n📦 Materiais obtidos: *${drops}*\n🛠️ Durabilidade da Picareta: *${dur}/${max}*${broke ? '\n⚠️ *Sua picareta quebrou!*' : ''}`
+    },
+    working: {
+      cooldown: (time) => `⏳ Você trabalhou recentemente. Aguarde ${time}.`,
+      success: (gain, bonus, total) => `💼 *TRABALHO* 💼\n\n💵 Salário base: *${gain}*\n✨ Bônus: *+${bonus}*\n💰 Total recebido: *${total}* moedas.`,
+      levelUp: (level) => `\n\n🎉 *LEVEL UP!* Você alcançou o nível *${level}*! 🚀`
+    },
+    employment: {
+      catalogHeader: `╭━━━⊱ 💼 *VAGAS DE EMPREGO* 💼 ⊱━━━╮\n`,
+      catalogItem: (key, name, min, max) => `│ 🔹 *${name}* (ID: ${key})\n│   💰 Salário: ${min} - ${max}\n│\n`,
+      catalogFooter: (prefix) => `╰━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╯\n\n💡 Use *${prefix}emprego <ID>* para trabalhar.`,
+      usage: (prefix) => `💡 Uso correto: *${prefix}emprego <ID do cargo>*. Veja os cargos disponíveis em *${prefix}vagas*.`,
+      hired: (name, min, max, prefix) => `🎉 Parabéns! Você foi contratado como *${name}*!\n💰 Salário estimado: *${min} - ${max}* por turno.\n\n💡 Use *${prefix}trabalhar* para começar.`,
+      resigned: (prefix) => `✅ Você pediu demissão do seu emprego!\n💡 Use *${prefix}vagas* para procurar um novo cargo.`
+    },
+    fishing: {
+      cooldown: (time) => `⏳ Os peixes estão assustados. Aguarde ${time} para pescar novamente.`,
+      success: (total, bonusText, qty) => `🎣 *PESCA* 🎣\n\n🪙 Gold ganho: *${total}* moedas\n${bonusText}🐟 Peixes capturados: *${qty}*x`
+    },
+    exploring: {
+      cooldown: (time) => `⏳ Você está cansado da última exploração. Aguarde ${time}.`,
+      success: (total, bonusText, matsText) => `🧭 *EXPLORAÇÃO* 🧭\n\n🪙 Gold ganho: *${total}* moedas\n${bonusText}${matsText}`
+    },
+    hunting: {
+      cooldown: (time) => `⏳ A floresta está perigosa agora. Aguarde ${time} para caçar novamente.`,
+      success: (total, bonusText, meatQty, matsText) => `🏹 *CAÇADA* 🏹\n\n🪙 Gold ganho: *${total}* moedas\n${bonusText}🥩 Carne obtida: *${meatQty}*x\n${matsText}`
+    },
+    reset: {
+      needMention: '❌ Marque o usuário que deseja resetar.',
+      success: (target) => `⚠️ Jogador @${target} foi completamente resetado!`
+    }
+  },
+
   quests: {
     noRewards: '💔 Nenhuma recompensa disponível para reivindicar! Complete as missões primeiro.',
     claimed: (count, reward, exp) => `╭━━━⊱ ✅ *RECOMPENSAS* ⊱━━━╮\n\n🎉 Você reivindicou ${count} missão(ões)!\n\n💰 Dinheiro: +${reward}\n✨ EXP: +${exp}\n\n╰━━━━━━━━━━━━━━━━━━━━╯`
