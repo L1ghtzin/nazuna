@@ -5,9 +5,23 @@ export default {
   handle: async ({ 
     bot, from, info, command, args, reply, prefix, pushname, sender, menc_os2,
     gifts, reputation, qrcode, achievements, notes,
-    getEcoUser, loadEconomy, saveEconomy, isGroupAdmin, isOwnerOrSub
+    getEcoUser, loadEconomy, saveEconomy, checkEcoLevelUp, isGroupAdmin, isOwnerOrSub
   , MESSAGES }) => {
     const cmd = command.toLowerCase();
+
+    const applyBoxReward = (userEco, reward) => {
+      if (!reward || !userEco) return '';
+      if (reward.type === 'gold') {
+        userEco.wallet = (userEco.wallet || 0) + reward.amount;
+        return `\n💼 Carteira: ${userEco.wallet}`;
+      }
+      if (reward.type === 'xp') {
+        userEco.exp = (userEco.exp || 0) + reward.amount;
+        const levelInfo = checkEcoLevelUp ? checkEcoLevelUp(userEco) : null;
+        return levelInfo?.leveledUp ? `\n⭐ Novo level: ${levelInfo.newLevel}` : '';
+      }
+      return '';
+    };
 
     // ═══════════════════════════════════════════════════════════════
     // 🎁 SISTEMA DE CAIXAS (BOX)
@@ -27,17 +41,22 @@ export default {
       if (['diaria', 'daily'].includes(tipoBox)) {
         result = gifts.openDailyBox(sender);
       } else if (['rara', 'rare'].includes(tipoBox)) {
-        if (userEco.gold < 500) return reply(`💔 Você precisa de 500 gold.`);
-        result = gifts.openBox(sender, 'rara');
-        if (result.success) { userEco.gold -= 500; saveEconomy(econ); }
+        if ((userEco.wallet || 0) < 500) return reply(`💔 Você precisa de 500 gold.`);
+        result = gifts.openBox(sender, 'rara', userEco.wallet || 0);
+        if (result.success) userEco.wallet -= 500;
       } else if (['lendaria', 'legendary'].includes(tipoBox)) {
-        if (userEco.gold < 2000) return reply(`💔 Você precisa de 2000 gold.`);
-        result = gifts.openBox(sender, 'lendaria');
-        if (result.success) { userEco.gold -= 2000; saveEconomy(econ); }
+        if ((userEco.wallet || 0) < 2000) return reply(`💔 Você precisa de 2000 gold.`);
+        result = gifts.openBox(sender, 'lendaria', userEco.wallet || 0);
+        if (result.success) userEco.wallet -= 2000;
       } else {
         return reply(`💔 Tipo inválido!`);
       }
       
+      if (result.success) {
+        const rewardMessage = applyBoxReward(userEco, result.reward);
+        saveEconomy(econ);
+        result.message += rewardMessage;
+      }
       return reply(result.message);
     }
 
@@ -50,11 +69,24 @@ export default {
       
       const tipoGift = args[1]?.toLowerCase();
       if (!tipoGift) {
-        return reply(`🎁 *Tipos de Presente*\n\n${gifts.getGiftTypes()}`);
+        return reply(gifts.listGifts(prefix).message);
       }
       
+      const giftInfo = gifts.SENDABLE_GIFTS?.[tipoGift];
+      if (!giftInfo) {
+        return reply(gifts.listGifts(prefix).message);
+      }
+
+      const econ = loadEconomy();
+      const userEco = getEcoUser(econ, sender);
+      if ((userEco.wallet || 0) < giftInfo.cost) {
+        return reply(`💔 Você precisa de ${giftInfo.cost} gold.`);
+      }
+
       const result = gifts.sendGift(sender, menc_os2, tipoGift);
       if (result.success) {
+        userEco.wallet -= giftInfo.cost;
+        saveEconomy(econ);
         await bot.sendMessage(from, { text: result.message, mentions: [sender, menc_os2] });
       } else {
         reply(result.message);

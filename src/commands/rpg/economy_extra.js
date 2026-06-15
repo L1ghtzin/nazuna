@@ -20,22 +20,6 @@ export default {
     getEcoUser,
     MESSAGES
   }) => {
-  usage: "{prefix}loteria",
-  handle: async ({ 
-    reply, 
-    isGroup, 
-    groupData, 
-    sender, 
-    prefix, 
-    pushname, 
-    command,
-    args,
-    menc_jid2,
-    loadEconomy, 
-    saveEconomy, 
-    getEcoUser,
-    MESSAGES
-  }) => {
     if (!isGroup) return reply(MESSAGES.rpg.groupOnly);
     if (!groupData.modorpg) return reply(MESSAGES.rpg.disabled(prefix));
     
