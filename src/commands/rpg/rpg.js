@@ -27,7 +27,7 @@ export default {
     // 🎁 SISTEMA DE CAIXAS (BOX)
     // ═══════════════════════════════════════════════════════════════
     if (['box', 'caixa'].includes(cmd)) {
-      if (!gifts) return reply("Sistema de presentes indisponível.");
+      if (!gifts) return reply(MESSAGES.rpg.gifts.unavailable);
       
       const tipoBox = args[0]?.toLowerCase();
       if (!tipoBox) {
@@ -41,15 +41,15 @@ export default {
       if (['diaria', 'daily'].includes(tipoBox)) {
         result = gifts.openDailyBox(sender);
       } else if (['rara', 'rare'].includes(tipoBox)) {
-        if ((userEco.wallet || 0) < 500) return reply(`💔 Você precisa de 500 gold.`);
+        if ((userEco.wallet || 0) < 500) return reply(MESSAGES.rpg.gifts.insufficientGold(500));
         result = gifts.openBox(sender, 'rara', userEco.wallet || 0);
         if (result.success) userEco.wallet -= 500;
       } else if (['lendaria', 'legendary'].includes(tipoBox)) {
-        if ((userEco.wallet || 0) < 2000) return reply(`💔 Você precisa de 2000 gold.`);
+        if ((userEco.wallet || 0) < 2000) return reply(MESSAGES.rpg.gifts.insufficientGold(2000));
         result = gifts.openBox(sender, 'lendaria', userEco.wallet || 0);
         if (result.success) userEco.wallet -= 2000;
       } else {
-        return reply(`💔 Tipo inválido!`);
+        return reply(MESSAGES.rpg.gifts.invalidType);
       }
       
       if (result.success) {
@@ -64,8 +64,8 @@ export default {
     // 💝 PRESENTES (GIFT)
     // ═══════════════════════════════════════════════════════════════
     if (['presentebn', 'giftbn', 'presente'].includes(cmd)) {
-      if (!gifts) return reply("Sistema de presentes indisponível.");
-      if (!menc_os2) return reply(`💔 Marque alguém!\nUso: ${prefix}presente @user <tipo>`);
+      if (!gifts) return reply(MESSAGES.rpg.gifts.unavailable);
+      if (!menc_os2) return reply(MESSAGES.rpg.gifts.needMention(prefix, command));
       
       const tipoGift = args[1]?.toLowerCase();
       if (!tipoGift) {
@@ -80,7 +80,7 @@ export default {
       const econ = loadEconomy();
       const userEco = getEcoUser(econ, sender);
       if ((userEco.wallet || 0) < giftInfo.cost) {
-        return reply(`💔 Você precisa de ${giftInfo.cost} gold.`);
+        return reply(MESSAGES.rpg.gifts.insufficientGold(giftInfo.cost));
       }
 
       const result = gifts.sendGift(sender, menc_os2, tipoGift);
@@ -98,9 +98,9 @@ export default {
     // 🎒 INVENTÁRIO
     // ═══════════════════════════════════════════════════════════════
     if (['inventario', 'inventory'].includes(cmd)) {
-      if (!gifts) return reply("Sistema de presentes indisponível.");
+      if (!gifts) return reply(MESSAGES.rpg.gifts.unavailable);
       const invStr = gifts.getInventory(sender);
-      if (!invStr || invStr.trim() === '') return reply(`╭━━━⊱ 🎒 *INVENTÁRIO* 🎒 ⊱━━━╮\n│\n│ 📭 Inventário vazio\n│\n╰━━━━━━━━━━━━━━━━━━━━━━━╯`);
+      if (!invStr || invStr.trim() === '') return reply(MESSAGES.rpg.gifts.emptyInventory);
       return reply(`╭━━━⊱ 🎒 *INVENTÁRIO* 🎒 ⊱━━━╮\n│\n${invStr.split('\n').map(l => '│ ' + l).join('\n')}\n│\n╰━━━━━━━━━━━━━━━━━━━━━━━╯`);
     }
 
@@ -108,7 +108,7 @@ export default {
     // ⭐ REPUTAÇÃO (REP)
     // ═══════════════════════════════════════════════════════════════
     if (['repbn', 'reputacaobn', 'rep'].includes(cmd)) {
-      if (!reputation) return reply("Sistema de reputação indisponível.");
+      if (!reputation) return reply(MESSAGES.rpg.reputation.unavailable);
       
       const action = args[0]?.toLowerCase();
       if (!action || (!menc_os2 && action !== '+' && action !== '-')) {
@@ -127,11 +127,11 @@ export default {
       if (['-', 'menos'].includes(action) && menc_os2) {
         return reply(reputation.giveRep(sender, menc_os2, false).message);
       }
-      return reply(`💔 Uso: ${prefix}rep + @user`);
+      return reply(MESSAGES.rpg.reputation.usage(prefix));
     }
 
     if (['toprep', 'rankrep'].includes(cmd)) {
-      if (!reputation) return reply("Sistema de reputação indisponível.");
+      if (!reputation) return reply(MESSAGES.rpg.reputation.unavailable);
       return reply(reputation.getRepRanking(10));
     }
 
@@ -139,17 +139,16 @@ export default {
     // 📢 DENÚNCIAS (REPORT)
     // ═══════════════════════════════════════════════════════════════
     if (['denunciar', 'report'].includes(cmd)) {
-      if (!reputation) return reply("Sistema de reputação indisponível.");
-      if (!menc_os2) return reply(`💔 Marque quem denunciar!`);
+      if (!reputation) return reply(MESSAGES.rpg.reputation.unavailable);
+      if (!menc_os2) return reply(MESSAGES.rpg.reputation.needMention);
       const motivo = args.slice(1).join(' ');
-      if (!motivo) return reply(`💔 Informe o motivo!`);
+      if (!motivo) return reply(MESSAGES.rpg.reputation.needReason);
       return reply(reputation.reportUser(sender, menc_os2, from, motivo).message);
     }
 
     if (['denuncias', 'reports'].includes(cmd)) {
-      if (!reputation) return reply("Sistema de reputação indisponível.");
+      if (!reputation) return reply(MESSAGES.rpg.reputation.unavailable);
       if (!isGroupAdmin && !isOwnerOrSub) return reply(MESSAGES.permission.adminOnly);
-      // Logic for reports view was missing in original snippet view, but we can assume it's reputation.getReports(from)
       return reply(reputation.getReports(from));
     }
 
@@ -157,8 +156,8 @@ export default {
     // 📱 QR CODE
     // ═══════════════════════════════════════════════════════════════
     if (['qrcodebn', 'gerarqrbn'].includes(cmd)) {
-      if (!qrcode) return reply("Sistema de QR Code indisponível.");
-      if (!q) return reply(`💔 Digite o texto!\nEx: ${prefix}qrcode https://google.com`);
+      if (!qrcode) return reply(MESSAGES.rpg.qrcode.unavailable);
+      if (!q) return reply(MESSAGES.rpg.qrcode.missingText(prefix));
       
       const result = await qrcode.generateQRCode(q, 300, prefix);
       if (result.success) {
@@ -170,10 +169,10 @@ export default {
     }
 
     if (['lerqr', 'readqr', 'scanqr'].includes(cmd)) {
-      if (!qrcode) return reply("Sistema de QR Code indisponível.");
+      if (!qrcode) return reply(MESSAGES.rpg.qrcode.unavailable);
       const quoted = info.message?.extendedTextMessage?.contextInfo?.quotedMessage;
       const media = quoted?.imageMessage || info.message?.imageMessage;
-      if (!media) return reply(`💔 Marque um QR Code!`);
+      if (!media) return reply(MESSAGES.rpg.qrcode.missingMedia);
       
       try {
         const { downloadContentFromMessage } = await import('baileys');
@@ -192,7 +191,7 @@ export default {
     // 🏆 CONQUISTAS (ACHIEVEMENTS)
     // ═══════════════════════════════════════════════════════════════
     if (['conquistasbn', 'achievementsbn', 'medalhasbn'].includes(cmd)) {
-      if (!achievements) return reply("Sistema de conquistas indisponível.");
+      if (!achievements) return reply(MESSAGES.rpg.achievements.unavailable);
       return reply(achievements.getAchievements(sender));
     }
 
@@ -200,27 +199,27 @@ export default {
     // 📝 NOTAS (NOTES)
     // ═══════════════════════════════════════════════════════════════
     if (['nota', 'note', 'notas', 'notes'].includes(cmd)) {
-      if (!notes) return reply("Sistema de notas indisponível.");
+      if (!notes) return reply(MESSAGES.rpg.notes.unavailable);
       
       const subCmd = args[0]?.toLowerCase();
       if (!subCmd || subCmd === 'list' || cmd === 'notas' || cmd === 'notes') {
         const userNotes = notes.getUserNotes(sender);
-        if (userNotes.length === 0) return reply("Você não tem notas salvas.");
+        if (userNotes.length === 0) return reply(MESSAGES.rpg.notes.empty);
         return reply(`📝 *Suas Notas:*\n\n${userNotes.map((n, i) => `${i + 1}. ${n.title || (n.text ? n.text.slice(0, 20) : 'Sem texto')}...`).join('\n')}`);
       }
 
       if (subCmd === 'add') {
         const text = args.slice(1).join(' ');
-        if (!text) return reply("Digite o texto da nota!");
+        if (!text) return reply(MESSAGES.rpg.notes.missingText);
         notes.addNote(sender, text);
-        return reply("✅ Nota adicionada!");
+        return reply(MESSAGES.rpg.notes.successAdd);
       }
 
       if (subCmd === 'del') {
         const id = parseInt(args[1]) - 1;
-        if (isNaN(id)) return reply("Informe o ID!");
+        if (isNaN(id)) return reply(MESSAGES.rpg.notes.missingId);
         const res = notes.deleteNote(sender, id);
-        return reply(res ? "✅ Nota deletada!" : `💔 ID inválido.`);
+        return reply(res ? MESSAGES.rpg.notes.successDel : MESSAGES.rpg.notes.invalidId);
       }
     }
   }

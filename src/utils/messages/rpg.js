@@ -439,5 +439,35 @@ export const rpgMessages = {
     bjWon: (amount) => `🎉 *VITÓRIA RARA!* Você ganhou ${amount}!`,
     bjTie: (amount) => `🤝 *EMPATE!*\n💸 Taxa de empate: -${amount}`,
     bjLost: (amount) => `💀 *MESA VENCEU!* Você perdeu ${amount}.\n🃏 O dealer parece ter sorte demais...`
+  },
+  gifts: {
+    unavailable: 'Sistema de presentes indisponível.',
+    insufficientGold: (cost) => `💔 Você precisa de ${cost} gold.`,
+    invalidType: '💔 Tipo inválido!',
+    needMention: (prefix, cmd) => `💔 Marque alguém!\nUso: ${prefix}${cmd} @user <tipo>`,
+    emptyInventory: '╭━━━⊱ 🎒 *INVENTÁRIO* 🎒 ⊱━━━╮\n│\n│ 📭 Inventário vazio\n│\n╰━━━━━━━━━━━━━━━━━━━━━━━╯'
+  },
+  reputation: {
+    unavailable: 'Sistema de reputação indisponível.',
+    usage: (prefix) => `💔 Uso: ${prefix}rep + @user`,
+    needMention: '💔 Marque quem denunciar!',
+    needReason: '💔 Informe o motivo!'
+  },
+  qrcode: {
+    unavailable: 'Sistema de QR Code indisponível.',
+    missingText: (prefix) => `💔 Digite o texto!\nEx: ${prefix}qrcode https://google.com`,
+    missingMedia: '💔 Marque um QR Code!'
+  },
+  achievements: {
+    unavailable: 'Sistema de conquistas indisponível.'
+  },
+  notes: {
+    unavailable: 'Sistema de notas indisponível.',
+    empty: 'Você não tem notas salvas.',
+    missingText: 'Digite o texto da nota!',
+    successAdd: '✅ Nota adicionada!',
+    missingId: 'Informe o ID!',
+    successDel: '✅ Nota deletada!',
+    invalidId: '💔 ID inválido.'
   }
 };
