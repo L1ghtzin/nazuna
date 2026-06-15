@@ -77,6 +77,18 @@ export const rpgMessages = {
     }
   },
 
+  crime: {
+    needTarget: '❌ Mencione o usuário que deseja assaltar/roubar.',
+    cantTargetSelf: '❌ Você não pode se assaltar!',
+    cooldownRob: (time) => `⏳ Você assaltou alguém recentemente. Aguarde ${time} para tentar novamente.`,
+    victimNoMoney: '❌ A vítima não possui moedas na carteira.',
+    robSuccess: (target, amount) => `🔫 Você assaltou @${target} e conseguiu roubar *${amount}* moedas!`,
+    robFailed: (target, multa) => `👮 A polícia chegou! @${target} reagiu e você teve que pagar uma multa de *${multa}* moedas.`,
+    cooldownCrime: (time) => `⏳ Você cometeu um crime recentemente. Aguarde ${time} para tentar de novo.`,
+    crimeSuccess: (amount) => `🕶️ Você realizou o crime com sucesso e faturou *${amount}* moedas!`,
+    crimeFailed: (fine) => `🚓 O plano deu errado e você foi pego pela polícia! Multa paga: *${fine}* moedas.`
+  },
+
   quests: {
     noRewards: '💔 Nenhuma recompensa disponível para reivindicar! Complete as missões primeiro.',
     claimed: (count, reward, exp) => `╭━━━⊱ ✅ *RECOMPENSAS* ⊱━━━╮\n\n🎉 Você reivindicou ${count} missão(ões)!\n\n💰 Dinheiro: +${reward}\n✨ EXP: +${exp}\n\n╰━━━━━━━━━━━━━━━━━━━━╯`
@@ -86,6 +98,7 @@ export const rpgMessages = {
     noHouse: '❌ Você não tem uma casa!',
     decorNotFound: '❌ Decoração não encontrada!',
     decorAlreadyOwned: '❌ Você já tem essa decoração!',
+    invalidDecor: '❌ Decoração inválida ou não encontrada!',
     invalidType: '❌ Tipo inválido!\n\n🏘️ Tipos: barraca, cabana, casa, mansao, castelo',
     insufficientFunds: (cost, name) => `💰 Você precisa de ${cost} para comprar ${name}!`,
     bought: (emoji, name, storage, income) => `╭━━━⊱ 🎉 *CASA COMPRADA* ⊱━━━╮\n\n${emoji} Você comprou uma *${name}*!\n\n📦 Armazenamento: +${storage}\n💰 Renda: ${income}/dia\n\n╰━━━━━━━━━━━━━━━━━━━━╯`,

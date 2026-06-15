@@ -20,10 +20,12 @@ export const MESSAGES = {
     ffmpegMissing: "❌ Erro ao processar o áudio. Verifique se o FFmpeg está instalado corretamente no seu sistema.",
     cooldown: (time) => `⏳ Aguarde ${time} antes de usar novamente.`,
     notEnough: (item) => `❌ Você não tem ${item} suficiente!`,
+    onlyGroup: "❌ Este comando só pode ser utilizado em grupos!",
     modoBnDisabled: "💔 O modo brincadeira não está ativo nesse grupo.",
   },
   permission: {
     ownerOnly: "🚫 Este comando é exclusivo do dono!",
+    botGameModeDisabled: "💔 O modo brincadeira não está ativo neste grupo.",
     subOwnerOnly: "🚫 Apenas o dono ou subdonos podem usar este comando.",
     adminOnly: "Comando restrito a administradores ou moderadores com permissão.",
     botAdminOnly: "Eu preciso ser admin.",
