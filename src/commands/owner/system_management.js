@@ -15,6 +15,7 @@ export default {
     }
 
     // --- UPDATES ---
+    // --- UPDATES ---
     if (['updates', 'atualizar', 'update', 'atualizarbot'].includes(cmd)) {
       if (!isOwner) return reply(MESSAGES.permission.ownerOnly);
 
@@ -33,7 +34,71 @@ export default {
           return reply(MESSAGES.owner.system_management.update.scriptNotFound);
         }
 
-        await reply(MESSAGES.owner.system_management.update.starting);
+        const stages = [
+          { name: 'requisitos', label: '🔍 Verificando requisitos do sistema', triggers: ['Verificando requisitos'], doneTriggers: ['Criando backup', 'Backup salvo', 'Baixando a versão', 'Download concluído', 'Limpando arquivos', 'Limpeza concluída', 'Aplicando atualização', 'Atualização aplicada', 'Restaurando backup', 'Backup restaurado', 'Instalando dependências', 'Dependências instaladas', 'Atualização concluída'] },
+          { name: 'backup', label: '📁 Criando backup de segurança', triggers: ['Criando backup', 'Backup salvo'], doneTriggers: ['Baixando a versão', 'Download concluído', 'Limpando arquivos', 'Limpeza concluída', 'Aplicando atualização', 'Atualização aplicada', 'Restaurando backup', 'Backup restaurado', 'Instalando dependências', 'Dependências instaladas', 'Atualização concluída'] },
+          { name: 'download', label: '📥 Baixando arquivos do GitHub', triggers: ['Baixando a versão', 'Download concluído'], doneTriggers: ['Limpando arquivos', 'Limpeza concluída', 'Aplicando atualização', 'Atualização aplicada', 'Restaurando backup', 'Backup restaurado', 'Instalando dependências', 'Dependências instaladas', 'Atualização concluída'] },
+          { name: 'limpeza', label: '🧹 Limpando arquivos antigos', triggers: ['Limpando arquivos', 'Limpeza concluída'], doneTriggers: ['Aplicando atualização', 'Atualização aplicada', 'Restaurando backup', 'Backup restaurado', 'Instalando dependências', 'Dependências instaladas', 'Atualização concluída'] },
+          { name: 'aplicacao', label: '🚀 Aplicando nova versão', triggers: ['Aplicando atualização', 'Atualização aplicada'], doneTriggers: ['Restaurando backup', 'Backup restaurado', 'Instalando dependências', 'Dependências instaladas', 'Atualização concluída'] },
+          { name: 'restauracao', label: '📂 Restaurando dados preservados', triggers: ['Restaurando backup', 'Backup restaurado'], doneTriggers: ['Instalando dependências', 'Dependências instaladas', 'Atualização concluída'] },
+          { name: 'dependencias', label: '📦 Instalando dependências', triggers: ['Instalando dependências', 'Dependências instaladas'], doneTriggers: ['Atualização concluída'] },
+          { name: 'finalizacao', label: '🎉 Finalizando atualização', triggers: ['Atualização concluída'], doneTriggers: [] }
+        ];
+
+        const activeTriggers = new Set();
+        let sentMsg = null;
+
+        const buildStatusText = () => {
+          let text = `⚙️ *PROCESSO DE ATUALIZAÇÃO DO BOT* ⚙️\n\n`;
+          
+          const isStageDone = (stage) => {
+            return stage.doneTriggers.some(t => activeTriggers.has(t));
+          };
+          
+          const isStageActive = (stage) => {
+            return stage.triggers.some(t => activeTriggers.has(t));
+          };
+
+          stages.forEach((stage, idx) => {
+            let icon = '⚪';
+            let statusLabel = '';
+            
+            if (isStageDone(stage)) {
+              icon = '✅';
+            } else if (isStageActive(stage)) {
+              icon = '⏳';
+              statusLabel = ' _(processando...)_';
+            }
+            
+            text += `${icon} *${idx + 1}.* ${stage.label}${statusLabel}\n`;
+          });
+          
+          if (activeTriggers.has('Atualização concluída')) {
+            text += `\n🎉 *ATUALIZAÇÃO CONCLUÍDA COM SUCESSO!*\n\n🔄 *O bot será reiniciado em instantes...*`;
+          } else {
+            text += `\n⏳ _Por favor, aguarde o término das etapas..._`;
+          }
+          
+          return text;
+        };
+
+        const updateMessage = async () => {
+          if (!sentMsg?.key) return;
+          try {
+            await bot.sendMessage(from, { edit: sentMsg.key, text: buildStatusText() });
+          } catch (err) {
+            console.error('Erro ao atualizar status do update:', err.message);
+          }
+        };
+
+        // Envia mensagem inicial
+        const sentMsgPromise = reply(buildStatusText());
+        sentMsgPromise.then(msg => {
+          sentMsg = msg;
+          if (activeTriggers.size > 0) {
+            updateMessage().catch(() => {});
+          }
+        });
 
         const updateProcess = spawn('node', [updateScriptPath], {
           cwd: process.cwd(),
@@ -41,28 +106,32 @@ export default {
           detached: false
         });
 
-        const messagesSent = new Set();
-        const updateMessages = {
-          'Verificando requisitos': '🔍 Verificando requisitos do sistema...',
-          'Criando backup': '📁 Criando backup dos arquivos importantes...',
-          'Backup salvo': '✅ Backup criado com sucesso!',
-          'Baixando a versão': '📥 Baixando atualização do GitHub...',
-          'Download concluído': '✅ Download concluído!\n\n🧹 Limpando arquivos antigos...',
-          'Limpeza concluída': '✅ Limpeza concluída!\n\n🚀 Aplicando atualização...',
-          'Atualização aplicada': '✅ Atualização aplicada!\n\n📂 Restaurando dados preservados...',
-          'Backup restaurado': '✅ Dados restaurados!\n\n📦 Instalando dependências...',
-          'Instalando dependências': '📦 Instalando/verificando dependências...\n⏳ Isso pode levar alguns minutos...',
-          'Dependências instaladas': '✅ Dependências instaladas com sucesso!',
-          'Atualização concluída': '🎉 *ATUALIZAÇÃO CONCLUÍDA COM SUCESSO!*\n\n🔄 *O bot será reiniciado agora...*'
-        };
-
-        updateProcess.stdout.on('data', (data) => {
+        updateProcess.stdout.on('data', async (data) => {
           const str = data.toString();
-          for (const [trigger, msg] of Object.entries(updateMessages)) {
-            if (str.includes(trigger) && !messagesSent.has(trigger)) {
-              messagesSent.add(trigger);
-              reply(msg).catch(() => {});
+          let changed = false;
+          
+          for (const stage of stages) {
+            for (const trigger of stage.triggers) {
+              if (str.includes(trigger) && !activeTriggers.has(trigger)) {
+                activeTriggers.add(trigger);
+                changed = true;
+              }
             }
+            for (const trigger of stage.doneTriggers) {
+              if (str.includes(trigger) && !activeTriggers.has(trigger)) {
+                activeTriggers.add(trigger);
+                changed = true;
+              }
+            }
+          }
+          
+          if (str.includes('Atualização concluída') && !activeTriggers.has('Atualização concluída')) {
+            activeTriggers.add('Atualização concluída');
+            changed = true;
+          }
+
+          if (changed) {
+            await updateMessage().catch(() => {});
           }
         });
 
@@ -71,11 +140,16 @@ export default {
           console.error(`[UPDATE ERROR]: ${str}`);
         });
 
-        updateProcess.on('close', (code) => {
+        updateProcess.on('close', async (code) => {
           if (code === 0) {
             setTimeout(() => process.exit(0), 3000);
           } else {
-            reply(MESSAGES.owner.system_management.update.finishedError(code));
+            const errText = MESSAGES.owner.system_management.update.finishedError(code);
+            if (sentMsg?.key) {
+              await bot.sendMessage(from, { edit: sentMsg.key, text: `❌ *FALHA NA ATUALIZAÇÃO (Código ${code})*\n\n${errText}` }).catch(() => {});
+            } else {
+              reply(errText).catch(() => {});
+            }
           }
         });
 
