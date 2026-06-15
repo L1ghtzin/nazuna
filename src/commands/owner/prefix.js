@@ -1,5 +1,4 @@
 import fs from 'fs';
-import fs from 'fs';
 import { CONFIG_FILE } from '../../utils/paths.js';
 
 export default {

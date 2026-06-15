@@ -26,6 +26,7 @@ export async function handleMinMessage(context) {
         } catch (error) {
             console.error('Erro ao processar minMessage:', error);
         }
+        return true;
     }
     return false;
 }

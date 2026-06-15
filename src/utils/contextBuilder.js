@@ -687,7 +687,18 @@ export async function buildMessageContext(bot, info, store, messagesCache, renta
         return false;
       }
     };
-    bot.react = reagir;
+
+    const botForContext = new Proxy(bot, {
+      get(target, prop, receiver) {
+        if (prop === 'react') return reagir;
+        const value = Reflect.get(target, prop, receiver);
+        return typeof value === 'function' ? value.bind(target) : value;
+      },
+      set(target, prop, value, receiver) {
+        if (prop === 'react') return true;
+        return Reflect.set(target, prop, value, receiver);
+      }
+    });
 
     // Verificação de captcha para solicitações de entrada em grupos (DEVE vir ANTES de antipv)
     const captchaHandled = await handleCaptchaResponse(bot, sender, body, isGroup, info, reply, GRUPOS_DIR, debug);
@@ -828,7 +839,7 @@ export async function buildMessageContext(bot, info, store, messagesCache, renta
     // Retorna o objeto de contexto completo
     return {
       // Core
-      bot, info, store, messagesCache, rentalExpirationManager,
+      bot: botForContext, info, store, messagesCache, rentalExpirationManager,
       from, isGroup, sender, pushname, type, body, budy2, args, q,
       // Permissões
       isOwner, isRealOwner, isOwnerOrSub, isSubOwner, isGroupAdmin, isBotAdmin, isPremium, isBotSender,

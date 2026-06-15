@@ -223,7 +223,7 @@ async function downloadUpdate() {
       gitProcess = exec(`git clone --depth 1 ${REPO_URL} "${TEMP_DIR}"`, (error) => {
         if (error) {
           printWarning(`❌ Falha ao clonar repositório: ${error.message}`);
-          reject(error);
+          return;
         }
       });
     } catch (execError) {
