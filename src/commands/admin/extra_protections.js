@@ -1,10 +1,10 @@
 import pathz from 'path';
-import { handleAntistealthCommand } from '../../middleware/antiStealth.js';
+import { handleAntistealthCommand, handleAntipaymentCommand } from '../../middleware/antiStealth.js';
 
 export default {
   name: "extra_protections",
-  description: "Proteções adicionais (Anti-Link, Anti-Porn, Anti-Gore, Anti-Stealth)",
-  commands: ["antilinkgp", "antilinkcanal", "antilinkch", "antilinksoft", "antiporn", "antigore", "antistealth"],
+  description: "Proteções adicionais (Anti-Link, Anti-Porn, Anti-Gore, Anti-Stealth, Anti-Pagamento)",
+  commands: ["antilinkgp", "antilinkcanal", "antilinkch", "antilinksoft", "antiporn", "antigore", "antistealth", "antipagamento", "antipayment"],
   handle: async ({ 
     reply, command, isGroup, isGroupAdmin, isBotAdmin, from, 
     groupData, DATABASE_DIR, optimizer, MESSAGES, args, prefix, bot
@@ -38,6 +38,14 @@ export default {
     // --- ANTI-STEALTH (configurável) ---
     if (cmd === 'antistealth') {
       return handleAntistealthCommand({ 
+        reply, args, isGroup, isGroupAdmin, isBotAdmin, from, 
+        groupData, DATABASE_DIR, optimizer, MESSAGES, prefix, ChainySock: bot 
+      });
+    }
+
+    // --- ANTI-PAGAMENTO (configurável) ---
+    if (['antipagamento', 'antipayment'].includes(cmd)) {
+      return handleAntipaymentCommand({ 
         reply, args, isGroup, isGroupAdmin, isBotAdmin, from, 
         groupData, DATABASE_DIR, optimizer, MESSAGES, prefix, ChainySock: bot 
       });

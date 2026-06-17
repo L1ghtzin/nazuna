@@ -21,6 +21,8 @@ import { performMigration, updateOwnerLid } from './utils/migration.js';
 import { handleGroupParticipantsUpdate, handleGroupJoinRequest } from './handlers/groupEvents.js';
 import { loadGroupData } from './utils/groupManager.js';
 import { processAntiStealth } from './middleware/antiStealth.js';
+import { recordMessageEnvelope } from './utils/messageEnvelopeRegistry.js';
+import { hasPaymentMessage } from './utils/paymentMessage.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -396,6 +398,15 @@ async function createBotSocket(authDir) {
 
     ChainySock.ev.on('messages.upsert', async (m) => {
     if (!m.messages || !Array.isArray(m.messages)) return;
+
+    // Registra o envelope de toda mensagem de grupo recebida para corroborar marcações de pagamento
+    for (const msg of m.messages) {
+        try {
+            recordMessageEnvelope(msg, hasPaymentMessage(msg));
+        } catch (e) {
+            console.error('[ANTI-STEALTH] Erro ao registrar envelope:', e);
+        }
+    }
     
     // --- ANTI-STEALTH (Anti Msg Criptografada) ---
     await processAntiStealth(ChainySock, m, performanceOptimizer).catch(e => console.error('[ANTI-STEALTH] Erro crítico no módulo:', e));

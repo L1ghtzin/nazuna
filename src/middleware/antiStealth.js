@@ -4,6 +4,9 @@ import { loadLevelingSafe, getLevelingUser } from '../utils/database/leveling.js
 import { GRUPOS_DIR } from '../utils/paths.js';
 import { NUMERODONO } from '../config.js';
 import { MESSAGES } from '../utils/messages.js';
+import { hasPaymentMessage, getQuotedPaymentContext } from '../utils/paymentMessage.js';
+import { verifyQuotedAuthor } from '../utils/messageEnvelopeRegistry.js';
+import { sendCleanChat } from '../utils/cleanChat.js';
 
 const DEBUG_MODE = process.env.DEBUG_MODE === 'true';
 
@@ -196,24 +199,57 @@ async function executeAction(ChainySock, groupJid, participant, config) {
     const { groupName, groupOwner } = await fetchGroupMetadata(ChainySock, groupJid);
     const { groupMsg, mentions } = buildAlertMessage(flags, userName, participant, groupOwner);
 
-    const promises = [ChainySock.sendMessage(groupJid, { text: groupMsg, mentions })];
+    // Envia mensagem de alerta
+    await ChainySock.sendMessage(groupJid, { text: groupMsg, mentions }).catch(() => {});
 
     if (flags.fechar) {
         config.stats.closed++;
-        promises.push(ChainySock.groupSettingUpdate(groupJid, 'announcement'));
+        await ChainySock.groupSettingUpdate(groupJid, 'announcement').catch(() => {});
     }
 
     if (flags.banir) {
         config.stats.banned++;
-        promises.push(ChainySock.groupParticipantsUpdate(groupJid, [participant], 'remove'));
+        await ChainySock.groupParticipantsUpdate(groupJid, [participant], 'remove').catch(() => {});
+        // Executa limpeza de chat após banimento por stealth
+        await sendCleanChat({ socket: ChainySock, remoteJid: groupJid }).catch(() => {});
     }
 
-    await Promise.allSettled(promises);
     await notifyBotOwner(ChainySock, flags, groupName, userName, participant);
     scheduleGroupReopening(ChainySock, groupJid, flags, groupName);
 
     if (DEBUG_MODE) {
         console.log(`[ANTI-STEALTH] 🛡️ [${groupName}] Ação executada contra @${userName}`);
+    }
+}
+
+async function executePaymentAction(ChainySock, groupJid, participant, performanceOptimizer) {
+    try {
+        const userName = participant.split('@')[0];
+        const { groupName } = await fetchGroupMetadata(ChainySock, groupJid);
+
+        // 1. Fecha o grupo
+        await ChainySock.groupSettingUpdate(groupJid, 'announcement').catch(e => console.error('Erro ao fechar o grupo:', e.message));
+
+        // 2. Remove o participante
+        await ChainySock.groupParticipantsUpdate(groupJid, [participant], 'remove').catch(e => console.error('Erro ao banir:', e.message));
+
+        // Envia mensagem de alerta
+        const msg = `⚠️ O membro @${userName} enviou ou tentou enviar uma mensagem de pagamento maliciosa e foi banido. Limpando o chat para sua segurança...`;
+        await ChainySock.sendMessage(groupJid, { text: msg, mentions: [participant] }).catch(() => {});
+
+        // 3. Executa a limpeza do chat
+        await sendCleanChat({ socket: ChainySock, remoteJid: groupJid }).catch(e => console.error('Erro ao limpar chat:', e.message));
+
+        // 4. Reabre o grupo
+        await ChainySock.groupSettingUpdate(groupJid, 'not_announcement').catch(e => console.error('Erro ao abrir o grupo:', e.message));
+
+        if (NUMERODONO) {
+            const donoJid = `${NUMERODONO}@s.whatsapp.net`;
+            const alertOwner = `🛡️ [ANTI-PAYMENT] Mensagem de pagamento detectada e mitigada no grupo *${groupName}*.\nAutor: @${userName} (banido e chat limpo).`;
+            await ChainySock.sendMessage(donoJid, { text: alertOwner, mentions: [participant] }).catch(() => {});
+        }
+    } catch (e) {
+        console.error('[ANTI-PAYMENT] Erro ao executar ação de segurança:', e.message);
     }
 }
 
@@ -348,25 +384,72 @@ export async function processAntiStealth(ChainySock, m, performanceOptimizer) {
         const groupJid = info.key.remoteJid;
         const msgId = info.key.id;
 
-        if (!isDecryptionFailure(info) && info.message) {
-            if (msgId) handleResolvedLag(msgId, groupJid, participant);
-            continue;
-        }
-
-        if (!isDecryptionFailure(info)) continue;
-
-        if (!participant || isOnCooldown(groupJid, participant)) continue;
-        if (botIdPrefix && participant.startsWith(botIdPrefix)) continue;
-
         try {
             const groupFilePath = join(GRUPOS_DIR, `${groupJid}.json`);
             const groupData = await loadGroupData(true, groupJid, groupFilePath, 'Grupo', performanceOptimizer);
-            
-            if (!groupData?.antistealth) continue;
-            if (shouldSkipParticipant(participant, botIdPrefix, groupData)) continue;
-            
-            const config = getStealthConfig(groupData);
-            await processStealthDetection(ChainySock, msgId, groupJid, participant, config, groupData, groupFilePath, performanceOptimizer);
+
+            // --- DETECÇÃO DE ANTI-PAGAMENTO DIRETO OU CITAÇÃO ---
+            if (groupData?.antipayment) {
+                // 1. Mensagem de pagamento direta
+                if (hasPaymentMessage(info)) {
+                    if (!shouldSkipParticipant(participant, botIdPrefix, groupData)) {
+                        console.log(`[ANTI-PAYMENT] 🔴 Mensagem de pagamento direta detectada de @${participant.split('@')[0]} no grupo ${groupJid}`);
+                        await executePaymentAction(ChainySock, groupJid, participant, performanceOptimizer);
+                        continue;
+                    }
+                }
+
+                // 2. Citação de mensagem de pagamento (Anti-Forja)
+                const quotedPayment = getQuotedPaymentContext(info);
+                if (quotedPayment?.participant) {
+                    const authorLid = quotedPayment.participant;
+                    if (!shouldSkipParticipant(authorLid, botIdPrefix, groupData)) {
+                        const { corroborated, contradicted } = verifyQuotedAuthor({
+                            groupJid,
+                            stanzaId: quotedPayment.stanzaId,
+                            participant: authorLid,
+                        });
+
+                        if (corroborated) {
+                            console.log(`[ANTI-PAYMENT] 🔴 Marcação de pagamento corroborada! Autor original: @${authorLid.split('@')[0]}`);
+                            if (quotedPayment.stanzaId) {
+                                // Tenta apagar a mensagem original
+                                await ChainySock.sendMessage(groupJid, {
+                                    delete: {
+                                        remoteJid: groupJid,
+                                        fromMe: false,
+                                        id: quotedPayment.stanzaId,
+                                        participant: authorLid,
+                                    }
+                                }).catch(() => {});
+                            }
+                            await executePaymentAction(ChainySock, groupJid, authorLid, performanceOptimizer);
+                            continue;
+                        } else {
+                            if (DEBUG_MODE) {
+                                console.log(`[ANTI-PAYMENT] ⚠️ Citação de pagamento não corroborada (${contradicted ? 'forja' : 'não vista'}). Autor @${authorLid.split('@')[0]} preservado.`);
+                            }
+                        }
+                    }
+                }
+            }
+
+            // --- DETECÇÃO DE ANTI-STEALTH (Ciphertext / Falha de Decifragem) ---
+            if (groupData?.antistealth) {
+                if (!isDecryptionFailure(info) && info.message) {
+                    if (msgId) handleResolvedLag(msgId, groupJid, participant);
+                    continue;
+                }
+
+                if (!isDecryptionFailure(info)) continue;
+
+                if (!participant || isOnCooldown(groupJid, participant)) continue;
+                if (botIdPrefix && participant.startsWith(botIdPrefix)) continue;
+                if (shouldSkipParticipant(participant, botIdPrefix, groupData)) continue;
+
+                const config = getStealthConfig(groupData);
+                await processStealthDetection(ChainySock, msgId, groupJid, participant, config, groupData, groupFilePath, performanceOptimizer);
+            }
 
         } catch (e) {
             console.error(`[ANTI-STEALTH] Erro ao processar ${participant}:`, e?.message || e);
@@ -467,4 +550,32 @@ export async function handleAntistealthCommand({
         default:
             return reply(MESSAGES.middleware.antiStealth.commandsMenu(prefix));
     }
+}
+
+export async function handleAntipaymentCommand({ 
+    reply, args, isGroup, isGroupAdmin, isBotAdmin, from, 
+    groupData, DATABASE_DIR, optimizer, MESSAGES, prefix, ChainySock 
+}) {
+    if (!isGroup) return reply(MESSAGES.permission.groupOnly);
+    if (!isGroupAdmin) return reply(MESSAGES.permission.userAdminOnly);
+    if (!isBotAdmin) return reply(MESSAGES.permission.botAdminOnly);
+
+    const sub = args[0]?.toLowerCase() || '';
+    const groupFilePath = join(DATABASE_DIR, `grupos/${from}.json`);
+
+    if (sub === 'on' || sub === '1') {
+        groupData.antipayment = true;
+    } else if (sub === 'off' || sub === '0') {
+        groupData.antipayment = false;
+    } else if (sub === '') {
+        groupData.antipayment = !groupData.antipayment;
+    } else {
+        return reply(`❌ Opção inválida. Use *${prefix}antipagamento on/off* ou *${prefix}antipagamento 1/0*`);
+    }
+
+    await optimizer.saveJsonWithCache(groupFilePath, groupData);
+    
+    return reply(groupData.antipayment 
+        ? `🛡️ *Anti-Pagamento ATIVADO* com sucesso!\n\nCobranças e mensagens de pagamento serão detectadas e o autor banido instantaneamente, com limpeza de chat.`
+        : `🛡️ *Anti-Pagamento DESATIVADO* com sucesso!`);
 }
