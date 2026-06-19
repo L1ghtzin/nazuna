@@ -14,5 +14,3 @@ dados/config.json
 dados/logs/*.log
 dados/logs/
 
-# Agents
-.agents
