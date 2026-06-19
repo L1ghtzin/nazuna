@@ -100,7 +100,8 @@ export default {
         'Consultei os oráculos...', 'Analisei todas as possibilidades...', 'O universo me contou...'
       ];
       const comment = comments[Math.floor(Math.random() * comments.length)];
-      return reply(`🎯 *${comment}*\n\n🎯 A chance de "${q}" acontecer é: *${chance}%*!\n\n${chance >= 80 ? '🚀 Uau! Apostaria minhas fichas nisso!' : chance >= 60 ? '😎 Chances promissoras!' : chance >= 40 ? '🤔 Meio termo, pode rolar!' : chance >= 20 ? '😅 Hmm... complicado!' : '😂 Melhor sonhar com outra coisa!'}`);
+      const evalText = chance >= 80 ? '🚀 Uau! Apostaria minhas fichas nisso!' : chance >= 60 ? '😎 Chances promissoras!' : chance >= 40 ? '🤔 Meio termo, pode rolar!' : chance >= 20 ? '😅 Hmm... complicado!' : '😂 Melhor sonhar com outra coisa!';
+      return reply(MESSAGES.member.fun.chanceResult(comment, q, chance, evalText));
     }
 
     // --- QUANDO ---
@@ -112,7 +113,8 @@ export default {
         'depois do carnaval 🎡', 'nunca 😅', 'já aconteceu e você não viu 🤯', 'numa sexta-feira 13 😈', 'quando os santos ajudarem 😇'
       ];
       const time = times[Math.floor(Math.random() * times.length)];
-      return reply(`🔮 Minha visão revela que...\n\n  ️ "${q}" vai acontecer: *${time}*!\n\n${time.includes('nunca') ? '😂 Brincadeira! Nunca desista dos seus sonhos!' : '🍀 Boa sorte na espera!'}`);
+      const evalText = time.includes('nunca') ? '😂 Brincadeira! Nunca desista dos seus sonhos!' : '🍀 Boa sorte na espera!';
+      return reply(MESSAGES.member.fun.quandoResult(q, time, evalText));
     }
 
     // --- SN (Sim ou Não) ---
@@ -122,7 +124,9 @@ export default {
       const neg = ['Não! 😅', 'Nem pensar! 😂', 'Esquece! 🤭', 'Nada a ver! 🙄', 'De jeito nenhum! 😑', 'Que nada! 😒', 'Não rola! 😶', 'Melhor não! 😬'];
       const isPos = Math.random() > 0.5;
       const resp = isPos ? pos[Math.floor(Math.random() * pos.length)] : neg[Math.floor(Math.random() * neg.length)];
-      return reply(`  **ORÁCULO RESPONDE** 🎱\n\n🤔 *Pergunta:* "${q}"\n\n${isPos ? '🎆' : '💔'} **Resposta:** *${resp}*\n\n📊 *Confiança:* ${Math.floor(Math.random() * 30) + 70}%\n\n${isPos ? '🎉 O destino sorri para você!' : '😅 Mas não desista dos seus sonhos!'}`);
+      const conf = Math.floor(Math.random() * 30) + 70;
+      const evalText = isPos ? '🎉 O destino sorri para você!' : '😅 Mas não desista dos seus sonhos!';
+      return reply(MESSAGES.member.fun.snResult(q, isPos, resp, conf, evalText));
     }
 
     // --- SORTE ---

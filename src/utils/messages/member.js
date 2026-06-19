@@ -187,8 +187,11 @@ export const memberMessages = {
     niverInvalidFormat: `💔 Formato inválido! Use DD/MM (ex: 25/12).`,
     niverSuccess: (sender, q) => `✅ @${sender}, seu aniversário foi registrado para o dia ${q}! 🥳`,
     chanceMissingText: (prefix) => `🎲 Me conta algo para eu calcular as chances! 📊\n\n📝 *Exemplo:* ${prefix}chance chover pizza hoje`,
+    chanceResult: (comment, q, chance, evalText) => `🎯 *${comment}*\n\n🎯 A chance de "${q}" acontecer é: *${chance}%*!\n\n${evalText}`,
     quandoMissingText: (prefix) => `🔮 Me conta o que você quer que eu preveja! 🌠\n\n📝 *Exemplo:* ${prefix}quando vou ficar rico`,
+    quandoResult: (q, time, evalText) => `🔮 Minha visão revela que...\n\n  ️ "${q}" vai acontecer: *${time}*!\n\n${evalText}`,
     snMissingText: (prefix) => `🎱 Faça uma pergunta para o oráculo! 🔮\n\n📝 *Exemplo:* ${prefix}sn Vou ganhar na loteria?`,
+    snResult: (q, isPos, resp, conf, evalText) => `  **ORÁCULO RESPONDE** 🎱\n\n🤔 *Pergunta:* "${q}"\n\n${isPos ? '🎆' : '💔'} **Resposta:** *${resp}*\n\n📊 *Confiança:* ${conf}%\n\n${evalText}`,
     sorteStatus: (name, level, status) => `🍀 *TESTE DE SORTE* 🍀\n\n👤 *Usuário:* ${name}\n📊 *Nível de Sorte:* ${level}%\n\n📝 *Status:* ${status}\n\n${level >= 50 ? '🚀 Aproveite o dia, a sorte está com você!' : '⚠️ Melhor ter cuidado hoje!'}`
   },
   games: {

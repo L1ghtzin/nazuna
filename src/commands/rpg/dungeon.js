@@ -32,7 +32,7 @@ export default {
     if (command === 'masmorrasolo' || command === 'dungeonsolo' || command === 'dg' || command === 'dungeon' || command === 'masmorra') {
       if (me.lastDungeon && (now - me.lastDungeon) < 7200000) {
         const remaining = Math.ceil((7200000 - (now - me.lastDungeon)) / 60000);
-        return reply(`⏰ Você está exausto! Aguarde *${remaining} minutos*.`);
+        return reply(MESSAGES.rpg.dungeon.cooldown(remaining));
       }
       
       const dungeons = [
@@ -46,15 +46,15 @@ export default {
       const availableDungeons = dungeons.filter(d => d.diff <= Math.ceil(userLevel / 5) + 1);
       
       if (!q) {
-        let text = `╭━━━⊱ 🗺️ *MASMORRAS* ⊱━━━╮\n│ Aventureiro: *${pushname}*\n│ Nível: ${userLevel}\n╰━━━━━━━━━━━━━━━━━━━━╯\n\n`;
+        let text = MESSAGES.rpg.dungeon.header(pushname, userLevel);
         availableDungeons.forEach((d, i) => {
-          text += `${i + 1}. ${d.emoji} *${d.name}* (Lv.${d.diff * 5})\n   💰 ${d.reward[0]}-${d.reward[1]} | ✨ ${d.exp}\n\n`;
+          text += MESSAGES.rpg.dungeon.itemLine(i + 1, d.emoji, d.name, d.diff * 5, d.reward[0], d.reward[1], d.exp);
         });
-        return reply(text + `💡 Use ${prefix}dg <número>`);
+        return reply(text + MESSAGES.rpg.dungeon.footer(prefix));
       }
       
       const index = parseInt(q) - 1;
-      if (isNaN(index) || index < 0 || index >= availableDungeons.length) return reply(`💔 Masmorra inválida!`);
+      if (isNaN(index) || index < 0 || index >= availableDungeons.length) return reply(MESSAGES.rpg.dungeon.invalid);
       
       const dungeon = availableDungeons[index];
       const userPower = (me.power || 100) + (me.attackBonus || 0);
@@ -77,16 +77,16 @@ export default {
         }
         
         if (leveledUp) {
-          reply(`🌟 *LEVEL UP!* Você agora é nível ${me.level}!`);
+          reply(MESSAGES.rpg.dungeon.levelUp(me.level));
         }
         
         saveEconomy(econ);
-        return reply(`⚔️ *VITÓRIA!* Você conquistou a ${dungeon.name}!\n💰 +${reward.toLocaleString()} moedas\n✨ +${dungeon.exp} XP`);
+        return reply(MESSAGES.rpg.dungeon.win(dungeon.name, reward.toLocaleString(), dungeon.exp));
       } else {
         const loss = Math.floor(me.wallet * 0.1);
         me.wallet -= loss;
         saveEconomy(econ);
-        return reply(`💀 *DERROTA!* Você fugiu da ${dungeon.name}!\n💸 Perdeu ${loss.toLocaleString()} moedas.`);
+        return reply(MESSAGES.rpg.dungeon.lose(dungeon.name, loss.toLocaleString()));
       }
     }
 
@@ -95,7 +95,7 @@ export default {
       const BOSS_COOLDOWN = 4 * 60 * 60 * 1000;
       if (me.lastBoss && (now - me.lastBoss) < BOSS_COOLDOWN) {
         const remaining = Math.ceil((BOSS_COOLDOWN - (now - me.lastBoss)) / 60000);
-        return reply(`⏰ Exausto! Aguarde *${Math.floor(remaining/60)}h ${remaining%60}min*.`);
+        return reply(MESSAGES.rpg.dungeon.bossCooldown(Math.floor(remaining/60), remaining%60));
       }
       
       const bosses = [
@@ -114,14 +114,14 @@ export default {
       let turns = 0;
       const maxTurns = 15;
       
-      let battleLog = `╭━━━⊱ 👹 *BOSS FIGHT!* ⊱━━━╮\n\n${boss.emoji} *${boss.name}*\n❤️ HP: ${boss.hp} | ⚔️ ATK: ${boss.attack} | 🛡️ DEF: ${boss.defense}\n\nVS\n\n⚔️ *${pushname}* (Poder: ${playerPower})\n\n╰━━━━━━━━━━━━━━━━━━━━╯\n\n`;
+      let battleLog = MESSAGES.rpg.dungeon.bossBattleStart(boss.emoji, boss.name, boss.hp, boss.attack, boss.defense, pushname, playerPower);
       
       while (bossHp > 0 && playerHp > 0 && turns < maxTurns) {
         const playerDmg = Math.max(10, Math.floor(playerPower * 0.3 + Math.random() * 30 - boss.defense * 0.2));
         bossHp -= playerDmg;
         
         if (bossHp <= 0) {
-          battleLog += `⚔️ Você desferiu o golpe final! (-${playerDmg} HP)\n`;
+          battleLog += MESSAGES.rpg.dungeon.bossFinalHit(playerDmg);
           break;
         }
         
@@ -141,15 +141,15 @@ export default {
         const levelUpRes = checkEcoLevelUp(me);
         saveEconomy(econ);
         
-        battleLog += `\n╭━━━⊱ 🏆 *VITÓRIA!* ⊱━━━╮\n│ Você derrotou ${boss.emoji} *${boss.name}*!\n│\n│ 💰 Recompensa: +${boss.reward.toLocaleString()}\n│ ✨ XP: +${boss.xp}\n│ 🏅 Bosses derrotados: ${me.stats.bossesDefeated}\n╰━━━━━━━━━━━━━━━━━━━━╯`;
+        battleLog += MESSAGES.rpg.dungeon.bossWin(boss.emoji, boss.name, boss.reward.toLocaleString(), boss.xp, me.stats.bossesDefeated);
         
         if (levelUpRes.leveledUp) {
-          battleLog += `\n\n🌟 *LEVEL UP!* Você agora é nível ${levelUpRes.newLevel}!`;
+          battleLog += MESSAGES.rpg.dungeon.bossLevelUp(levelUpRes.newLevel);
         }
         return reply(battleLog);
       } else {
         saveEconomy(econ);
-        battleLog += `\n╭━━━⊱ 💀 *DERROTA!* ⊱━━━╮\n│ ${boss.emoji} *${boss.name}* foi mais forte!\n│\n│ 💡 Fique mais forte e tente novamente!\n│ 📈 Use ${prefix}equipar ou ${prefix}encantar para melhorar\n╰━━━━━━━━━━━━━━━━━━━━╯`;
+        battleLog += MESSAGES.rpg.dungeon.bossLose(boss.emoji, boss.name, prefix);
         return reply(battleLog);
       }
     }
@@ -167,8 +167,8 @@ export default {
         '🎰 Sábado do Cassino (Sorte!)'
       ];
       
-      let text = `╭━━━⊱ 🎉 *EVENTOS RPG* ⊱━━━╮\n│ Hoje: ${weeklyEvents[dayOfWeek]}\n╰━━━━━━━━━━━━━━━━━━━━╯\n\n`;
-      text += `📅 *Agenda Semanal:*\n` + weeklyEvents.join('\n');
+      let text = MESSAGES.rpg.events.header(weeklyEvents[dayOfWeek]);
+      text += MESSAGES.rpg.events.body(weeklyEvents.join('\n'));
       return reply(text);
     }
   }

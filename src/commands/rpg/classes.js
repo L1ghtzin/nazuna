@@ -31,18 +31,18 @@ export default {
     };
 
     if (!args[0]) {
-      let text = `╭━━━⊱ ⚔️ *CLASSES* ⊱━━━╮\n\n`;
+      let text = MESSAGES.rpg.classes.header;
       Object.entries(classes).forEach(([id, c]) => {
-        text += `${c.emoji} *${c.name}*\n   💡 Use ${prefix}classe ${id}\n\n`;
+        text += MESSAGES.rpg.classes.itemLine(c.emoji, c.name, prefix, id);
       });
       return reply(text);
     }
     
     const choice = args[0].toLowerCase();
-    if (!classes[choice]) return reply(`💔 Classe não encontrada!`);
+    if (!classes[choice]) return reply(MESSAGES.rpg.classes.notFound);
     
     me.classe = choice;
     saveEconomy(econ);
-    return reply(`✨ Você agora é um *${classes[choice].name}*!`);
+    return reply(MESSAGES.rpg.classes.chosen(classes[choice].name));
   }
 };

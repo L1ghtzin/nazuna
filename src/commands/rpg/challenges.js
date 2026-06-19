@@ -32,15 +32,15 @@ export default {
     const show = sub === 'desafiomensal' ? me.monthlyChallenge : me.weeklyChallenge;
     const labels = { mine: 'Minerações', work: 'Trabalhos', fish: 'Pescarias', explore: 'Explorações', hunt: 'Caçadas', crimeSuccess: 'Crimes OK' };
     
-    let text = `🎯 Desafio ${sub === 'desafiomensal' ? 'Mensal' : 'Semanal'}\n\n`;
+    let text = MESSAGES.rpg.challenges.header(sub);
     for (const t of (show.tasks || [])) {
-      text += `  ${labels[t.type] || t.type}: ${t.progress || 0}/${t.target}\n`;
+      text += MESSAGES.rpg.challenges.taskLine(labels[t.type] || t.type, t.progress || 0, t.target);
     }
     
-    text += `\nPrêmio: ${fmt(show.reward)} ${show.claimed ? '(coletado)' : ''}`;
+    text += MESSAGES.rpg.challenges.prize(fmt(show.reward), show.claimed);
     
     if (isPeriodCompleted(show) && !show.claimed) {
-      text += `\nUse: ${prefix}${sub} coletar`;
+      text += MESSAGES.rpg.challenges.claimFooter(prefix, sub);
     }
     
     if ((args[0] || '').toLowerCase() === 'coletar') {
@@ -51,7 +51,7 @@ export default {
       show.claimed = true; 
       saveEconomy(econ);
       
-      return reply(`🎁 Você coletou ${fmt(show.reward)} do ${sub === 'desafiomensal' ? 'desafio mensal' : 'desafio semanal'}!`);
+      return reply(MESSAGES.rpg.challenges.reward(fmt(show.reward), sub));
     }
     
     return reply(text);

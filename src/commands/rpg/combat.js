@@ -31,20 +31,20 @@ export default {
     // --- DUELO PVP ---
     if (command === 'duelarrpg' || command === 'duelorpg' || command === 'duelrpg' || command === 'pvp') {
       let target = (menc_jid2 && menc_jid2[0]) || null;
-      if (!target) return reply(`💔 Marque alguém para duelar!`);
+      if (!target) return reply(MESSAGES.rpg.combat.duel.needTarget);
       
       if (isValidJid(target)) {
         target = await getLidFromJidCached(bot, target) || target;
       }
       
-      if (target === sender) return reply(`💔 Você não pode duelar consigo mesmo!`);
+      if (target === sender) return reply(MESSAGES.rpg.combat.duel.selfDuel);
       
       const econ = loadEconomy();
       const me = getEcoUser(econ, sender);
       
       if (me.lastDuel && (now - me.lastDuel) < 600000) {
         const remaining = Math.ceil((600000 - (now - me.lastDuel)) / 60000);
-        return reply(`⏰ Você está exausto! Aguarde ${remaining} minutos.`);
+        return reply(MESSAGES.rpg.combat.duel.cooldown(remaining));
       }
       
       const opponent = getEcoUser(econ, target);
@@ -57,7 +57,7 @@ export default {
       let myHp = 200 + ((me.level || 1) * 10);
       let oppHp = 200 + ((opponent.level || 1) * 10);
       
-      let text = `╭━━━⊱ ⚔️ *DUELO* ⊱━━━╮\n│ ${pushname} VS @${target?.split('@')?.[0] || 'desconhecido'}\n╰━━━━━━━━━━━━━━━━━━━━╯\n\n`;
+      let text = MESSAGES.rpg.combat.duel.header(pushname, target?.split('@')?.[0] || 'desconhecido');
       let turn = 0;
       let battle = '';
 
@@ -65,12 +65,12 @@ export default {
         turn++;
         const myDmg = Math.max(5, myPower - Math.floor(Math.random() * oppDefense));
         oppHp -= myDmg;
-        battle += `⚔️ ${pushname}: -${myDmg} HP\n`;
+        battle += MESSAGES.rpg.combat.duel.myDmgLine(pushname, myDmg);
         if (oppHp <= 0) break;
         
         const oppDmg = Math.max(5, oppPower - Math.floor(Math.random() * myDefense));
         myHp -= oppDmg;
-        battle += `🛡️ Oponente: -${oppDmg} HP\n\n`;
+        battle += MESSAGES.rpg.combat.duel.oppDmgLine(oppDmg);
       }
       
       me.lastDuel = now;
@@ -92,11 +92,11 @@ export default {
         saveEconomy(econ);
         
         text += battle;
-        text += `\n╭━━━⊱ 🏆 *VITÓRIA!* 🏆 ⊱━━━╮\n│\n│ 💰 Recompensa: *+${reward.toLocaleString()}*\n│ ✨ EXP: *+150*\n`;
+        text += MESSAGES.rpg.combat.duel.win(reward.toLocaleString());
         if (levelUpRes.leveledUp) {
-          text += `│\n╰━━━━━━━━━━━━━━━━━━━━━╯\n\n╭━━━⊱   *LEVEL UP!* 🌟 ⊱━━━╮\n│\n│ 📊 Nível atual: *${levelUpRes.newLevel}*\n│ ❤️ HP restante: *${Math.max(0, myHp)}*\n│\n╰━━━━━━━━━━━━━━━━━━━━━╯`;
+          text += MESSAGES.rpg.combat.duel.levelUpExt(levelUpRes.newLevel, Math.max(0, myHp));
         } else {
-          text += `│ ❤️ HP restante: *${Math.max(0, myHp)}*\n│\n╰━━━━━━━━━━━━━━━━━━━━━╯`;
+          text += MESSAGES.rpg.combat.duel.winExt(Math.max(0, myHp));
         }
         
         return reply(text, { mentions: [target] });
@@ -114,7 +114,7 @@ export default {
         saveEconomy(econ);
         
         text += battle;
-        text += `\n╭━━━⊱ 💀 *DERROTA!* 💀 ⊱━━━╮\n│\n│ 💸 Perdeu: *-${loss.toLocaleString()}*\n│ ❤️ HP restante: *0*\n│\n╰━━━━━━━━━━━━━━━━━━━━━╯`;
+        text += MESSAGES.rpg.combat.duel.lose(loss.toLocaleString());
         
         return reply(text, { mentions: [target] });
       }
@@ -126,7 +126,7 @@ export default {
       const me = getEcoUser(econ, sender);
       if (me.lastArena && (now - me.lastArena) < 1800000) {
         const remaining = Math.ceil((1800000 - (now - me.lastArena)) / 60000);
-        return reply(`⏰ A arena está fechada para você! Aguarde ${remaining} minutos.`);
+        return reply(MESSAGES.rpg.combat.arena.cooldown(remaining));
       }
       
       const levels = [
@@ -137,15 +137,15 @@ export default {
       
       const available = levels.filter(l => l.minLevel <= (me.level || 1));
       if (!q) {
-        let text = `╭━━━⊱ 🏛️ *ARENA* ⊱━━━╮\n╰━━━━━━━━━━━━━━━━━━━━╯\n\n`;
+        let text = MESSAGES.rpg.combat.arena.header;
         available.forEach((l, i) => {
-          text += `${i + 1}. 🏆 *${l.name}* (Lv.${l.minLevel})\n   💰 ${l.reward[0]}-${l.reward[1]} | ⚔️ ${l.enemies} Inimigos\n\n`;
+          text += MESSAGES.rpg.combat.arena.itemLine(i + 1, l.name, l.minLevel, l.reward[0], l.reward[1], l.enemies);
         });
-        return reply(text + `💡 Use ${prefix}arena <número>`);
+        return reply(text + MESSAGES.rpg.combat.arena.footer(prefix));
       }
       
       const index = parseInt(q) - 1;
-      if (isNaN(index) || index < 0 || index >= available.length) return reply(`💔 Arena inválida!`);
+      if (isNaN(index) || index < 0 || index >= available.length) return reply(MESSAGES.rpg.combat.arena.invalid);
       
       const arena = available[index];
       const wins = Math.floor(Math.random() * (arena.enemies + 1));
@@ -158,16 +158,16 @@ export default {
         
         const levelUpRes = checkEcoLevelUp(me);
         if (levelUpRes.leveledUp) {
-          reply(`🌟 *LEVEL UP!* Você agora é nível ${levelUpRes.newLevel}!`);
+          reply(MESSAGES.rpg.combat.arena.levelUp(levelUpRes.newLevel));
         }
 
         saveEconomy(econ);
-        return reply(`🏆 *VITÓRIA NA ARENA!* Derrotou ${wins}/${arena.enemies} inimigos!\n💰 Prêmio: +${reward.toLocaleString()} moedas`);
+        return reply(MESSAGES.rpg.combat.arena.win(wins, arena.enemies, reward.toLocaleString()));
       } else {
         const loss = Math.floor(me.wallet * 0.08);
         me.wallet -= loss;
         saveEconomy(econ);
-        return reply(`💀 *DERROTA NA ARENA!* Derrotou apenas ${wins}/${arena.enemies} inimigos.\n💸 Perdeu: -${loss.toLocaleString()} moedas`);
+        return reply(MESSAGES.rpg.combat.arena.lose(wins, arena.enemies, loss.toLocaleString()));
       }
     }
   }

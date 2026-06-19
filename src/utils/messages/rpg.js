@@ -206,6 +206,69 @@ export const rpgMessages = {
     claimed: (count, reward, exp) => `╭━━━⊱ ✅ *RECOMPENSAS* ⊱━━━╮\n\n🎉 Você reivindicou ${count} missão(ões)!\n\n💰 Dinheiro: +${reward}\n✨ EXP: +${exp}\n\n╰━━━━━━━━━━━━━━━━━━━━╯`
   },
   
+  challenges: {
+    reward: (reward, sub) => `🎁 Você coletou ${reward} do ${sub === 'desafiomensal' ? 'desafio mensal' : 'desafio semanal'}!`,
+    header: (sub) => `🎯 Desafio ${sub === 'desafiomensal' ? 'Mensal' : 'Semanal'}\n\n`,
+    taskLine: (name, prog, target) => `  ${name}: ${prog}/${target}\n`,
+    prize: (reward, claimed) => `\nPrêmio: ${reward} ${claimed ? '(coletado)' : ''}`,
+    claimFooter: (prefix, sub) => `\nUse: ${prefix}${sub} coletar`
+  },
+  
+  classes: {
+    notFound: '💔 Classe não encontrada!',
+    chosen: (name) => `✨ Você agora é um *${name}*!`,
+    header: `╭━━━⊱ ⚔️ *CLASSES* ⊱━━━╮\n\n`,
+    itemLine: (emoji, name, prefix, id) => `${emoji} *${name}*\n   💡 Use ${prefix}classe ${id}\n\n`
+  },
+
+  combat: {
+    duel: {
+      needTarget: `💔 Marque alguém para duelar!`,
+      selfDuel: `💔 Você não pode duelar consigo mesmo!`,
+      cooldown: (rem) => `⏰ Você está exausto! Aguarde ${rem} minutos.`,
+      header: (p1, p2) => `╭━━━⊱ ⚔️ *DUELO* ⊱━━━╮\n│ ${p1} VS @${p2}\n╰━━━━━━━━━━━━━━━━━━━━╯\n\n`,
+      myDmgLine: (name, dmg) => `⚔️ ${name}: -${dmg} HP\n`,
+      oppDmgLine: (dmg) => `🛡️ Oponente: -${dmg} HP\n\n`,
+      win: (reward) => `\n╭━━━⊱ 🏆 *VITÓRIA!* 🏆 ⊱━━━╮\n│\n│ 💰 Recompensa: *+${reward}*\n│ ✨ EXP: *+150*\n`,
+      levelUpExt: (level, hp) => `│\n╰━━━━━━━━━━━━━━━━━━━━━╯\n\n╭━━━⊱   *LEVEL UP!* 🌟 ⊱━━━╮\n│\n│ 📊 Nível atual: *${level}*\n│ ❤️ HP restante: *${hp}*\n│\n╰━━━━━━━━━━━━━━━━━━━━━╯`,
+      winExt: (hp) => `│ ❤️ HP restante: *${hp}*\n│\n╰━━━━━━━━━━━━━━━━━━━━━╯`,
+      lose: (loss) => `\n╭━━━⊱ 💀 *DERROTA!* 💀 ⊱━━━╮\n│\n│ 💸 Perdeu: *-${loss}*\n│ ❤️ HP restante: *0*\n│\n╰━━━━━━━━━━━━━━━━━━━━━╯`
+    },
+    arena: {
+      cooldown: (rem) => `⏰ A arena está fechada para você! Aguarde ${rem} minutos.`,
+      header: `╭━━━⊱ 🏛️ *ARENA* ⊱━━━╮\n╰━━━━━━━━━━━━━━━━━━━━╯\n\n`,
+      itemLine: (i, name, level, r1, r2, enemies) => `${i}. 🏆 *${name}* (Lv.${level})\n   💰 ${r1}-${r2} | ⚔️ ${enemies} Inimigos\n\n`,
+      footer: (prefix) => `💡 Use ${prefix}arena <número>`,
+      invalid: `💔 Arena inválida!`,
+      levelUp: (level) => `🌟 *LEVEL UP!* Você agora é nível ${level}!`,
+      win: (wins, enemies, reward) => `🏆 *VITÓRIA NA ARENA!* Derrotou ${wins}/${enemies} inimigos!\n💰 Prêmio: +${reward} moedas`,
+      lose: (wins, enemies, loss) => `💀 *DERROTA NA ARENA!* Derrotou apenas ${wins}/${enemies} inimigos.\n💸 Perdeu: -${loss} moedas`
+    }
+  },
+
+  dungeon: {
+    cooldown: (rem) => `⏰ Você está exausto! Aguarde *${rem} minutos*.`,
+    header: (name, level) => `╭━━━⊱ 🗺️ *MASMORRAS* ⊱━━━╮\n│ Aventureiro: *${name}*\n│ Nível: ${level}\n╰━━━━━━━━━━━━━━━━━━━━╯\n\n`,
+    itemLine: (i, emoji, name, level, r1, r2, exp) => `${i}. ${emoji} *${name}* (Lv.${level})\n   💰 ${r1}-${r2} | ✨ ${exp}\n\n`,
+    footer: (prefix) => `💡 Use ${prefix}dg <número>`,
+    invalid: `💔 Masmorra inválida!`,
+    levelUp: (level) => `🌟 *LEVEL UP!* Você agora é nível ${level}!`,
+    win: (name, reward, exp) => `⚔️ *VITÓRIA!* Você conquistou a ${name}!\n💰 +${reward} moedas\n✨ +${exp} XP`,
+    lose: (name, loss) => `💀 *DERROTA!* Você fugiu da ${name}!\n💸 Perdeu ${loss} moedas.`,
+    
+    bossCooldown: (remH, remM) => `⏰ Exausto! Aguarde *${remH}h ${remM}min*.`,
+    bossBattleStart: (emoji, name, hp, atk, def, pName, pPower) => `╭━━━⊱ 👹 *BOSS FIGHT!* ⊱━━━╮\n\n${emoji} *${name}*\n❤️ HP: ${hp} | ⚔️ ATK: ${atk} | 🛡️ DEF: ${def}\n\nVS\n\n⚔️ *${pName}* (Poder: ${pPower})\n\n╰━━━━━━━━━━━━━━━━━━━━╯\n\n`,
+    bossFinalHit: (dmg) => `⚔️ Você desferiu o golpe final! (-${dmg} HP)\n`,
+    bossWin: (emoji, name, reward, exp, totalDefeated) => `\n╭━━━⊱ 🏆 *VITÓRIA!* ⊱━━━╮\n│ Você derrotou ${emoji} *${name}*!\n│\n│ 💰 Recompensa: +${reward}\n│ ✨ XP: +${exp}\n│ 🏅 Bosses derrotados: ${totalDefeated}\n╰━━━━━━━━━━━━━━━━━━━━╯`,
+    bossLevelUp: (level) => `\n\n🌟 *LEVEL UP!* Você agora é nível ${level}!`,
+    bossLose: (emoji, name, prefix) => `\n╭━━━⊱ 💀 *DERROTA!* ⊱━━━╮\n│ ${emoji} *${name}* foi mais forte!\n│\n│ 💡 Fique mais forte e tente novamente!\n│ 📈 Use ${prefix}equipar ou ${prefix}encantar para melhorar\n╰━━━━━━━━━━━━━━━━━━━━╯`
+  },
+
+  events: {
+    header: (todayEvent) => `╭━━━⊱ 🎉 *EVENTOS RPG* ⊱━━━╮\n│ Hoje: ${todayEvent}\n╰━━━━━━━━━━━━━━━━━━━━╯\n\n`,
+    body: (eventsList) => `📅 *Agenda Semanal:*\n${eventsList}`
+  },
+
   house: {
     noHouse: '❌ Você não tem uma casa!',
     decorNotFound: '❌ Decoração não encontrada!',
