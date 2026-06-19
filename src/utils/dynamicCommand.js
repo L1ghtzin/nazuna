@@ -6,9 +6,21 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const COMMANDS_DIR = path.resolve(__dirname, '../commands');
+const IGNORED_COMMAND_FILES = new Set([
+  'owner/owner_broadcast.js',
+  'owner/personalizargrupo.js',
+]);
 
 let commandImports = null;
 let duplicateCommandAliases = [];
+
+function formatCommandPath(filePath) {
+  return path.relative(COMMANDS_DIR, filePath).replace(/\\/g, '/');
+}
+
+function shouldLoadCommandFile(filePath) {
+  return !IGNORED_COMMAND_FILES.has(formatCommandPath(filePath));
+}
 
 function readDirectoryRecursive(dir) {
   const results = [];
@@ -24,7 +36,9 @@ function readDirectoryRecursive(dir) {
       !item.name.startsWith("_") &&
       (item.name.endsWith(".js") || item.name.endsWith(".ts"))
     ) {
-      results.push(itemPath);
+      if (shouldLoadCommandFile(itemPath)) {
+        results.push(itemPath);
+      }
     }
   }
 
@@ -32,10 +46,6 @@ function readDirectoryRecursive(dir) {
 }
 
 let commandLookupMap = null;
-
-function formatCommandPath(filePath) {
-  return path.relative(COMMANDS_DIR, filePath).replace(/\\/g, '/');
-}
 
 function registerCommandAlias(alias, type, command) {
   const normalizedAlias = String(alias).toLowerCase();
