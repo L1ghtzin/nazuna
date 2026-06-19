@@ -19,14 +19,15 @@ export default {
     args, 
     prefix, 
     normalizar,
-    MESSAGES
+    MESSAGES,
+    optimizer
   }) => {
     if (!isGroup) return reply(MESSAGES.permission.groupOnly);
 
     const stopPath = path.join(__dirname, '../../funcs/json/stop.json');
     let categoriasStop = ['Nome', 'País', 'Cidade', 'Animal', 'Cor', 'Fruta', 'Objeto', 'Profissão'];
     try {
-      const stopData = JSON.parse(fs.readFileSync(stopPath, 'utf-8'));
+      const stopData = await optimizer.loadJsonWithCache(stopPath, 'utf-8');
       categoriasStop = stopData.categorias || categoriasStop;
     } catch (e) {
       console.error('Erro ao carregar stop.json:', e);

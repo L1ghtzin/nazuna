@@ -21,7 +21,8 @@ export default {
     normalizar, 
     menc_os2, 
     q,
-    MESSAGES
+    MESSAGES,
+    optimizer
   }) => {
     if (!isGroup) return reply(MESSAGES.permission.groupOnly);
 
@@ -29,7 +30,7 @@ export default {
     const digitacaoPath = path.join(__dirname, '../../funcs/json/digitacao.json');
     let frasesDigitacao = [];
     try {
-      const digitacaoData = JSON.parse(fs.readFileSync(digitacaoPath, 'utf-8'));
+      const digitacaoData = await optimizer.loadJsonWithCache(digitacaoPath, 'utf-8');
       frasesDigitacao = digitacaoData.frases || [];
     } catch (e) {
       console.error('Erro ao carregar digitacao.json:', e);

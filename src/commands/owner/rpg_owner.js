@@ -45,8 +45,6 @@ export default {
     }
 
     // --- ADMIN COMMANDS CHECK ---
-    if (!isOwnerOrSub) return reply(MESSAGES.permission.subOwnerOnly);
-
     const econ = loadEconomy();
 
     // --- ADD MONEY ---
@@ -108,7 +106,6 @@ export default {
 
     // --- RESET GLOBAL ---
     if (command === 'rpgresetglobal' || command === 'resetrpgglobal') {
-      if (!isOwner) return reply(MESSAGES.permission.ownerOnly);
       if (args[0] !== 'confirmar') return reply(MESSAGES.rpg.admin.resetConfirm(prefix));
       econ.users = {};
       saveEconomy(econ);

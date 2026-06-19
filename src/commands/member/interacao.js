@@ -10,7 +10,7 @@ export default {
   description: "Comandos de interação (brincadeiras) entre os membros",
   commands: ["chute", "chutar", "tapa", "soco", "socar", "beijo", "beijar", "beijob", "beijarb", "abraco", "abracar", "mata", "matar", "tapar", "goza", "gozar", "mamar", "mamada", "cafune", "morder", "mordida", "lamber", "lambida", "explodir", "sexo", "tomate", "fonfon", "piupiu", "pegarpau", "apalpar"],
   usage: `${global.prefix}chute @usuário`,
-  handle: async ({  bot, reply, isGroup, command, menc_os2, prefix, info, getUserName, from, isModoLite, isModoBn , MESSAGES }) => {
+  handle: async ({  bot, reply, isGroup, command, menc_os2, prefix, info, getUserName, from, isModoLite, isModoBn , MESSAGES, optimizer }) => {
     try {
       const comandosImpróprios = ['sexo', 'surubao', 'goza', 'gozar', 'mamar', 'mamada', 'beijob', 'beijarb', 'tapar'];
       
@@ -26,13 +26,9 @@ export default {
       const gamesPath = path.join(__dirname, '../../funcs/json/games.json');
       const markgamePath = path.join(__dirname, '../../funcs/json/markgame.json');
 
-      let gamesData = fs.existsSync(gamesPath) 
-        ? JSON.parse(fs.readFileSync(gamesPath)) 
-        : { games2: {} };
+      let gamesData = await optimizer.loadJsonWithCache(gamesPath, { games2: {} });
         
-      let GamezinData = fs.existsSync(markgamePath) 
-        ? JSON.parse(fs.readFileSync(markgamePath)) 
-        : {};
+      let GamezinData = await optimizer.loadJsonWithCache(markgamePath, {});
         
       let gameResponse = GamezinData[command];
       if (Array.isArray(gameResponse)) {

@@ -19,7 +19,8 @@ export default {
     args, 
     prefix, 
     menc_os2,
-    MESSAGES
+    MESSAGES,
+    optimizer
   }) => {
     if (!isGroup) return reply(MESSAGES.member.naval.groupOnly);
 
@@ -35,7 +36,7 @@ export default {
       ]
     };
     try {
-      const navalData = JSON.parse(fs.readFileSync(navalPath, 'utf-8'));
+      const navalData = await optimizer.loadJsonWithCache(navalPath, { config: {} });
       configNaval = { ...configNaval, ...navalData.config };
     } catch (e) {
       console.error('Erro ao carregar batalhanaval.json:', e);

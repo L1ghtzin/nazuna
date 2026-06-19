@@ -19,7 +19,8 @@ export default {
     args, 
     prefix, 
     normalizar,
-    MESSAGES
+    MESSAGES,
+    optimizer
   }) => {
     const cacaPath = path.join(__dirname, '../../funcs/json/cacapalavras.json');
     let configCaca = {
@@ -32,7 +33,7 @@ export default {
     };
     let palavrasCaca = ['amor', 'fogo', 'gato', 'hora', 'jogo', 'rosa', 'vida', 'água', 'amigo', 'barco'];
     try {
-      const cacaData = JSON.parse(fs.readFileSync(cacaPath, 'utf-8'));
+      const cacaData = await optimizer.loadJsonWithCache(cacaPath, 'utf-8');
       configCaca = { ...configCaca, ...cacaData.config };
       palavrasCaca = cacaData.palavras || palavrasCaca;
     } catch (e) {

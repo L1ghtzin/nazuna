@@ -19,13 +19,14 @@ export default {
     args, 
     prefix, 
     normalizar,
-    MESSAGES
+    MESSAGES,
+    optimizer
   }) => {
     // Carregar palavras do JSON
     const wordlePath = path.join(__dirname, '../../funcs/json/wordle.json');
     let palavrasPorTamanho = {};
     try {
-      const wordleData = JSON.parse(fs.readFileSync(wordlePath, 'utf-8'));
+      const wordleData = await optimizer.loadJsonWithCache(wordlePath, 'utf-8');
       palavrasPorTamanho = wordleData.palavras || {};
     } catch (e) {
       console.error('Erro ao carregar wordle.json:', e);

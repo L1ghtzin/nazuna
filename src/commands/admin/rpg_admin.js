@@ -3,7 +3,7 @@ import path from 'path';
 export default {
     name: "rpg_admin",
     description: "Configurações e menus do sistema RPG",
-    commands: ["modorpg", "rpgmode", "rpg"],
+    commands: ["modorpg", "rpgmode", "rpg", "denuncias", "reports"],
     handle: async ({  
         reply, 
         isGroup, 
@@ -20,9 +20,6 @@ export default {
         const sub = command.toLowerCase();
 
         if (sub === 'modorpg' || sub === 'rpgmode') {
-            if (!isGroup) return reply(MESSAGES.rpg.admin.groupOnly);
-            if (!isGroupAdmin) return reply(MESSAGES.permission.adminOnly);
-            
             groupData.modorpg = !groupData.modorpg;
             await optimizer.saveJsonWithCache(groupFile, groupData);
             
@@ -31,6 +28,12 @@ export default {
 
         if (sub === 'rpg') {
             return reply(MESSAGES.rpg.admin.menu(prefix));
+        }
+
+        if (sub === 'denuncias' || sub === 'reports') {
+            const { reputation } = await import('../../funcs/exports.js').then(m => m.default || m);
+            if (!reputation) return reply(MESSAGES.rpg.reputation.unavailable);
+            return reply(reputation.getReports(from));
         }
     }
 };

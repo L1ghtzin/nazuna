@@ -19,12 +19,13 @@ export default {
     args, 
     prefix, 
     normalizar,
-    MESSAGES
+    MESSAGES,
+    optimizer
   }) => {
     const anagramaPath = path.join(__dirname, '../../funcs/json/anagrama.json');
     let palavrasAnagrama = [];
     try {
-      const anagramaData = JSON.parse(fs.readFileSync(anagramaPath, 'utf-8'));
+      const anagramaData = await optimizer.loadJsonWithCache(anagramaPath, 'utf-8');
       palavrasAnagrama = anagramaData.palavras || [];
     } catch (e) {
       console.error('Erro ao carregar anagrama.json:', e);

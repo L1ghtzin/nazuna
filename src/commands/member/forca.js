@@ -19,13 +19,14 @@ export default {
     args, 
     prefix, 
     normalizar,
-    MESSAGES
+    MESSAGES,
+    optimizer
   }) => {
     // Carregar palavras do JSON
     const forcaPath = path.join(__dirname, '../../funcs/json/forca.json');
     let palavrasForca = [];
     try {
-      const forcaData = JSON.parse(fs.readFileSync(forcaPath, 'utf-8'));
+      const forcaData = await optimizer.loadJsonWithCache(forcaPath, 'utf-8');
       palavrasForca = forcaData.palavras || [];
     } catch (e) {
       console.error('Erro ao carregar forca.json:', e);

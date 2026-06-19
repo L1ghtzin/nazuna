@@ -1,7 +1,7 @@
 export default {
   name: "rpg",
   description: "Comandos de RPG e Economia",
-  commands: ["achievementsbn", "box", "caixa", "conquistasbn", "denunciar", "denuncias", "gerarqrbn", "giftbn", "inventory", "lerqr", "medalhasbn", "nota", "notas", "note", "notes", "presente", "presentebn", "qrcodebn", "rankrep", "readqr", "repbn", "report", "reports", "reputacaobn", "scanqr", "toprep"],
+  commands: ["achievementsbn", "box", "caixa", "conquistasbn", "denunciar", "gerarqrbn", "giftbn", "inventory", "lerqr", "medalhasbn", "nota", "notas", "note", "notes", "presente", "presentebn", "qrcodebn", "rankrep", "readqr", "repbn", "report", "reputacaobn", "scanqr", "toprep"],
   handle: async ({ 
     bot, from, info, command, args, reply, prefix, pushname, sender, menc_os2,
     gifts, reputation, qrcode, achievements, notes,
@@ -144,12 +144,6 @@ export default {
       const motivo = args.slice(1).join(' ');
       if (!motivo) return reply(MESSAGES.rpg.reputation.needReason);
       return reply(reputation.reportUser(sender, menc_os2, from, motivo).message);
-    }
-
-    if (['denuncias', 'reports'].includes(cmd)) {
-      if (!reputation) return reply(MESSAGES.rpg.reputation.unavailable);
-      if (!isGroupAdmin && !isOwnerOrSub) return reply(MESSAGES.permission.adminOnly);
-      return reply(reputation.getReports(from));
     }
 
     // ═══════════════════════════════════════════════════════════════

@@ -20,13 +20,14 @@ export default {
     prefix, 
     normalizar, 
     menc_os2,
-    MESSAGES
+    MESSAGES,
+    optimizer
   }) => {
     // Carregar perguntas do JSON
     const quizPath = path.join(__dirname, '../../funcs/json/quiz.json');
     let quizDB = {};
     try {
-      quizDB = JSON.parse(fs.readFileSync(quizPath, 'utf-8'));
+      quizDB = await optimizer.loadJsonWithCache(quizPath, 'utf-8');
     } catch (e) {
       console.error('Erro ao carregar quiz.json:', e);
       quizDB = {
