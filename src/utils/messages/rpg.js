@@ -650,7 +650,7 @@ export const rpgMessages = {
     missingId: 'Informe o ID!',
     successDel: '✅ Nota deletada!',
     invalidId: '💔 ID inválido.',
-    list: (userNotes) => `📝 *Suas Notas:*\n\n${userNotes.map((n, i) => \`\${i + 1}. \${n.title || (n.text ? n.text.slice(0, 20) : 'Sem texto')}...\`).join('\\n')}`
+    list: (userNotes) => `📝 *Suas Notas:*\n\n${userNotes.map((n, i) => `${i + 1}. ${n.title || (n.text ? n.text.slice(0, 20) : 'Sem texto')}...`).join('\\n')}`
   },
   cooking: {
     recipesHeader: '📖 *RECEITAS CULINÁRIAS*\n\n',
