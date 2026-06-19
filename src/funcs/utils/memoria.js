@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { debouncedSaveJson } from '../../utils/helpers.js';
+import { funcsMessages } from '../../utils/messages/funcs.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -277,34 +278,29 @@ class MemoryManager {
 
     startGame(groupId, odIUserId) {
         if (this.activeGames.has(groupId)) {
-            return this._formatResponse(false, '❌ Já existe um jogo de memória em andamento neste chat!');
+            return this._formatResponse(false, funcsMessages.memoria.alreadyExists);
         }
         
         const game = new MemoryGame(odIUserId);
         this.activeGames.set(groupId, game);
         
-        const message = `🧠 *JOGO DA MEMÓRIA*\n\n` +
-                        `👤 Jogador: @${getUserName(odIUserId)}\n` +
-                        `🎯 Encontre os ${game.totalPairs} pares!\n\n` +
-                        `${game.renderBoardWithNumbers()}\n` +
-                        `📝 Digite o número da posição para revelar.\n` +
-                        `💡 Exemplo: "1" ou "memoria 5"`;
+        const message = funcsMessages.memoria.created(getUserName(odIUserId), game.totalPairs, game.renderBoardWithNumbers());
         
         return this._formatResponse(true, message, { mentions: [odIUserId] });
     }
 
     makeMove(groupId, odIUserId, position) {
         const game = this.activeGames.get(groupId);
-        if (!game) return this._formatResponse(false, '❌ Nenhum jogo em andamento!');
-        if (game.player !== odIUserId) return this._formatResponse(false, '❌ Este não é seu jogo!');
+        if (!game) return this._formatResponse(false, funcsMessages.memoria.noGame);
+        if (game.player !== odIUserId) return this._formatResponse(false, funcsMessages.memoria.notYourGame);
         
         const result = game.revealCard(parseInt(position));
         
         if (!result.success) {
             const errors = {
-                'game_finished': '❌ O jogo já terminou!',
-                'invalid_position': '❌ Posição inválida! Use 1-16.',
-                'already_revealed': '❌ Esta carta já foi revelada!'
+                'game_finished': funcsMessages.memoria.gameFinished,
+                'invalid_position': funcsMessages.memoria.invalidPosition,
+                'already_revealed': funcsMessages.memoria.alreadyRevealed
             };
             return this._formatResponse(false, errors[result.reason]);
         }
@@ -312,28 +308,17 @@ class MemoryManager {
         const status = game.getStatus();
         
         if (result.status === 'first_card') {
-            const message = `🧠 *JOGO DA MEMÓRIA*\n\n` +
-                            `🎴 Posição ${result.position}: ${result.emoji}\n` +
-                            `👆 Escolha a segunda carta!\n\n` +
-                            `${game.renderBoardWithNumbers()}\n` +
-                            `📊 Tentativas: ${status.attempts} | Pares: ${status.pairsFound}/${status.totalPairs}`;
+            const message = funcsMessages.memoria.firstCard(result.position, result.emoji, game.renderBoardWithNumbers(), status.attempts, status.pairsFound, status.totalPairs);
             return this._formatResponse(true, message);
         }
         
         if (result.status === 'match') {
-            const message = `🧠 *JOGO DA MEMÓRIA*\n\n` +
-                            `✅ *PAR ENCONTRADO!* ${result.emoji}${result.emoji}\n\n` +
-                            `${game.renderBoardWithNumbers()}\n` +
-                            `📊 Tentativas: ${status.attempts} | Pares: ${status.pairsFound}/${status.totalPairs}`;
+            const message = funcsMessages.memoria.match(result.emoji, game.renderBoardWithNumbers(), status.attempts, status.pairsFound, status.totalPairs);
             return this._formatResponse(true, message);
         }
         
         if (result.status === 'no_match') {
-            const message = `🧠 *JOGO DA MEMÓRIA*\n\n` +
-                            `❌ Não é par!\n` +
-                            `${result.firstPos}: ${result.firstEmoji} ≠ ${result.secondPos}: ${result.secondEmoji}\n\n` +
-                            `${game.renderBoardWithNumbers()}\n` +
-                            `📊 Tentativas: ${status.attempts} | Pares: ${status.pairsFound}/${status.totalPairs}`;
+            const message = funcsMessages.memoria.noMatch(result.firstPos, result.firstEmoji, result.secondPos, result.secondEmoji, game.renderBoardWithNumbers(), status.attempts, status.pairsFound, status.totalPairs);
             return this._formatResponse(true, message);
         }
         
@@ -344,14 +329,7 @@ class MemoryManager {
             const seconds = result.timeTaken % 60;
             const timeStr = minutes > 0 ? `${minutes}m ${seconds}s` : `${seconds}s`;
             
-            const message = `🧠 *JOGO DA MEMÓRIA - VITÓRIA!*\n\n` +
-                            `🎉 @${getUserName(odIUserId)} completou o jogo!\n\n` +
-                            `${game.renderBoard(true)}\n` +
-                            `📊 *Estatísticas:*\n` +
-                            `• Tentativas: ${result.attempts}\n` +
-                            `• Tempo: ${timeStr}\n` +
-                            `• Ranking: #${rankPos}\n\n` +
-                            `${result.attempts <= 12 ? '🏆 *CONQUISTA DESBLOQUEADA: Memória de Elefante!*' : ''}`;
+            const message = funcsMessages.memoria.win(getUserName(odIUserId), game.renderBoard(true), result.attempts, timeStr, rankPos);
             
             return this._formatResponse(true, message, { 
                 finished: true, 
@@ -364,28 +342,28 @@ class MemoryManager {
 
     endGame(groupId, odIUserId, isAdmin = false) {
         const game = this.activeGames.get(groupId);
-        if (!game) return this._formatResponse(false, '❌ Nenhum jogo em andamento!');
+        if (!game) return this._formatResponse(false, funcsMessages.memoria.noGame);
         if (game.player !== odIUserId && !isAdmin) {
-            return this._formatResponse(false, '❌ Apenas o jogador ou admins podem encerrar!');
+            return this._formatResponse(false, funcsMessages.memoria.notAdminOrPlayerCancel);
         }
         
         this.activeGames.delete(groupId);
-        return this._formatResponse(true, '🧠 Jogo da memória encerrado!');
+        return this._formatResponse(true, funcsMessages.memoria.cancelled);
     }
 
     getRanking() {
         const rankings = getTopRanking(10);
         if (rankings.length === 0) {
-            return this._formatResponse(true, '🧠 *RANKING - JOGO DA MEMÓRIA*\n\nNenhum recorde ainda!');
+            return this._formatResponse(true, funcsMessages.memoria.rankingEmpty);
         }
         
-        let message = '🧠 *RANKING - JOGO DA MEMÓRIA*\n\n';
+        let message = funcsMessages.memoria.rankingHeader;
         rankings.forEach((r, i) => {
             const medal = ['🥇', '🥈', '🥉'][i] || `${i + 1}.`;
             const minutes = Math.floor(r.timeTaken / 60);
             const seconds = r.timeTaken % 60;
             const timeStr = minutes > 0 ? `${minutes}m${seconds}s` : `${seconds}s`;
-            message += `${medal} @${getUserName(r.userId)} - ${r.attempts} tentativas (${timeStr})\n`;
+            message += funcsMessages.memoria.rankingRow(medal, getUserName(r.userId), r.attempts, timeStr);
         });
         
         return this._formatResponse(true, message, { mentions: rankings.map(r => r.userId) });

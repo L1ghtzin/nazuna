@@ -1,3 +1,5 @@
+import { funcsMessages } from '../../utils/messages/funcs.js';
+
 // --- JOGO CONNECT 4 ---
 const CONFIG = {
     INVITATION_TIMEOUT_MS: 15 * 60 * 1000,
@@ -150,25 +152,21 @@ class Connect4Manager {
 
     invitePlayer(groupId, inviter, invitee) {
         if (!groupId || !inviter || !invitee || inviter === invitee) {
-            return this._formatResponse(false, '❌ Dados inválidos para o convite');
+            return this._formatResponse(false, funcsMessages.connect4.invalidInvite);
         }
         if (this.activeGames.has(groupId) || this.pendingInvitations.has(groupId)) {
-            return this._formatResponse(false, '❌ Já existe um jogo ou convite em andamento neste grupo!');
+            return this._formatResponse(false, funcsMessages.connect4.alreadyPlaying);
         }
 
         this.pendingInvitations.set(groupId, { inviter, invitee, timestamp: Date.now() });
-        const message = `🔴🟡 *CONVITE CONNECT 4*\n\n` +
-                        `@${getUserName(inviter)} convidou @${getUserName(invitee)} para jogar!\n\n` +
-                        `✅ Aceitar: "sim", "s"\n` +
-                        `❌ Recusar: "não", "n"\n\n` +
-                        `⏳ Expira em 15 minutos.`;
+        const message = funcsMessages.connect4.invite(getUserName(inviter), getUserName(invitee));
         return this._formatResponse(true, message, { mentions: [inviter, invitee] });
     }
 
     processInvitationResponse(groupId, invitee, response) {
         const invitation = this.pendingInvitations.get(groupId);
         if (!invitation || invitation.invitee !== invitee) {
-            return this._formatResponse(false, '❌ Nenhum convite pendente para você.');
+            return this._formatResponse(false, funcsMessages.connect4.noPendingInvite);
         }
 
         const normalizedResponse = response.toLowerCase().trim();
@@ -176,83 +174,70 @@ class Connect4Manager {
         const isRejected = ['n', 'não', 'nao', 'no'].includes(normalizedResponse);
 
         if (!isAccepted && !isRejected) {
-            return this._formatResponse(false, '❌ Resposta inválida. Use "sim" ou "não".');
+            return this._formatResponse(false, funcsMessages.connect4.invalidResponse);
         }
 
         this.pendingInvitations.delete(groupId);
 
         if (isRejected) {
-            return this._formatResponse(true, '❌ Convite recusado. Jogo cancelado.', { mentions: [invitation.inviter, invitee] });
+            return this._formatResponse(true, funcsMessages.connect4.inviteRejected, { mentions: [invitation.inviter, invitee] });
         }
 
         const game = new Connect4Engine(invitation.inviter, invitation.invitee);
         this.activeGames.set(groupId, game);
 
-        const message = `🔴🟡 *CONNECT 4 - INICIADO!*\n\n` +
-                        `👥 Jogadores:\n` +
-                        `➤ ${CONFIG.SYMBOLS[1]}: @${getUserName(invitation.inviter)}\n` +
-                        `➤ ${CONFIG.SYMBOLS[2]}: @${getUserName(invitation.invitee)}\n\n` +
-                        `${game.renderBoard()}\n` +
-                        `💡 Vez de @${getUserName(invitation.inviter)}\n` +
-                        `📝 Digite um número de 1 a 7 para escolher a coluna.`;
+        const message = funcsMessages.connect4.gameStarted(CONFIG.SYMBOLS[1], getUserName(invitation.inviter), CONFIG.SYMBOLS[2], getUserName(invitation.invitee), game.renderBoard(), getUserName(invitation.inviter));
         return this._formatResponse(true, message, { mentions: [invitation.inviter, invitee] });
     }
 
     makeMove(groupId, player, column) {
         const game = this.activeGames.get(groupId);
         if (!game) {
-            return this._formatResponse(false, '❌ Nenhum jogo em andamento!');
+            return this._formatResponse(false, funcsMessages.connect4.noActiveGame);
         }
 
         // Verificação de timeout
         if (Date.now() - game.lastMoveTime > CONFIG.MOVE_TIMEOUT_MS) {
             this.activeGames.delete(groupId);
-            return this._formatResponse(false, '❌ Jogo encerrado por inatividade (5 minutos sem jogada).', { mentions: Object.values(game.players) });
+            return this._formatResponse(false, funcsMessages.connect4.gameTimeout, { mentions: Object.values(game.players) });
         }
 
         const result = game.makeMove(player, column);
 
         if (!result.success) {
             const errorMessages = {
-                'not_your_turn': '❌ Não é sua vez!',
-                'invalid_column': '❌ Coluna inválida! Use 1-7.',
-                'column_full': '❌ Esta coluna está cheia!'
+                'not_your_turn': funcsMessages.connect4.notYourTurn,
+                'invalid_column': funcsMessages.connect4.invalidColumn,
+                'column_full': funcsMessages.connect4.columnFull
             };
-            return this._formatResponse(false, errorMessages[result.reason] || '❌ Erro desconhecido.');
+            return this._formatResponse(false, errorMessages[result.reason] || funcsMessages.connect4.unknownError);
         }
 
         if (result.status === 'win') {
             this.activeGames.delete(groupId);
-            const message = `🔴🟡 *CONNECT 4 - FIM*\n\n` +
-                            `🎉 @${getUserName(result.winner)} venceu! 🏆\n\n` +
-                            `${game.renderBoard()}`;
+            const message = funcsMessages.connect4.gameWon(getUserName(result.winner), game.renderBoard());
             return this._formatResponse(true, message, { finished: true, winner: result.winner, mentions: [result.winner] });
         }
 
         if (result.status === 'draw') {
             this.activeGames.delete(groupId);
-            const message = `🔴🟡 *CONNECT 4 - FIM*\n\n` +
-                            `🤝 Empate!\n\n` +
-                            `${game.renderBoard()}`;
+            const message = funcsMessages.connect4.gameDraw(game.renderBoard());
             return this._formatResponse(true, message, { finished: true, draw: true, mentions: Object.values(game.players) });
         }
 
         if (result.status === 'continue') {
-            const message = `🔴🟡 *CONNECT 4*\n\n` +
-                            `👉 Vez de @${getUserName(result.nextPlayer)}\n\n` +
-                            `${game.renderBoard()}\n` +
-                            `💡 Digite um número de 1 a 7.`;
+            const message = funcsMessages.connect4.gameContinue(getUserName(result.nextPlayer), game.renderBoard());
             return this._formatResponse(true, message, { finished: false, mentions: [result.nextPlayer] });
         }
     }
 
     endGame(groupId) {
         if (!this.activeGames.has(groupId)) {
-            return this._formatResponse(false, '❌ Nenhum jogo em andamento!');
+            return this._formatResponse(false, funcsMessages.connect4.noActiveGame);
         }
         const players = Object.values(this.activeGames.get(groupId).players);
         this.activeGames.delete(groupId);
-        return this._formatResponse(true, '🔴🟡 Jogo encerrado manualmente!', { mentions: players });
+        return this._formatResponse(true, funcsMessages.connect4.gameEndedManual, { mentions: players });
     }
 
     hasActiveGame = (groupId) => this.activeGames.has(groupId);
