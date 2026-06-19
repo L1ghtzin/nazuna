@@ -12,12 +12,8 @@ export default {
     "autocleanup",
     "rentalclean"
   ],
-  handle: async ({ reply, command, isOwner, rentalExpirationManager, MESSAGES }) => {
+  handle: async ({ reply, command, rentalExpirationManager, MESSAGES }) => {
     const cmd = (command || "").toLowerCase();
-
-    if (!isOwner) {
-      return reply(MESSAGES.owner.rental_management.permission);
-    }
 
     if (cmd === "rentalstats") {
       if (!rentalExpirationManager?.getStats) {

@@ -37,7 +37,6 @@ export default {
     reply,
     q,
     isGroup,
-    isOwner,
     prefix,
     loadRentalData,
     saveRentalData,
@@ -54,14 +53,6 @@ export default {
   }) => {
     const cmd = (command || "").toLowerCase();
     const query = (q || "").trim();
-    const ensureOwner = (fallback = MESSAGES.owner.rental_system.permission.ownerOnly) => {
-      if (!isOwner) {
-        reply(fallback);
-        return false;
-      }
-      return true;
-    };
-
     const normalizeGroupId = value => {
       if (!value) return null;
       const raw = String(value).trim();
@@ -70,7 +61,6 @@ export default {
     };
 
     if (["modoaluguel"].includes(cmd)) {
-      if (!ensureOwner(MESSAGES.owner.rental_system.permission.mode)) return;
       try {
         const action = query.toLowerCase();
         if (action === "on" || action === "ativar") {
@@ -94,7 +84,6 @@ export default {
     }
 
     if (["aluguelaviso"].includes(cmd)) {
-      if (!ensureOwner(MESSAGES.owner.rental_system.permission.ownerOnly)) return;
       try {
         const action = query.toLowerCase();
         if (["grupo", "pv", "ambos"].includes(action)) {
@@ -113,7 +102,6 @@ export default {
     }
 
     if (["listaraluguel", "listaraluguéis", "aluguelist", "listaluguel", "listaaluguel", "veraluguéis", "listrentals"].includes(cmd)) {
-      if (!ensureOwner(MESSAGES.owner.rental_system.permission.list)) return;
       try {
         const rentalData = loadRentalData();
         const groupIds = Object.keys(rentalData.groups || {});
@@ -187,7 +175,6 @@ export default {
     }
 
     if (["addaluguel"].includes(cmd)) {
-      if (!ensureOwner(MESSAGES.owner.rental_system.permission.ownerOnly)) return;
       if (!isGroup) return reply(MESSAGES.owner.rental_system.permission.groupOnly);
 
       try {
@@ -214,7 +201,6 @@ export default {
     }
 
     if (["removeraluguel", "deletaraluguel", "cancelaraluguel"].includes(cmd)) {
-      if (!ensureOwner(MESSAGES.owner.rental_system.permission.remove)) return;
       try {
         let targetGroupId = query || (isGroup ? from : "");
 
@@ -256,7 +242,6 @@ export default {
     }
 
     if (["estenderaluguel", "adddiasaluguel", "extenderrental"].includes(cmd)) {
-      if (!ensureOwner(MESSAGES.owner.rental_system.permission.extend)) return;
       try {
         const parts = query ? query.split(" ") : [];
         let targetGroupId;
@@ -317,7 +302,6 @@ export default {
     }
 
     if (["dayfree"].includes(cmd)) {
-      if (!ensureOwner(MESSAGES.owner.rental_system.permission.extend)) return;
       try {
         if (!query) {
           return reply(MESSAGES.owner.rental_system.dayfree.usage(prefix, command));
@@ -374,7 +358,6 @@ export default {
     }
 
     if (["infoaluguel", "statusaluguel", "detalhesaluguel"].includes(cmd)) {
-      if (!ensureOwner(MESSAGES.owner.rental_system.permission.info)) return;
       try {
         let targetGroupId = query;
 
@@ -451,7 +434,6 @@ export default {
     }
 
     if (["gerarcodigo", "gerarcodigobr", "gerarcod", "geraraluguel"].includes(cmd)) {
-      if (!ensureOwner(MESSAGES.owner.rental_system.permission.code)) return;
       try {
         const parts = query ? query.split(" ") : [];
         const durationArg = parts[0]?.toLowerCase();
@@ -495,7 +477,6 @@ export default {
     }
 
     if (["limparaluguel"].includes(cmd)) {
-      if (!ensureOwner(MESSAGES.owner.rental_system.permission.cleanup)) return;
       try {
         await reply(MESSAGES.owner.rental_system.cleanup.start);
 
