@@ -45,7 +45,10 @@ export const MESSAGES = {
     invalidFormat: "❌ Formato inválido! Verifique o menu para saber como usar.",
     noResults: "🔍 Nenhum resultado encontrado.",
     unknownUser: "Usuário Desconhecido",
-    prefixInfo: (prefix) => `ℹ️ O meu prefixo atual é: *${prefix}*\n\nPara ver meus comandos, digite: *${prefix}menu*`
+    prefixInfo: (prefix) => `ℹ️ O meu prefixo atual é: *${prefix}*\n\nPara ver meus comandos, digite: *${prefix}menu*`,
+    autoPrefixFixed: (prefix) => `⚠️ *PREFIXO AUTOMÁTICO CORRIGIDO*\n\n❌ O símbolo "$" é reservado e não pode ser usado como prefixo.\n\n✅ O prefixo foi alterado automaticamente para "/" ao iniciar o bot.\n\n💡 Use ${prefix}prefix para alterar para outro símbolo válido.`,
+    cleanChatBotMessage: (content) => `🤖 \n\n${content}`,
+    cleanChatSuccess: (successMessage) => `🤖 ✅ ${successMessage}`
   },
   rpg: rpgMessages,
   admin: adminMessages,
@@ -79,6 +82,7 @@ export const MESSAGES = {
     antiStatusAdmin: (user) => `🚫 @${user}, Status não são permitidos neste grupo. Você foi removido.`,
     antiStatusUser: (user, extra = '') => `🚫 @${user}, Status não são permitidos neste grupo!${extra}`,
     antiFakeQuote: (user, messages) => `🛡️ Sistema Anti-Fake Quote ativado!\n\nO banimento de @${user} foi anulado pois ele é um membro veterano (${messages} msgs).\nIsso evita banimentos injustos caso alguém forje um status.`,
+    antiPaymentFakeQuote: (user, messages) => `🛡️ Sistema Anti-Fake Quote ativado!\n\nO banimento de @${user} foi anulado pois ele é um membro veterano (${messages} msgs).\nIsso evita banimentos injustos caso alguém forje uma mensagem de pagamento.`,
     minMessageAdmin: (min) => `🚫 Usuário removido por enviar mídia sem legenda suficiente (mínimo: ${min} caracteres).`,
     minMessageUser: "⚠️ Mídia sem legenda suficiente detectada, mas não sou admin para remover o usuário.",
     minMessageWarn: (min) => `⚠️ Advertência: Envie mídias com pelo menos ${min} caracteres na legenda para evitar remoção.`,

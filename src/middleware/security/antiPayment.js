@@ -45,7 +45,7 @@ export async function handleAntiPayment(context) {
         const targetData = getLevelingUser(levelingData, targetUser);
         if ((targetData.messages || 0) > 50) {
             await runAntiPaymentStep(() => bot.sendMessage(from, { 
-                text: `🛡️ Sistema Anti-Fake Quote ativado!\n\nO banimento de @${targetUser.split('@')[0]} foi anulado pois ele é um membro veterano (${targetData.messages} msgs).\nIsso evita banimentos injustos caso alguém forje uma mensagem de pagamento.`, 
+                text: MESSAGES.security.antiPaymentFakeQuote(targetUser.split('@')[0], targetData.messages), 
                 mentions: [targetUser] 
             }), 'Erro ao enviar aviso de imunidade.');
             return false;

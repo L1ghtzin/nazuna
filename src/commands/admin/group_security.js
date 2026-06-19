@@ -4,7 +4,7 @@ import { sendCleanChat } from '../../utils/cleanChat.js';
 export default {
   name: "group_security",
   description: "Segurança e moderação avançada de grupos",
-  commands: ["aceitarticket", "addblacklist", "addparceria", "addpartnership", "adv", "advertir", "antibanmarcar", "antifig", "antipalavra", "antisl", "antistatus", "antisticker+", "antistickerplus", "antistickerplusbot", "antitoxic", "antitóxico", "antiword", "banghost", "bemvindo", "blacklist", "boasvindas", "bv", "clean", "configsaida", "delblacklist", "delfotobv", "delfotosaiu", "delparceria", "delpartnership", "exit", "exitimg", "exitmsg", "fotobv", "fotosaida", "fotosaiu", "imgsaiu", "legendasaiu", "limpar", "listadv", "listblacklist", "modoparceria", "parcerias", "partnerships", "protecaomarcar", "removeradv", "removerfotobv", "removerfotosaiu", "rmadv", "rmexitimg", "rmfotobv", "rmfotosaiu", "rmwelcomeimg", "saida", "suporte", "suporteaceitar", "suporteticket", "textsaiu", "ticket", "ticket.aceitar", "ticketaceitar", "ticketsuporte", "unblacklist", "unwarning", "warning", "warninglist", "welcome", "welcomeimg", "antipayment", "antipagamento", "antiimagem", "antivideo", "antiaudio", "antidoc", "antievento", "antiproduto"],
+  commands: ["aceitarticket", "addblacklist", "addparceria", "addpartnership", "adv", "advertir", "antibanmarcar", "antifig", "antipalavra", "antisl", "antistatus", "antisticker+", "antistickerplus", "antistickerplusbot", "antitoxic", "antitóxico", "antiword", "banghost", "bemvindo", "blacklist", "boasvindas", "bv", "clean", "configsaida", "delblacklist", "delfotobv", "delfotosaiu", "delparceria", "delpartnership", "exit", "exitimg", "exitmsg", "fotobv", "fotosaida", "fotosaiu", "imgsaiu", "legendasaiu", "limpar", "listadv", "listblacklist", "modoparceria", "parcerias", "partnerships", "protecaomarcar", "removeradv", "removerfotobv", "removerfotosaiu", "rmadv", "rmexitimg", "rmfotobv", "rmfotosaiu", "rmwelcomeimg", "saida", "suporte", "suporteaceitar", "suporteticket", "textsaiu", "ticket", "ticket.aceitar", "ticketaceitar", "ticketsuporte", "unblacklist", "unwarning", "warning", "warninglist", "welcome", "welcomeimg", "antiimagem", "antivideo", "antiaudio", "antidoc", "antievento", "antiproduto"],
   handle: async ({ 
     bot, from, info, command, args, reply, prefix, pushname, sender, q,
     isGroup, isGroupAdmin, isBotAdmin, isOwner, AllgroupMembers, groupData, groupFile,
@@ -381,20 +381,6 @@ export default {
       if (!antipalavra) return reply(MESSAGES.admin.group_security.protections.unavailable('Antipalavra'));
       await antipalavra.handleCommand(bot, from, args, groupData, { reply, prefix });
       return;
-    }
-
-    if (['antipayment', 'antipagamento'].includes(cmd)) {
-      if (!isGroup) return reply(MESSAGES.permission.groupOnly);
-      if (!isGroupAdmin) return reply(MESSAGES.permission.adminOnly);
-      if (!isBotAdmin) return reply(MESSAGES.permission.botAdminOnly);
-
-      groupData.antipayment = !groupData.antipayment;
-      await optimizer.saveJsonWithCache(groupFile, groupData);
-
-      if (groupData.antipayment) {
-        return reply(MESSAGES.admin.group_security.protections.antiPaymentOn);
-      }
-      return reply(MESSAGES.admin.group_security.protections.antiPaymentOff);
     }
 
     if (['antiimagem', 'antiimage'].includes(cmd)) {

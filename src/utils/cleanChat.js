@@ -56,7 +56,7 @@ export async function sendCleanChat({
     await sendText(`\n\n${clearChat()}`);
   } else {
     await socket.sendMessage(remoteJid, {
-      text: `🤖 \n\n${clearChat()}`,
+      text: MESSAGES.general.cleanChatBotMessage(clearChat()),
     });
   }
 
@@ -76,6 +76,6 @@ export async function sendCleanChat({
   }
 
   await socket.sendMessage(remoteJid, {
-    text: `🤖 ✅ ${successMessage}`,
+    text: MESSAGES.general.cleanChatSuccess(successMessage),
   });
 }

@@ -149,5 +149,10 @@ export const funcsMessages = {
     rankingEmpty: '🧠 *RANKING - JOGO DA MEMÓRIA*\n\nNenhum recorde ainda!',
     rankingHeader: '🧠 *RANKING - JOGO DA MEMÓRIA*\n\n',
     rankingRow: (medal, player, attempts, timeStr) => `${medal} @${player} - ${attempts} tentativas (${timeStr})\n`
+  },
+  relationships: {
+    brincadeiraSuccess: 'agora estão em uma brincadeira!',
+    namoroSuccess: 'agora estão namorando!',
+    casamentoSuccess: 'agora estão oficialmente casados!'
   }
 };

@@ -291,7 +291,7 @@ export async function buildMessageContext(bot, info, store, messagesCache, renta
     const ownerJid = `${config.numerodono}@s.whatsapp.net`;
     try {
       await bot.sendMessage(ownerJid, {
-        text: `⚠️ *PREFIXO AUTOMÁTICO CORRIGIDO*\n\n❌ O símbolo "$" é reservado e não pode ser usado como prefixo.\n\n✅ O prefixo foi alterado automaticamente para "/" ao iniciar o bot.\n\n💡 Use ${config.prefixo}prefix para alterar para outro símbolo válido.`
+        text: MESSAGES.general.autoPrefixFixed(config.prefixo)
       });
     } catch (notifyError) {
       console.log('Aviso: Não foi possível notificar o dono sobre a mudança de prefixo:', notifyError.message);
