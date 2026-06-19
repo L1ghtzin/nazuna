@@ -17,6 +17,11 @@ const BACKUP_DIR = path.join(process.cwd(), `backup_${new Date().toISOString().r
 const TEMP_DIR = path.join(process.cwd(), 'temp_bot');
 const isWindows = os.platform() === 'win32';
 
+const OBSOLETE_PROJECT_FILES = [
+  'src/commands/owner/owner_broadcast.js',
+  'src/commands/owner/personalizargrupo.js',
+];
+
 const colors = {
   reset: '\x1b[0m',
   green: '\x1b[1;32m',
@@ -47,6 +52,41 @@ function printDetail(text) {
 
 function printSeparator() {
   console.log(`${colors.blue}============================================${colors.reset}`);
+}
+
+function toRelativePath(filePath) {
+  return filePath.replace(/\\/g, '/');
+}
+
+async function removePathIfExists(relativePath, reason = 'arquivo antigo') {
+  const safeRelativePath = toRelativePath(relativePath);
+  if (safeRelativePath.startsWith('../') || path.isAbsolute(safeRelativePath)) {
+    throw new Error(`Caminho inseguro para remoção: ${relativePath}`);
+  }
+
+  const targetPath = path.join(process.cwd(), safeRelativePath);
+  const relativeToRoot = path.relative(process.cwd(), targetPath);
+  if (relativeToRoot.startsWith('..') || path.isAbsolute(relativeToRoot)) {
+    throw new Error(`Caminho fora do projeto: ${relativePath}`);
+  }
+
+  if (!fsSync.existsSync(targetPath)) return false;
+
+  printDetail(`📂 Removendo ${reason}: ${safeRelativePath}...`);
+  await fs.rm(targetPath, { recursive: true, force: true });
+  return true;
+}
+
+async function listTrackedFiles(repoDir) {
+  const { stdout } = await execAsync('git ls-files -z', {
+    cwd: repoDir,
+    maxBuffer: 20 * 1024 * 1024,
+  });
+
+  return stdout
+    .split('\0')
+    .map(filePath => toRelativePath(filePath.trim()))
+    .filter(Boolean);
 }
 
 function setupGracefulShutdown() {
@@ -262,17 +302,6 @@ async function downloadUpdate() {
           return;
         }
 
-        // Remove README.md as in the original code
-        try {
-          const readmePath = path.join(TEMP_DIR, 'README.md');
-          if (fsSync.existsSync(readmePath)) {
-            await fs.unlink(readmePath);
-          }
-        } catch (unlinkError) {
-          printWarning(`⚠️ Não foi possível remover README.md: ${unlinkError.message}`);
-          // Don't fail the entire process for this
-        }
-
         printMessage('✅ Download concluído com sucesso.');
         resolve();
       });
@@ -297,16 +326,70 @@ async function downloadUpdate() {
   }
 }
 
+async function cleanTrackedFilesRemovedUpstream() {
+  printDetail('🔍 Verificando arquivos removidos na versão nova...');
+
+  try {
+    if (!fsSync.existsSync(path.join(process.cwd(), '.git'))) {
+      printDetail('ℹ️ Repositório local sem .git; pulando limpeza baseada em histórico.');
+      return;
+    }
+
+    const [currentFiles, nextFiles] = await Promise.all([
+      listTrackedFiles(process.cwd()),
+      listTrackedFiles(TEMP_DIR),
+    ]);
+
+    const nextFileSet = new Set(nextFiles);
+    const removedFiles = currentFiles.filter(filePath => !nextFileSet.has(filePath));
+
+    if (!removedFiles.length) {
+      printDetail('✅ Nenhum arquivo rastreado obsoleto encontrado.');
+      return;
+    }
+
+    let removedCount = 0;
+    for (const filePath of removedFiles) {
+      if (await removePathIfExists(filePath, 'arquivo removido do repositório')) {
+        removedCount++;
+      }
+    }
+
+    printDetail(`✅ ${removedCount} arquivo(s) obsoleto(s) removido(s).`);
+  } catch (error) {
+    printWarning(`⚠️ Não foi possível limpar arquivos removidos do repositório: ${error.message}`);
+  }
+}
+
+async function cleanKnownObsoleteFiles() {
+  printDetail('🔍 Verificando sobras antigas conhecidas...');
+
+  let removedCount = 0;
+  for (const relativePath of OBSOLETE_PROJECT_FILES) {
+    if (await removePathIfExists(relativePath, 'sobra antiga')) {
+      removedCount++;
+    }
+  }
+
+  if (removedCount > 0) {
+    printDetail(`✅ ${removedCount} sobra(s) antiga(s) removida(s).`);
+  } else {
+    printDetail('✅ Nenhuma sobra antiga conhecida encontrada.');
+  }
+}
+
 async function cleanOldFiles(options = {}) {
   const { removeNodeModules = true, removePackageLock = true } = options;
   printMessage('🧹 Limpando arquivos antigos...');
 
   try {
+    await cleanTrackedFilesRemovedUpstream();
+    await cleanKnownObsoleteFiles();
+
     const itemsToDelete = [
       { path: path.join(process.cwd(), '.git'), type: 'dir', name: '.git' },
       { path: path.join(process.cwd(), '.github'), type: 'dir', name: '.github' },
       { path: path.join(process.cwd(), '.npm'), type: 'dir', name: '.npm' },
-      { path: path.join(process.cwd(), 'README.md'), type: 'file', name: 'README.md' },
     ];
 
     if (removeNodeModules) {
