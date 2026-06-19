@@ -81,13 +81,28 @@ export default {
           return text;
         };
 
-        const updateMessage = async () => {
-          if (!sentMsg?.key) return;
-          try {
-            await bot.sendMessage(from, { edit: sentMsg.key, text: buildStatusText() });
-          } catch (err) {
-            console.error('Erro ao atualizar status do update:', err.message);
+        let isEditing = false;
+        let needsAnotherEdit = false;
+
+        const processEditQueue = async () => {
+          if (isEditing || !sentMsg?.key) return;
+          isEditing = true;
+          
+          while (needsAnotherEdit) {
+            needsAnotherEdit = false;
+            try {
+              await bot.sendMessage(from, { edit: sentMsg.key, text: buildStatusText() });
+              await new Promise(r => setTimeout(r, 1500)); // Pausa de 1.5s p/ evitar block
+            } catch (err) {
+              console.error('Erro ao atualizar status do update:', err.message);
+            }
           }
+          isEditing = false;
+        };
+
+        const updateMessage = () => {
+          needsAnotherEdit = true;
+          processEditQueue();
         };
 
         // Envia mensagem inicial
@@ -95,7 +110,7 @@ export default {
         sentMsgPromise.then(msg => {
           sentMsg = msg;
           if (activeTriggers.size > 0) {
-            updateMessage().catch(() => {});
+            updateMessage();
           }
         });
 
@@ -138,7 +153,7 @@ export default {
           }
 
           if (changed) {
-            await updateMessage().catch(() => {});
+            updateMessage();
           }
         });
 
