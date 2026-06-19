@@ -7,8 +7,6 @@ export default {
   usage: `${global.prefix}minmessage <mínimo de dígitos> <ban/adv>\n${global.prefix}minmessage off`,
   handle: async ({  reply, isGroup, isGroupAdmin, args, prefix, groupData, groupFile , MESSAGES }) => {
     try {
-      if (!isGroup) return reply(MESSAGES.permission.groupOnly);
-      if (!isGroupAdmin) return reply(MESSAGES.permission.adminOnly);
       if (!args[0]) return reply(MESSAGES.admin.minmessage.usage(prefix));
       
       if (args[0].toLowerCase() === 'off') {

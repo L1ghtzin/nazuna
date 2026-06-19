@@ -8,8 +8,6 @@ export default {
     bot, from, command, reply, isOwner, isGroup,
     optimizer, banGpIds, getCachedGroupMetadata, DATABASE_DIR, fs, __dirname
   , MESSAGES }) => {
-    if (!isOwner) return reply(MESSAGES.permission.ownerOnly);
-
     const cmd = command.toLowerCase();
 
     if (['listagp', 'listgp'].includes(cmd)) {

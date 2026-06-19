@@ -10,8 +10,6 @@ export default {
     isOwner
   , MESSAGES }) => {
     try {
-      if (!isOwner) return reply(MESSAGES.permission.ownerOnly);
-      
       const currentState = isMenuLerMaisEnabled();
       const newState = setMenuLerMais(!currentState);
       

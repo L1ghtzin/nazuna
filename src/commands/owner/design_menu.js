@@ -8,8 +8,6 @@ export default {
     reply, command, q, isOwner, prefix, pushname,
     loadMenuDesign, saveMenuDesign, nomebot
   , MESSAGES }) => {
-    if (!isOwner) return reply(MESSAGES.permission.ownerOnly);
-
     const cmd = command.toLowerCase();
     const currentDesign = loadMenuDesign();
 

@@ -19,8 +19,6 @@ export default {
 
 
     // Comandos abaixo são apenas para dono
-    if (!isOwner) return reply(MESSAGES.permission.ownerOnly);
-
     // --- LIMPEZA DE GRUPOS ---
     if (cmd === 'limpardb') {
       try {

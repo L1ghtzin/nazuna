@@ -13,8 +13,6 @@ export default {
     sender
   , MESSAGES }) => {
     try {
-      if (!isGroup) return reply(MESSAGES.permission.groupOnly);
-      if (!isGroupAdmin) return reply(MESSAGES.permission.adminOnly);
       if (!isBotAdmin) return reply(MESSAGES.permission.botAdminOnly);
       
       const linkgc = await bot.groupInviteCode(from);

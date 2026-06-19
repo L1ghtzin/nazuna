@@ -17,9 +17,6 @@ export default {
     groupFile
   }) => {
     try {
-      if (!isGroup) return reply(MESSAGES.permission.groupOnly);
-      if (!isGroupAdmin) return reply(MESSAGES.permission.adminOnly);
-      
       if (!groupData.modolite) {
         groupData.modolite = true;
         if (groupData.hasOwnProperty('modoliteOff')) {

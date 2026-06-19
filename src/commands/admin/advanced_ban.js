@@ -9,7 +9,6 @@ export default {
     groupData, DATABASE_DIR, optimizer, nomedono, q, prefix, MESSAGES,
     isBotAdmin, idsMatch, ownerJid, lidowner, botNumber, botNumberLid, idInArray, groupAdmins, AllgroupMembers
   }) => {
-    if (!isGroup) return reply(MESSAGES.permission.groupOnly);
     if (!isGroupAdmin && !isOwner) return reply(MESSAGES.permission.userAdminOnly);
 
     const cmd = command.toLowerCase();

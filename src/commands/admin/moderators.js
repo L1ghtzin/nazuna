@@ -6,9 +6,6 @@ export default {
   commands: ["addmod", "addmodcmd", "delmod", "delmodcmd", "grantmodcmd", "listmodcmds", "listmods", "modlist", "revokemodcmd"],
   usage: `${global.prefix}addmod @usuário\n${global.prefix}grantmodcmd ban`,
   handle: async ({  reply, isGroup, isGroupAdmin, command, menc_os2, q, prefix, groupData, groupFile, getUserName, groupName, optimizer , MESSAGES }) => {
-    if (!isGroup) return reply(MESSAGES.permission.groupOnly);
-    if (!isGroupAdmin) return reply(MESSAGES.permission.adminOnly);
-
     const cmd = command.toLowerCase();
     groupData.moderators = groupData.moderators || [];
     groupData.allowedModCommands = groupData.allowedModCommands || [];

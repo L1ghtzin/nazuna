@@ -16,7 +16,7 @@ export default {
     MESSAGES
   }) => {
     try {
-      if (!isOwner) return reply(MESSAGES.permission.ownerOnly);
+
       if (!q) return reply(MESSAGES.owner.prefix.usage(prefix, command));
       
       let newPrefix = q.trim();

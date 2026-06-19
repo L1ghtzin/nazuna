@@ -8,7 +8,6 @@ export default {
     botNumber, botNumberLid, idsMatch, MESSAGES
   }) => {
     try {
-      if (!isOwner) return reply(MESSAGES.permission.ownerOnly);
       if (!isGroup) return reply(MESSAGES.permission.groupOnly);
       if (!isBotAdmin) return reply(MESSAGES.permission.botAdminOnly);
       

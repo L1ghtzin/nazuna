@@ -7,7 +7,6 @@ export default {
   usage: `${global.prefix}addreact <trigger> <emoji>`,
   handle: async ({  reply, isOwner, args, prefix , MESSAGES }) => {
     try {
-      if (!isOwner) return reply(MESSAGES.permission.ownerOnly);
       if (args.length < 2) return reply(MESSAGES.owner.addreact.missingParams(prefix, 'addreact'));
       const trigger = args[0];
       const emoji = args[1];

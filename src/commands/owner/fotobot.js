@@ -17,7 +17,6 @@ export default {
     processImageForProfile
   , MESSAGES }) => {
     try {
-      if (!isOwner) return reply(MESSAGES.permission.ownerOnly);
       if (!isQuotedImage && !isImage) return reply(MESSAGES.owner.fotobot.missingImage(prefix));
       
       const messageToUse = isQuotedImage ? quotedMessageContent : info.message;

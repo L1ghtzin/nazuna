@@ -20,7 +20,6 @@ export default {
     // 🎲 SORTEIOS
     // ═══════════════════════════════════════════════════════════════
     if (cmd === 'sorteio' || cmd === 'sorteionome') {
-      if (!isGroup) return reply(MESSAGES.permission.groupOnly);
       try {
         const path = buildGroupFilePath(from);
         const data = await optimizer.loadJsonWithCache(path, { mark: {} });
@@ -57,8 +56,6 @@ export default {
     // 📢 MENSAGENS EM MASSA (HIDETAG)
     // ═══════════════════════════════════════════════════════════════
     if (['totag', 'cita', 'hidetag'].includes(cmd)) {
-      if (!isGroup) return reply(MESSAGES.permission.groupOnly);
-      if (!isGroupAdmin) return reply(MESSAGES.permission.adminOnly);
       if (!isBotAdmin) return reply(MESSAGES.permission.botAdminOnly);
 
       try {
@@ -128,8 +125,6 @@ export default {
     // 🛡️ PROTEÇÕES ADICIONAIS
     // ═══════════════════════════════════════════════════════════════
     if (['antilinkhard', 'antibotao', 'antibtn', 'antidelete', 'antidel', 'autodl', 'autodown', 'antidoc', 'antiloc', 'antiflood'].includes(cmd)) {
-      if (!isGroup) return reply(MESSAGES.permission.groupOnly);
-      if (!isGroupAdmin) return reply(MESSAGES.permission.adminOnly);
       if (!isBotAdmin && cmd !== 'autodl' && cmd !== 'autodown') return reply(MESSAGES.permission.botAdminOnly);
 
       const featureMap = {
@@ -169,8 +164,6 @@ export default {
     // 🛡️ ANTIFAKE (Bloquear números estrangeiros)
     // ═══════════════════════════════════════════════════════════════
     if (cmd === 'antifake') {
-      if (!isGroup) return reply(MESSAGES.permission.groupOnly);
-      if (!isGroupAdmin) return reply(MESSAGES.permission.adminOnly);
       if (!isBotAdmin) return reply(MESSAGES.permission.botAdminOnly);
 
       const subArg = (q || '').trim();
@@ -265,8 +258,6 @@ export default {
     // ⚙️ CONFIGURAÇÕES DE GRUPO
     // ═══════════════════════════════════════════════════════════════
     if (cmd === 'setprefix') {
-      if (!isGroup) return reply(MESSAGES.permission.groupOnly);
-      if (!isGroupAdmin) return reply(MESSAGES.permission.adminOnly);
       if (!q) return reply(MESSAGES.admin.group_management.config.prefixUsage(prefix));
       const newPrefix = q.trim().charAt(0);
       if (newPrefix === '$') return reply(MESSAGES.admin.group_management.config.prefixReserved);
@@ -276,17 +267,12 @@ export default {
     }
 
     if (['modobrincadeira', 'modobrincadeiras', 'modobn', 'gamemode'].includes(cmd)) {
-      if (!isGroup) return reply(MESSAGES.permission.groupOnly);
-      if (!isGroupAdmin) return reply(MESSAGES.permission.adminOnly);
       groupData.modobrincadeira = !groupData.modobrincadeira;
       await optimizer.saveJsonWithCache(groupFile, groupData);
       return reply(MESSAGES.admin.group_management.config.gameModeToggle(groupData.modobrincadeira));
     }
 
     if (['limitmessage', 'dellimitmessage'].includes(cmd)) {
-      if (!isGroup) return reply(MESSAGES.permission.groupOnly);
-      if (!isGroupAdmin) return reply(MESSAGES.permission.adminOnly);
-      
       if (cmd === 'dellimitmessage') {
         delete groupData.messageLimit;
         await optimizer.saveJsonWithCache(groupFile, groupData);
@@ -313,8 +299,6 @@ export default {
     // 🚪 GRUPO STATUS (ABRIR/FECHAR)
     // ═══════════════════════════════════════════════════════════════
     if (['grupo', 'gp', 'group'].includes(cmd)) {
-      if (!isGroup) return reply(MESSAGES.permission.groupOnly);
-      if (!isGroupAdmin) return reply(MESSAGES.permission.adminOnly);
       if (!isBotAdmin) return reply(MESSAGES.permission.botAdminOnly);
       
       const param = (q || '').toLowerCase();
@@ -338,8 +322,6 @@ export default {
     }
 
     if (cmd === 'opengp' || cmd === 'abrirgp') {
-      if (!isGroup) return reply(MESSAGES.permission.groupOnly);
-      if (!isGroupAdmin) return reply(MESSAGES.permission.adminOnly);
       if (!q) {
         return reply(MESSAGES.admin.group_management.status.openScheduleUsage(prefix, cmd));
       }
@@ -387,8 +369,6 @@ export default {
     }
 
     if (cmd === 'closegp' || cmd === 'fechargp') {
-      if (!isGroup) return reply(MESSAGES.permission.groupOnly);
-      if (!isGroupAdmin) return reply(MESSAGES.permission.adminOnly);
       if (!q) {
         return reply(MESSAGES.admin.group_management.status.closeScheduleUsage(prefix, cmd));
       }
@@ -439,8 +419,6 @@ export default {
     // 🖼️ FOTO, NOME E DESCRIÇÃO
     // ═══════════════════════════════════════════════════════════════
     if (['fotogp', 'fotogrupo', 'setppgp', 'setfoto'].includes(cmd)) {
-      if (!isGroup) return reply(MESSAGES.permission.groupOnly);
-      if (!isGroupAdmin) return reply(MESSAGES.permission.adminOnly);
       if (!isBotAdmin) return reply(MESSAGES.permission.botAdminOnly);
       if (!isQuotedImage && !isQuotedMsg && !info.message?.imageMessage) return reply(MESSAGES.admin.group_management.media.photoProvide);
 
@@ -453,8 +431,6 @@ export default {
     }
 
     if (cmd === 'nomegp' || cmd === 'setname') {
-      if (!isGroup) return reply(MESSAGES.permission.groupOnly);
-      if (!isGroupAdmin) return reply(MESSAGES.permission.adminOnly);
       if (!isBotAdmin) return reply(MESSAGES.permission.botAdminOnly);
       if (!q) return reply(MESSAGES.admin.group_management.media.nameProvide);
       await bot.groupUpdateSubject(from, q);
@@ -462,17 +438,12 @@ export default {
     }
 
     if (cmd === 'descgp' || cmd === 'descgrupo' || cmd === 'setdesc') {
-      if (!isGroup) return reply(MESSAGES.permission.groupOnly);
-      if (!isGroupAdmin) return reply(MESSAGES.permission.adminOnly);
       if (!isBotAdmin) return reply(MESSAGES.permission.botAdminOnly);
       await bot.groupUpdateDescription(from, q || '');
       return reply(MESSAGES.admin.group_management.media.descSuccess);
     }
 
     if (cmd === 'soadm' || cmd === 'adminonly' || cmd === 'soadmin') {
-      if (!isGroup) return reply(MESSAGES.permission.groupOnly);
-      if (!isGroupAdmin) return reply(MESSAGES.permission.adminOnly);
-      
       groupData.soadm = !groupData.soadm;
       await optimizer.saveJsonWithCache(groupFile, groupData);
       
@@ -483,7 +454,6 @@ export default {
     // 📬 SOLICITAÇÕES DE ENTRADA
     // ═══════════════════════════════════════════════════════════════
     if (['requests', 'solicitacoes', 'pendentes'].includes(cmd)) {
-      if (!isGroupAdmin && !isOwner) return reply(MESSAGES.permission.adminOnly);
       try {
         const requests = await bot.groupRequestParticipantsList(from);
         if (!requests || requests.length === 0) return reply(MESSAGES.admin.group_management.requests.empty);
@@ -498,7 +468,6 @@ export default {
     }
 
     if (['aprovar', 'aceitar', 'approve', 'recusarsolic', 'recusar', 'reject'].includes(cmd)) {
-      if (!isGroupAdmin && !isOwner) return reply(MESSAGES.permission.adminOnly);
       const type = ['aprovar', 'aceitar', 'approve'].includes(cmd) ? 'approve' : 'reject';
       const target = menc_os2 || (args[0] && args[0].includes('@') ? args[0].replace('@', '') + '@s.whatsapp.net' : null);
       if (!target) return reply(MESSAGES.error.missing('alguém'));
@@ -509,7 +478,6 @@ export default {
     }
 
     if (['autoaceitarsolic', 'autoaprovar', 'captchasolic'].includes(cmd)) {
-      if (!isGroupAdmin && !isOwner) return reply(MESSAGES.permission.adminOnly);
       const subCmd = args[0]?.toLowerCase();
       if (!subCmd) return reply(MESSAGES.admin.group_management.requests.autoUsage(prefix, cmd));
       const feature = cmd === 'captchasolic' ? 'captchaEnabled' : 'autoAcceptRequests';

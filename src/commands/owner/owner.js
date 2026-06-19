@@ -18,7 +18,6 @@ export default {
     // 📡 TRANSMISSÃO (TM)
     // ═══════════════════════════════════════════════════════════════
     if (cmd === 'tm') {
-      if (!isOwner) return reply(MESSAGES.permission.ownerOnly);
       if (!q && !isImage && !isVideo && !isQuotedImage && !isQuotedVideo) return reply(MESSAGES.owner.owner.tm.missingMedia);
 
       const cabecalho = MESSAGES.owner.owner.tm.header;

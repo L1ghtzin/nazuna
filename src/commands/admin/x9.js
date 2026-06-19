@@ -22,9 +22,6 @@ export default {
     MESSAGES
   }) => {
     try {
-      if (!isGroup) return reply(MESSAGES.permission.groupOnly);
-      if (!isGroupAdmin) return reply(MESSAGES.permission.adminOnly);
-      
       groupData.x9 = !groupData.x9;
       await optimizer.saveJsonWithCache(groupFile, groupData);
       

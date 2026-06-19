@@ -8,8 +8,6 @@ export default {
     isOwner
   , MESSAGES }) => {
     try {
-      if (!isOwner) return reply(MESSAGES.permission.ownerOnly);
-      
       await reply(MESSAGES.owner.reiniciar.success);
       
       try {

@@ -131,6 +131,10 @@ export async function execDynamicCommand(commandName, paramsHandler) {
             await reply(paramsHandler.MESSAGES.permission.groupOnly);
             return true;
         }
+        if (!isGroupAdmin && !isOwner && !paramsHandler.isOwnerOrSub) {
+            await reply(paramsHandler.MESSAGES.permission.adminOnly);
+            return true;
+        }
     }
     
     try {

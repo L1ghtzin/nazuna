@@ -12,8 +12,6 @@ export default {
     MESSAGES
   }) => {
     try {
-      if (!isOwner) return reply(MESSAGES.permission.ownerOnly);
-      
       const authDir = path.join(process.cwd(), 'dados', 'database', 'qr-code');
       const filePatterns = ['pre-key', 'sender', 'session', 'app-state'];
       let totalDeleted = 0;

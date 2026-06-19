@@ -10,8 +10,6 @@ export default {
     reply, command, isGroup, isGroupAdmin, isBotAdmin, from, q, 
     groupData, DATABASE_DIR, optimizer, prefix, MESSAGES
   }) => {
-    if (!isGroup) return reply(MESSAGES.permission.groupOnly);
-    if (!isGroupAdmin) return reply(MESSAGES.permission.userAdminOnly);
 
     const cmd = command.toLowerCase();
     const groupFilePath = pathz.join(DATABASE_DIR, `grupos/${from}.json`);

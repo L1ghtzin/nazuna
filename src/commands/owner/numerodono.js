@@ -16,7 +16,6 @@ export default {
     MESSAGES
   }) => {
     try {
-      if (!isOwner) return reply(MESSAGES.permission.ownerOnly);
       if (!q) return reply(MESSAGES.owner.numerodono.missingParams(prefix, command));
       
       let config = JSON.parse(fs.readFileSync(CONFIG_FILE));

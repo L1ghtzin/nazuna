@@ -19,8 +19,6 @@ export default {
       return reply(text);
     }
 
-    if (!isOwner) return reply(MESSAGES.permission.ownerOnly);
-
     // ═══════════════════════════════════════════════════════════════
     // ⚙️ GERENCIAMENTO
     // ═══════════════════════════════════════════════════════════════

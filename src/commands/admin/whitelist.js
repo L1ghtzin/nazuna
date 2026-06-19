@@ -6,9 +6,6 @@ export default {
   commands: ["addwhitelist", "listawhitelist", "removewhitelist", "whitelistlista", "wl.add", "wl.lista", "wl.remove", "wladd", "wllist", "wlremove"],
   usage: `${global.prefix}wl.add @usuário | antilink,antistatus\n${global.prefix}wl.remove @usuário\n${global.prefix}wl.lista`,
   handle: async ({  reply, isGroup, isGroupAdmin, command, menc_os2, q, prefix, groupData, groupFile, sender, getUserName, optimizer , MESSAGES }) => {
-    if (!isGroup) return reply(MESSAGES.permission.groupOnly);
-    if (!isGroupAdmin) return reply(MESSAGES.permission.adminOnly);
-
     const cmd = command.toLowerCase();
     groupData.adminWhitelist = groupData.adminWhitelist || {};
 

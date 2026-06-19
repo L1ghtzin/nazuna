@@ -7,7 +7,6 @@ export default {
   usage: `${global.prefix}listreact`,
   handle: async ({  reply, isOwner , MESSAGES }) => {
     try {
-      if (!isOwner) return reply(MESSAGES.permission.ownerOnly);
       const reacts = loadCustomReacts();
       if (reacts.length === 0) return reply(MESSAGES.owner.listreact.empty);
       let listMsg = MESSAGES.owner.listreact.header;

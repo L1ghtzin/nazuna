@@ -35,8 +35,6 @@ export default {
     q,
     MESSAGES
   }) => {
-    if (!isGroup) return reply(MESSAGES.permission.groupOnly);
-    if (!isGroupAdmin && !isOwner) return reply(MESSAGES.permission.adminOnly);
 
     const subCommand = args[0]?.toLowerCase();
     

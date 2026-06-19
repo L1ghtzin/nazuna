@@ -23,8 +23,6 @@ export default {
     optimizer
   }) => {
     try {
-      if (!isGroup) return reply(MESSAGES.permission.groupOnly);
-      if (!isGroupAdmin) return reply(MESSAGES.permission.userAdminOnly);
       if (!q) return reply(MESSAGES.admin.unblockcmd.usage(prefix));
       
       groupData.blockedCommands = groupData.blockedCommands || {};

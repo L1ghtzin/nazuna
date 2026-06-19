@@ -23,7 +23,7 @@ export default {
     menc_os2,
     MESSAGES
   }) => {
-    if (!isGroup) return reply(MESSAGES.permission.groupOnly);
+
     // command já vem desestruturado
 
 
@@ -49,8 +49,6 @@ export default {
       }
       return reply(MESSAGES.admin.tools.mention.invalid(prefix));
     }
-
-    if (!isGroupAdmin && !isOwner) return reply(MESSAGES.permission.adminOnly);
 
     // --- DELETAR (Apagar mensagem do bot ou de outros se for admin) ---
     if (['deletar', 'del', 'd', 'delete'].includes(command)) {

@@ -14,14 +14,10 @@ export default {
     MESSAGES
   }) => {
     const cmd = command.toLowerCase();
-
-    if (!isGroup) return reply(MESSAGES.permission.groupOnly);
-
     // ═══════════════════════════════════════════════════════════════
     // 📢 MENCIONAR TODOS (MARCAR)
     // ═══════════════════════════════════════════════════════════════
     if (['marcar', 'mark', 'todos', 'all', 'mencionar'].includes(cmd)) {
-      if (!isGroupAdmin) return reply(MESSAGES.permission.adminOnly);
       if (!isBotAdmin) return reply(MESSAGES.permission.botAdminOnly);
 
 

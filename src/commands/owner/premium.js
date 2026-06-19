@@ -13,8 +13,6 @@ export default {
     isOwner, premiumListaZinha, DATABASE_DIR, optimizer, getUserName,
     MESSAGES
   }) => {
-    if (!isOwner) return reply(MESSAGES.permission.ownerOnly);
-
     const cmd = command.toLowerCase();
 
     // --- ADICIONAR PREMIUM ---

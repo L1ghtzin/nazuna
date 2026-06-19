@@ -15,8 +15,6 @@ export default {
     prefix
   , MESSAGES }) => {
     try {
-      if (!isGroup) return reply(MESSAGES.permission.groupOnly);
-      if (!isGroupAdmin) return reply(MESSAGES.permission.adminOnly);
       if (!q || isNaN(parseInt(q))) return reply(MESSAGES.admin.rules.delProvideNum(prefix));
       
       groupData.rules = groupData.rules || [];

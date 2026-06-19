@@ -9,16 +9,9 @@ export default {
     MESSAGES, botState, optimizer, DATABASE_DIR
   }) => {
     const cmd = command.toLowerCase();
-
-    if (!isOwnerOrSub) {
-       return reply(MESSAGES.permission.subOwnerOnly);
-    }
-
     // --- UPDATES ---
     // --- UPDATES ---
     if (['updates', 'atualizar', 'update', 'atualizarbot'].includes(cmd)) {
-      if (!isOwner) return reply(MESSAGES.permission.ownerOnly);
-
       if (!q || q.toLowerCase() !== 'sim') {
         return reply(MESSAGES.owner.system_management.update.warning(prefix, command));
       }
@@ -271,7 +264,6 @@ export default {
 
     // --- VIEWMSG (Marcar como lida) ---
     if (cmd === 'viewmsg') {
-      if (!isOwner) return reply(MESSAGES.permission.ownerOnly);
       const opt = q.toLowerCase();
       
       if (opt !== 'on' && opt !== 'off') {

@@ -11,7 +11,6 @@ export default {
     MESSAGES, optimizer, getFileBuffer, getMediaInfo,
     setMenuAudio, removeMenuAudio, DATABASE_DIR, pathz
   }) => {
-    if (!isOwner) return reply(OWNER_ONLY_MESSAGE);
     const cmd = command.toLowerCase();
 
     // --- ANTIPV ---

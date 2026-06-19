@@ -24,8 +24,6 @@ export default {
     // 👋 BOAS-VINDAS / SAÍDA (WELCOME/EXIT)
     // ═══════════════════════════════════════════════════════════════
     if (['bemvindo', 'bv', 'boasvindas', 'welcome', 'saida', 'exit'].includes(cmd)) {
-      if (!isGroup) return reply(MESSAGES.permission.groupOnly);
-      if (!isGroupAdmin) return reply(MESSAGES.permission.adminOnly);
       const isWelcome = ['bemvindo', 'bv', 'boasvindas', 'welcome'].includes(cmd);
       
       if (isWelcome) {
@@ -53,8 +51,6 @@ export default {
     }
 
     if (['fotobv', 'welcomeimg', 'fotosaida', 'exitimg'].includes(cmd)) {
-      if (!isGroup) return reply(MESSAGES.permission.groupOnly);
-      if (!isGroupAdmin) return reply(MESSAGES.permission.adminOnly);
       if (!isQuotedImage && !isImage) return reply(MESSAGES.admin.group_security.welcome.imgProvide);
       
       try {
@@ -71,8 +67,6 @@ export default {
     }
 
     if (['removerfotobv', 'rmfotobv', 'delfotobv', 'rmwelcomeimg'].includes(cmd)) {
-      if (!isGroup) return reply(MESSAGES.permission.groupOnly);
-      if (!isGroupAdmin) return reply(MESSAGES.permission.adminOnly);
       if (!groupData.welcome?.image) return reply(MESSAGES.admin.group_security.welcome.imgNone);
       delete groupData.welcome.image;
       await optimizer.saveJsonWithCache(groupFile, groupData);
@@ -80,8 +74,6 @@ export default {
     }
 
     if (['removerfotosaiu', 'rmfotosaiu', 'delfotosaiu', 'rmexitimg'].includes(cmd)) {
-      if (!isGroup) return reply(MESSAGES.permission.groupOnly);
-      if (!isGroupAdmin) return reply(MESSAGES.permission.adminOnly);
       if (!groupData.exit?.image) return reply(MESSAGES.admin.group_security.welcome.imgNone);
       delete groupData.exit.image;
       await optimizer.saveJsonWithCache(groupFile, groupData);
@@ -89,8 +81,6 @@ export default {
     }
 
     if (['configsaida', 'textsaiu', 'legendasaiu', 'exitmsg'].includes(cmd)) {
-      if (!isGroup) return reply(MESSAGES.permission.groupOnly);
-      if (!isGroupAdmin) return reply(MESSAGES.permission.adminOnly);
       if (!q) return reply(MESSAGES.admin.group_security.welcome.msgUsage(prefix, cmd));
       groupData.exit = groupData.exit || {};
       groupData.exit.text = q;
@@ -103,8 +93,6 @@ export default {
     // 👻 FANTASMAS (GHOST)
     // ═══════════════════════════════════════════════════════════════
     if (cmd === 'banghost') {
-      if (!isGroup) return reply(MESSAGES.permission.groupOnly);
-      if (!isGroupAdmin) return reply(MESSAGES.permission.adminOnly);
       if (!isBotAdmin) return reply(MESSAGES.permission.botAdminOnly);
       const limit = parseInt(q);
       if (isNaN(limit)) return reply(MESSAGES.admin.group_security.ghost.usage(prefix));
@@ -125,8 +113,6 @@ export default {
     // ═══════════════════════════════════════════════════════════════
     if (['antibanmarcar', 'protecaomarcar'].includes(cmd)) {
       if (!isOwner) return reply(MESSAGES.permission.ownerOnly);
-      if (!isGroup) return reply(MESSAGES.permission.groupOnly);
-      
       const mmConfig = loadMassMentionConfig();
       const action = args[0]?.toLowerCase();
 
@@ -153,7 +139,6 @@ export default {
     // ⚠️ ADVERTÊNCIAS (WARNINGS)
     // ═══════════════════════════════════════════════════════════════
     if (['adv', 'advertir', 'warning', 'aviso', 'removeradv', 'rmadv', 'unwarning', 'removeraviso', 'rmaviso', 'listadv', 'warninglist', 'listavisos', 'listaavisos'].includes(cmd)) {
-      if (!isGroup || !isGroupAdmin) return reply(MESSAGES.permission.adminOnly);
       groupData.warnings = groupData.warnings || {};
 
       if (['listadv', 'warninglist', 'listavisos', 'listaavisos'].includes(cmd)) {
@@ -204,7 +189,6 @@ export default {
     // ═══════════════════════════════════════════════════════════════
     if (['suporte', 'ticket', 'ticketaceitar', 'aceitarticket', 'suporteaceitar', 'ticket.aceitar', 'listaticket', 'listarticket', 'listartickets'].includes(cmd)) {
       if (['listaticket', 'listarticket', 'listartickets'].includes(cmd)) {
-        if (!isGroupAdmin && !isOwner) return reply(MESSAGES.permission.adminOnly);
         const tickets = listSupportTickets(from);
         if (!tickets.length) return reply(MESSAGES.admin.group_security.tickets.empty);
         let text = MESSAGES.admin.group_security.tickets.header;
@@ -215,15 +199,11 @@ export default {
       }
 
       if (['ticketaceitar', 'aceitarticket', 'suporteaceitar', 'ticket.aceitar'].includes(cmd)) {
-        if (!isGroupAdmin && !isOwner) return reply(MESSAGES.permission.adminOnly);
         if (!q) return reply(MESSAGES.admin.group_security.tickets.provideId);
         const res = acceptSupportTicket(q.trim(), sender);
         return reply(res.message);
       }
-
-      if (!isGroup) return reply(MESSAGES.permission.groupOnly);
       if (q === 'on' || q === 'off') {
-        if (!isGroupAdmin) return reply(MESSAGES.permission.adminOnly);
         setSupportMode(from, q === 'on');
         return reply(MESSAGES.admin.group_security.tickets.toggle(q === 'on'));
       }
@@ -236,7 +216,6 @@ export default {
     // 📋 BLACKLIST DO GRUPO
     // ═══════════════════════════════════════════════════════════════
     if (['blacklist', 'addblacklist', 'delblacklist', 'unblacklist', 'listblacklist', 'listablacklist', 'listblacklistgp', 'listblacklistgrupal', 'blacklistlista', 'blacklista'].includes(cmd)) {
-      if (!isGroup || !isGroupAdmin) return reply(MESSAGES.permission.adminOnly);
       groupData.blacklist = groupData.blacklist || {};
 
       if (['listblacklist', 'listablacklist', 'listblacklistgp', 'listblacklistgrupal', 'blacklistlista', 'blacklista'].includes(cmd)) {
@@ -298,8 +277,6 @@ export default {
     // 🧹 LIMPEZA
     // ═══════════════════════════════════════════════════════════════
     if (['limpar', 'clean'].includes(cmd)) {
-      if (!isGroup) return reply(MESSAGES.permission.groupOnly);
-      if (!isGroupAdmin) return reply(MESSAGES.permission.adminOnly);
       if (!isBotAdmin) return reply(MESSAGES.permission.botAdminOnly);
       try {
         await sendCleanChat({ bot, from, reply, successMessage: 'Limpeza concluída!' });
@@ -316,9 +293,6 @@ export default {
     // 🛡️ PROTEÇÕES EXTRAS (ANTISTATUS, ANTISTICKERPLUS, ETC)
     // ═══════════════════════════════════════════════════════════════
     if (['antifig'].includes(cmd)) {
-      if (!isGroup) return reply(MESSAGES.permission.groupOnly);
-      if (!isGroupAdmin) return reply(MESSAGES.permission.adminOnly);
-
       try {
         groupData.antifig = groupData.antifig || {};
         groupData.antifig.enabled = !groupData.antifig.enabled;
@@ -336,8 +310,6 @@ export default {
     }
 
     if (cmd === 'antistatus') {
-      if (!isGroup) return reply(MESSAGES.permission.groupOnly);
-      if (!isGroupAdmin) return reply(MESSAGES.permission.adminOnly);
       if (!isBotAdmin) return reply(MESSAGES.permission.botAdminOnly);
 
       const action = args[0]?.toLowerCase();
@@ -360,33 +332,24 @@ export default {
     }
 
     if (['antistickerplus', 'antisticker+', 'antisl', 'antistickerplusbot'].includes(cmd)) {
-      if (!isGroup) return reply(MESSAGES.permission.groupOnly);
-      if (!isGroupAdmin && !isOwner) return reply(MESSAGES.permission.adminOnly);
       if (!antistickerplus) return reply(MESSAGES.admin.group_security.protections.unavailable('AntistickerPlus'));
       await antistickerplus.handleCommand(bot, from, args, groupData, { reply, prefix });
       return;
     }
 
     if (cmd === 'antitoxic') {
-      if (!isGroup) return reply(MESSAGES.permission.groupOnly);
-      if (!isGroupAdmin && !isOwner) return reply(MESSAGES.permission.adminOnly);
       if (!antitoxic) return reply(MESSAGES.admin.group_security.protections.unavailable('Antitoxic'));
       await antitoxic.handleCommand(bot, from, args, groupData, { reply, prefix });
       return;
     }
 
     if (['antipalavra', 'antiword'].includes(cmd)) {
-      if (!isGroup) return reply(MESSAGES.permission.groupOnly);
-      if (!isGroupAdmin && !isOwner) return reply(MESSAGES.permission.adminOnly);
       if (!antipalavra) return reply(MESSAGES.admin.group_security.protections.unavailable('Antipalavra'));
       await antipalavra.handleCommand(bot, from, args, groupData, { reply, prefix });
       return;
     }
 
     if (['antiimagem', 'antiimage'].includes(cmd)) {
-      if (!isGroup) return reply(MESSAGES.permission.groupOnly);
-      if (!isGroupAdmin) return reply(MESSAGES.permission.adminOnly);
-
       const action = args[0]?.toLowerCase();
 
       if (action === 'vizu') {
@@ -414,9 +377,6 @@ export default {
     }
 
     if (['antivideo'].includes(cmd)) {
-      if (!isGroup) return reply(MESSAGES.permission.groupOnly);
-      if (!isGroupAdmin) return reply(MESSAGES.permission.adminOnly);
-
       const action = args[0]?.toLowerCase();
 
       if (action === 'vizu') {
@@ -444,9 +404,6 @@ export default {
     }
 
     if (['antiaudio'].includes(cmd)) {
-      if (!isGroup) return reply(MESSAGES.permission.groupOnly);
-      if (!isGroupAdmin) return reply(MESSAGES.permission.adminOnly);
-
       const action = args[0]?.toLowerCase();
 
       if (action === 'vizu') {
@@ -474,9 +431,6 @@ export default {
     }
 
     if (['antidoc'].includes(cmd)) {
-      if (!isGroup) return reply(MESSAGES.permission.groupOnly);
-      if (!isGroupAdmin) return reply(MESSAGES.permission.adminOnly);
-
       const action = args[0]?.toLowerCase();
 
       if (action === 'apagar' || action === 'banir') {
@@ -497,9 +451,6 @@ export default {
     }
 
     if (['antievento'].includes(cmd)) {
-      if (!isGroup) return reply(MESSAGES.permission.groupOnly);
-      if (!isGroupAdmin) return reply(MESSAGES.permission.adminOnly);
-
       const action = args[0]?.toLowerCase();
 
       if (action === 'apagar' || action === 'banir') {
@@ -520,9 +471,6 @@ export default {
     }
 
     if (['antiproduto'].includes(cmd)) {
-      if (!isGroup) return reply(MESSAGES.permission.groupOnly);
-      if (!isGroupAdmin) return reply(MESSAGES.permission.adminOnly);
-
       const action = args[0]?.toLowerCase();
 
       if (action === 'apagar' || action === 'banir') {

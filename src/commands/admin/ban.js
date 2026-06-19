@@ -26,8 +26,6 @@ export default {
     AllgroupMembers
   , MESSAGES }) => {
     try {
-      if (!isGroup) return reply(MESSAGES.permission.groupOnly);
-      if (!isGroupAdmin) return reply(MESSAGES.permission.adminOnly);
       if (!isBotAdmin) return reply(MESSAGES.permission.botAdminOnly);
       if (!menc_os2) return reply(MESSAGES.error.missing('alguém'));
       if (idsMatch(menc_os2, ownerJid) || (lidowner && idsMatch(menc_os2, lidowner))) return reply(MESSAGES.permission.cantBanRole('dono do bot'));

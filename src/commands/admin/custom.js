@@ -14,7 +14,7 @@ export default {
 
     // ==================== AUTO-RESPOSTAS ====================
     if (['addauto', 'addautoadmin', 'addautoresponse'].includes(cmd)) {
-      if (!isGroupAdmin && !isOwner) return reply(MESSAGES.permission.adminOnly);
+
       if (!q || !q.includes('/')) return reply(MESSAGES.admin.custom.autoAddUsage(groupPrefix, cmd));
       
       const [trigger, ...respParts] = q.split('/');
@@ -27,7 +27,7 @@ export default {
         saveCustomAutoResponses(responses);
         return reply(MESSAGES.admin.custom.autoAddGlobalSuccess(trigger.trim()));
       } else {
-        if (!isGroup) return reply(MESSAGES.permission.groupOnly);
+
         const responses = loadGroupAutoResponses(from);
         responses.push({ trigger: trigger.trim(), response: responseText, addedBy: sender });
         saveGroupAutoResponses(from, responses);
@@ -36,7 +36,7 @@ export default {
     }
 
     if (['listauto', 'listautoadmin', 'autoresponses', 'autorespostas'].includes(cmd)) {
-      if (!isGroupAdmin && !isOwner) return reply(MESSAGES.permission.adminOnly);
+
       const globalResponses = loadCustomAutoResponses();
       const groupResponses = isGroup ? loadGroupAutoResponses(from) : [];
       

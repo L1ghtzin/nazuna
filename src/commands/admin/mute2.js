@@ -26,8 +26,7 @@ export default {
     writeJsonFile
   }) => {
     try {
-      if (!isGroup) return reply(MESSAGES.permission.groupOnly);
-      if (!isGroupAdmin) return reply(MESSAGES.permission.userAdminOnly);
+
       if (!isBotAdmin) return reply(MESSAGES.permission.botAdminOnly);
       if (!menc_os2) return reply(MESSAGES.error.missing('alguém'));
       

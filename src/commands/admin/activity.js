@@ -25,8 +25,6 @@ export default {
     menc_os2,
     sender
   }) => {
-    if (!isGroup) return reply(MESSAGES.permission.groupOnly);
-
     // command já vem desestruturado dos parâmetros do handle
 
     const groupFile = buildGroupFilePath(from);
