@@ -1,3 +1,5 @@
+import { funcsMessages } from '../../utils/messages/funcs.js';
+
 // --- CONFIGURAÇÃO ---
 const CONFIG = {
     INVITATION_TIMEOUT_MS: 15 * 60 * 1000,
@@ -88,25 +90,21 @@ class GameManager {
 
     invitePlayer(groupId, inviter, invitee) {
         if (!groupId || !inviter || !invitee || inviter === invitee) {
-            return this._formatResponse(false, '❌ Dados inválidos para o convite');
+            return this._formatResponse(false, funcsMessages.tictactoe.invalidInvite);
         }
         if (this.activeGames.has(groupId) || this.pendingInvitations.has(groupId)) {
-            return this._formatResponse(false, '❌ Já existe um jogo ou convite em andamento!');
+            return this._formatResponse(false, funcsMessages.tictactoe.alreadyPlaying);
         }
         
         this.pendingInvitations.set(groupId, { inviter, invitee, timestamp: Date.now() });
-        const message = `🎮 *CONVITE JOGO DA VELHA*\n\n` +
-                        `@${getUserName(inviter)} convidou @${getUserName(invitee)}!\n\n` +
-                        `✅ Aceitar: "sim", "s"\n` +
-                        `❌ Recusar: "não", "n"\n\n` +
-                        `⏳ Expira em 15 minutos.`;
+        const message = funcsMessages.tictactoe.invite(getUserName(inviter), getUserName(invitee));
         return this._formatResponse(true, message, { mentions: [inviter, invitee] });
     }
 
     processInvitationResponse(groupId, invitee, response) {
         const invitation = this.pendingInvitations.get(groupId);
         if (!invitation || invitation.invitee !== invitee) {
-            return this._formatResponse(false, '❌ Nenhum convite pendente para você.');
+            return this._formatResponse(false, funcsMessages.tictactoe.noPendingInvite);
         }
 
         const normalizedResponse = response.toLowerCase().trim();
@@ -114,82 +112,70 @@ class GameManager {
         const isRejected = ['n', 'não', 'nao', 'no'].includes(normalizedResponse);
         
         if (!isAccepted && !isRejected) {
-            return this._formatResponse(false, '❌ Resposta inválida. Use "sim" ou "não".');
+            return this._formatResponse(false, funcsMessages.tictactoe.invalidResponse);
         }
 
         this.pendingInvitations.delete(groupId);
 
         if (isRejected) {
-            return this._formatResponse(true, '❌ Convite recusado. Jogo cancelado.', { mentions: [invitation.inviter, invitee] });
+            return this._formatResponse(true, funcsMessages.tictactoe.inviteRejected, { mentions: [invitation.inviter, invitee] });
         }
 
         const game = new TicTacToe(invitation.inviter, invitation.invitee);
         this.activeGames.set(groupId, game);
         
-        const message = `🎮 *JOGO DA VELHA - INICIADO!*\n\n` +
-                        `👥 Jogadores:\n` +
-                        `➤ ${CONFIG.SYMBOLS.X}: @${getUserName(invitation.inviter)}\n` +
-                        `➤ ${CONFIG.SYMBOLS.O}: @${getUserName(invitation.invitee)}\n\n` +
-                        `${game.renderBoard()}\n\n` +
-                        `💡 Vez de @${getUserName(invitation.inviter)} (1-9).`;
+        const message = funcsMessages.tictactoe.gameStarted(CONFIG.SYMBOLS.X, getUserName(invitation.inviter), CONFIG.SYMBOLS.O, getUserName(invitation.invitee), game.renderBoard(), getUserName(invitation.inviter));
         return this._formatResponse(true, message, { mentions: [invitation.inviter, invitee] });
     }
 
     makeMove(groupId, player, position) {
         const game = this.activeGames.get(groupId);
         if (!game) {
-            return this._formatResponse(false, '❌ Nenhum jogo em andamento!');
+            return this._formatResponse(false, funcsMessages.tictactoe.noActiveGame);
         }
 
         // Verificação de timeout de inatividade
         if (Date.now() - game.lastMoveTime > CONFIG.MOVE_TIMEOUT_MS) {
             this.activeGames.delete(groupId);
-            return this._formatResponse(false, '❌ Jogo encerrado por inatividade (5 minutos sem jogada).', { mentions: Object.values(game.players) });
+            return this._formatResponse(false, funcsMessages.tictactoe.gameTimeout, { mentions: Object.values(game.players) });
         }
         
         const result = game.makeMove(player, position);
 
         if (!result.success) {
             const errorMessages = {
-                'not_your_turn': '❌ Não é sua vez!',
-                'invalid_position': '❌ Posição inválida! Use 1-9.',
-                'position_taken': '❌ Posição já ocupada!'
+                'not_your_turn': funcsMessages.tictactoe.notYourTurn,
+                'invalid_position': funcsMessages.tictactoe.invalidPosition,
+                'position_taken': funcsMessages.tictactoe.positionTaken
             };
-            return this._formatResponse(false, errorMessages[result.reason] || '❌ Erro desconhecido.');
+            return this._formatResponse(false, errorMessages[result.reason] || funcsMessages.tictactoe.unknownError);
         }
 
         if (result.status === 'win') {
             this.activeGames.delete(groupId);
-            const message = `🎮 *JOGO DA VELHA - FIM*\n\n` +
-                            `🎉 @${result.winner.split('@')[0]} venceu! 🏆\n\n` +
-                            `${game.renderBoard()}`;
+            const message = funcsMessages.tictactoe.gameWon(result.winner.split('@')[0], game.renderBoard());
             return this._formatResponse(true, message, { finished: true, winner: result.winner, mentions: [result.winner] });
         }
 
         if (result.status === 'draw') {
             this.activeGames.delete(groupId);
-            const message = `🎮 *JOGO DA VELHA - FIM*\n\n` +
-                            `🤝 Empate!\n\n` +
-                            `${game.renderBoard()}`;
+            const message = funcsMessages.tictactoe.gameDraw(game.renderBoard());
             return this._formatResponse(true, message, { finished: true, draw: true, mentions: Object.values(game.players) });
         }
 
         if (result.status === 'continue') {
-            const message = `🎮 *JOGO DA VELHA*\n\n` +
-                            `👉 Vez de @${getUserName(result.nextPlayer)}\n\n` +
-                            `${game.renderBoard()}\n\n` +
-                            `💡 Digite um número de 1 a 9.`;
+            const message = funcsMessages.tictactoe.gameContinue(getUserName(result.nextPlayer), game.renderBoard());
             return this._formatResponse(true, message, { finished: false, mentions: [result.nextPlayer] });
         }
     }
 
     endGame(groupId) {
         if (!this.activeGames.has(groupId)) {
-            return this._formatResponse(false, '❌ Nenhum jogo em andamento!');
+            return this._formatResponse(false, funcsMessages.tictactoe.noActiveGame);
         }
         const players = Object.values(this.activeGames.get(groupId).players);
         this.activeGames.delete(groupId);
-        return this._formatResponse(true, '🎮 Jogo encerrado manualmente!', { mentions: players });
+        return this._formatResponse(true, funcsMessages.tictactoe.gameEndedManual, { mentions: players });
     }
     
     hasActiveGame = (groupId) => this.activeGames.has(groupId);

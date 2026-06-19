@@ -67,8 +67,8 @@ async function createGroupMessage(ChainySock, groupMetadata, participants, setti
         '#membros#': groupMetadata.participants.length,
     };
     const defaultText = isWelcome ?
-        (jsonGp.textbv ? jsonGp.textbv : "╭━━━⊱ 🌟 *BEM-VINDO(A/S)!* 🌟 ⊱━━━╮\n│\n│ 👤 #numerodele#\n│\n│ 🏠 Grupo: *#nomedogp#*\n│ 👥 Membros: *#membros#*\n│\n╰━━━━━━━━━━━━━━━━━━━━━━━━╯\n\n✨ *Seja bem-vindo(a/s) ao grupo!* ✨") :
-        (jsonGp.exit?.text ? jsonGp.exit.text : "╭━━━⊱ 👋 *ATÉ LOGO!* 👋 ⊱━━━╮\n│\n│ 👤 #numerodele#\n│\n│ 🚪 Saiu do grupo\n│ *#nomedogp#*\n│\n╰━━━━━━━━━━━━━━━━━━━━━━╯\n\n💫 *Até a próxima!* 💫");
+        (jsonGp.textbv ? jsonGp.textbv : MESSAGES.handlers.groupEvents.welcomeDefault) :
+        (jsonGp.exit?.text ? jsonGp.exit.text : MESSAGES.handlers.groupEvents.exitDefault);
     
     const text = formatMessageText(settings.text || defaultText, replacements);
     const message = { text, mentions };

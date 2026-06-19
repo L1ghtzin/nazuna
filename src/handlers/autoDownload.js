@@ -80,7 +80,7 @@ export async function handleAutoDownload(bot, from, url, info, modules) {
         if (videoUrl) {
           await bot.sendMessage(from, {
             video: { url: videoUrl },
-            caption: `📱 *TikTok*`,
+            caption: MESSAGES.handlers.autoDownload.captions.tiktok,
             mimetype: 'video/mp4'
           }, { quoted: info });
           return true;
@@ -96,13 +96,13 @@ export async function handleAutoDownload(bot, from, url, info, modules) {
         if (media.type === 'video') {
           await bot.sendMessage(from, {
             video: media.buff || { url: media.url },
-            caption: '📸 *Instagram*',
+            caption: MESSAGES.handlers.autoDownload.captions.instagram,
             mimetype: 'video/mp4'
           }, { quoted: info });
         } else {
           await bot.sendMessage(from, {
             image: media.buff || { url: media.url },
-            caption: '📸 *Instagram*'
+            caption: MESSAGES.handlers.autoDownload.captions.instagram
           }, { quoted: info });
         }
         return true;
@@ -117,13 +117,13 @@ export async function handleAutoDownload(bot, from, url, info, modules) {
         if (media.type === 'video') {
           await bot.sendMessage(from, {
             video: media.buff || { url: media.url },
-            caption: '📸 *Kwai*',
+            caption: MESSAGES.handlers.autoDownload.captions.kwai,
             mimetype: 'video/mp4'
           }, { quoted: info });
         } else {
           await bot.sendMessage(from, {
             image: media.buff || { url: media.url },
-            caption: '📸 *Kwai*'
+            caption: MESSAGES.handlers.autoDownload.captions.kwai
           }, { quoted: info });
         }
         return true;
@@ -136,7 +136,7 @@ export async function handleAutoDownload(bot, from, url, info, modules) {
       if (result && result.ok && result.buffer) {
         await bot.sendMessage(from, {
           video: result.buffer,
-          caption: `📘 *Facebook* - ${result.resolution || 'HD'}`,
+          caption: MESSAGES.handlers.autoDownload.captions.facebook(result.resolution || 'HD'),
           mimetype: 'video/mp4'
         }, { quoted: info });
         return true;
@@ -151,13 +151,13 @@ export async function handleAutoDownload(bot, from, url, info, modules) {
         if (result.type === 'video') {
           await bot.sendMessage(from, {
             video: { url: mediaUrl },
-            caption: '📌 *Pinterest*',
+            caption: MESSAGES.handlers.autoDownload.captions.pinterest,
             mimetype: 'video/mp4'
           }, { quoted: info });
         } else {
           await bot.sendMessage(from, {
             image: { url: mediaUrl },
-            caption: '📌 *Pinterest*'
+            caption: MESSAGES.handlers.autoDownload.captions.pinterest
           }, { quoted: info });
         }
         return true;
