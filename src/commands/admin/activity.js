@@ -13,7 +13,6 @@ export default {
     reply, 
     isGroup, 
     isGroupAdmin, 
-    isOwner, 
     args, 
     prefix, 
     groupData,
@@ -97,7 +96,6 @@ export default {
     }
 
     // --- CONFIGS (Admin) ---
-    if (!isGroupAdmin && !isOwner) return;
 
     if (['limparatividade', 'resetatividade'].includes(command)) {
       groupData.contador = [];

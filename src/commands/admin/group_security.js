@@ -4,16 +4,15 @@ import { sendCleanChat } from '../../utils/cleanChat.js';
 export default {
   name: "group_security",
   description: "Segurança e moderação avançada de grupos",
-  commands: ["aceitarticket", "addblacklist", "addparceria", "addpartnership", "adv", "advertir", "antibanmarcar", "antifig", "antipalavra", "antisl", "antistatus", "antisticker+", "antistickerplus", "antistickerplusbot", "antitoxic", "antitóxico", "antiword", "banghost", "bemvindo", "blacklist", "boasvindas", "bv", "clean", "configsaida", "delblacklist", "delfotobv", "delfotosaiu", "delparceria", "delpartnership", "exit", "exitimg", "exitmsg", "fotobv", "fotosaida", "fotosaiu", "imgsaiu", "legendasaiu", "limpar", "listadv", "listblacklist", "modoparceria", "parcerias", "partnerships", "protecaomarcar", "removeradv", "removerfotobv", "removerfotosaiu", "rmadv", "rmexitimg", "rmfotobv", "rmfotosaiu", "rmwelcomeimg", "saida", "suporte", "suporteaceitar", "suporteticket", "textsaiu", "ticket", "ticket.aceitar", "ticketaceitar", "ticketsuporte", "unblacklist", "unwarning", "warning", "warninglist", "welcome", "welcomeimg", "antiimagem", "antivideo", "antiaudio", "antidoc", "antievento", "antiproduto"],
+  commands: ["aceitarticket", "addblacklist", "addparceria", "addpartnership", "adv", "advertir", "antifig", "antipalavra", "antisl", "antistatus", "antisticker+", "antistickerplus", "antistickerplusbot", "antitoxic", "antitóxico", "antiword", "banghost", "bemvindo", "blacklist", "boasvindas", "bv", "clean", "configsaida", "delblacklist", "delfotobv", "delfotosaiu", "delparceria", "delpartnership", "exit", "exitimg", "exitmsg", "fotobv", "fotosaida", "fotosaiu", "imgsaiu", "legendasaiu", "limpar", "listadv", "listblacklist", "modoparceria", "parcerias", "partnerships", "removeradv", "removerfotobv", "removerfotosaiu", "rmadv", "rmexitimg", "rmfotobv", "rmfotosaiu", "rmwelcomeimg", "saida", "suporte", "suporteaceitar", "suporteticket", "textsaiu", "ticket", "ticket.aceitar", "ticketaceitar", "ticketsuporte", "unblacklist", "unwarning", "warning", "warninglist", "welcome", "welcomeimg", "antiimagem", "antivideo", "antiaudio", "antidoc", "antievento", "antiproduto"],
   handle: async ({ 
     bot, from, info, command, args, reply, prefix, pushname, sender, q,
-    isGroup, isGroupAdmin, isBotAdmin, isOwner, AllgroupMembers, groupData, groupFile,
+    isGroup, isGroupAdmin, isBotAdmin, AllgroupMembers, groupData, groupFile,
     getUserName, optimizer, GRUPOS_DIR, DATABASE_DIR, buildGroupFilePath,
     isQuotedMsg, isQuotedImage, isImage, getFileBuffer, upload,
     menc_os2, menc_jid2, botNumber, botNumberLid, nmrdn,
     fs, pathz, groupAdmins, groupName, idInArray,
-    loadMassMentionConfig, saveMassMentionConfig, MASS_MENTION_MAX_USES, MASS_MENTION_THRESHOLD,
-    loadMassMentionLimit, parceriasData, saveParceriasData, getLidFromJidCached,
+    parceriasData, saveParceriasData, getLidFromJidCached,
     isValidJid, isValidLid, buildUserId, config, groupMetadata,
     extractReason, setSupportMode, createSupportTicket, findSupportTicketById, acceptSupportTicket, listSupportTickets,
     antistickerplus, antitoxic, antipalavra, idsMatch
@@ -111,30 +110,6 @@ export default {
     // ═══════════════════════════════════════════════════════════════
     // 🛡️ ANTI-BAN MARCAR (MASS MENTION PROTECTION)
     // ═══════════════════════════════════════════════════════════════
-    if (['antibanmarcar', 'protecaomarcar'].includes(cmd)) {
-      if (!isOwner) return reply(MESSAGES.permission.ownerOnly);
-      const mmConfig = loadMassMentionConfig();
-      const action = args[0]?.toLowerCase();
-
-      if (action === 'on' || action === 'ativar') {
-        mmConfig[from] = { enabled: true };
-        saveMassMentionConfig(mmConfig);
-        return reply(MESSAGES.admin.group_security.antiBan.on);
-      } else if (action === 'off' || action === 'desativar') {
-        if (mmConfig[from]) mmConfig[from].enabled = false;
-        saveMassMentionConfig(mmConfig);
-        return reply(MESSAGES.admin.group_security.antiBan.off);
-      } else if (action === 'status' || action === 'ver') {
-        const isEnabled = mmConfig[from]?.enabled || false;
-        const memberCount = AllgroupMembers?.length || 0;
-        const limitData = loadMassMentionLimit();
-        const uses = limitData[from]?.uses?.length || 0;
-        return reply(MESSAGES.admin.group_security.antiBan.status(isEnabled, memberCount, uses, MASS_MENTION_MAX_USES));
-      } else {
-        return reply(MESSAGES.admin.group_security.antiBan.usage(prefix, cmd));
-      }
-    }
-
     // ═══════════════════════════════════════════════════════════════
     // ⚠️ ADVERTÊNCIAS (WARNINGS)
     // ═══════════════════════════════════════════════════════════════

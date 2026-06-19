@@ -1,104 +1,59 @@
-import fs from 'fs';
-import pathz from 'path';
+import { sendMenuWithMedia } from '../../utils/menuSender.js';
 
 export default {
   name: "menu",
   description: "Menus e guias do bot",
-  commands: ["admmenu", "alteradores", "changers", "changersmenu", "comandos", "commands", "downloadmenu", "downmenu", "ferramentas", "gamemenu", "help", "membermenu", "membmenu", "menu", "menuadm", "menuadmin", "menuadmins", "menualterador", "menualteradores", "menubn", "menubrincadeira", "menubrincadeiras", "menudono", "menudown", "menudownload", "menudownloads", "menuferramenta", "menuferramentas", "menufig", "menugeral", "menumemb", "menumembros", "menurpg", "menusticker", "menuvip", "ownermenu", "stickermenu", "tools", "toolsmenu"],
-  handle: async ({ 
+  commands: ["admmenu", "alteradores", "changers", "changersmenu", "comandos", "commands", "downloadmenu", "downmenu", "ferramentas", "gamemenu", "help", "membermenu", "membmenu", "menu", "menuadm", "menuadmin", "menuadmins", "menualterador", "menualteradores", "menubn", "menubrincadeira", "menubrincadeiras", "menudown", "menudownload", "menudownloads", "menuferramenta", "menuferramentas", "menufig", "menugeral", "menumemb", "menumembros", "menurpg", "menusticker", "menuvip", "stickermenu", "tools", "toolsmenu"],
+  handle: async ({
     bot, from, info, command, reply, prefix, pushname, isGroup,
     nomebot, menus, getGroupCustomization, isGroupCustomizationEnabled,
     getMenuDesignWithDefaults, getMenuLerMaisText, isMenuAudioEnabled,
-    getMenuAudioPath, isOwner
-  , MESSAGES }) => {
+    getMenuAudioPath, MESSAGES
+  }) => {
     const cmd = command.toLowerCase();
-    
-    // Função local para simplificar envio dos sub-menus
-    const sendMenuWithMedia = async (menuType, menuFunction) => {
-      let customBotName = nomebot;
-      let customMediaPath = null;
-      
-      if (isGroup && isGroupCustomizationEnabled()) {
-        const groupCustom = getGroupCustomization(from);
-        if (groupCustom) {
-          if (groupCustom.customName) customBotName = groupCustom.customName;
-          if (groupCustom.customPhoto && fs.existsSync(groupCustom.customPhoto)) {
-            customMediaPath = groupCustom.customPhoto;
-          }
-        }
-      }
-      
-      let mediaPath, useVideo, mediaBuffer;
-      if (customMediaPath) {
-        mediaPath = customMediaPath;
-        useVideo = false;
-        mediaBuffer = fs.readFileSync(mediaPath);
-      } else {
-        const menuVideoPath = pathz.join(process.cwd(), 'dados/midias/menu.mp4');
-        const menuImagePath = pathz.join(process.cwd(), 'dados/midias/menu.jpg');
-        useVideo = fs.existsSync(menuVideoPath);
-        mediaPath = useVideo ? menuVideoPath : menuImagePath;
-        mediaBuffer = fs.readFileSync(mediaPath);
-      }
-      
-      const customDesign = getMenuDesignWithDefaults(customBotName, pushname, prefix);
-      const menuText = await menuFunction(prefix, customBotName, pushname, customDesign);
-      const lerMaisPrefix = getMenuLerMaisText();
-      
-      if (isMenuAudioEnabled()) {
-        const audioPath = getMenuAudioPath();
-        if (audioPath && fs.existsSync(audioPath)) {
-          const audioBuffer = fs.readFileSync(audioPath);
-          await bot.sendMessage(from, { audio: audioBuffer, mimetype: 'audio/mpeg', ptt: false }, { quoted: info });
-        }
-      }
-      
-      await bot.sendMessage(from, {
-        [useVideo ? 'video' : 'image']: mediaBuffer,
-        caption: lerMaisPrefix + menuText,
-        gifPlayback: useVideo,
-        mimetype: useVideo ? 'video/mp4' : 'image/jpeg'
-      }, { quoted: info });
-    };
+
+    const send = (menuFunction) => sendMenuWithMedia({
+      bot,
+      from,
+      info,
+      prefix,
+      pushname,
+      isGroup,
+      nomebot,
+      getGroupCustomization,
+      isGroupCustomizationEnabled,
+      getMenuDesignWithDefaults,
+      getMenuLerMaisText,
+      isMenuAudioEnabled,
+      getMenuAudioPath,
+      menuFunction
+    });
 
     try {
       if (['menu', 'help', 'comandos', 'commands'].includes(cmd)) {
-        await sendMenuWithMedia('principal', menus.menu);
+        await send(menus.menu);
+      } else if (['alteradores', 'menualterador', 'menualteradores', 'changersmenu', 'changers'].includes(cmd)) {
+        await send(menus.menuAlterador);
+      } else if (['menubn', 'menubrincadeira', 'menubrincadeiras', 'gamemenu'].includes(cmd)) {
+        await send(menus.menubn);
+      } else if (['menudown', 'menudownload', 'menudownloads', 'downmenu', 'downloadmenu'].includes(cmd)) {
+        await send(menus.menudown);
+      } else if (['ferramentas', 'menuferramentas', 'menuferramenta', 'toolsmenu', 'tools'].includes(cmd)) {
+        await send(menus.menuFerramentas);
+      } else if (['menuadm', 'menuadmin', 'menuadmins', 'admmenu'].includes(cmd)) {
+        await send(menus.menuadm);
+      } else if (['menumembros', 'menumemb', 'menugeral', 'membmenu', 'membermenu'].includes(cmd)) {
+        await send(menus.menuMembros);
+      } else if (['stickermenu', 'menusticker', 'menufig'].includes(cmd)) {
+        await send(menus.menuSticker);
+      } else if (cmd === 'menurpg') {
+        await send(menus.menuRPG);
+      } else if (cmd === 'menuvip') {
+        await send(menus.menuVIP);
       }
-      else if (['alteradores', 'menualterador', 'menualteradores', 'changersmenu', 'changers'].includes(cmd)) {
-        await sendMenuWithMedia('alteradores', menus.menuAlterador);
-      }
-      else if (['menubn', 'menubrincadeira', 'menubrincadeiras', 'gamemenu'].includes(cmd)) {
-        await sendMenuWithMedia('brincadeiras', menus.menubn);
-      }
-      else if (['menudown', 'menudownload', 'menudownloads', 'downmenu', 'downloadmenu'].includes(cmd)) {
-        await sendMenuWithMedia('downloads', menus.menudown);
-      }
-      else if (['ferramentas', 'menuferramentas', 'menuferramenta', 'toolsmenu', 'tools'].includes(cmd)) {
-        await sendMenuWithMedia('ferramentas', menus.menuFerramentas);
-      }
-      else if (['menuadm', 'menuadmin', 'menuadmins', 'admmenu'].includes(cmd)) {
-        await sendMenuWithMedia('admin', menus.menuadm);
-      }
-      else if (['menumembros', 'menumemb', 'menugeral', 'membmenu', 'membermenu'].includes(cmd)) {
-        await sendMenuWithMedia('membros', menus.menuMembros);
-      }
-      else if (['menudono', 'ownermenu'].includes(cmd)) {
-        if (!isOwner) return reply(MESSAGES.permission.ownerOnly);
-        await sendMenuWithMedia('dono', menus.menuDono);
-      }
-      else if (['stickermenu', 'menusticker', 'menufig'].includes(cmd)) {
-        await sendMenuWithMedia('stickers', menus.menuSticker);
-      }
-      else if (cmd === 'menurpg') {
-        await sendMenuWithMedia('rpg', menus.menuRPG);
-      }
-      else if (cmd === 'menuvip') {
-        await sendMenuWithMedia('vip', menus.menuVIP);
-      }
-    } catch (e) {
-      console.error('Erro ao enviar menu:', e);
-      reply(MESSAGES.error.general);
+    } catch (error) {
+      console.error('Erro ao enviar menu:', error);
+      return reply(MESSAGES.error.general);
     }
   }
 };

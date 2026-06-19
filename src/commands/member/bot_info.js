@@ -1,83 +1,16 @@
 import os from 'os';
-import { execSync } from 'child_process';
-import path from 'path';
-import { fileURLToPath } from 'url';
-import https from 'https';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-function createProgressBar(percent, length = 10) {
-    const p = isNaN(percent) ? 0 : Math.max(0, Math.min(100, percent));
-    const filledLength = Math.round(length * p / 100);
-    return '█'.repeat(filledLength) + ' '.repeat(length - filledLength);
-}
-
-async function getDiskSpaceInfo() {
-  try {
-    const platform = os.platform();
-    let totalBytes = 0;
-    let freeBytes = 0;
-    const defaultResult = { totalGb: 'N/A', freeGb: 'N/A', usedGb: 'N/A', percentUsed: 'N/A' };
-    
-    if (platform === 'win32') {
-      try {
-        const scriptPath = __dirname;
-        const driveLetter = path.parse(scriptPath).root.charAt(0);
-        const command = `fsutil volume diskfree ${driveLetter}:`;
-        const output = execSync(command).toString();
-        const lines = output.split('\n');
-        const freeLine = lines.find(line => line.includes('Total # of free bytes'));
-        const totalLine = lines.find(line => line.includes('Total # of bytes'));
-        if (freeLine) freeBytes = parseFloat(freeLine.split(':')[1].trim().replace(/\./g, ''));
-        if (totalLine) totalBytes = parseFloat(totalLine.split(':')[1].trim().replace(/\./g, ''));
-      } catch (winError) {
-        return defaultResult;
-      }
-    } else if (platform === 'linux' || platform === 'darwin') {
-      try {
-        const command = 'df -k .';
-        const output = execSync(command).toString();
-        const lines = output.split('\n');
-        if (lines.length > 1) {
-          const parts = lines[1].trim().split(/\s+/);
-          totalBytes = parseInt(parts[1]) * 1024;
-          freeBytes = parseInt(parts[3]) * 1024;
-        }
-      } catch (unixError) {
-        return defaultResult;
-      }
-    } else {
-      return defaultResult;
-    }
-    
-    if (totalBytes > 0 && freeBytes >= 0) {
-      const usedBytes = totalBytes - freeBytes;
-      const totalGb = (totalBytes / 1024 / 1024 / 1024).toFixed(2);
-      const freeGb = (freeBytes / 1024 / 1024 / 1024).toFixed(2);
-      const usedGb = (usedBytes / 1024 / 1024 / 1024).toFixed(2);
-      const percentUsed = (usedBytes / totalBytes * 100).toFixed(1) + '%';
-      return { totalGb, freeGb, usedGb, percentUsed };
-    } else {
-      return defaultResult;
-    }
-  } catch (error) {
-    return { totalGb: 'N/A', freeGb: 'N/A', usedGb: 'N/A', percentUsed: 'N/A' };
-  }
-}
 
 export default {
   name: "bot_info",
-  description: "Informações detalhadas sobre o bot e o servidor",
-  commands: ["infobot", "statusbot", "botinfo", "infoserver", "meustatus", "topcmd", "topcmds", "comandosmaisusados", "cmdinfo", "comandoinfo", "statusgp", "dadosgp", "horariomundial"],
-  handle: async ({ 
-    bot, from, reply, formatUptime, getTotalCommands, pushname, nomebot, botVersion,
-    isGroup, groupMetadata, sender, command, isOwner, info, MESSAGES,
-    botState, isRentalModeActive, premiumListaZinha, globalBlocks, nomedono
+  description: "Informacoes publicas sobre o bot",
+  commands: ["infobot", "statusbot", "botinfo", "meustatus", "topcmd", "topcmds", "comandosmaisusados", "cmdinfo", "comandoinfo", "statusgp", "dadosgp", "horariomundial"],
+  handle: async ({
+    bot, from, reply, formatUptime, getTotalCommands, nomebot, botVersion,
+    isGroup, command, MESSAGES, botState, isRentalModeActive,
+    premiumListaZinha, globalBlocks, nomedono
   }) => {
     const cmd = command.toLowerCase();
 
-    // --- INFO DO GRUPO ---
     if (['statusgp', 'dadosgp'].includes(cmd)) {
       if (!isGroup) return reply(MESSAGES.permission.groupOnly);
       const metadata = await bot.groupMetadata(from);
@@ -85,173 +18,35 @@ export default {
         metadata.subject,
         metadata.participants.length,
         metadata.owner?.split('@')[0] || 'N/A',
-        metadata.desc || 'Sem descrição'
+        metadata.desc || 'Sem descricao'
       ), { mentions: [metadata.owner].filter(Boolean) });
     }
 
-    // --- INFOSERVER (DIAGNÓSTICO COMPLETO PARA DONO) ---
-    if (['infoserver'].includes(cmd)) {
-      if (!isOwner) {
-        return reply(MESSAGES.permission.ownerOnly);
-      }
-      
-      const serverUptime = process.uptime();
-      const serverUptimeFormatted = formatUptime(serverUptime, true);
-      const serverMemUsage = process.memoryUsage();
-      const serverMemUsed = (serverMemUsage.heapUsed / 1024 / 1024).toFixed(2);
-      const serverMemTotal = (serverMemUsage.heapTotal / 1024 / 1024).toFixed(2);
-      const serverMemRss = (serverMemUsage.rss / 1024 / 1024).toFixed(2);
-      const serverMemExternal = (serverMemUsage.external / 1024 / 1024).toFixed(2);
-      
-      const serverCpuUsage = process.cpuUsage();
-      const serverCpuUser = (serverCpuUsage.user / 1000000).toFixed(2);
-      const serverCpuSystem = (serverCpuUsage.system / 1000000).toFixed(2);
-      
-      const serverOsInfo = {
-        platform: os.platform(),
-        arch: os.arch(),
-        release: os.release(),
-        hostname: os.hostname(),
-        type: os.type(),
-        endianness: os.endianness()
-      };
-      
-      const serverFreeMemoryRaw = os.freemem();
-      const serverTotalMemoryRaw = os.totalmem();
-      const serverUsedMemoryRaw = Math.max(0, serverTotalMemoryRaw - serverFreeMemoryRaw);
-      const serverFreeMemory = (serverFreeMemoryRaw / 1024 / 1024 / 1024).toFixed(2);
-      const serverTotalMemory = (serverTotalMemoryRaw / 1024 / 1024 / 1024).toFixed(2);
-      const usedMemGb = serverUsedMemoryRaw / 1024 / 1024 / 1024;
-      const memPercent = serverTotalMemoryRaw > 0 ? (serverUsedMemoryRaw / serverTotalMemoryRaw) * 100 : 0;
-      const heapPercent = serverMemUsage.heapTotal > 0 ? (serverMemUsage.heapUsed / serverMemUsage.heapTotal) * 100 : 0;
-      const botNameCap = nomebot || 'Bot';
-      const serverLoadAvg = os.loadavg();
-      const serverCpuCount = os.cpus().length;
-      const serverCpuModel = os.cpus()[0]?.model || 'Desconhecido';
-      const serverNetworkInterfaces = os.networkInterfaces();
-      const serverInterfaces = Object.keys(serverNetworkInterfaces).length;
-      
-      const currentServerTime = new Date().toLocaleString('pt-BR', {
-        timeZone: 'America/Sao_Paulo',
-        day: '2-digit', month: '2-digit', year: 'numeric',
-        hour: '2-digit', minute: '2-digit', second: '2-digit'
-      });
-      
-      const nodeVersion = process.version;
-      const osUptime = (os.uptime() / 3600).toFixed(2);
-      
-      let networkDetails = '';
-      for (const [name, interfaces] of Object.entries(serverNetworkInterfaces)) {
-        interfaces.forEach(iface => {
-          networkDetails += `├ ${name} (${iface.family}): ${iface.address}\n`;
-        });
-      }
-      
-      let diskInfo = await getDiskSpaceInfo();
-      const diskFree = diskInfo.freeGb;
-      const diskTotal = diskInfo.totalGb;
-      const diskUsed = diskInfo.usedGb;
-      const diskUsagePercent = diskInfo.percentUsed;
-      const dp = Number.parseFloat(diskUsagePercent) || 0;
-      
-      const startUsage = process.cpuUsage();
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      const endUsage = process.cpuUsage(startUsage);
-      const cpuPercent = ((endUsage.user + endUsage.system) / 10000).toFixed(1);
-      
-      const startTime = Date.now();
-      let networkLatency = 'N/A';
-      try {
-        const startNetworkTest = Date.now();
-        await new Promise((resolve, reject) => {
-          const req = https.get('https://www.google.com', res => {
-            res.on('data', () => {});
-            res.on('end', () => resolve());
-          });
-          req.on('error', err => reject(err));
-          req.setTimeout(5000, () => reject(new Error('Timeout')));
-        });
-        const endNetworkTest = Date.now();
-        networkLatency = `${endNetworkTest - startNetworkTest}ms`;
-      } catch (error) {
-        networkLatency = 'Erro ao testar';
-      }
-      const endTime = Date.now();
-      const latency = endTime - startTime;
-
-      return reply(MESSAGES.member.bot_info.serverInfo({
-        nodeVersion,
-        platform: serverOsInfo.platform,
-        arch: serverOsInfo.arch,
-        type: serverOsInfo.type,
-        release: serverOsInfo.release,
-        hostname: serverOsInfo.hostname,
-        endianness: serverOsInfo.endianness,
-        osUptime,
-        currentServerTime,
-        serverCpuCount,
-        serverCpuModel,
-        serverCpuUser,
-        serverCpuSystem,
-        cpuPercent,
-        serverLoadAvg0: serverLoadAvg[0].toFixed(2),
-        serverLoadAvg1: serverLoadAvg[1].toFixed(2),
-        serverLoadAvg2: serverLoadAvg[2].toFixed(2),
-        serverFreeMemory,
-        serverTotalMemory,
-        usedMemGb: usedMemGb.toFixed(2),
-        memProgressBar: createProgressBar(memPercent),
-        memPercent: memPercent.toFixed(1),
-        botNameCap,
-        serverMemUsed,
-        serverMemTotal,
-        serverMemRss,
-        serverMemExternal,
-        heapProgressBar: createProgressBar(heapPercent),
-        heapPercent: heapPercent.toFixed(1),
-        serverInterfaces,
-        networkDetails,
-        networkLatency,
-        diskFree,
-        diskTotal,
-        diskUsed,
-        diskProgressBar: createProgressBar(dp),
-        diskUsagePercent,
-        latency,
-        serverUptimeFormatted
-      }));
-    }
-
-    // --- INFOBOT / STATUSBOT (PÚBLICO) ---
     if (['infobot', 'statusbot', 'botinfo', 'meustatus'].includes(cmd)) {
       const botUptime = formatUptime(process.uptime(), true);
       const botMemUsage = process.memoryUsage();
       const memUsed = (botMemUsage.heapUsed / 1024 / 1024).toFixed(2);
       const memTotal = (botMemUsage.heapTotal / 1024 / 1024).toFixed(2);
-      
+
       const allGroups = await bot.groupFetchAllParticipating();
       const totalGroups = Object.keys(allGroups).length;
       let totalUsers = 0;
       Object.values(allGroups).forEach(group => {
         totalUsers += group.participants?.length || 0;
       });
-      
-      const botStatus = botState?.status === 'on' ? '✅ Online' : `💔 Offline`;
-      const rentalMode = isRentalModeActive && isRentalModeActive() ? '✅ Ativo' : `💔 Desativo`;
+
+      const botStatus = botState?.status === 'on' ? 'Online' : 'Offline';
+      const rentalMode = isRentalModeActive && isRentalModeActive() ? 'Ativo' : 'Desativo';
       const nodeV = process.version;
       const platform = os.platform();
       const totalCmds = getTotalCommands ? await getTotalCommands() : 0;
-      
-      const premLista = premiumListaZinha || {};
-      const premiumUsers = Object.keys(premLista).filter(key => key.endsWith('@s.whatsapp.net')).length;
-      const premiumGroups = Object.keys(premLista).filter(key => key.endsWith('@g.us')).length;
-      
-      const blocks = globalBlocks || {};
-      const blockedUsersCount = Object.keys(blocks.users || {}).length;
-      const blockedCommandsCount = Object.keys(blocks.commands || {}).length;
-      
+
+      const premiumUsers = Object.keys(premiumListaZinha || {}).filter(key => key.endsWith('@s.whatsapp.net')).length;
+      const premiumGroups = Object.keys(premiumListaZinha || {}).filter(key => key.endsWith('@g.us')).length;
+      const blockedUsersCount = Object.keys(globalBlocks?.users || {}).length;
+      const blockedCommandsCount = Object.keys(globalBlocks?.commands || {}).length;
       const currentTime = new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });
-      
+
       return reply(MESSAGES.member.bot_info.botStatus({
         nomebot,
         nomedono,

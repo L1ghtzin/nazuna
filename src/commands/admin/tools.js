@@ -1,7 +1,7 @@
 export default {
   name: "admintools",
   description: "Ferramentas administrativas adicionais",
-  commands: ["blockuser", "d", "del", "deletar", "delete", "mention", "unblockuser"],
+  commands: ["d", "del", "deletar", "delete", "mention"],
   usage: "{prefix}mention Olá grupo!",
   handle: async ({  
     bot, 
@@ -11,7 +11,6 @@ export default {
     reply, 
     isGroup, 
     isGroupAdmin, 
-    isOwner, 
     args, 
     q, 
     prefix,
@@ -20,7 +19,6 @@ export default {
     quotedMessageContent,
     optimizer,
     buildGroupFilePath,
-    menc_os2,
     MESSAGES
   }) => {
 
@@ -65,25 +63,6 @@ export default {
         await bot.sendMessage(from, { delete: key });
       } catch (e) {
         return reply(MESSAGES.admin.tools.del.error);
-      }
-    }
-
-    // --- BLOCK / UNBLOCK USER (No bot) ---
-    if (['blockuser', 'unblockuser'].includes(command)) {
-      if (!isOwner) return reply(MESSAGES.permission.ownerOnly);
-      const target = menc_os2;
-      if (!target) return reply(MESSAGES.admin.tools.block.missingTarget);
-      
-      try {
-        if (command === 'blockuser') {
-          await bot.updateBlockStatus(target, "block");
-          return reply(MESSAGES.admin.tools.block.successBlock);
-        } else {
-          await bot.updateBlockStatus(target, "unblock");
-          return reply(MESSAGES.admin.tools.block.successUnblock);
-        }
-      } catch (e) {
-        return reply(MESSAGES.admin.tools.block.error);
       }
     }
   },

@@ -5,12 +5,10 @@ export default {
   description: "Sistema de Banimento Fake (BAM)",
   commands: ["ban2", "banir2", "bam", "banfake", "setbammsg", "editarbam", "verbammsg", "verbam", "resetbammsg", "resetarbam"],
   handle: async ({ 
-    bot, from, info, command, reply, isOwner, isGroupAdmin, isGroup, menc_os2, 
+    bot, from, info, command, reply, isGroup, menc_os2,
     groupData, DATABASE_DIR, optimizer, nomedono, q, prefix, MESSAGES,
     isBotAdmin, idsMatch, ownerJid, lidowner, botNumber, botNumberLid, idInArray, groupAdmins, AllgroupMembers
   }) => {
-    if (!isGroupAdmin && !isOwner) return reply(MESSAGES.permission.userAdminOnly);
-
     const cmd = command.toLowerCase();
     const groupFilePath = pathz.join(DATABASE_DIR, `grupos/${from}.json`);
 

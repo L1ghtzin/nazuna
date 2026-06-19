@@ -1,57 +1,25 @@
 import pathz from 'path';
 
 export default {
-  name: "indication_system",
-  description: "Sistema de indicações e recomendações",
-  commands: ["addindicacao", "addindicar", "addindica", "topindica", "topindicacao", "rankindicacao", "rankindicacoes", "delindicacao", "rmindicacao", "removerindicacao"],
-  handle: async ({ 
-    reply, command, isOwner, menc_os2, DATABASE_DIR, optimizer, getUserName, prefix,
-    MESSAGES
-  }) => {
-    const cmd = command.toLowerCase();
+  name: "indication_rank",
+  description: "Ranking de indicacoes e recomendacoes",
+  commands: ["topindica", "topindicacao", "rankindicacao", "rankindicacoes"],
+  handle: async ({ reply, DATABASE_DIR, optimizer, MESSAGES }) => {
     const filePath = pathz.join(DATABASE_DIR, 'indicacoes.json');
-    
-    // Carregar dados
     const data = await optimizer.loadJsonWithCache(filePath, { users: {} });
     data.users = data.users || {};
 
-    // --- ADICIONAR INDICAÇÃO ---
-    if (cmd.startsWith('add')) {
-      if (!isOwner) return reply(MESSAGES.permission.ownerOnly);
-      if (!menc_os2) return reply(MESSAGES.error.missing('alguém'));
-      
-      if (!data.users[menc_os2]) {
-        data.users[menc_os2] = { count: 0, addedBy: [], createdAt: new Date().toISOString() };
-      }
-      
-      data.users[menc_os2].count += 1;
-      await optimizer.saveJsonWithCache(filePath, data);
-      return reply(MESSAGES.member.indications.addSuccess(getUserName(menc_os2), data.users[menc_os2].count), { mentions: [menc_os2] });
-    }
+    const users = Object.entries(data.users)
+      .sort((a, b) => b[1].count - a[1].count)
+      .slice(0, 10);
 
-    // --- RANKING ---
-    if (cmd.includes('top') || cmd.includes('rank')) {
-      const users = Object.entries(data.users)
-        .sort((a, b) => b[1].count - a[1].count)
-        .slice(0, 10);
-      
-      if (users.length === 0) return reply(MESSAGES.member.indications.empty);
-      
-      let teks = MESSAGES.member.indications.rankingHeader;
-      users.forEach(([id, info], i) => {
-        teks += `${i + 1}. @${id.split('@')[0]} - ${info.count} indicações\n`;
-      });
-      return reply(teks, { mentions: users.map(u => u[0]) });
-    }
+    if (users.length === 0) return reply(MESSAGES.member.indications.empty);
 
-    // --- REMOVER ---
-    if (cmd.startsWith('del') || cmd.startsWith('rm') || cmd.startsWith('remover')) {
-      if (!isOwner) return reply(MESSAGES.permission.ownerOnly);
-      if (!menc_os2 || !data.users[menc_os2]) return reply(MESSAGES.member.indications.userNotFound);
-      
-      delete data.users[menc_os2];
-      await optimizer.saveJsonWithCache(filePath, data);
-      return reply(MESSAGES.member.indications.removeSuccess);
-    }
+    let text = MESSAGES.member.indications.rankingHeader;
+    users.forEach(([id, info], index) => {
+      text += `${index + 1}. @${id.split('@')[0]} - ${info.count} indicacoes\n`;
+    });
+
+    return reply(text, { mentions: users.map(([id]) => id) });
   }
 };
