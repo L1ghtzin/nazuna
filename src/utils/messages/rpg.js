@@ -74,6 +74,118 @@ export const rpgMessages = {
     reset: {
       needMention: '❌ Marque o usuário que deseja resetar.',
       success: (target) => `⚠️ Jogador @${target} foi completamente resetado!`
+    },
+    shop: {
+      header: '╭━━━⊱ 🛒 *LOJA RPG* 🛒 ⊱━━━╮\n│\n',
+      item: (key, name, price) => `│ 🔹 *${key}*\n│   ${name}\n│   💰 ${price}\n│\n`,
+      footer: (prefix) => `╰━━━━━━━━━━━━━━━━━━━━━━━╯\n\n💡 Use: ${prefix}comprar <item>`,
+      buySuccess: (name) => `✅ Você comprou ${name}!`
+    },
+    inventory: {
+      header: '╭━━━⊱ 🎒 *INVENTÁRIO* 🎒 ⊱━━━╮\n│\n',
+      item: (key, qty) => `│ 🔹 *${key}*: ${qty}\n`,
+      empty: '│ 📭 Inventário vazio\n',
+      footer: '│\n╰━━━━━━━━━━━━━━━━━━━━━━━╯'
+    },
+    profile: {
+      header: (pushname) => `╭━━━⊱ ⚔️ *PERFIL RPG* ⚔️ ⊱━━━╮\n│ ${pushname}\n╰━━━━━━━━━━━━━━━━━━━━━━━━━╯\n\n`,
+      exp: (level, progress, percent, pLevel, pMult, streak) => `📊 *NÍVEL & EXPERIÊNCIA*\n├ Level: ${level}\n├ XP: ${progress} (${percent}%)\n├ Prestige: ${pLevel}x (${pMult}x)\n└ Streak: ${streak}\n\n`,
+      finances: (wallet, bank, total, job) => `💰 *FINANÇAS*\n├ Carteira: ${wallet}\n├ Banco: ${bank}\n├ Total: ${total}\n└ Emprego: ${job}\n\n`,
+      custom: (classe, clan, house) => `🎭 *PERSONALIZAÇÃO*\n├ Classe: ${classe}\n├ Clã: ${clan}\n└ Casa: ${house}\n\n`,
+      combat: (won, lost, rate, power) => `⚔️ *COMBATE*\n├ Vitórias: ${won}\n├ Derrotas: ${lost}\n├ Win Rate: ${rate}%\n└ Poder: ${power}\n\n`,
+      skillsHeader: `🛠️ *HABILIDADES (TOP 3)*\n`,
+      familyHeader: `\n👨‍👩‍👧‍👦 *FAMÍLIA & RELACIONAMENTO*\n`,
+      familyStatus: (emoji, type, spouse) => `├ ${emoji} Status: ${type}\n├ Parceiro(a): ${spouse}\n`,
+      familySingle: `├ 💔 Status: Solteiro(a)\n`,
+      familyChildren: (children) => `└ Filhos: ${children}\n\n`,
+      collectibles: (achv, pets, premium) => `🏆 *COLECIONÁVEIS*\n├ Conquistas: ${achv}\n├ Pets: ${pets}\n└ Itens Premium: ${premium}\n\n`,
+      reputation: (points, karma) => `⭐ *REPUTAÇÃO*\n├ Pontos: ${points}\n└ Karma: ${karma}\n\n`,
+      footer: (prefix) => `💎 Use ${prefix}meustats para ver estatísticas detalhadas`
+    },
+    daily: {
+      cooldown: (time) => `╭━━━⊱ ⏳ *COOLDOWN* ⏳ ⊱━━━╮\n│\n│ ⚠️ Você já coletou hoje!\n│ 🕐 Volte em: ${time}\n│\n╰━━━━━━━━━━━━━━━━━━━━━╯`,
+      bonus7: '\n🎉 *BÔNUS DE 7 DIAS:* +500!',
+      bonus30: '\n🏆 *BÔNUS DE 30 DIAS:* +2000!',
+      rewardHeader: '╭━━━⊱ 🎁 *RECOMPENSA DIÁRIA* ⊱━━━╮\n│\n',
+      rewardBase: (base) => `│ 💰 Base: +${base}\n`,
+      rewardStreak: (count, bonus) => `│ 🔥 Streak (${count}x): +${bonus}\n`,
+      rewardExtra: (extra) => `│ ✨ Bônus: +${extra}\n`,
+      rewardDivider: '│ ━━━━━━━━━━━━━━\n',
+      rewardTotal: (total) => `│ 💵 Total: *${total}*\n`,
+      rewardXp: (xp) => `│ ⚡ XP: +${xp}\n│\n`,
+      rewardSequence: (count, s) => `│ 🔥 Sequência: *${count} dia${s}*\n`,
+      rewardRecord: (record, s) => `│ 🏆 Recorde: ${record} dia${s}\n│\n`,
+      rewardFooter: '╰━━━━━━━━━━━━━━━━━━━━━━━━━━╯',
+      levelUp: (level) => `\n\n⚡ *LEVEL UP!* Agora você é level ${level}!`
+    },
+    admin: {
+      groupOnly: '💔 Este comando só funciona em grupos.',
+      toggle: (status) => `⚔️ Modo RPG ${status ? 'ATIVADO' : 'DESATIVADO'} neste grupo.\n\n${status ? '🎮 Agora os membros podem usar todos os comandos RPG!' : '🔒 Comandos RPG desativados.'}`,
+      menu: (prefix) => `📖 Use o comando *${prefix}menurpg* para ver todos os comandos de RPG!`
+    },
+    prestige: {
+      info: (level, bonus, currentLevel, reqLevel, wallet, reqMoney, prefix) => `╭━━━⊱ ✨ *PRESTIGE* ⊱━━━╮\n│ Nível Atual: ${level}\n│ Bônus: +${bonus}% ganhos\n╰━━━━━━━━━━━━━━━━━━━━╯\n\n🚀 *REQUISITOS PARA EVOLUIR:*\n• Nível: ${currentLevel}/${reqLevel}\n• Dinheiro: ${wallet}/${reqMoney}\n\n⚠️ *AVISO:* Evoluir resetará seu nível e dinheiro, mas dará bônus permanentes!\n\n💡 Use ${prefix}evoluir confirmar para prosseguir.`,
+      needLevel: (reqLevel) => `💔 Você precisa ser Lv.${reqLevel}!`,
+      needMoney: (reqMoney) => `💰 Você precisa de ${reqMoney}!`,
+      success: (pushname, level) => `🌟 *EVOLUÇÃO CONCLUÍDA!*\n\n${pushname} agora é Prestige Nível ${level}!\n\n✨ Seus ganhos permanentes aumentaram em 10%!`
+    },
+    playerMarket: {
+      header: (fee) => `╭━━━⊱ 🛒 *MERCADO DE JOGADORES* ⊱━━━╮\n│ Taxa: ${fee}% por venda\n╰━━━━━━━━━━━━━━━━━━━━╯\n\n`,
+      empty: `📦 Nenhum item à venda no momento!\n\n`,
+      itemsHeader: `📦 *ITENS À VENDA:*\n\n`,
+      itemLine: (i, name, enchant, price, seller) => `${i}. *${name}* ${enchant ? `+${enchant}` : ''}\n   💰 ${price} | 👤 @${seller}\n`,
+      commandsHelp: (prefix) => `\n💡 *Comandos:*\n• ${prefix}mercadoplayer vender <item> <preço>\n• ${prefix}mercadoplayer comprar <nº>\n• ${prefix}mercadoplayer meus`,
+      sellUsage: (prefix) => `💡 Use: ${prefix}mercadoplayer vender <item> <preço>\n\n⚠️ Preço mínimo: 100`,
+      noItem: `💔 Você não tem este item!`,
+      maxListings: `💔 Você já tem 5 itens à venda! Cancele algum primeiro.`,
+      sellSuccess: (name, price, fee) => `✅ *ITEM LISTADO*\n\n📦 ${name}\n💰 ${price}\n\n⚠️ Taxa de ${fee}% será cobrada na venda`,
+      invalidNumber: `💔 Número inválido! Use o número da lista.`,
+      invalidCancelNumber: `💔 Número inválido!`,
+      needMoney: (price) => `💰 Você precisa de ${price}!`,
+      buySuccess: (name, price, seller, received) => `✅ *COMPRA REALIZADA*\n\n📦 ${name}\n💰 -${price}\n\n📬 Vendedor @${seller} recebeu ${received}`,
+      myAdsEmpty: 'Nenhum anúncio seu encontrado.',
+      myAdsHeader: `🛒 *SEUS ANÚNCIOS*\n\n`,
+      myAdsItemLine: (i, name, price) => `${i}. *${name}*\n   💰 ${price}\n\n`,
+      myAdsFooter: (prefix) => `💡 Use ${prefix}mercadoplayer cancelar <nº> para cancelar`,
+      cancelSuccess: (name) => `✅ Anúncio cancelado! ${name} devolvido ao inventário.`,
+      help: (prefix) => `💡 Use ${prefix}mercadoplayer para ver comandos`
+    },
+    investments: {
+      sellSuccess: (stock, qty, value, profit) => `╭━━━⊱ 💵 *VENDA DE AÇÕES* 💵 ⊱━━━╮\n│\n│ ✅ Ações vendidas!\n│\n│ 📊 Ação: ${stock}\n│ 📈 Quantidade: ${qty}\n│ 💰 Recebido: ${value}\n│ 💼 Lucro acumulado: ${profit}\n│\n╰━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╯`,
+      invalidStock: `❌ Item inválido! Escolha: tecnologia, ouro, bitcoin, energia`,
+      needMoney: (cost) => `💰 Você precisa de ${cost} moedas!`,
+      buySuccess: (stock, qty, cost, total) => `╭━━━⊱ 💼 *INVESTIMENTO* 💼 ⊱━━━╮\n│\n│ ✅ Investimento realizado!\n│\n│ 📊 Ação: ${stock}\n│ 📈 Quantidade: ${qty}\n│ 💰 Valor: ${cost}\n│ 💼 Total investido: ${total}\n│\n╰━━━━━━━━━━━━━━━━━━━━━━━━━━━╯`,
+      marketHeader: (pushname) => `╭━━━⊱ 📈 *MERCADO DE AÇÕES* 📈 ⊱━━━╮\n│\n│ 👤 Investidor: ${pushname}\n│\n│ 💼 *AÇÕES DISPONÍVEIS:*\n│\n`,
+      marketItem: (emoji, name, price, owned) => `│ ${emoji} *${name}*\n│ 💰 Preço: ${price}\n│ 📊 Você tem: ${owned}\n│\n`,
+      marketFooter: (prefix) => `╰━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╯\n\n💡 Use ${prefix}investir comprar <nome> <qtd>\n💡 Exemplo: ${prefix}investir comprar bitcoin 5`
+    },
+    family: {
+      myFamilyHeader: (pushname) => `╭━━━⊱ 👨‍👩‍👧‍👦 *MINHA FAMÍLIA* ⊱━━━╮\n│ ${pushname}\n╰━━━━━━━━━━━━━━━━━━━━╯\n\n`,
+      single: `💔 *Relacionamento:* Solteiro(a)\n\n`,
+      relationship: (emoji, type, partner, since) => `${emoji} *${type}:*\n┌─────────────────\n│ @${partner}\n│ ❤️ Desde: ${since}\n└─────────────────\n\n`,
+      parentsHeader: `👫 *Pais:*\n`,
+      childrenHeader: (count) => `👶 *Filhos (${count}):*\n`,
+      noChildren: `👶 *Filhos:* Nenhum\n\n`,
+      siblingsHeader: (count) => `👫 *Irmãos (${count}):*\n`,
+      listItemDot: (user) => `• @${user}\n`,
+      listItemNum: (i, user) => `${i}. @${user}\n`,
+      helpFooter: (prefix) => `💡 Use ${prefix}adotaruser @user para adotar\n💡 Use ${prefix}arvore para ver árvore genealógica`,
+      adoptNeedMention: (prefix) => `💔 Marque alguém para adotar!\n\n💡 Exemplo: ${prefix}adotaruser @user`,
+      adoptSelf: `💔 Você não pode se adotar!`,
+      adoptAlreadyChild: `💔 Esta pessoa já é seu filho(a)!`,
+      adoptAlreadyParents: `💔 Esta pessoa já tem 2 pais/mães!`,
+      adoptNeedMoney: (cost) => `💰 Você precisa de ${cost} moedas para adotar!`,
+      adoptSuccess: (pushname, target, cost) => `🎉 Parabéns! ${pushname} adotou @${target}!\n💰 Custo: ${cost}`,
+      disownNeedMention: (prefix) => `💔 Marque alguém para deserdar!\n\n💡 Exemplo: ${prefix}deserdar @user`,
+      disownNotChild: `💔 Esta pessoa não é seu filho(a)!`,
+      disownSuccess: (pushname, target) => `😢 ${pushname} deserdou @${target}!`,
+      treeHeader: `╭━━━⊱ 🌳 *ÁRVORE GENEALÓGICA* ⊱━━━╮\n╰━━━━━━━━━━━━━━━━━━━━╯\n\n`,
+      treeGrandparents: `👴👵 *Avós:*\n`,
+      treeParents: `👫 *Pais:*\n`,
+      treeYou: (pushname) => `👤 *Você:* ${pushname}\n`,
+      treePartner: (partner) => `💍 *Parceiro(a):* @${partner}\n`,
+      treeChildren: `👶 *Filhos:*\n`,
+      treeGrandchildren: `👶👶 *Netos:*\n`
     }
   },
 
@@ -445,18 +557,24 @@ export const rpgMessages = {
     insufficientGold: (cost) => `💔 Você precisa de ${cost} gold.`,
     invalidType: '💔 Tipo inválido!',
     needMention: (prefix, cmd) => `💔 Marque alguém!\nUso: ${prefix}${cmd} @user <tipo>`,
-    emptyInventory: '╭━━━⊱ 🎒 *INVENTÁRIO* 🎒 ⊱━━━╮\n│\n│ 📭 Inventário vazio\n│\n╰━━━━━━━━━━━━━━━━━━━━━━━╯'
+    emptyInventory: '╭━━━⊱ 🎒 *INVENTÁRIO* 🎒 ⊱━━━╮\n│\n│ 📭 Inventário vazio\n│\n╰━━━━━━━━━━━━━━━━━━━━━━━╯',
+    boxSystem: (prefix) => `╭━━━⊱ 🎁 *SISTEMA DE CAIXAS* 🎁 ⊱━━━╮\n│\n│ 🔹 ${prefix}caixa diaria\n│ 🔹 ${prefix}caixa rara (500 gold)\n│ 🔹 ${prefix}caixa lendaria (2000 gold)\n│\n╰━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╯`,
+    inventoryContent: (invStr) => `╭━━━⊱ 🎒 *INVENTÁRIO* 🎒 ⊱━━━╮\n│\n${invStr.split('\n').map(l => '│ ' + l).join('\n')}\n│\n╰━━━━━━━━━━━━━━━━━━━━━━━╯`,
+    walletReward: (wallet) => `\n💼 Carteira: ${wallet}`,
+    levelReward: (level) => `\n⭐ Novo level: ${level}`
   },
   reputation: {
     unavailable: 'Sistema de reputação indisponível.',
     usage: (prefix) => `💔 Uso: ${prefix}rep + @user`,
     needMention: '💔 Marque quem denunciar!',
-    needReason: '💔 Informe o motivo!'
+    needReason: '💔 Informe o motivo!',
+    info: (name, rep) => `╭━━━⊱ ⭐ *REPUTAÇÃO* ⭐ ⊱━━━╮\n│\n│ 👤 Usuário: ${name}\n│\n│ ${rep.split('\n').join('\n│ ')}\n│\n╰━━━━━━━━━━━━━━━━━━━━━━━╯`
   },
   qrcode: {
     unavailable: 'Sistema de QR Code indisponível.',
     missingText: (prefix) => `💔 Digite o texto!\nEx: ${prefix}qrcode https://google.com`,
-    missingMedia: '💔 Marque um QR Code!'
+    missingMedia: '💔 Marque um QR Code!',
+    generated: (q) => `📱 *QR Code gerado!*\n\nConteúdo: ${q}`
   },
   achievements: {
     unavailable: 'Sistema de conquistas indisponível.'
@@ -468,6 +586,67 @@ export const rpgMessages = {
     successAdd: '✅ Nota adicionada!',
     missingId: 'Informe o ID!',
     successDel: '✅ Nota deletada!',
-    invalidId: '💔 ID inválido.'
+    invalidId: '💔 ID inválido.',
+    list: (userNotes) => `📝 *Suas Notas:*\n\n${userNotes.map((n, i) => \`\${i + 1}. \${n.title || (n.text ? n.text.slice(0, 20) : 'Sem texto')}...\`).join('\\n')}`
+  },
+  cooking: {
+    recipesHeader: '📖 *RECEITAS CULINÁRIAS*\n\n',
+    recipeTip: (prefix) => `💡 *Dica:* Plante ingredientes com ${prefix}plantar`,
+    recipeLine: (name, ingredients, gold, sellPrice, energy, prefix, key) => `${name}\n  📦 Ingredientes: ${ingredients}\n  💰 Custo: ${gold}\n  💵 Venda: ${sellPrice}\n  ⚡ Energia: +${energy}\n  🍳 Cozinhar: ${prefix}cozinhar ${key}\n\n`,
+    systemInfo: (prefix) => `👨‍🍳 *SISTEMA DE COZINHA*\n\n📖 Veja as receitas disponíveis: ${prefix}receitas\n🍳 Cozinhar: ${prefix}cozinhar <receita>\n\n💡 Exemplo: ${prefix}cozinhar pao`,
+    recipeNotFound: (prefix) => `💔 Receita não encontrada! Use ${prefix}receitas para ver todas as receitas disponíveis.`,
+    cooldownCook: (time) => `⏳ Você ainda está cozinhando! Aguarde ${time}.`,
+    insufficientFundsCook: (gold, name, wallet) => `💰 Você precisa de ${gold} para cozinhar ${name}. Saldo atual: ${wallet}`,
+    insufficientIngredients: (ing, req, have, prefix) => `📦 Ingredientes insuficientes! Você precisa de ${ing} x${req}, mas tem apenas x${have}.\n\n🌱 Plante ingredientes com ${prefix}plantar`,
+    cookSuccess: (name, energy, sellPrice, prefix, key) => `👨‍🍳 *COZINHA CONCLUÍDA!*\n\n${name} preparado com sucesso!\n⚡ Energia: +${energy}\n💵 Valor de venda: ${sellPrice}\n\n🍴 Use ${prefix}comer ${key} para consumir\n💰 Use ${prefix}vendercomida ${key} para vender`,
+    ingredientsEmpty: (prefix) => `📦 *INGREDIENTES*\n\nVocê não possui ingredientes.\n\n🌱 Plante com ${prefix}plantar para conseguir ingredientes!`,
+    myIngredientsHeader: '📦 *MEUS INGREDIENTES*\n\n',
+    myIngredientsTip: (prefix) => `\n👨‍🍳 Use ${prefix}receitas para ver o que pode cozinhar`,
+    foodEmpty: (prefix) => `🍽️ Você não tem comida preparada.\n\n👨‍🍳 Cozinhe algo com ${prefix}cozinhar`,
+    foodHeader: '🍽️ *COMIDAS PREPARADAS*\n\n',
+    foodItem: (name, qty, energy, sellPrice) => `${name} x${qty}\n  ⚡ Energia: +${energy}\n  💵 Valor: ${sellPrice}\n\n`,
+    foodTip: (prefix) => `🍴 Comer: ${prefix}comer <comida>\n💰 Vender: ${prefix}vendercomida <comida>`,
+    foodNotPrepared: (key, prefix) => `💔 Você não tem ${key} preparado.\n\n👨‍🍳 Cozinhe com ${prefix}cozinhar ${key}`,
+    eatSuccess: (name, energyGain, totalEnergy) => `😋 *DELICIOSO!*\n\nVocê comeu ${name}!\n⚡ Energia: +${energyGain}\n💪 Energia total: ${totalEnergy}\n\n💡 Quanto mais energia, mais bônus você recebe!`,
+    sellUsage: (prefix) => `💰 *VENDER COMIDA*\n\nUse: ${prefix}vendercomida <comida> <quantidade>\n\n💡 Veja suas comidas com ${prefix}comer`,
+    invalidQuantity: `💔 Quantidade inválida!`,
+    notEnoughFood: (qty, key, have) => `💔 Você não tem ${qty}x ${key}.\n\n🍽️ Você tem: ${have}`,
+    sellSuccess: (qty, name, totalValue, wallet) => `💰 *VENDA CONCLUÍDA!*\n\nVocê vendeu ${qty}x ${name}\n💵 Ganhou: ${totalValue}\n💼 Carteira: ${wallet}`,
+    invalidRecipe: `💔 Receita não encontrada.`
+  },
+  farming: {
+    farmHeader: '🌾 *MINHA PLANTAÇÃO*\n\n',
+    farmStats: (current, max) => `📊 Terrenos: ${current}/${max}\n\n`,
+    farmEmpty: '🌱 Sua plantação está vazia!\n\n',
+    plotHeader: (idx, seedName) => `🌱 *Terreno ${idx}*\n  Semente: ${seedName}\n`,
+    plotReady: '  ✅ Pronto para colher!\n',
+    plotTimeLeft: (mins) => `  ⏳ Pronto em: ${mins} min\n`,
+    farmCommands: (prefix) => `💡 *Comandos:*\n🌱 Plantar: ${prefix}plantar <semente>\n🌾 Colher: ${prefix}colher\n📦 Sementes: ${prefix}sementes`,
+    systemInfo: '🌱 *SISTEMA DE PLANTAÇÃO*\n\n📦 *Sementes Disponíveis:*\n\n',
+    seedLineInfo: (name, cost, mins, yieldText) => `${name}\n  💰 Custo: ${cost}\n  ⏱️ Tempo: ${mins} min\n  🌾 Colheita: ${yieldText}\n\n`,
+    plantUsage: (prefix) => `🌱 Plantar: ${prefix}plantar <semente>\n💡 Exemplo: ${prefix}plantar trigo`,
+    seedNotFound: (prefix) => `💔 Semente não encontrada! Use ${prefix}plantar para ver as sementes disponíveis.`,
+    plotsFull: '🌾 Todos os seus terrenos estão ocupados! Aguarde a colheita ou expanda sua fazenda.',
+    insufficientFundsPlant: (cost, name, wallet) => `💰 Você precisa de ${cost} para plantar ${name}. Saldo: ${wallet}`,
+    plantSuccess: (name, mins, currentPlots, maxPlots) => `🌱 ${name} plantado com sucesso!\n\n⏱️ Estará pronto para colher em ${mins} minutos.\n🌾 Terrenos ocupados: ${currentPlots}/${maxPlots}`,
+    nothingPlanted: '🌾 Você não tem nada plantado!',
+    nothingReady: (mins) => `⏳ Nenhuma planta está pronta para colher ainda.\n🕐 Próxima colheita em: ${mins} minuto(s)`,
+    harvestSuccess: (count, ingredients, value, freePlots, maxPlots) => `🌾 *COLHEITA CONCLUÍDA!*\n\n✅ Plantas colhidas: ${count}\n📦 Ingredientes obtidos:\n${ingredients}\n\n💵 Valor estimado: ${value}\n🌱 Terrenos livres: ${freePlots}/${maxPlots}`,
+    seedsHeader: '🌱 *CATÁLOGO DE SEMENTES*\n\n',
+    seedsLine: (name, cost, mins, prefix, key) => `${name}\n  💰 Custo: ${cost}\n  ⏱️ Crescimento: ${mins} min\n  🌱 Plantar: ${prefix}plantar ${key}\n\n`
+  },
+  materials: {
+    empty: (prefix) => `╭━━━⊱ ⛏️ *MATERIAIS* ⛏️ ⊱━━━╮\n│\n│ 📭 Você não possui materiais\n│\n│ ⛏️ Mine para coletar!\n│ Use: ${prefix}minerar\n│\n╰━━━━━━━━━━━━━━━━━━━━━━╯`,
+    header: '╭━━━⊱ ⛏️ *MATERIAIS* ⛏️ ⊱━━━╮\n│\n',
+    itemLine: (key, qty) => `│ 💎 ${key}: ${qty}\n`,
+    footer: '│\n╰━━━━━━━━━━━━━━━━━━━━━━╯',
+    pricesHeader: '╭━━━⊱ 💱 *PREÇOS* 💱 ⊱━━━╮\n│\n│ 💎 *MATERIAIS (unidade)*\n│\n',
+    priceLine: (key, price) => `│ 🔸 ${key}: ${price}\n`,
+    recipesHeader: '│\n│ 📜 *RECEITAS*\n│\n',
+    recipeLine: (name, reqs, gold) => `│ 🔨 ${name}\n│    ${reqs} + ${gold}\n`,
+    pricesFooter: '│\n╰━━━━━━━━━━━━━━━━━━━━━━━━╯',
+    sellUsage: (prefix) => `╭━━━⊱ 💰 *VENDER MATERIAIS* 💰 ⊱━━━╮\n│\n│ 📝 *Uso:*\n│ ${prefix}vender <material> <qtd|all>\n│\n│ 💡 *Exemplo:*\n│ ${prefix}vender ferro 10\n│ ${prefix}vender ouro all\n│\n│ 💱 Ver preços: ${prefix}precos\n│\n╰━━━━━━━━━━━━━━━━━━━━━━━━━╯`,
+    invalidMaterial: (prefix) => `❌ Material inválido.\n\n💱 Veja preços com ${prefix}precos`,
+    sellSuccess: (qty, matKey, gain) => `╭━━━⊱ ✅ *VENDA* ✅ ⊱━━━╮\n│\n│   Vendeu: ${qty}x ${matKey}\n│ 💰 Ganhou: ${gain}\n│\n╰━━━━━━━━━━━━━━━━━━━━━╯`
   }
 };

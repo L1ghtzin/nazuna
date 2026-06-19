@@ -43,36 +43,31 @@ export default {
         }
 
         if (sub === 'receitas') {
-            let text = '📖 *RECEITAS CULINÁRIAS*\n\n';
+            let text = MESSAGES.rpg.cooking.recipesHeader;
             for (const [key, rec] of Object.entries(econ.cookingRecipes)) {
                 const ingredients = Object.entries(rec.requires).map(([ing, qty]) => `${ing} x${qty}`).join(', ');
-                text += `${rec.name}\n`;
-                text += `  📦 Ingredientes: ${ingredients}\n`;
-                text += `  💰 Custo: ${fmt(rec.gold)}\n`;
-                text += `  💵 Venda: ${fmt(rec.sellPrice)}\n`;
-                text += `  ⚡ Energia: +${rec.energy}\n`;
-                text += `  🍳 Cozinhar: ${prefix}cozinhar ${key}\n\n`;
+                text += MESSAGES.rpg.cooking.recipeLine(rec.name, ingredients, fmt(rec.gold), fmt(rec.sellPrice), rec.energy, prefix, key);
             }
-            text += `💡 *Dica:* Plante ingredientes com ${prefix}plantar`;
+            text += MESSAGES.rpg.cooking.recipeTip(prefix);
             return reply(text);
         }
 
         if (sub === 'cozinhar' || sub === 'cook') {
             const recipeKey = (args[0] || '').toLowerCase();
-            if (!recipeKey) return reply(`👨‍🍳 *SISTEMA DE COZINHA*\n\n📖 Veja as receitas disponíveis: ${prefix}receitas\n🍳 Cozinhar: ${prefix}cozinhar <receita>\n\n💡 Exemplo: ${prefix}cozinhar pao`);
+            if (!recipeKey) return reply(MESSAGES.rpg.cooking.systemInfo(prefix));
 
             const recipe = econ.cookingRecipes[recipeKey];
-            if (!recipe) return reply(`💔 Receita não encontrada! Use ${prefix}receitas para ver todas as receitas disponíveis.`);
+            if (!recipe) return reply(MESSAGES.rpg.cooking.recipeNotFound(prefix));
 
             const cd = me.cooldowns?.cook || 0;
-            if (Date.now() < cd) return reply(`⏳ Você ainda está cozinhando! Aguarde ${timeLeft(cd)}.`);
+            if (Date.now() < cd) return reply(MESSAGES.rpg.cooking.cooldownCook(timeLeft(cd)));
 
-            if (me.wallet < recipe.gold) return reply(`💰 Você precisa de ${fmt(recipe.gold)} para cozinhar ${recipe.name}. Saldo atual: ${fmt(me.wallet)}`);
+            if (me.wallet < recipe.gold) return reply(MESSAGES.rpg.cooking.insufficientFundsCook(fmt(recipe.gold), recipe.name, fmt(me.wallet)));
 
             me.ingredients = me.ingredients || {};
             for (const [ing, qty] of Object.entries(recipe.requires)) {
                 if ((me.ingredients[ing] || 0) < qty) {
-                    return reply(`📦 Ingredientes insuficientes! Você precisa de ${ing} x${qty}, mas tem apenas x${me.ingredients[ing] || 0}.\n\n🌱 Plante ingredientes com ${prefix}plantar`);
+                    return reply(MESSAGES.rpg.cooking.insufficientIngredients(ing, qty, me.ingredients[ing] || 0, prefix));
                 }
             }
 
@@ -92,17 +87,17 @@ export default {
             me.cooldowns.cook = Date.now() + 3 * 60 * 1000;
             saveEconomy(econ);
 
-            return reply(`👨‍🍳 *COZINHA CONCLUÍDA!*\n\n${recipe.name} preparado com sucesso!\n⚡ Energia: +${recipe.energy}\n💵 Valor de venda: ${fmt(recipe.sellPrice)}\n\n🍴 Use ${prefix}comer ${recipeKey} para consumir\n💰 Use ${prefix}vendercomida ${recipeKey} para vender`);
+            return reply(MESSAGES.rpg.cooking.cookSuccess(recipe.name, recipe.energy, fmt(recipe.sellPrice), prefix, recipeKey));
         }
 
         if (sub === 'ingredientes') {
             me.ingredients = me.ingredients || {};
             const entries = Object.entries(me.ingredients).filter(([, qty]) => qty > 0);
-            if (entries.length === 0) return reply(`📦 *INGREDIENTES*\n\nVocê não possui ingredientes.\n\n🌱 Plante com ${prefix}plantar para conseguir ingredientes!`);
+            if (entries.length === 0) return reply(MESSAGES.rpg.cooking.ingredientsEmpty(prefix));
 
-            let text = '📦 *MEUS INGREDIENTES*\n\n';
+            let text = MESSAGES.rpg.cooking.myIngredientsHeader;
             for (const [ing, qty] of entries) text += `• ${ing}: x${qty}\n`;
-            text += `\n👨‍🍳 Use ${prefix}receitas para ver o que pode cozinhar`;
+            text += MESSAGES.rpg.cooking.myIngredientsTip(prefix);
             return reply(text);
         }
 
@@ -112,51 +107,51 @@ export default {
 
             if (!foodKey) {
                 const entries = Object.entries(me.cookedFood).filter(([, qty]) => qty > 0);
-                if (entries.length === 0) return reply(`🍽️ Você não tem comida preparada.\n\n👨‍🍳 Cozinhe algo com ${prefix}cozinhar`);
+                if (entries.length === 0) return reply(MESSAGES.rpg.cooking.foodEmpty(prefix));
                 
-                let text = '🍽️ *COMIDAS PREPARADAS*\n\n';
+                let text = MESSAGES.rpg.cooking.foodHeader;
                 for (const [key, qty] of entries) {
                     const recipe = econ.cookingRecipes?.[key];
                     if (recipe) {
-                        text += `${recipe.name} x${qty}\n  ⚡ Energia: +${recipe.energy}\n  💵 Valor: ${fmt(recipe.sellPrice)}\n\n`;
+                        text += MESSAGES.rpg.cooking.foodItem(recipe.name, qty, recipe.energy, fmt(recipe.sellPrice));
                     }
                 }
-                text += `🍴 Comer: ${prefix}comer <comida>\n💰 Vender: ${prefix}vendercomida <comida>`;
+                text += MESSAGES.rpg.cooking.foodTip(prefix);
                 return reply(text);
             }
 
-            if (!me.cookedFood[foodKey] || me.cookedFood[foodKey] <= 0) return reply(`💔 Você não tem ${foodKey} preparado.\n\n👨‍🍳 Cozinhe com ${prefix}cozinhar ${foodKey}`);
+            if (!me.cookedFood[foodKey] || me.cookedFood[foodKey] <= 0) return reply(MESSAGES.rpg.cooking.foodNotPrepared(foodKey, prefix));
 
             const recipe = econ.cookingRecipes?.[foodKey];
-            if (!recipe) return reply(`💔 Receita não encontrada.`);
+            if (!recipe) return reply(MESSAGES.rpg.cooking.invalidRecipe);
 
             me.cookedFood[foodKey] -= 1;
             me.energy = (me.energy || 0) + recipe.energy;
             addSkillXP(me, 'cooking', 1);
             saveEconomy(econ);
 
-            return reply(`😋 *DELICIOSO!*\n\nVocê comeu ${recipe.name}!\n⚡ Energia: +${recipe.energy}\n💪 Energia total: ${me.energy}\n\n💡 Quanto mais energia, mais bônus você recebe!`);
+            return reply(MESSAGES.rpg.cooking.eatSuccess(recipe.name, recipe.energy, me.energy));
         }
 
         if (sub === 'vendercomida') {
             const foodKey = (args[0] || '').toLowerCase();
             me.cookedFood = me.cookedFood || {};
-            if (!foodKey) return reply(`💰 *VENDER COMIDA*\n\nUse: ${prefix}vendercomida <comida> <quantidade>\n\n💡 Veja suas comidas com ${prefix}comer`);
+            if (!foodKey) return reply(MESSAGES.rpg.cooking.sellUsage(prefix));
 
             const have = me.cookedFood[foodKey] || 0;
             const qty = parseAmount(args[1], have) || 1;
-            if (isNaN(qty) || qty <= 0) return reply(`💔 Quantidade inválida!`);
-            if (have < qty) return reply(`💔 Você não tem ${qty}x ${foodKey}.\n\n🍽️ Você tem: ${have}`);
+            if (isNaN(qty) || qty <= 0) return reply(MESSAGES.rpg.cooking.invalidQuantity);
+            if (have < qty) return reply(MESSAGES.rpg.cooking.notEnoughFood(qty, foodKey, have));
 
             const recipe = econ.cookingRecipes?.[foodKey];
-            if (!recipe) return reply(`💔 Receita não encontrada.`);
+            if (!recipe) return reply(MESSAGES.rpg.cooking.invalidRecipe);
 
             const totalValue = recipe.sellPrice * qty;
             me.cookedFood[foodKey] -= qty;
             me.wallet += totalValue;
             saveEconomy(econ);
 
-            return reply(`💰 *VENDA CONCLUÍDA!*\n\nVocê vendeu ${qty}x ${recipe.name}\n💵 Ganhou: ${fmt(totalValue)}\n💼 Carteira: ${fmt(me.wallet)}`);
+            return reply(MESSAGES.rpg.cooking.sellSuccess(qty, recipe.name, fmt(totalValue), fmt(me.wallet)));
         }
     }
 };

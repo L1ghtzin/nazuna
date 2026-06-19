@@ -13,12 +13,12 @@ export default {
       if (!reward || !userEco) return '';
       if (reward.type === 'gold') {
         userEco.wallet = (userEco.wallet || 0) + reward.amount;
-        return `\n💼 Carteira: ${userEco.wallet}`;
+        return MESSAGES.rpg.gifts.walletReward(userEco.wallet);
       }
       if (reward.type === 'xp') {
         userEco.exp = (userEco.exp || 0) + reward.amount;
         const levelInfo = checkEcoLevelUp ? checkEcoLevelUp(userEco) : null;
-        return levelInfo?.leveledUp ? `\n⭐ Novo level: ${levelInfo.newLevel}` : '';
+        return levelInfo?.leveledUp ? MESSAGES.rpg.gifts.levelReward(levelInfo.newLevel) : '';
       }
       return '';
     };
@@ -31,7 +31,7 @@ export default {
       
       const tipoBox = args[0]?.toLowerCase();
       if (!tipoBox) {
-        return reply(`╭━━━⊱ 🎁 *SISTEMA DE CAIXAS* 🎁 ⊱━━━╮\n│\n│ 🔹 ${prefix}caixa diaria\n│ 🔹 ${prefix}caixa rara (500 gold)\n│ 🔹 ${prefix}caixa lendaria (2000 gold)\n│\n╰━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╯`);
+        return reply(MESSAGES.rpg.gifts.boxSystem(prefix));
       }
       
       const econ = loadEconomy();
@@ -101,7 +101,7 @@ export default {
       if (!gifts) return reply(MESSAGES.rpg.gifts.unavailable);
       const invStr = gifts.getInventory(sender);
       if (!invStr || invStr.trim() === '') return reply(MESSAGES.rpg.gifts.emptyInventory);
-      return reply(`╭━━━⊱ 🎒 *INVENTÁRIO* 🎒 ⊱━━━╮\n│\n${invStr.split('\n').map(l => '│ ' + l).join('\n')}\n│\n╰━━━━━━━━━━━━━━━━━━━━━━━╯`);
+      return reply(MESSAGES.rpg.gifts.inventoryContent(invStr));
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -116,7 +116,7 @@ export default {
         const rep = reputation.getReputation(target);
         const name = menc_os2 ? `@${menc_os2.split('@')[0]}` : pushname;
         return bot.sendMessage(from, {
-          text: `╭━━━⊱ ⭐ *REPUTAÇÃO* ⭐ ⊱━━━╮\n│\n│ 👤 Usuário: ${name}\n│\n│ ${rep.split('\\n').join('\\n│ ')}\n│\n╰━━━━━━━━━━━━━━━━━━━━━━━╯`,
+          text: MESSAGES.rpg.reputation.info(name, rep),
           mentions: menc_os2 ? [menc_os2] : []
         });
       }
@@ -161,7 +161,7 @@ export default {
       
       const result = await qrcode.generateQRCode(q, 300, prefix);
       if (result.success) {
-        await bot.sendMessage(from, { image: result.buffer, caption: `📱 *QR Code gerado!*\n\nConteúdo: ${q}` }, { quoted: info });
+        await bot.sendMessage(from, { image: result.buffer, caption: MESSAGES.rpg.qrcode.generated(q) }, { quoted: info });
       } else {
         reply(result.message);
       }
@@ -205,7 +205,7 @@ export default {
       if (!subCmd || subCmd === 'list' || cmd === 'notas' || cmd === 'notes') {
         const userNotes = notes.getUserNotes(sender);
         if (userNotes.length === 0) return reply(MESSAGES.rpg.notes.empty);
-        return reply(`📝 *Suas Notas:*\n\n${userNotes.map((n, i) => `${i + 1}. ${n.title || (n.text ? n.text.slice(0, 20) : 'Sem texto')}...`).join('\n')}`);
+        return reply(MESSAGES.rpg.notes.list(userNotes));
       }
 
       if (subCmd === 'add') {

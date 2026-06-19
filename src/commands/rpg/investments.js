@@ -20,8 +20,8 @@ export default {
     parseAmount,
     MESSAGES
   }) => {
-    if (!isGroup) return reply(MESSAGES.rpg.groupOnly);
-    if (!groupData.modorpg) return reply(MESSAGES.rpg.disabled(prefix));
+    if (!isGroup) return reply(MESSAGES.rpg.core.groupOnly);
+    if (!groupData.modorpg) return reply(MESSAGES.rpg.core.disabled(prefix));
     
     const econ = loadEconomy();
     const me = getEcoUser(econ, sender);
@@ -85,14 +85,12 @@ export default {
       me.wallet += totalValue;
       me.investments.totalProfit += totalValue;
 
-      let text = `╭━━━⊱ 💵 *VENDA DE AÇÕES* 💵 ⊱━━━╮\n`;
-      text += `│\n`;
-      text += `│ ✅ Ações vendidas!\n│\n`;
-      text += `│ 📊 Ação: ${stockType.toUpperCase()}\n`;
-      text += `│ 📈 Quantidade: ${amount}\n`;
-      text += `│ 💰 Recebido: ${totalValue.toLocaleString()}\n`;
-      text += `│ 💼 Lucro acumulado: ${me.investments.totalProfit.toLocaleString()}\n`;
-      text += `│\n╰━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╯`;
+      let text = MESSAGES.rpg.investments.sellSuccess(
+        stockType.toUpperCase(),
+        amount,
+        totalValue.toLocaleString(),
+        me.investments.totalProfit.toLocaleString()
+      );
 
       saveEconomy(econ);
       return reply(text);
@@ -111,7 +109,7 @@ export default {
       const stockType = aliasesForBuy[rawStockType];
 
       if (!stockType || !econ.stockMarket.prices[stockType]) {
-        return reply(MESSAGES.rpg.invalidItem + ' Escolha: tecnologia, ouro, bitcoin, energia');
+        return reply(MESSAGES.rpg.investments.invalidStock);
       }
 
       const price = Math.floor(econ.stockMarket.prices[stockType]);
@@ -125,32 +123,26 @@ export default {
       const totalCost = price * amount;
 
       if (me.wallet < totalCost) {
-        return reply(`💰 Você precisa de ${totalCost.toLocaleString()} moedas!`);
+        return reply(MESSAGES.rpg.investments.needMoney(totalCost.toLocaleString()));
       }
 
       me.wallet -= totalCost;
       me.investments.stocks[stockType] = (me.investments.stocks[stockType] || 0) + amount;
       me.investments.totalInvested += totalCost;
 
-      let text = `╭━━━⊱ 💼 *INVESTIMENTO* 💼 ⊱━━━╮\n`;
-      text += `│\n`;
-      text += `│ ✅ Investimento realizado!\n│\n`;
-      text += `│ 📊 Ação: ${stockType.toUpperCase()}\n`;
-      text += `│ 📈 Quantidade: ${amount}\n`;
-      text += `│ 💰 Valor: ${totalCost.toLocaleString()}\n`;
-      text += `│ 💼 Total investido: ${me.investments.totalInvested.toLocaleString()}\n`;
-      text += `│\n╰━━━━━━━━━━━━━━━━━━━━━━━━━━━╯`;
+      let text = MESSAGES.rpg.investments.buySuccess(
+        stockType.toUpperCase(),
+        amount,
+        totalCost.toLocaleString(),
+        me.investments.totalInvested.toLocaleString()
+      );
 
       saveEconomy(econ);
       return reply(text);
     }
 
     // --- VER MERCADO (Padrão) ---
-    let text = `╭━━━⊱ 📈 *MERCADO DE AÇÕES* 📈 ⊱━━━╮\n`;
-    text += `│\n`;
-    text += `│ 👤 Investidor: ${pushname}\n`;
-    text += `│\n`;
-    text += `│ 💼 *AÇÕES DISPONÍVEIS:*\n│\n`;
+    let text = MESSAGES.rpg.investments.marketHeader(pushname);
 
     const stocks = {
       tech: { name: 'Tecnologia', emoji: '💻' },
@@ -162,14 +154,10 @@ export default {
     for (const [key, stock] of Object.entries(stocks)) {
       const price = Math.floor(econ.stockMarket.prices[key]);
       const owned = me.investments.stocks[key] || 0;
-      text += `│ ${stock.emoji} *${stock.name}*\n`;
-      text += `│ 💰 Preço: ${price.toLocaleString()}\n`;
-      text += `│ 📊 Você tem: ${owned}\n│\n`;
+      text += MESSAGES.rpg.investments.marketItem(stock.emoji, stock.name, price.toLocaleString(), owned);
     }
 
-    text += `╰━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╯\n\n`;
-    text += `💡 Use ${prefix}investir comprar <nome> <qtd>\n`;
-    text += `💡 Exemplo: ${prefix}investir comprar bitcoin 5`;
+    text += MESSAGES.rpg.investments.marketFooter(prefix);
 
     saveEconomy(econ);
     return reply(text);

@@ -154,34 +154,17 @@ export default {
                 relationshipEmoji = '💍';
             }
             
-            let text = `╭━━━⊱ ⚔️ *PERFIL RPG* ⚔️ ⊱━━━╮\n`;
-            text += `│ ${pushname}\n`;
-            text += `╰━━━━━━━━━━━━━━━━━━━━━━━━━╯\n\n`;
+            let text = MESSAGES.rpg.core.profile.header(pushname);
             
-            text += `📊 *NÍVEL & EXPERIÊNCIA*\n`;
-            text += `├ Level: ${level}\n`;
-            text += `├ XP: ${expProgress} (${expPercent}%)\n`;
-            text += `├ Prestige: ${prestigeLevel}x (${prestigeMultiplier.toFixed(2)}x)\n`;
-            text += `└ Streak: ${streak} dia${streak !== 1 ? 's' : ''}\n\n`;
+            text += MESSAGES.rpg.core.profile.exp(level, expProgress, expPercent, prestigeLevel, prestigeMultiplier.toFixed(2), `${streak} dia${streak !== 1 ? 's' : ''}`);
             
-            text += `💰 *FINANÇAS*\n`;
-            text += `├ Carteira: ${fmt(me.wallet)}\n`;
-            text += `├ Banco: ${fmt(me.bank)}\n`;
-            text += `├ Total: ${fmt(total)}\n`;
-            text += `└ Emprego: ${me.job ? econ.jobCatalog?.[me.job]?.name || me.job : 'Desempregado(a)'}\n\n`;
+            text += MESSAGES.rpg.core.profile.finances(fmt(me.wallet), fmt(me.bank), fmt(total), me.job ? econ.jobCatalog?.[me.job]?.name || me.job : 'Desempregado(a)');
             
-            text += `🎭 *PERSONALIZAÇÃO*\n`;
-            text += `├ Classe: ${classeInfo}\n`;
-            text += `├ Clã: ${clanInfo}\n`;
-            text += `└ Casa: ${houseInfo}\n\n`;
+            text += MESSAGES.rpg.core.profile.custom(classeInfo, clanInfo, houseInfo);
             
-            text += `⚔️ *COMBATE*\n`;
-            text += `├ Vitórias: ${battlesWon}\n`;
-            text += `├ Derrotas: ${battlesLost}\n`;
-            text += `├ Win Rate: ${winRate}%\n`;
-            text += `└ Poder: ${me.power || 100}\n\n`;
+            text += MESSAGES.rpg.core.profile.combat(battlesWon, battlesLost, winRate, me.power || 100);
             
-            text += `🛠️ *HABILIDADES (TOP 3)*\n`;
+            text += MESSAGES.rpg.core.profile.skillsHeader;
             topSkills.forEach((sk, i) => {
               const prefixChar = i === topSkills.length - 1 ? '└' : '├';
               const skillName = sk.name.charAt(0).toUpperCase() + sk.name.slice(1);
@@ -189,25 +172,19 @@ export default {
             });
             text += `\n`;
             
-            text += `👨‍👩‍👧‍👦 *FAMÍLIA & RELACIONAMENTO*\n`;
+            text += MESSAGES.rpg.core.profile.familyHeader;
             if (relationshipEmoji) {
-              text += `├ ${relationshipEmoji} Status: ${relationshipType}\n`;
-              text += `├ Parceiro(a): ${familySpouse}\n`;
+              text += MESSAGES.rpg.core.profile.familyStatus(relationshipEmoji, relationshipType, familySpouse);
             } else {
-              text += `├ 💔 Status: Solteiro(a)\n`;
+              text += MESSAGES.rpg.core.profile.familySingle;
             }
-            text += `└ Filhos: ${familyChildren}\n\n`;
+            text += MESSAGES.rpg.core.profile.familyChildren(familyChildren);
             
-            text += `🏆 *COLECIONÁVEIS*\n`;
-            text += `├ Conquistas: ${achievements}\n`;
-            text += `├ Pets: ${pets}\n`;
-            text += `└ Itens Premium: ${premiumItems}\n\n`;
+            text += MESSAGES.rpg.core.profile.collectibles(achievements, pets, premiumItems);
             
-            text += `⭐ *REPUTAÇÃO*\n`;
-            text += `├ Pontos: ${reputation}\n`;
-            text += `└ Karma: ${karma}\n\n`;
+            text += MESSAGES.rpg.core.profile.reputation(reputation, karma);
             
-            text += `💎 Use ${prefix}meustats para ver estatísticas detalhadas`;
+            text += MESSAGES.rpg.core.profile.footer(prefix);
             
             return reply(text, mentions.length > 0 ? { mentions } : undefined);
         }
@@ -320,11 +297,11 @@ export default {
         }
 
         if (sub === 'loja' || sub === 'lojarps') {
-            let text = '╭━━━⊱ 🛒 *LOJA RPG* 🛒 ⊱━━━╮\n│\n';
+            let text = MESSAGES.rpg.core.shop.header;
             for (const [k, it] of Object.entries(econ.shop || {})) {
-                text += `│ 🔹 *${k}*\n│   ${it.name}\n│   💰 ${fmt(it.price)}\n│\n`;
+                text += MESSAGES.rpg.core.shop.item(k, it.name, fmt(it.price));
             }
-            text += `╰━━━━━━━━━━━━━━━━━━━━━━━╯\n\n💡 Use: ${prefix}comprar <item>`;
+            text += MESSAGES.rpg.core.shop.footer(prefix);
             return reply(text);
         }
 
@@ -341,20 +318,20 @@ export default {
                 me.inventory[key] = (me.inventory[key] || 0) + 1;
             }
             saveEconomy(econ);
-            return reply(`✅ Você comprou ${it.name}!`);
+            return reply(MESSAGES.rpg.core.shop.buySuccess(it.name));
         }
 
         if (sub === 'inventario' || sub === 'inv') {
-            let text = '╭━━━⊱ 🎒 *INVENTÁRIO* 🎒 ⊱━━━╮\n│\n';
+            let text = MESSAGES.rpg.core.inventory.header;
             let count = 0;
             for (const [k, q] of Object.entries(me.inventory || {})) {
                 if (q > 0) {
-                    text += `│ 🔹 *${k}*: ${q}\n`;
+                    text += MESSAGES.rpg.core.inventory.item(k, q);
                     count++;
                 }
             }
-            if (count === 0) text += '│ 📭 Inventário vazio\n';
-            text += `│\n╰━━━━━━━━━━━━━━━━━━━━━━━╯`;
+            if (count === 0) text += MESSAGES.rpg.core.inventory.empty;
+            text += MESSAGES.rpg.core.inventory.footer;
             return reply(text);
         }
 

@@ -19,8 +19,8 @@ export default {
     relationshipManager,
     MESSAGES
   }) => {
-    if (!isGroup) return reply(MESSAGES.rpg.groupOnly);
-    if (!groupData.modorpg) return reply(MESSAGES.rpg.disabled(prefix));
+    if (!isGroup) return reply(MESSAGES.rpg.core.groupOnly);
+    if (!groupData.modorpg) return reply(MESSAGES.rpg.core.disabled(prefix));
     
     const econ = loadEconomy();
     const me = getEcoUser(econ, sender);
@@ -29,9 +29,7 @@ export default {
     
     // --- VER FAMÍLIA ---
     if (command === 'familia' || command === 'family') {
-      let text = `╭━━━⊱ 👨‍👩‍👧‍👦 *MINHA FAMÍLIA* ⊱━━━╮\n`;
-      text += `│ ${pushname}\n`;
-      text += `╰━━━━━━━━━━━━━━━━━━━━╯\n\n`;
+      let text = MESSAGES.rpg.family.myFamilyHeader(pushname);
       
       // Relacionamento do relationshipManager
       const activePair = relationshipManager?.getActivePairForUser(sender);
@@ -44,46 +42,41 @@ export default {
         const since = activePair.pair?.stages?.[activePair.pair.status]?.since;
         const sinceDate = since ? new Date(since).toLocaleDateString() : 'Data desconhecida';
         
-        text += `${relationshipEmoji} *${relationshipType}:*\n`;
-        text += `┌─────────────────\n`;
-        text += `│ @${activePair.partnerId.split('@')[0]}\n`;
-        text += `│ ❤️ Desde: ${sinceDate}\n`;
-        text += `└─────────────────\n\n`;
+        text += MESSAGES.rpg.family.relationship(relationshipEmoji, relationshipType, activePair.partnerId.split('@')[0], sinceDate);
       } else {
-        text += `💔 *Relacionamento:* Solteiro(a)\n\n`;
+        text += MESSAGES.rpg.family.single;
       }
       
       // Pais
       if (me.family.parents && me.family.parents.length > 0) {
-        text += `👫 *Pais:*\n`;
+        text += MESSAGES.rpg.family.parentsHeader;
         me.family.parents.forEach(parent => {
-          text += `• @${parent.split('@')[0]}\n`;
+          text += MESSAGES.rpg.family.listItemDot(parent.split('@')[0]);
         });
         text += `\n`;
       }
       
       // Filhos
       if (me.family.children && me.family.children.length > 0) {
-        text += `👶 *Filhos (${me.family.children.length}):*\n`;
+        text += MESSAGES.rpg.family.childrenHeader(me.family.children.length);
         me.family.children.forEach((child, i) => {
-          text += `${i + 1}. @${child.split('@')[0]}\n`;
+          text += MESSAGES.rpg.family.listItemNum(i + 1, child.split('@')[0]);
         });
         text += `\n`;
       } else {
-        text += `👶 *Filhos:* Nenhum\n\n`;
+        text += MESSAGES.rpg.family.noChildren;
       }
       
       // Irmãos
       if (me.family.siblings && me.family.siblings.length > 0) {
-        text += `👫 *Irmãos (${me.family.siblings.length}):*\n`;
+        text += MESSAGES.rpg.family.siblingsHeader(me.family.siblings.length);
         me.family.siblings.forEach(sibling => {
-          text += `• @${sibling.split('@')[0]}\n`;
+          text += MESSAGES.rpg.family.listItemDot(sibling.split('@')[0]);
         });
         text += `\n`;
       }
       
-      text += `💡 Use ${prefix}adotaruser @user para adotar\n`;
-      text += `💡 Use ${prefix}arvore para ver árvore genealógica`;
+      text += MESSAGES.rpg.family.helpFooter(prefix);
       
       const mentions = [
         ...(me.family.parents || []),
@@ -99,17 +92,17 @@ export default {
     // --- ADOTAR ---
     if (command === 'adotaruser' || command === 'adotarfilho') {
       const target = (menc_jid2 && menc_jid2[0]) || null;
-      if (!target) return reply(`💔 Marque alguém para adotar!\n\n💡 Exemplo: ${prefix}adotaruser @user`);
-      if (target === sender) return reply(`💔 Você não pode se adotar!`);
+      if (!target) return reply(MESSAGES.rpg.family.adoptNeedMention(prefix));
+      if (target === sender) return reply(MESSAGES.rpg.family.adoptSelf);
       
       const targetUser = getEcoUser(econ, target);
       if (!targetUser.family) targetUser.family = { spouse: null, children: [], parents: [], siblings: [] };
       
-      if (me.family.children?.includes(target)) return reply(`💔 Esta pessoa já é seu filho(a)!`);
-      if (targetUser.family.parents?.length >= 2) return reply(`💔 Esta pessoa já tem 2 pais/mães!`);
+      if (me.family.children?.includes(target)) return reply(MESSAGES.rpg.family.adoptAlreadyChild);
+      if (targetUser.family.parents?.length >= 2) return reply(MESSAGES.rpg.family.adoptAlreadyParents);
       
       const adoptCost = 10000;
-      if (me.wallet < adoptCost) return reply(`💰 Você precisa de ${adoptCost.toLocaleString()} moedas para adotar!`);
+      if (me.wallet < adoptCost) return reply(MESSAGES.rpg.family.adoptNeedMoney(adoptCost.toLocaleString()));
       
       me.wallet -= adoptCost;
       if (!me.family.children) me.family.children = [];
@@ -129,15 +122,15 @@ export default {
       }
       
       saveEconomy(econ);
-      return reply(`🎉 Parabéns! ${pushname} adotou @${target.split('@')[0]}!\n💰 Custo: ${adoptCost.toLocaleString()}`, { mentions: [target] });
+      return reply(MESSAGES.rpg.family.adoptSuccess(pushname, target.split('@')[0], adoptCost.toLocaleString()), { mentions: [target] });
     }
 
     // --- DESERDAR ---
     if (command === 'deserdar' || command === 'desherdar' || command === 'removerfilho') {
       const target = (menc_jid2 && menc_jid2[0]) || null;
-      if (!target) return reply(`💔 Marque alguém para deserdar!\n\n💡 Exemplo: ${prefix}deserdar @user`);
+      if (!target) return reply(MESSAGES.rpg.family.disownNeedMention(prefix));
       
-      if (!me.family.children?.includes(target)) return reply(`💔 Esta pessoa não é seu filho(a)!`);
+      if (!me.family.children?.includes(target)) return reply(MESSAGES.rpg.family.disownNotChild);
       
       me.family.children = me.family.children.filter(child => child !== target);
       const targetUser = getEcoUser(econ, target);
@@ -158,12 +151,12 @@ export default {
       }
       
       saveEconomy(econ);
-      return reply(`😢 ${pushname} deserdou @${target.split('@')[0]}!`, { mentions: [target] });
+      return reply(MESSAGES.rpg.family.disownSuccess(pushname, target.split('@')[0]), { mentions: [target] });
     }
 
     // --- ÁRVORE GENEALÓGICA ---
     if (command === 'arvore' || command === 'familytree') {
-      let text = `╭━━━⊱ 🌳 *ÁRVORE GENEALÓGICA* ⊱━━━╮\n╰━━━━━━━━━━━━━━━━━━━━╯\n\n`;
+      let text = MESSAGES.rpg.family.treeHeader;
       
       const grandparents = [];
       if (me.family.parents) {
@@ -174,27 +167,27 @@ export default {
       }
       
       if (grandparents.length > 0) {
-        text += `👴👵 *Avós:*\n`;
-        [...new Set(grandparents)].forEach(gp => text += `• @${gp.split('@')[0]}\n`);
+        text += MESSAGES.rpg.family.treeGrandparents;
+        [...new Set(grandparents)].forEach(gp => text += MESSAGES.rpg.family.listItemDot(gp.split('@')[0]));
         text += `\n`;
       }
       
       if (me.family.parents?.length > 0) {
-        text += `👫 *Pais:*\n`;
-        me.family.parents.forEach(p => text += `• @${p.split('@')[0]}\n`);
+        text += MESSAGES.rpg.family.treeParents;
+        me.family.parents.forEach(p => text += MESSAGES.rpg.family.listItemDot(p.split('@')[0]));
         text += `\n`;
       }
       
-      text += `👤 *Você:* ${pushname}\n`;
+      text += MESSAGES.rpg.family.treeYou(pushname);
       const activePair = relationshipManager?.getActivePairForUser(sender);
       if (activePair && activePair.partnerId) {
-        text += `💍 *Parceiro(a):* @${activePair.partnerId.split('@')[0]}\n`;
+        text += MESSAGES.rpg.family.treePartner(activePair.partnerId.split('@')[0]);
       }
       text += `\n`;
       
       if (me.family.children?.length > 0) {
-        text += `👶 *Filhos:*\n`;
-        me.family.children.forEach(c => text += `• @${c.split('@')[0]}\n`);
+        text += MESSAGES.rpg.family.treeChildren;
+        me.family.children.forEach(c => text += MESSAGES.rpg.family.listItemDot(c.split('@')[0]));
         text += `\n`;
       }
       
@@ -207,8 +200,8 @@ export default {
       }
       
       if (grandchildren.length > 0) {
-        text += `👶👶 *Netos:*\n`;
-        grandchildren.forEach(gc => text += `• @${gc.split('@')[0]}\n`);
+        text += MESSAGES.rpg.family.treeGrandchildren;
+        grandchildren.forEach(gc => text += MESSAGES.rpg.family.listItemDot(gc.split('@')[0]));
         text += `\n`;
       }
       

@@ -23,7 +23,7 @@ export default {
         const now = Date.now();
 
         const cd = me.cooldowns?.daily || 0;
-        if (now < cd) return reply(`╭━━━⊱ ⏳ *COOLDOWN* ⏳ ⊱━━━╮\n│\n│ ⚠️ Você já coletou hoje!\n│ 🕐 Volte em: ${timeLeft(cd)}\n│\n╰━━━━━━━━━━━━━━━━━━━━━╯`);
+        if (now < cd) return reply(MESSAGES.rpg.daily.cooldown(timeLeft(cd)));
 
         // Sistema de Streak
         if (!me.streak) me.streak = { count: 0, lastClaim: 0, record: 0 };
@@ -46,11 +46,11 @@ export default {
         let bonusMessage = '';
         if (me.streak.count % 7 === 0) {
             extraBonus = 500;
-            bonusMessage = '\n🎉 *BÔNUS DE 7 DIAS:* +500!';
+            bonusMessage = MESSAGES.rpg.daily.bonus7;
         }
         if (me.streak.count % 30 === 0) {
             extraBonus += 2000;
-            bonusMessage += '\n🏆 *BÔNUS DE 30 DIAS:* +2000!';
+            bonusMessage += MESSAGES.rpg.daily.bonus30;
         }
         
         const finalReward = totalReward + extraBonus;
@@ -73,19 +73,19 @@ export default {
         
         saveEconomy(econ);
         
-        let text = `╭━━━⊱ 🎁 *RECOMPENSA DIÁRIA* ⊱━━━╮\n`;
-        text += `│\n│ 💰 Base: +${fmt(baseReward)}\n`;
-        text += `│ 🔥 Streak (${me.streak.count}x): +${fmt(streakBonus)}\n`;
-        if (extraBonus > 0) text += `│ ✨ Bônus: +${fmt(extraBonus)}\n`;
-        text += `│ ━━━━━━━━━━━━━━\n`;
-        text += `│ 💵 Total: *${fmt(finalReward)}*\n`;
-        text += `│ ⚡ XP: +${xpGain}\n│\n`;
-        text += `│ 🔥 Sequência: *${me.streak.count} dia${me.streak.count !== 1 ? 's' : ''}*\n`;
-        text += `│ 🏆 Recorde: ${me.streak.record} dia${me.streak.record !== 1 ? 's' : ''}\n│\n`;
-        text += `╰━━━━━━━━━━━━━━━━━━━━━━━━━━╯`;
+        let text = MESSAGES.rpg.daily.rewardHeader;
+        text += MESSAGES.rpg.daily.rewardBase(fmt(baseReward));
+        text += MESSAGES.rpg.daily.rewardStreak(me.streak.count, fmt(streakBonus));
+        if (extraBonus > 0) text += MESSAGES.rpg.daily.rewardExtra(fmt(extraBonus));
+        text += MESSAGES.rpg.daily.rewardDivider;
+        text += MESSAGES.rpg.daily.rewardTotal(fmt(finalReward));
+        text += MESSAGES.rpg.daily.rewardXp(xpGain);
+        text += MESSAGES.rpg.daily.rewardSequence(me.streak.count, me.streak.count !== 1 ? 's' : '');
+        text += MESSAGES.rpg.daily.rewardRecord(me.streak.record, me.streak.record !== 1 ? 's' : '');
+        text += MESSAGES.rpg.daily.rewardFooter;
         
         if (bonusMessage) text += bonusMessage;
-        if (leveledUp) text += `\n\n⚡ *LEVEL UP!* Agora você é level ${me.level}!`;
+        if (leveledUp) text += MESSAGES.rpg.daily.levelUp(me.level);
         
         return reply(text);
     }

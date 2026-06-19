@@ -79,7 +79,7 @@ export default {
           }
           return bot.sendMessage(from, { image: { url: res.result.download } }, { quoted: info });
         }
-      } catch (e) { return reply("Erro no processamento."); }
+      } catch (e) { return reply(MESSAGES.error.general); }
     }
 
     // --- GROUPSTATS ---
@@ -195,7 +195,7 @@ export default {
       await reply(MESSAGES.member.tools.scanlinkScanning);
       try {
         return reply(MESSAGES.member.tools.scanlinkSafe(url));
-      } catch (e) { return reply("Erro ao verificar."); }
+      } catch (e) { return reply(MESSAGES.error.general); }
     }
   },
 };

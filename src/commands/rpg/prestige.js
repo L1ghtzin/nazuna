@@ -17,8 +17,8 @@ export default {
     getEcoUser,
     MESSAGES
   }) => {
-    if (!isGroup) return reply(MESSAGES.rpg.groupOnly);
-    if (!groupData.modorpg) return reply(MESSAGES.rpg.disabled(prefix));
+    if (!isGroup) return reply(MESSAGES.rpg.core.groupOnly);
+    if (!groupData.modorpg) return reply(MESSAGES.rpg.core.disabled(prefix));
     
     const q = args ? args.join(" ").toLowerCase() : "";
 
@@ -31,21 +31,20 @@ export default {
     const reqMoney = 1000000 * (me.prestige.level + 1);
     
     if (!q || q === 'info') {
-      let text = `╭━━━⊱ ✨ *PRESTIGE* ⊱━━━╮\n`;
-      text += `│ Nível Atual: ${me.prestige.level}\n`;
-      text += `│ Bônus: +${(me.prestige.level * 10)}% ganhos\n`;
-      text += `╰━━━━━━━━━━━━━━━━━━━━╯\n\n`;
-      text += `🚀 *REQUISITOS PARA EVOLUIR:*\n`;
-      text += `• Nível: ${me.level || 1}/${reqLevel}\n`;
-      text += `• Dinheiro: ${me.wallet.toLocaleString()}/${reqMoney.toLocaleString()}\n\n`;
-      text += `⚠️ *AVISO:* Evoluir resetará seu nível e dinheiro, mas dará bônus permanentes!\n\n`;
-      text += `💡 Use ${prefix}evoluir confirmar para prosseguir.`;
-      return reply(text);
+      return reply(MESSAGES.rpg.prestige.info(
+        me.prestige.level, 
+        (me.prestige.level * 10), 
+        me.level || 1, 
+        reqLevel, 
+        me.wallet.toLocaleString(), 
+        reqMoney.toLocaleString(), 
+        prefix
+      ));
     }
 
     if (q === 'confirmar') {
-      if ((me.level || 1) < reqLevel) return reply(`💔 Você precisa ser Lv.${reqLevel}!`);
-      if (me.wallet < reqMoney) return reply(`💰 Você precisa de ${reqMoney.toLocaleString()}!`);
+      if ((me.level || 1) < reqLevel) return reply(MESSAGES.rpg.prestige.needLevel(reqLevel));
+      if (me.wallet < reqMoney) return reply(MESSAGES.rpg.prestige.needMoney(reqMoney.toLocaleString()));
       
       me.prestige.level++;
       me.level = 1;
@@ -55,7 +54,7 @@ export default {
       me.prestige.bonusMultiplier += 0.1;
       
       saveEconomy(econ);
-      return reply(`🌟 *EVOLUÇÃO CONCLUÍDA!*\n\n${pushname} agora é Prestige Nível ${me.prestige.level}!\n\n✨ Seus ganhos permanentes aumentaram em 10%!`);
+      return reply(MESSAGES.rpg.prestige.success(pushname, me.prestige.level));
     }
   }
 };
