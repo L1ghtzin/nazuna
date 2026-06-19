@@ -49,7 +49,8 @@ export default {
     generateActivationCode,
     getCachedGroupMetadata,
     deleteChatByLastMessage,
-    clearChatHistorySafe
+    clearChatHistorySafe,
+    MESSAGES
   }) => {
     const cmd = (command || "").toLowerCase();
     const query = (q || "").trim();

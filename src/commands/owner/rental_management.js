@@ -12,7 +12,7 @@ export default {
     "autocleanup",
     "rentalclean"
   ],
-  handle: async ({ reply, command, isOwner, rentalExpirationManager }) => {
+  handle: async ({ reply, command, isOwner, rentalExpirationManager, MESSAGES }) => {
     const cmd = (command || "").toLowerCase();
 
     if (!isOwner) {
