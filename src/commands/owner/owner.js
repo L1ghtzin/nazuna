@@ -1,4 +1,4 @@
-import fs from 'fs';
+import fs from 'fs/promises';
 import pathz from 'path';
 import { getAllCommandList } from '../../utils/dynamicCommand.js';
 
@@ -109,15 +109,18 @@ export default {
 
     if (cmd === 'reviverqr') {
       const qrcodeDir = pathz.join(DATABASE_DIR, 'qr-code');
-      if (fs.existsSync(qrcodeDir)) {
-        fs.readdirSync(qrcodeDir).forEach(f => {
+      try {
+        const files = await fs.readdir(qrcodeDir);
+        for (const f of files) {
           if (f.startsWith('pre-key') || f.startsWith('sender') || f.startsWith('session')) {
-            fs.unlinkSync(pathz.join(qrcodeDir, f));
+            await fs.unlink(pathz.join(qrcodeDir, f));
           }
-        });
-        reply(MESSAGES.owner.owner.reviverqr.success);
-        setTimeout(() => process.exit(), 1000);
+        }
+      } catch (error) {
+        if (error.code !== 'ENOENT') throw error;
       }
+      reply(MESSAGES.owner.owner.reviverqr.success);
+      setTimeout(() => process.exit(), 1000);
       return;
     }
 

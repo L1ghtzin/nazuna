@@ -1,13 +1,11 @@
-import fs from 'fs';
+import { AUTO_HORARIOS_FILE } from '../../utils/paths.js';
 
 export default {
   name: "autohorarios",
   description: "Gerencia o envio automático de horários pagantes",
   commands: ["autohorarios"],
   usage: `${global.prefix}autohorarios <on|off|status|link>`,
-  handle: async ({ reply, isOwner, isGroupAdmin, args, prefix, from, MESSAGES }) => {
-    if (!isOwner && !isGroupAdmin) return reply(MESSAGES.permission.adminOnly);
-    
+  handle: async ({ reply, args, prefix, from, optimizer, MESSAGES }) => {
     try {
       const action = args[0]?.toLowerCase();
       
@@ -16,15 +14,7 @@ export default {
         return;
       }
       
-      let autoSchedules = {};
-      const autoSchedulesPath = './dados/database/autohorarios.json';
-      try {
-        if (fs.existsSync(autoSchedulesPath)) {
-          autoSchedules = JSON.parse(fs.readFileSync(autoSchedulesPath, 'utf8'));
-        }
-      } catch (e) {
-        autoSchedules = {};
-      }
+      const autoSchedules = await optimizer.loadJsonWithCache(AUTO_HORARIOS_FILE, {});
       
       if (!autoSchedules[from]) {
         autoSchedules[from] = {
@@ -37,13 +27,13 @@ export default {
       switch (action) {
         case 'on':
           autoSchedules[from].enabled = true;
-          fs.writeFileSync(autoSchedulesPath, JSON.stringify(autoSchedules, null, 2));
+          await optimizer.saveJsonWithCache(AUTO_HORARIOS_FILE, autoSchedules);
           await reply(MESSAGES.admin.autohorarios.activated);
           break;
           
         case 'off':
           autoSchedules[from].enabled = false;
-          fs.writeFileSync(autoSchedulesPath, JSON.stringify(autoSchedules, null, 2));
+          await optimizer.saveJsonWithCache(AUTO_HORARIOS_FILE, autoSchedules);
           await reply(MESSAGES.admin.autohorarios.deactivated);
           break;
           
@@ -59,11 +49,11 @@ export default {
           
           if (!linkUrl) {
             autoSchedules[from].link = null;
-            fs.writeFileSync(autoSchedulesPath, JSON.stringify(autoSchedules, null, 2));
+            await optimizer.saveJsonWithCache(AUTO_HORARIOS_FILE, autoSchedules);
             await reply(MESSAGES.admin.autohorarios.linkRemoved);
           } else {
             autoSchedules[from].link = linkUrl;
-            fs.writeFileSync(autoSchedulesPath, JSON.stringify(autoSchedules, null, 2));
+            await optimizer.saveJsonWithCache(AUTO_HORARIOS_FILE, autoSchedules);
             await reply(MESSAGES.admin.autohorarios.linkConfigured(linkUrl));
           }
           break;

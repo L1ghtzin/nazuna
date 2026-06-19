@@ -14,6 +14,7 @@ export default {
     // 👑 DONO (ATIVAR/DESATIVAR)
     // ═══════════════════════════════════════════════════════════════
     if (['personalizargrupo', 'ativarperso'].includes(cmd)) {
+      if (!isOwner) return reply(MESSAGES.permission.ownerOnly);
       const newState = setGroupCustomizationEnabled(!isGroupCustomizationEnabled());
       return reply(MESSAGES.owner.personalizargrupo.toggle(newState));
     }

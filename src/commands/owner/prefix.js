@@ -1,4 +1,3 @@
-import fs from 'fs';
 import { CONFIG_FILE } from '../../utils/paths.js';
 
 export default {
@@ -8,10 +7,10 @@ export default {
   usage: `${global.prefixo}prefix <novo_prefixo>`,
   handle: async ({
     reply,
-    isOwner,
     q,
     prefix,
     command,
+    config,
     optimizer,
     MESSAGES
   }) => {
@@ -29,10 +28,9 @@ export default {
         await reply(MESSAGES.owner.prefix.success(newPrefix));
       }
       
-      let config = JSON.parse(fs.readFileSync(CONFIG_FILE));
-      config.prefixo = newPrefix;
+      const nextConfig = { ...(config || await optimizer.loadJsonWithCache(CONFIG_FILE, {})), prefixo: newPrefix };
       
-      await optimizer.saveJsonWithCache(CONFIG_FILE, config);
+      await optimizer.saveJsonWithCache(CONFIG_FILE, nextConfig);
       
     } catch (e) {
       console.error(e);

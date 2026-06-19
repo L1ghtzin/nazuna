@@ -1,5 +1,6 @@
 import pathz from 'path';
-import fs from 'fs';
+import fs from 'fs/promises';
+import { GRUPOS_DIR } from '../../utils/paths.js';
 import { diagnosticDatabase, saveMenuDesign, getMenuDesignWithDefaults } from '../../utils/database.js';
 
 export default {
@@ -10,9 +11,9 @@ export default {
     "fixdb", "diagnosticrpg", "set", "style", "preview", "reset", "resetgold"
   ],
   handle: async ({ 
-    bot, from, reply, isOwner, command, DATABASE_DIR, optimizer, nomedono,
-    sender, loadEconomy, getEcoUser, saveEconomy, prefix,
-    info, q, args, isGroup, groupData,
+    bot, reply, command,
+    loadEconomy, saveEconomy, prefix,
+    q,
     MESSAGES
   }) => {
     const cmd = command.toLowerCase();
@@ -24,15 +25,14 @@ export default {
       try {
         const allGroups = await bot.groupFetchAllParticipating();
         const currentGroupIds = Object.keys(allGroups);
-        const gruposDir = pathz.join(DATABASE_DIR, 'grupos');
         
-        const files = fs.readdirSync(gruposDir).filter(f => f.endsWith('.json'));
+        const files = (await fs.readdir(GRUPOS_DIR)).filter(f => f.endsWith('.json'));
         let count = 0;
         
         for (const file of files) {
           const gid = file.replace('.json', '');
           if (!currentGroupIds.includes(gid)) {
-            fs.unlinkSync(pathz.join(gruposDir, file));
+            await fs.unlink(pathz.join(GRUPOS_DIR, file));
             count++;
           }
         }

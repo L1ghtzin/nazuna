@@ -1,5 +1,3 @@
-import fs from 'fs';
-
 export default {
   name: "delregra",
   description: "Remove uma regra do grupo",
@@ -7,10 +5,8 @@ export default {
   usage: `${global.prefixo}delregra <número>`,
   handle: async ({ 
     reply,
-    isGroup,
-    isGroupAdmin,
     groupData,
-    groupFile,
+    persistGroupDataLocal,
     q,
     prefix
   , MESSAGES }) => {
@@ -20,10 +16,12 @@ export default {
       groupData.rules = groupData.rules || [];
       const ruleNumber = parseInt(q);
       
+      if (ruleNumber < 1 || ruleNumber > groupData.rules.length) {
         return reply(MESSAGES.admin.rules.delInvalidNum(prefix, groupData.rules.length));
+      }
       
       const removedRule = groupData.rules.splice(ruleNumber - 1, 1);
-      fs.writeFileSync(groupFile, JSON.stringify(groupData, null, 2));
+      await persistGroupDataLocal();
       
       await reply(MESSAGES.admin.rules.delSuccess(removedRule[0]));
     } catch (e) {

@@ -45,7 +45,12 @@ export const middlewareMessages = {
     executionError: "❌ Erro ao executar comando personalizado."
   },
   commandDispatcher: {
-    vipOnly: (prefix) => `🔒 *Comando VIP Exclusivo*\n\nEste comando é apenas para usuários VIP/Premium!\n\n💎 Use ${prefix}menuvip para ver os comandos VIP!\n📞 Contate o dono: ${prefix}dono`
+    vipOnly: (prefix) => `🔒 *Comando VIP Exclusivo*\n\nEste comando é apenas para usuários VIP/Premium!\n\n💎 Use ${prefix}menuvip para ver os comandos VIP!\n📞 Contate o dono: ${prefix}dono`,
+    notFoundNoSimilar: (prefix) => `💡 Nenhum similar encontrado\n✨ Use ${prefix}menu para ver todos\n\n`,
+    notFoundFooter: '💭 Verifique se digitou corretamente!',
+    notFoundSimilarHeader: '💡 *Você quis dizer?*\n',
+    notFoundTotal: (totalCommands) => `📊 *Total de comandos:* ${totalCommands}\n\n`,
+    similarityLine: (index, prefix, command, similarity, bar) => `${index}. ${prefix}${command}\n   📊 ${similarity}% ${bar}\n\n`
   },
   partnership: {
     limitReached: (user, limit) => `@${user}, você atingiu o limite de ${limit} links de grupos.`,

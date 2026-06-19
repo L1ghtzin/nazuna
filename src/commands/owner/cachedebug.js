@@ -1,4 +1,3 @@
-import fs from 'fs';
 import { JID_LID_CACHE_FILE } from "../../utils/paths.js";
 import { saveJidLidCache } from "../../utils/helpers.js";
 
@@ -8,7 +7,7 @@ export default {
   commands: ["cachedebug", "debugcache"],
   usage: `${global.prefix}cachedebug`,
   handle: async ({ 
-    reply, isOwner, idInArray, sender,
+    reply, optimizer,
     MESSAGES
   }) => {
     // Simulando `isOwnerOrSub` baseado na estrutura usual (dono principal ou array de subdonos)
@@ -22,14 +21,8 @@ export default {
       saveJidLidCache();
       
       // Lê o arquivo de cache
-      let cacheData = { mappings: {}, version: 'N/A', lastUpdate: 'N/A' };
-      try {
-        if (fs.existsSync(cacheFilePath)) {
-          cacheData = JSON.parse(fs.readFileSync(cacheFilePath, 'utf-8'));
-        }
-      } catch (e) {
-        console.error('Erro ao ler cache:', e);
-      }
+      optimizer.invalidateJson(cacheFilePath);
+      const cacheData = await optimizer.loadJsonWithCache(cacheFilePath, { mappings: {}, version: 'N/A', lastUpdate: 'N/A' });
       
       const mappings = cacheData.mappings || {};
       const entries = Object.entries(mappings);

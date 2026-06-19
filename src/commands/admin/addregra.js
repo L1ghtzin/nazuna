@@ -1,5 +1,3 @@
-import fs from 'fs';
-
 export default {
   name: "addregra",
   description: "Adiciona uma regra ao grupo",
@@ -7,10 +5,8 @@ export default {
   usage: `${global.prefixo}addregra <texto da regra>`,
   handle: async ({ 
     reply,
-    isGroup,
-    isGroupAdmin,
     groupData,
-    groupFile,
+    persistGroupDataLocal,
     q,
     prefix
   , MESSAGES }) => {
@@ -19,7 +15,7 @@ export default {
       
       groupData.rules = groupData.rules || [];
       groupData.rules.push(q);
-      fs.writeFileSync(groupFile, JSON.stringify(groupData, null, 2));
+      await persistGroupDataLocal();
       
       await reply(MESSAGES.admin.rules.addSuccess(groupData.rules.length, q));
     } catch (e) {

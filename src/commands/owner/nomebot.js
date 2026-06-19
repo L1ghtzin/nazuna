@@ -1,4 +1,3 @@
-import fs from 'fs';
 import { CONFIG_FILE } from '../../utils/paths.js';
 
 export default {
@@ -8,20 +7,19 @@ export default {
   usage: `${global.prefixo}nomebot <novo_nome>`,
   handle: async ({
     reply,
-    isOwner,
     q,
     prefix,
     command,
+    config,
     optimizer,
     MESSAGES
   }) => {
     try {
       if (!q) return reply(MESSAGES.owner.nomebot.missingName(prefix, command));
       
-      let config = JSON.parse(fs.readFileSync(CONFIG_FILE));
-      config.nomebot = q;
+      const nextConfig = { ...(config || await optimizer.loadJsonWithCache(CONFIG_FILE, {})), nomebot: q };
       
-      await optimizer.saveJsonWithCache(CONFIG_FILE, config);
+      await optimizer.saveJsonWithCache(CONFIG_FILE, nextConfig);
       
       await reply(MESSAGES.owner.nomebot.success(q));
       

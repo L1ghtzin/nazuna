@@ -1,5 +1,13 @@
-import fs from 'fs';
+import fs from 'fs/promises';
 import path from 'path';
+
+async function removeFileIfExists(filePath) {
+  try {
+    await fs.unlink(filePath);
+  } catch (error) {
+    if (error.code !== 'ENOENT') throw error;
+  }
+}
 
 export default {
   name: "bot_config",
@@ -7,7 +15,7 @@ export default {
   // REMOVIDOS: addxp, delxp, level, leveling, dayfree para que não interceptem o bot_config!
   commands: ["activate", "ajuda", "antipv", "antipv2", "antipv3", "antipv4", "antipvmessage", "antipvmsg", "ativar", "audiomenu", "configcmdnotfound", "deactivate", "desativar", "entrar", "fotomenu", "guia", "list", "lista", "mediamenu", "menuaudio", "midiamenu", "off", "on", "sairgp", "setcmdmsg", "setmenuaudio", "tutorial", "videomenu"],
   handle: async ({ 
-    bot, from, info, command, reply, isOwner, q, args, prefix, OWNER_ONLY_MESSAGE,
+    bot, from, info, command, reply, q, args, prefix,
     MESSAGES, optimizer, getFileBuffer, getMediaInfo,
     setMenuAudio, removeMenuAudio, DATABASE_DIR, pathz
   }) => {
@@ -71,12 +79,12 @@ export default {
         }
         
         const isVideo2 = mediaInfo.type === 'video';
-        if (fs.existsSync(path.join(midiasDir, 'menu.jpg'))) fs.unlinkSync(path.join(midiasDir, 'menu.jpg'));
-        if (fs.existsSync(path.join(midiasDir, 'menu.mp4'))) fs.unlinkSync(path.join(midiasDir, 'menu.mp4'));
+        await removeFileIfExists(path.join(midiasDir, 'menu.jpg'));
+        await removeFileIfExists(path.join(midiasDir, 'menu.mp4'));
         
         const buffer = await getFileBuffer(mediaInfo.media, mediaInfo.type);
-        fs.mkdirSync(midiasDir, { recursive: true });
-        fs.writeFileSync(path.join(midiasDir, `menu.${isVideo2 ? 'mp4' : 'jpg'}`), buffer);
+        await fs.mkdir(midiasDir, { recursive: true });
+        await fs.writeFile(path.join(midiasDir, `menu.${isVideo2 ? 'mp4' : 'jpg'}`), buffer);
         return reply(MESSAGES.owner.bot_config.menu.mediaUpdated);
       } catch (e) {
         console.error(e);
@@ -89,7 +97,7 @@ export default {
       if (q && ['off', 'del', 'delete', 'remover'].includes(q.toLowerCase())) {
         if (typeof removeMenuAudio === 'function') removeMenuAudio();
         const audioPath = path.resolve('./dados/midias/menu_audio.mp3');
-        if (fs.existsSync(audioPath)) fs.unlinkSync(audioPath);
+        await removeFileIfExists(audioPath);
         return reply(MESSAGES.owner.bot_config.menu.audioRemoved);
       }
       
@@ -103,8 +111,8 @@ export default {
       try {
         const audioBuffer = await getFileBuffer(mediaInfo.media, 'audio');
         const audioPath = path.resolve('./dados/midias/menu_audio.mp3');
-        fs.mkdirSync(path.dirname(audioPath), { recursive: true });
-        fs.writeFileSync(audioPath, audioBuffer);
+        await fs.mkdir(path.dirname(audioPath), { recursive: true });
+        await fs.writeFile(audioPath, audioBuffer);
         if (typeof setMenuAudio === 'function') setMenuAudio(audioPath);
         
         return reply(MESSAGES.owner.bot_config.menu.audioUpdated(prefix, command));

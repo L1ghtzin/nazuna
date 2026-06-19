@@ -1,5 +1,7 @@
 
 
+import pathz from 'path';
+
 export default {
   name: "fun",
   description: "Comandos de diversão e sorte",
@@ -19,6 +21,7 @@ export default {
     from,
     prefix,
     GRUPOS_DIR,
+    optimizer,
     MESSAGES
   }) => {
     if (!isGroup) return reply(MESSAGES.error.onlyGroup);
@@ -54,16 +57,8 @@ export default {
 
     // --- ANIVERSÁRIO ---
     if (['aniversario', 'niver', 'birthday'].includes(command)) {
-      const fs = await import('fs');
-      const path = await import('path');
-      const aniversariosPath = path.join(GRUPOS_DIR, `${from}_aniversarios.json`);
-      let aniversarios = {};
-      try {
-        if (fs.existsSync(aniversariosPath)) {
-          aniversarios = JSON.parse(fs.readFileSync(aniversariosPath, 'utf-8'));
-        }
-      } catch (e) { aniversarios = {}; }
-
+      const aniversariosPath = pathz.join(GRUPOS_DIR, `${from}_aniversarios.json`);
+      const aniversarios = await optimizer.loadJsonWithCache(aniversariosPath, {});
       if (!q) {
         return reply(MESSAGES.member.fun.niverMenu(prefix, command));
       }
@@ -84,7 +79,7 @@ export default {
       if (!dateMatch) return reply(MESSAGES.member.fun.niverInvalidFormat);
 
       aniversarios[sender] = q;
-      fs.writeFileSync(aniversariosPath, JSON.stringify(aniversarios, null, 2));
+      await optimizer.saveJsonWithCache(aniversariosPath, aniversarios);
       return reply(MESSAGES.member.fun.niverSuccess(sender.split('@')[0], q), { mentions: [sender] });
     }
 

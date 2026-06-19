@@ -5,19 +5,15 @@ export default {
   description: "Sistema de indicações e recomendações",
   commands: ["addindicacao", "addindicar", "addindica", "topindica", "topindicacao", "rankindicacao", "rankindicacoes", "delindicacao", "rmindicacao", "removerindicacao"],
   handle: async ({ 
-    reply, command, isOwner, menc_os2, DATABASE_DIR, optimizer, getUserName, prefix, fs,
+    reply, command, isOwner, menc_os2, DATABASE_DIR, optimizer, getUserName, prefix,
     MESSAGES
   }) => {
     const cmd = command.toLowerCase();
     const filePath = pathz.join(DATABASE_DIR, 'indicacoes.json');
     
     // Carregar dados
-    let data = { users: {} };
-    try {
-      if (fs.existsSync(filePath)) {
-        data = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
-      }
-    } catch (e) { console.error('Error generating random indication:', e); }
+    const data = await optimizer.loadJsonWithCache(filePath, { users: {} });
+    data.users = data.users || {};
 
     // --- ADICIONAR INDICAÇÃO ---
     if (cmd.startsWith('add')) {

@@ -1,4 +1,3 @@
-import fs from 'fs';
 import { CONFIG_FILE } from '../../utils/paths.js';
 
 export default {
@@ -8,20 +7,19 @@ export default {
   usage: `${global.prefixo}numerodono <novo_numero>`,
   handle: async ({
     reply,
-    isOwner,
     q,
     prefix,
     command,
+    config,
     optimizer,
     MESSAGES
   }) => {
     try {
       if (!q) return reply(MESSAGES.owner.numerodono.missingParams(prefix, command));
       
-      let config = JSON.parse(fs.readFileSync(CONFIG_FILE));
-      config.numerodono = q;
+      const nextConfig = { ...(config || await optimizer.loadJsonWithCache(CONFIG_FILE, {})), numerodono: q };
       
-      await optimizer.saveJsonWithCache(CONFIG_FILE, config);
+      await optimizer.saveJsonWithCache(CONFIG_FILE, nextConfig);
       
       await reply(MESSAGES.owner.numerodono.success(q));
     } catch (e) {

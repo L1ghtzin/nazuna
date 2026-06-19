@@ -859,7 +859,7 @@ export async function buildMessageContext(bot, info, store, messagesCache, renta
       isAntiDel, isAntiBtn, isAntiStatus, isAutoRepo, isAssistente,
       isMuted, isMuted2,
       // Funções
-      reply, reagir, debugLog, persistGroupDataLocal, isUserWhitelisted,
+      reply, reagir, debugLog, persistGroupDataLocal, persistGroupData: persistGroupDataLocal, isUserWhitelisted,
       getCachedGroupMetadata, deleteChatByLastMessage, clearChatHistorySafe,
       // Módulos
       menus, modules: modulesExport, optimizer,

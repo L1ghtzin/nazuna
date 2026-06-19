@@ -100,10 +100,16 @@ export async function loadGroupData(isGroup, from, groupFile, groupName, optimiz
  */
 export const persistGroupData = (isGroup, from, groupFile, groupData, optimizer) => {
   if (isGroup) {
-    writeJsonFileAsync(groupFile, groupData).then(() => {
+    return writeJsonFileAsync(groupFile, groupData).then(() => {
       optimizer.invalidateGroup(from);
-    }).catch(err => console.error('Erro ao persistir groupData:', err));
+      optimizer.invalidateJson?.(groupFile);
+      return true;
+    }).catch(err => {
+      console.error('Erro ao persistir groupData:', err);
+      return false;
+    });
   }
+  return Promise.resolve(false);
 };
 
 /**

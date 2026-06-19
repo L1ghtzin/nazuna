@@ -1,5 +1,3 @@
-import fs from 'fs';
-
 export default {
   name: "voltei",
   description: "Remove seu status AFK",
@@ -10,14 +8,14 @@ export default {
     isGroup,
     sender,
     groupData,
-    groupFile
+    persistGroupDataLocal
   , MESSAGES }) => {
     try {
       if (!isGroup) return reply(MESSAGES.permission.groupOnly);
       
       if (groupData.afkUsers && groupData.afkUsers[sender]) {
         delete groupData.afkUsers[sender];
-        fs.writeFileSync(groupFile, JSON.stringify(groupData, null, 2));
+        await persistGroupDataLocal();
         await reply(MESSAGES.member.voltei.welcomeBack);
       } else {
         await reply(MESSAGES.member.voltei.notAfk);

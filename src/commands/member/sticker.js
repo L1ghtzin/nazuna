@@ -209,9 +209,9 @@ export default {
         if (!pack) return reply(MESSAGES.member.sticker.invalidFormatTake(prefix, command));
         
         const filePath = pathz.join(USERS_DIR, 'take.json');
-        const dataTake = fs.existsSync(filePath) ? JSON.parse(fs.readFileSync(filePath, 'utf-8')) : {};
+        const dataTake = await optimizer.loadJsonWithCache(filePath, {});
         dataTake[sender] = { author, pack };
-        fs.writeFileSync(filePath, JSON.stringify(dataTake, null, 2), 'utf-8');
+        await optimizer.saveJsonWithCache(filePath, dataTake);
         reply(MESSAGES.member.sticker.takeSaveSuccess(author, pack));
       } catch (e) {
         console.error(e);
@@ -227,8 +227,8 @@ export default {
       try {
         if (!isQuotedSticker) return reply(MESSAGES.member.sticker.missingQuotedStickerRename);
         const filePath = pathz.join(USERS_DIR, 'take.json');
-        if (!fs.existsSync(filePath)) return reply(MESSAGES.member.sticker.takeNoSaved);
-        const dataTake = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+        const dataTake = await optimizer.loadJsonWithCache(filePath, {});
+        if (!Object.keys(dataTake).length) return reply(MESSAGES.member.sticker.takeNoSaved);
         if (!dataTake[sender]) return reply(MESSAGES.member.sticker.takeMissingSaved);
         
         const { author, pack } = dataTake[sender];

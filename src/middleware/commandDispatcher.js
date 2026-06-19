@@ -39,18 +39,19 @@ export async function dispatchCommand(ctx) {
       const commandName = command || body.trim().slice(groupPrefix.length).split(/ +/).shift().trim();
       const topSimilar = getTopSimilarCommands(commandName);
       const totalCommands = getTotalCommands();
+      const messages = MESSAGES.middleware.commandDispatcher;
       
-      let msg = `📊 *Total de comandos:* ${totalCommands}\n\n`;
+      let msg = messages.notFoundTotal(totalCommands);
       if (topSimilar.length > 0) {
-        msg += '💡 *Você quis dizer?*\n';
+        msg += messages.notFoundSimilarHeader;
         topSimilar.forEach((cmd, i) => {
           const bar = '▰'.repeat(Math.floor(cmd.similarity / 10)) + '▱'.repeat(10 - Math.floor(cmd.similarity / 10));
-          msg += `${i + 1}. ${groupPrefix}${cmd.command}\n   📊 ${cmd.similarity}% ${bar}\n\n`;
+          msg += messages.similarityLine(i + 1, groupPrefix, cmd.command, cmd.similarity, bar);
         });
       } else {
-        msg += `💡 Nenhum similar encontrado\n✨ Use ${groupPrefix}menu para ver todos\n\n`;
+        msg += messages.notFoundNoSimilar(groupPrefix);
       }
-      msg += '💭 Verifique se digitou corretamente!';
+      msg += messages.notFoundFooter;
       
       try {
         await reply(msg);

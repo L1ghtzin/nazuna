@@ -19,11 +19,13 @@ export default {
       try {
         const { spawn } = await import('child_process');
         const pathz = await import('path');
-        const fs = await import('fs');
+        const fs = await import('fs/promises');
         
         const updateScriptPath = pathz.join(process.cwd(), 'src', '.scripts', 'update.js');
 
-        if (!fs.existsSync(updateScriptPath)) {
+        try {
+          await fs.access(updateScriptPath);
+        } catch {
           return reply(MESSAGES.owner.system_management.update.scriptNotFound);
         }
 

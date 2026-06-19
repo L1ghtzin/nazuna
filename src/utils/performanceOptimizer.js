@@ -474,8 +474,10 @@ class PerformanceOptimizer {
    */
   invalidateJson(filePath) {
     const cacheKey = `json:${filePath}`;
+    const fileKey = `file:${filePath}`;
     const existsKey = `exists:${filePath}`;
     this.fileCache.delete(cacheKey);
+    this.fileCache.delete(fileKey);
     this.fileCache.delete(existsKey);
   }
 
