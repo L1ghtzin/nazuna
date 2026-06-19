@@ -180,7 +180,7 @@ export default {
         
         for (const id of groups) {
           try {
-            await bot.sendMessage(id, { text: `[📡 MENSAGEM DO DONO]\n\n${messageText}` });
+            await bot.sendMessage(id, { text: MESSAGES.owner.owner_broadcast.divdono.send.messageFormat(messageText) });
             success++;
             await new Promise(r => setTimeout(r, 2000));
           } catch (e) {

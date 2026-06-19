@@ -9,6 +9,7 @@ import { ownerMessages } from './messages/owner.js';
 import { middlewareMessages } from './messages/middleware.js';
 import { handlersMessages } from './messages/handlers.js';
 import { funcsMessages } from './messages/funcs.js';
+import { workersMessages } from './messages/workers.js';
 
 export const MESSAGES = {
   error: {
@@ -43,7 +44,8 @@ export const MESSAGES = {
     cancelled: "❌ Operação cancelada.",
     invalidFormat: "❌ Formato inválido! Verifique o menu para saber como usar.",
     noResults: "🔍 Nenhum resultado encontrado.",
-    unknownUser: "Usuário Desconhecido"
+    unknownUser: "Usuário Desconhecido",
+    prefixInfo: (prefix) => `ℹ️ O meu prefixo atual é: *${prefix}*\n\nPara ver meus comandos, digite: *${prefix}menu*`
   },
   rpg: rpgMessages,
   admin: adminMessages,
@@ -52,6 +54,7 @@ export const MESSAGES = {
   middleware: middlewareMessages,
   handlers: handlersMessages,
   funcs: funcsMessages,
+  workers: workersMessages,
   tools: {
     ping: (statusEmoji, speed, statusCor, qualidade, uptimeBot) => `╭⊱ ⚡ *STATUS DA CONEXÃO* ⚡ ⊱╮
 │

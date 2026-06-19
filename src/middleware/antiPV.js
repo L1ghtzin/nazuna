@@ -12,6 +12,7 @@
  * @param {function} reply - Função para enviar resposta
  * @returns {Promise<boolean>} Retorna true se a mensagem foi bloqueada pelo AntiPV
  */
+import { MESSAGES } from '../utils/messages.js';
 export async function handleAntiPV(bot, sender, command, isGroup, isCmd, isOwner, isPremium, antipvData, reply) {
   // Se for grupo, AntiPV não se aplica
   if (isGroup) return false;
@@ -27,7 +28,7 @@ export async function handleAntiPV(bot, sender, command, isGroup, isCmd, isOwner
   // Se for autorizado, libera
   if (isOwner || isPremium || isTm2Command) return false;
 
-  const defaultMsg = antipvData.message || '🚫 Este comando só funciona em grupos!';
+  const defaultMsg = antipvData.message || MESSAGES.middleware.antiPV.defaultMsg;
 
   // --- MODO 1: ANTIPV (Ignora e avisa) ---
   if (antipvData.mode === 'antipv') {
@@ -50,7 +51,7 @@ export async function handleAntiPV(bot, sender, command, isGroup, isCmd, isOwner
   
   // --- MODO 4: ANTIPV4 (Bloqueio total) ---
   if (antipvData.mode === 'antipv4') {
-    await reply(defaultMsg + '\n\n⚠️ Você será bloqueado.');
+    await reply(defaultMsg + MESSAGES.middleware.antiPV.blockWarning);
     await new Promise(r => setTimeout(r, 2000));
     await bot.updateBlockStatus(sender, 'block');
     return true;

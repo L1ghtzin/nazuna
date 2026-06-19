@@ -127,7 +127,7 @@ export default {
           if (str.includes('TRIGGER_ALREADY_UPDATED')) {
             alreadyUpdated = true;
             if (sentMsg?.key) {
-              await bot.sendMessage(from, { edit: sentMsg.key, text: `✅ *O BOT JÁ ESTÁ NA VERSÃO MAIS RECENTE!*\n\nNenhuma atualização necessária no momento.` }).catch(() => {});
+              await bot.sendMessage(from, { edit: sentMsg.key, text: MESSAGES.owner.system_management.update.alreadyUpdated }).catch(() => {});
             }
             return;
           }
@@ -171,7 +171,7 @@ export default {
           } else {
             const errText = MESSAGES.owner.system_management.update.finishedError(code);
             if (sentMsg?.key) {
-              await bot.sendMessage(from, { edit: sentMsg.key, text: `❌ *FALHA NA ATUALIZAÇÃO (Código ${code})*\n\n${errText}` }).catch(() => {});
+              await bot.sendMessage(from, { edit: sentMsg.key, text: MESSAGES.owner.system_management.update.finishedErrorMsg(code, errText) }).catch(() => {});
             } else {
               reply(errText).catch(() => {});
             }

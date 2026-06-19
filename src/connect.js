@@ -23,6 +23,7 @@ import { loadGroupData } from './utils/groupManager.js';
 import { processAntiStealth } from './middleware/antiStealth.js';
 import { recordMessageEnvelope } from './utils/messageEnvelopeRegistry.js';
 import { hasPaymentMessage } from './utils/paymentMessage.js';
+import { MESSAGES } from './utils/messages.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -87,7 +88,7 @@ async function initializeOptimizedCaches(ChainySock) {
             /*
                 Vai receber apenas os ids expirados
             */
-            await ChainySock.sendMessage(dataCaptcha.groupId, { text: `⚠️ @${dataCaptcha.idOrigin.split('@')[0]} não resolveu o captcha a tempo e foi removido.` });
+            await ChainySock.sendMessage(dataCaptcha.groupId, { text: MESSAGES.middleware.captcha.expired(dataCaptcha.idOrigin.split('@')[0]), mentions: [dataCaptcha.idOrigin] });
             await ChainySock.groupParticipantsUpdate(dataCaptcha.groupId, [dataCaptcha.idOrigin], 'remove').catch(() => { });
         };
         await initCaptchaIndex(requestCaptchaMsg);

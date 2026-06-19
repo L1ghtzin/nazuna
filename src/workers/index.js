@@ -6,6 +6,7 @@ import { GRUPOS_DIR } from '../utils/paths.js';
 import { normalizeScheduleTime, getTodayStr, recordScheduleRun, hasRunForScheduleToday } from '../utils/timeHelpers.js';
 import { ensureDirectoryExists, isGroupId } from '../utils/helpers.js';
 import { PerformanceOptimizer, getPerformanceOptimizer } from '../utils/performanceOptimizer.js';
+import { MESSAGES } from '../utils/messages.js';
 
 // Reusing global optimizer if possible, or instantiating a local one
 const optimizer = getPerformanceOptimizer();
@@ -103,7 +104,7 @@ export const scheduleGroupJob = (groupId, type, timeStr, bot) => {
         if (type === 'open') {
           try {
             await bot.groupSettingUpdate(groupId, 'not_announcement');
-            await bot.sendMessage(groupId, { text: '🔓 Grupo aberto automaticamente pelo agendamento diário.' });
+            await bot.sendMessage(groupId, { text: MESSAGES.workers.schedule.groupOpened });
             console.log(`[Cron] ✅ Grupo ABERTO automaticamente: ${groupId.substring(0, 15)}... às ${normalized}`);
           } catch (e) {
             console.error(`[Cron Error] open ${groupId}:`, e.message || e);
@@ -115,7 +116,7 @@ export const scheduleGroupJob = (groupId, type, timeStr, bot) => {
         } else {
           try {
             await bot.groupSettingUpdate(groupId, 'announcement');
-            await bot.sendMessage(groupId, { text: '🔒 Grupo fechado automaticamente pelo agendamento diário.' });
+            await bot.sendMessage(groupId, { text: MESSAGES.workers.schedule.groupClosed });
             console.log(`[Cron] ✅ Grupo FECHADO automaticamente: ${groupId.substring(0, 15)}... às ${normalized}`);
           } catch (e) {
             console.error(`[Cron Error] close ${groupId}:`, e.message || e);
@@ -236,12 +237,11 @@ const startAutoHorariosWorker = (bot) => {
               { name: "💰 MONEY MAKER", hours: [6, 11, 12, 17, 20, 22, 1] }
             ];
             
-            let responseText = `┏━━━━━━━━━━━━━━━━━━━━━━━━┓\n`;
-            responseText += `┃    🎰 *HORÁRIOS PAGANTES*   ┃\n`;
-            responseText += `┗━━━━━━━━━━━━━━━━━━━━━━━━┛\n\n`;
-            responseText += `🕐 *Atualizado automaticamente:*\n`;
-            responseText += `📅 ${currentBrazilTime.toLocaleDateString('pt-BR')}\n`;
-            responseText += `⏰ ${currentBrazilTime.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}\n\n`;
+            let responseText = MESSAGES.workers.autoHorarios.header;
+            responseText += MESSAGES.workers.autoHorarios.updated(
+              currentBrazilTime.toLocaleDateString('pt-BR'),
+              currentBrazilTime.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+            );
             
             games.forEach(game => {
               const todayHours = game.hours.map(baseHour => {
@@ -258,23 +258,12 @@ const startAutoHorariosWorker = (bot) => {
             });
             
             if (config.link) {
-              responseText += `┏━━━━━━━━━━━━━━━━━━━━━━━━┓\n`;
-              responseText += `┃      🔗 *LINK DE APOSTAS*     ┃\n`;
-              responseText += `┗━━━━━━━━━━━━━━━━━━━━━━━━┛\n\n`;
+              responseText += MESSAGES.workers.autoHorarios.linkHeader;
               responseText += `${config.link}\n\n`;
             }
             
-            responseText += `⚠️ *AVISOS IMPORTANTES:*\n`;
-            responseText += `🔞 *Conteúdo para maiores de 18 anos*\n`;
-            responseText += `📊 Estes são horários estimados\n`;
-            responseText += `🎯 Jogue com responsabilidade\n`;
-            responseText += `💰 Nunca aposte mais do que pode perder\n`;
-            responseText += `🆘 Procure ajuda se tiver vício em jogos\n`;
-            responseText += `⚖️ Apostas podem causar dependência\n\n`;
-            responseText += `┏━━━━━━━━━━━━━━━━━━━━━━━━┓\n`;
-            responseText += `┃  🍀 *BOA SORTE E JOGUE*    ┃\n`;
-            responseText += `┃     *CONSCIENTEMENTE!* 🍀  ┃\n`;
-            responseText += `┗━━━━━━━━━━━━━━━━━━━━━━━━┛`;
+            responseText += MESSAGES.workers.autoHorarios.warnings;
+            responseText += MESSAGES.workers.autoHorarios.footer;
             
             await bot.sendMessage(chatId, { text: responseText });
             

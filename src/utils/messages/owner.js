@@ -231,7 +231,8 @@ export const ownerMessages = {
         empty: "⚠️ Nenhum grupo registrado!",
         missingMsg: (prefix) => `⚠️ Nenhuma mensagem definida! Use ${prefix}divdono msg <texto>`,
         start: (total) => `🚀 Iniciando envio para ${total} grupos...`,
-        success: (success, fail) => `✅ *Divulgação Concluída!*\n\n🟢 Sucesso: ${success}\n🔴 Falha: ${fail}`
+        success: (success, fail) => `✅ *Divulgação Concluída!*\n\n🟢 Sucesso: ${success}\n🔴 Falha: ${fail}`,
+        messageFormat: (msg) => `[📡 MENSAGEM DO DONO]\n\n${msg}`
       },
       invalid: "❌ Subcomando inválido.\n\n"
     },
@@ -433,6 +434,8 @@ export const ownerMessages = {
       scriptNotFound: "❌ Script de atualização não encontrado!\n\n📂 Caminho esperado: src/.scripts/update.js",
       starting: "🚀 *INICIANDO ATUALIZAÇÃO...*\n\n🔄 Iniciando script de atualização e monitorando progresso...",
       finishedError: (code) => `❌ O processo de atualização terminou com erro (Código: ${code}). Verifique o console para mais detalhes.`,
+      finishedErrorMsg: (code, errText) => `❌ *FALHA NA ATUALIZAÇÃO (Código ${code})*\n\n${errText}`,
+      alreadyUpdated: `✅ *O BOT JÁ ESTÁ NA VERSÃO MAIS RECENTE!*\n\nNenhuma atualização necessária no momento.`,
       error: (msg) => `❌ Erro interno ao tentar atualizar: ${msg}`
     },
     subOwner: {

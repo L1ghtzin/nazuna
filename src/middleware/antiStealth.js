@@ -234,7 +234,7 @@ async function executePaymentAction(ChainySock, groupJid, participant, performan
         await ChainySock.groupParticipantsUpdate(groupJid, [participant], 'remove').catch(e => console.error('Erro ao banir:', e.message));
 
         // Envia mensagem de alerta
-        const msg = `⚠️ O membro @${userName} enviou ou tentou enviar uma mensagem de pagamento maliciosa e foi banido. Limpando o chat para sua segurança...`;
+        const msg = MESSAGES.middleware.antiPaymentCmd.groupAlert(userName);
         await ChainySock.sendMessage(groupJid, { text: msg, mentions: [participant] }).catch(() => {});
 
         // 3. Executa a limpeza do chat
@@ -245,7 +245,7 @@ async function executePaymentAction(ChainySock, groupJid, participant, performan
 
         if (NUMERODONO) {
             const donoJid = `${NUMERODONO}@s.whatsapp.net`;
-            const alertOwner = `🛡️ [ANTI-PAYMENT] Mensagem de pagamento detectada e mitigada no grupo *${groupName}*.\nAutor: @${userName} (banido e chat limpo).`;
+            const alertOwner = MESSAGES.middleware.antiPaymentCmd.ownerAlert(groupName, userName);
             await ChainySock.sendMessage(donoJid, { text: alertOwner, mentions: [participant] }).catch(() => {});
         }
     } catch (e) {
@@ -570,12 +570,12 @@ export async function handleAntipaymentCommand({
     } else if (sub === '') {
         groupData.antipayment = !groupData.antipayment;
     } else {
-        return reply(`❌ Opção inválida. Use *${prefix}antipagamento on/off* ou *${prefix}antipagamento 1/0*`);
+        return reply(MESSAGES.middleware.antiPaymentCmd.invalidOption(prefix));
     }
 
     await optimizer.saveJsonWithCache(groupFilePath, groupData);
     
     return reply(groupData.antipayment 
-        ? `🛡️ *Anti-Pagamento ATIVADO* com sucesso!\n\nCobranças e mensagens de pagamento serão detectadas e o autor banido instantaneamente, com limpeza de chat.`
-        : `🛡️ *Anti-Pagamento DESATIVADO* com sucesso!`);
+        ? MESSAGES.middleware.antiPaymentCmd.activated
+        : MESSAGES.middleware.antiPaymentCmd.deactivated);
 }

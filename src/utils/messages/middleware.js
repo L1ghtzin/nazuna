@@ -26,6 +26,10 @@ export const middlewareMessages = {
     floodCooldown: (seconds) => `⏳ Aguarde ${seconds} segundos antes de usar outro comando.`,
     documentRemoved: (user) => `📄 @${user}, documentos não são permitidos. Você foi removido do grupo.`
   },
+  antiPV: {
+    defaultMsg: "🚫 Este comando só funciona em grupos!",
+    blockWarning: "\n\n⚠️ Você será bloqueado."
+  },
   captcha: {
     expired: (user) => `⏰ @${user} demorou demais e foi removido.`,
     released: (user) => `✅ @${user} liberado com sucesso!`
@@ -105,6 +109,13 @@ export const middlewareMessages = {
       `• _${prefix}antistealth acao_ — Configurar ação\n` +
       `• _${prefix}antistealth strikes_ — Configurar limite de strikes\n` +
       `• _${prefix}antistealth acao abrir_ — Abre o grupo`
+  },
+  antiPaymentCmd: {
+    groupAlert: (user) => `⚠️ O membro @${user} enviou ou tentou enviar uma mensagem de pagamento maliciosa e foi banido. Limpando o chat para sua segurança...`,
+    ownerAlert: (group, user) => `🛡️ [ANTI-PAYMENT] Mensagem de pagamento detectada e mitigada no grupo *${group}*.\nAutor: @${user} (banido e chat limpo).`,
+    invalidOption: (prefix) => `❌ Opção inválida. Use *${prefix}antipagamento on/off* ou *${prefix}antipagamento 1/0*`,
+    activated: `🛡️ *Anti-Pagamento ATIVADO* com sucesso!\n\nCobranças e mensagens de pagamento serão detectadas e o autor banido instantaneamente, com limpeza de chat.`,
+    deactivated: `🛡️ *Anti-Pagamento DESATIVADO* com sucesso!`
   },
   joinRequest: {
     captchaChallenge: (groupName, num1, num2) => 

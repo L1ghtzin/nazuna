@@ -122,15 +122,13 @@ export async function execDynamicCommand(commandName, paramsHandler) {
     
     const { isOwner, isGroupAdmin, isBotAdmin, reply, isGroup } = paramsHandler;
     
-    // Verificações de permissão com base na pasta (tipo) do comando
     if (type === 'owner' && !isOwner && !paramsHandler.isOwnerOrSub) {
-        await reply("🚫 Este comando é apenas para o dono ou subdonos!");
+        await reply(paramsHandler.MESSAGES.permission.subOwnerOnly);
         return true; // Retorna true para indicar que já processou
     }
-    
     if (type === 'admin') {
         if (!isGroup) {
-            await reply("Isso só pode ser usado em grupo ❌");
+            await reply(paramsHandler.MESSAGES.permission.groupOnly);
             return true;
         }
     }
