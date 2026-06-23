@@ -883,6 +883,7 @@ export async function buildMessageContext(bot, info, store, messagesCache, renta
       DATABASE_DIR, GRUPOS_DIR, USERS_DIR, DONO_DIR, PARCERIAS_DIR, TMP_DIR,
       CONFIG_FILE, ECONOMY_FILE, LEVELING_FILE,
       // Database functions
+      loadLevelingSafe, saveLevelingSafe, getLevelingUser, validateLevelingUser, calculateNextLevelXp,
       loadEconomy, saveEconomy, getEcoUser, parseAmount, fmt, timeLeft, checkEcoLevelUp, updateQuestProgress,
       loadReminders, saveReminders, formatUptime, getTotalCommands,
       loadRentalData, saveRentalData, setGroupRental, extendGroupRental,
