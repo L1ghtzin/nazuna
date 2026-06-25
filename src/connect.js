@@ -496,6 +496,32 @@ async function createBotSocket(authDir) {
         
         attachMessagesListener();
         setupMessagesCacheCleanup(); // Inicia o sistema de limpeza de cache
+
+        // Verifica se há alguma atualização pendente de finalização visual
+        try {
+            const pendingUpdatePath = path.join(process.cwd(), 'dados', 'database', 'pendingUpdate.json');
+            if (existsSync(pendingUpdatePath)) {
+                const data = JSON.parse(readFileSync(pendingUpdatePath, 'utf8'));
+                if (data && data.key && data.from) {
+                    const successText = `⚙️ *PROCESSO DE ATUALIZAÇÃO DO BOT* ⚙️\n\n` +
+                      `✅ *1.* 🔍 Verificando requisitos\n` +
+                      `✅ *2.* 📁 Criando backup\n` +
+                      `✅ *3.* 📥 Baixando do GitHub\n` +
+                      `✅ *4.* 🧹 Limpando arquivos\n` +
+                      `✅ *5.* 🚀 Aplicando nova versão\n` +
+                      `✅ *6.* 📂 Restaurando backup\n` +
+                      `✅ *7.* 📦 Instalando dependências\n` +
+                      `✅ *8.* 🎉 Finalizando atualização\n\n` +
+                      `🎉 *ATUALIZAÇÃO CONCLUÍDA COM SUCESSO!*`;
+                    
+                    await ChainySock.sendMessage(data.from, { edit: data.key, text: successText });
+                    console.log('✅ Mensagem de atualização finalizada com sucesso!');
+                }
+                await fs.unlink(pendingUpdatePath).catch(() => {});
+            }
+        } catch (updateErr) {
+            console.error('❌ Erro ao finalizar mensagem de atualização pendente:', updateErr.message);
+        }
         
         // Envia mensagem de boas-vindas para o dono
         try {

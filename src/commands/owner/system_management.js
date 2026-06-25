@@ -102,8 +102,19 @@ export default {
 
         // Envia mensagem inicial
         const sentMsgPromise = reply(buildStatusText());
-        sentMsgPromise.then(msg => {
+        sentMsgPromise.then(async (msg) => {
           sentMsg = msg;
+          if (msg && msg.key) {
+            try {
+              const pendingUpdatePath = pathz.join(process.cwd(), 'dados', 'database', 'pendingUpdate.json');
+              await fs.writeFile(pendingUpdatePath, JSON.stringify({
+                key: msg.key,
+                from: from
+              }, null, 2));
+            } catch (err) {
+              console.error('Erro ao salvar pendingUpdate.json:', err.message);
+            }
+          }
           if (activeTriggers.size > 0) {
             updateMessage();
           }
@@ -164,6 +175,10 @@ export default {
             }
             setTimeout(() => process.exit(0), 5000);
           } else {
+            try {
+              const pendingUpdatePath = pathz.join(process.cwd(), 'dados', 'database', 'pendingUpdate.json');
+              await fs.unlink(pendingUpdatePath).catch(() => {});
+            } catch {}
             const errText = MESSAGES.owner.system_management.update.finishedError(code);
             if (sentMsg?.key) {
               await bot.sendMessage(from, { edit: sentMsg.key, text: MESSAGES.owner.system_management.update.finishedErrorMsg(code, errText) }).catch(() => {});
@@ -174,6 +189,12 @@ export default {
         });
 
       } catch (e) {
+        try {
+          const pathz = await import('path');
+          const fs = await import('fs/promises');
+          const pendingUpdatePath = pathz.join(process.cwd(), 'dados', 'database', 'pendingUpdate.json');
+          await fs.unlink(pendingUpdatePath).catch(() => {});
+        } catch {}
         console.error('Erro ao iniciar spawn de atualização:', e);
         return reply(MESSAGES.owner.system_management.update.error(e.message));
       }
