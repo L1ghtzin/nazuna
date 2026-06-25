@@ -13,7 +13,7 @@ import { fileURLToPath } from 'url';
 import PerformanceOptimizer from './utils/performanceOptimizer.js';
 import RentalExpirationManager from './utils/rentalExpirationManager.js';
 import { loadMsgBotOn } from './utils/database.js';
-import { buildUserId } from './utils/helpers.js';
+import { buildUserId, normalizeMessageContent } from './utils/helpers.js';
 import { initCaptchaIndex, loadCaptchaJson, saveCaptchaJson } from './utils/captchaIndex.js';
 import CaptchaIndex from './utils/captchaIndex.js';
 import MessageQueue from './utils/messageQueue.js';
@@ -264,6 +264,13 @@ async function createBotSocket(authDir) {
     signalRepository,
     logger
     });
+
+    // Envelopamento do sendMessage para converter LIDs em JIDs em menções
+    const originalSendMessage = ChainySock.sendMessage.bind(ChainySock);
+    ChainySock.sendMessage = async (jid, content, options) => {
+      const normalizedContent = normalizeMessageContent(content);
+      return originalSendMessage(jid, normalizedContent, options);
+    };
 
     sock = ChainySock;
 

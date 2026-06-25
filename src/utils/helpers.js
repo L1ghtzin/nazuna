@@ -118,6 +118,48 @@ function getJidFromLid(lid) {
   return null;
 }
 
+// Normaliza o conteúdo de uma mensagem para que menções usando LID sejam convertidas em JID caso existam no cache
+function normalizeMessageContent(content) {
+  if (!content || typeof content !== 'object') return content;
+
+  // Clona o objeto de conteúdo para evitar mutar o original diretamente
+  const newContent = { ...content };
+
+  if (newContent && Array.isArray(newContent.mentions) && newContent.mentions.length > 0) {
+    const normalizedMentions = [];
+    let text = typeof newContent.text === 'string' ? newContent.text : '';
+    let caption = typeof newContent.caption === 'string' ? newContent.caption : '';
+
+    for (const mention of newContent.mentions) {
+      if (mention && typeof mention === 'string' && mention.includes('@lid')) {
+        const jid = getJidFromLid(mention);
+        if (jid) {
+          normalizedMentions.push(jid);
+          const lidNumber = mention.split('@')[0];
+          const jidNumber = jid.split('@')[0];
+          
+          if (text) {
+            text = text.replaceAll('@' + lidNumber, '@' + jidNumber);
+          }
+          if (caption) {
+            caption = caption.replaceAll('@' + lidNumber, '@' + jidNumber);
+          }
+        } else {
+          normalizedMentions.push(mention);
+        }
+      } else {
+        normalizedMentions.push(mention);
+      }
+    }
+
+    newContent.mentions = normalizedMentions;
+    if (typeof newContent.text === 'string') newContent.text = text;
+    if (typeof newContent.caption === 'string') newContent.caption = caption;
+  }
+
+  return newContent;
+}
+
 // Converte um array de IDs (JID/LID) para LID em batch
 async function convertIdsToLid(bot, ids) {
   if (!Array.isArray(ids) || ids.length === 0) return [];
@@ -421,12 +463,21 @@ const removeDeviceId = (id) => {
 // Função para extrair nome de usuário de LID/JID de forma compatível
 const getUserName = (userId) => {
   if (!userId || typeof userId !== 'string') return 'unknown';
+  
+  let targetId = userId;
   if (userId.includes('@lid')) {
-    return userId.split('@')[0];
-  } else if (userId.includes('@s.whatsapp.net')) {
-    return userId.split('@')[0];
+    const jid = getJidFromLid(userId);
+    if (jid) {
+      targetId = jid;
+    }
   }
-  return userId.split('@')[0] || userId;
+  
+  if (targetId.includes('@lid')) {
+    return targetId.split('@')[0];
+  } else if (targetId.includes('@s.whatsapp.net')) {
+    return targetId.split('@')[0];
+  }
+  return targetId.split('@')[0] || targetId;
 };
 
 // Função para obter LID a partir de JID (quando necessário para compatibilidade)
@@ -1051,6 +1102,7 @@ export {
   flushJidLidCache,
   getLidFromJidCached,
   getJidFromLid,
+  normalizeMessageContent,
   normalizeUserId,
   convertIdsToLid,
   idsMatch,
