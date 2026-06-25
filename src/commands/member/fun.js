@@ -127,7 +127,7 @@ export default {
     // --- SORTE ---
     if (command === 'sorte') {
       const target = menc_os2 || sender;
-      const name = menc_os2 ? `@${getUserName(menc_os2)}` : pushname;
+      const name = `@${getUserName(target)}`;
       const level = Math.floor(Math.random() * 101);
       const status = level >= 90 ? '🌟 SORTE LENDÁRIA!' : level >= 75 ? '🍀 Super sortudo!' : level >= 60 ? '✨ Boa sorte!' : level >= 40 ? '😐 Sorte mediana' : level >= 20 ? '😅 Pouca sorte' : '💀 AZAR TOTAL!';
       return reply(MESSAGES.member.fun.sorteStatus(name, level, status), { mentions: [target] });
