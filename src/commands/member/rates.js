@@ -27,7 +27,7 @@ export default {
         }
         
         let target = menc_os2 || sender;
-        let targetName = menc_os2 ? getUserName(menc_os2) : pushname;
+        let targetName = menc_os2 ? `@${getUserName(menc_os2)}` : pushname;
         let level = Math.floor(Math.random() * 101); // 0 a 100
         
         let gamesData = await optimizer.loadJsonWithCache(funcsDir + '/json/games.json', { games: {} });

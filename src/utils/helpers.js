@@ -118,6 +118,17 @@ function getJidFromLid(lid) {
   return null;
 }
 
+// Adiciona um mapeamento JID ↔ LID ao cache se não existir
+function addJidLidToCache(jid, lid) {
+  if (!jid || !lid || !jid.includes('@s.whatsapp.net') || !lid.includes('@lid')) return;
+  const cleanJid = removeDeviceId(jid);
+  const cleanLid = removeDeviceId(lid);
+  if (jidLidMemoryCache.get(cleanJid) !== cleanLid) {
+    jidLidMemoryCache.set(cleanJid, cleanLid);
+    cacheModified = true;
+  }
+}
+
 // Normaliza o conteúdo de uma mensagem para que menções usando LID sejam convertidas em JID caso existam no cache
 function normalizeMessageContent(content) {
   if (!content || typeof content !== 'object') return content;
@@ -1102,6 +1113,7 @@ export {
   flushJidLidCache,
   getLidFromJidCached,
   getJidFromLid,
+  addJidLidToCache,
   normalizeMessageContent,
   normalizeUserId,
   convertIdsToLid,

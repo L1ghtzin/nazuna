@@ -45,6 +45,7 @@ import {
   getUserName,
   getLidFromJid,
   getJidFromLid,
+  addJidLidToCache,
   buildUserId,
   getBotId,
   ensureDirectoryExists,
@@ -558,6 +559,16 @@ export async function buildMessageContext(bot, info, store, messagesCache, renta
     const sender_ou_n = (menc_jid2 && menc_jid2.length > 0) ? menc_jid2[0] : menc_prt || sender;
     const groupFile = buildGroupFilePath(from);
     const groupMetadata = isGroup ? await getCachedGroupMetadata(from) : {};
+    
+    // Popula o cache JID-LID com todos os membros do grupo para otimização de menções
+    if (isGroup && groupMetadata.participants) {
+      for (const participant of groupMetadata.participants) {
+        if (participant.id && participant.lid) {
+          addJidLidToCache(participant.id, participant.lid);
+        }
+      }
+    }
+
     const groupName = groupMetadata?.subject || '';
     const groupData = await loadGroupData(isGroup, from, groupFile, groupName, optimizer);
 
