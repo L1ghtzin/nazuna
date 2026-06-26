@@ -15,7 +15,8 @@ export default {
         command,
         bot,
         prefix,
-        MESSAGES 
+        MESSAGES,
+        reputation
     }) => {
         const sub = command.toLowerCase();
 
@@ -28,15 +29,14 @@ export default {
                 optimizer.invalidateGroup(from);
             }
             
-            return reply(MESSAGES.rpg.core.admin.toggle(newState));
+            return reply(MESSAGES.rpg.admin.toggle(newState));
         }
 
         if (sub === 'rpg') {
-            return reply(MESSAGES.rpg.core.admin.menu(prefix));
+            return reply(MESSAGES.rpg.admin.menu(prefix));
         }
 
         if (sub === 'denuncias' || sub === 'reports') {
-            const { reputation } = await import('../../funcs/exports.js').then(m => m.default || m);
             if (!reputation) return reply(MESSAGES.rpg.reputation.unavailable);
             return reply(reputation.getReports(from));
         }

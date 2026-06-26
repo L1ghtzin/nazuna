@@ -121,7 +121,20 @@ export const rpgMessages = {
     admin: {
       groupOnly: '💔 Este comando só funciona em grupos.',
       toggle: (status) => `⚔️ Modo RPG ${status ? 'ATIVADO' : 'DESATIVADO'} neste grupo.\n\n${status ? '🎮 Agora os membros podem usar todos os comandos RPG!' : '🔒 Comandos RPG desativados.'}`,
-      menu: (prefix) => `📖 Use o comando *${prefix}menurpg* para ver todos os comandos de RPG!`
+      menu: (prefix) => `📖 Use o comando *${prefix}menurpg* para ver todos os comandos de RPG!`,
+      noPlayers: '📊 Nenhum jogador registrado.',
+      resetSuccess: '⚠️ Sistema RPG resetado globalmente!',
+      rpgaddUsage: (prefix) => `💔 Uso: ${prefix}rpgadd @user <valor>`,
+      rpgaddSuccess: (amount, target) => `💰 Adicionado ${amount} para @${target}`,
+      rpgremoveUsage: (prefix) => `💔 Uso: ${prefix}rpgremove @user <valor>`,
+      rpgremoveSuccess: (amount, target) => `💸 Removido ${amount} de @${target}`,
+      rpgsetlevelUsage: (prefix) => `💔 Uso: ${prefix}rpgsetlevel @user <nivel>`,
+      rpgsetlevelSuccess: (level, target) => `📊 Nível de @${target} definido para ${level}`,
+      mentionPlayer: '💔 Marque um usuário!',
+      playerResetSuccess: (target) => `🗑️ Jogador @${target} resetado.`,
+      playerNotFound: '💔 Jogador não encontrado.',
+      stats: (users, money) => `📊 *STATS RPG*\n\n👥 Jogadores: ${users}\n💰 Circulação: ${money}`,
+      resetConfirm: (prefix) => `⚠️ Use ${prefix}rpgresetglobal confirmar para resetar TUDO.`
     },
     prestige: {
       info: (level, bonus, currentLevel, reqLevel, wallet, reqMoney, prefix) => `╭━━━⊱ ✨ *PRESTIGE* ⊱━━━╮\n│ Nível Atual: ${level}\n│ Bônus: +${bonus}% ganhos\n╰━━━━━━━━━━━━━━━━━━━━╯\n\n🚀 *REQUISITOS PARA EVOLUIR:*\n• Nível: ${currentLevel}/${reqLevel}\n• Dinheiro: ${wallet}/${reqMoney}\n\n⚠️ *AVISO:* Evoluir resetará seu nível e dinheiro, mas dará bônus permanentes!\n\n💡 Use ${prefix}evoluir confirmar para prosseguir.`,
@@ -347,22 +360,7 @@ export const rpgMessages = {
     removeInviteSuccess: (target) => `🗑️ Convite removido para @${target}.`
   },
   
-  admin: {
-    noPlayers: '📊 Nenhum jogador registrado.',
-    resetSuccess: '⚠️ Sistema RPG resetado globalmente!',
-    rpgaddUsage: (prefix) => `💔 Uso: ${prefix}rpgadd @user <valor>`,
-    rpgaddSuccess: (amount, target) => `💰 Adicionado ${amount} para @${target}`,
-    rpgremoveUsage: (prefix) => `💔 Uso: ${prefix}rpgremove @user <valor>`,
-    rpgremoveSuccess: (amount, target) => `💸 Removido ${amount} de @${target}`,
-    rpgsetlevelUsage: (prefix) => `💔 Uso: ${prefix}rpgsetlevel @user <nivel>`,
-    rpgsetlevelSuccess: (level, target) => `📊 Nível de @${target} definido para ${level}`,
-    mentionPlayer: '💔 Marque um usuário!',
-    playerResetSuccess: (target) => `🗑️ Jogador @${target} resetado.`,
-    playerNotFound: '💔 Jogador não encontrado.',
-    stats: (users, money) => `📊 *STATS RPG*\n\n👥 Jogadores: ${users}\n💰 Circulação: ${money}`,
-    resetConfirm: (prefix) => `⚠️ Use ${prefix}rpgresetglobal confirmar para resetar TUDO.`
-  },
-  
+
   crafting: {
     maxEnchant: '❌ Sua arma já está no encantamento máximo (+10)!',
     confirmNeed: '❌ Use "confirmar" para prosseguir',
