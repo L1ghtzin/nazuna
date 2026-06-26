@@ -388,53 +388,9 @@ export async function processAntiStealth(ChainySock, m, performanceOptimizer) {
             const groupFilePath = join(GRUPOS_DIR, `${groupJid}.json`);
             const groupData = await loadGroupData(true, groupJid, groupFilePath, 'Grupo', performanceOptimizer);
 
-            // --- DETECÇÃO DE ANTI-PAGAMENTO DIRETO OU CITAÇÃO ---
-            if (groupData?.antipayment) {
-                // 1. Mensagem de pagamento direta
-                if (hasPaymentMessage(info)) {
-                    if (!shouldSkipParticipant(participant, botIdPrefix, groupData)) {
-                        console.log(`[ANTI-PAYMENT] 🔴 Mensagem de pagamento direta detectada de @${participant.split('@')[0]} no grupo ${groupJid}`);
-                        await executePaymentAction(ChainySock, groupJid, participant, performanceOptimizer);
-                        continue;
-                    }
-                }
-
-                // 2. Citação de mensagem de pagamento (Anti-Forja)
-                const quotedPayment = getQuotedPaymentContext(info);
-                if (quotedPayment?.participant) {
-                    const authorLid = quotedPayment.participant;
-                    if (!shouldSkipParticipant(authorLid, botIdPrefix, groupData)) {
-                        const { corroborated, contradicted } = verifyQuotedAuthor({
-                            groupJid,
-                            stanzaId: quotedPayment.stanzaId,
-                            participant: authorLid,
-                        });
-
-                        if (corroborated) {
-                            console.log(`[ANTI-PAYMENT] 🔴 Marcação de pagamento corroborada! Autor original: @${authorLid.split('@')[0]}`);
-                            if (quotedPayment.stanzaId) {
-                                // Tenta apagar a mensagem original
-                                await ChainySock.sendMessage(groupJid, {
-                                    delete: {
-                                        remoteJid: groupJid,
-                                        fromMe: false,
-                                        id: quotedPayment.stanzaId,
-                                        participant: authorLid,
-                                    }
-                                }).catch(() => {});
-                            }
-                            await executePaymentAction(ChainySock, groupJid, authorLid, performanceOptimizer);
-                            continue;
-                        } else {
-                            if (DEBUG_MODE) {
-                                console.log(`[ANTI-PAYMENT] ⚠️ Citação de pagamento não corroborada (${contradicted ? 'forja' : 'não vista'}). Autor @${authorLid.split('@')[0]} preservado.`);
-                            }
-                        }
-                    }
-                }
-            }
-
             // --- DETECÇÃO DE ANTI-STEALTH (Ciphertext / Falha de Decifragem) ---
+            // Nota: Se uma trava de pagamento chegar ofuscada/criptografada, ela falhará na decriptação
+            // e cairá perfeitamente aqui nesta proteção de Stealth!
             if (groupData?.antistealth) {
                 if (!isDecryptionFailure(info) && info.message) {
                     if (msgId) handleResolvedLag(msgId, groupJid, participant);

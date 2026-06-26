@@ -1,8 +1,31 @@
 import { hasPaymentMessage } from '../../utils/securityHelpers.js';
 import { unwrapMessage } from '../../utils/messageHelpers.js';
+import { verifyQuotedAuthor } from '../../utils/messageEnvelopeRegistry.js';
 import { sendCleanChat } from '../../utils/cleanChat.js';
 import { loadLevelingSafe, getLevelingUser } from '../../utils/database/leveling.js';
 import fs from 'fs';
+
+const BAN_COOLDOWN_MS = 10_000;
+const recentBans = new Map();
+const CACHE_CLEANUP_INTERVAL_MS = 60_000;
+
+const cleanupInterval = setInterval(() => {
+    const now = Date.now();
+    for (const [key, timestamp] of recentBans) {
+        if (now - timestamp > BAN_COOLDOWN_MS) recentBans.delete(key);
+    }
+}, CACHE_CLEANUP_INTERVAL_MS);
+if (cleanupInterval.unref) cleanupInterval.unref();
+
+function isOnCooldown(groupJid, participant) {
+    const banKey = `${groupJid}:${participant}`;
+    const lastBan = recentBans.get(banKey);
+    return lastBan && Date.now() - lastBan < BAN_COOLDOWN_MS;
+}
+
+function registerCooldown(groupJid, participant) {
+    recentBans.set(`${groupJid}:${participant}`, Date.now());
+}
 
 /**
  * Executa um step do anti-payment com error handling isolado.
@@ -39,21 +62,41 @@ export async function handleAntiPayment(context) {
         if (idInArray && groupAdmins && idInArray(targetUser, groupAdmins)) return false;
         if (isUserWhitelisted && isUserWhitelisted(targetUser, 'antipayment')) return false;
 
-        // Proteção contra falsificação de quote (marcar mensagem fake para banir inocentes)
-        // Se o alvo for um veterano (muitas mensagens), ignoramos o banimento por quote.
-        const levelingData = loadLevelingSafe();
-        const targetData = getLevelingUser(levelingData, targetUser);
-        if ((targetData.messages || 0) > 50) {
-            await runAntiPaymentStep(() => bot.sendMessage(from, { 
-                text: MESSAGES.security.antiPaymentFakeQuote(targetUser.split('@')[0], targetData.messages), 
-                mentions: [targetUser] 
-            }), 'Erro ao enviar aviso de imunidade.');
-            return false;
+        // Proteção Avançada Anti-Forja (Envelope Registry)
+        const stanzaId = actualMessage?.extendedTextMessage?.contextInfo?.stanzaId;
+        if (stanzaId) {
+            const { corroborated, contradicted } = verifyQuotedAuthor({
+                groupJid: from,
+                stanzaId,
+                participant: targetUser,
+            });
+
+            if (!corroborated) {
+                console.log(`[ANTI-PAYMENT] ⚠️ Citação de pagamento não corroborada (${contradicted ? 'forja' : 'não vista'}). Autor @${targetUser.split('@')[0]} preservado.`);
+                return false;
+            }
+            
+            console.log(`[ANTI-PAYMENT] 🔴 Marcação de pagamento corroborada! Autor original: @${targetUser.split('@')[0]}`);
+            
+            if (isBotAdmin) {
+                // Tenta apagar a mensagem original
+                await runAntiPaymentStep(() => bot.sendMessage(from, {
+                    delete: {
+                        remoteJid: from,
+                        fromMe: false,
+                        id: stanzaId,
+                        participant: targetUser,
+                    }
+                }), 'Erro ao apagar a mensagem original.');
+            }
         }
     } else {
         // Se foi o próprio sender que enviou a trava
         if (isGroupAdmin || isOwner || (isUserWhitelisted && isUserWhitelisted(sender, 'antipayment'))) return false;
     }
+
+    if (isOnCooldown(from, targetUser)) return false;
+    registerCooldown(from, targetUser);
 
     if (isBotAdmin) {
         await runAntiPaymentStep(() => bot.groupSettingUpdate(from, 'announcement'), 'Erro ao fechar o grupo.');
