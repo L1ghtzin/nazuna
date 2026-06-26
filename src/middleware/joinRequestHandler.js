@@ -1,7 +1,100 @@
 import pathz from 'path';
 import { readJsonFileAsync, writeJsonFileAsync } from '../utils/asyncFs.js';
 import { addCaptcha, removeCaptcha } from '../utils/captchaIndex.js';
+import { addJidLidToCache, getJidFromLid, getUserName } from '../utils/helpers.js';
 import { MESSAGES } from '../utils/messages.js';
+
+const normalizeWhatsAppId = (value, defaultSuffix = '') => {
+  if (!value) return '';
+
+  const textValue = String(value).trim().replace(/^['"]|['"]$/g, '');
+  if (!textValue || textValue === '[object Object]') return '';
+
+  if (textValue.includes('@')) {
+    const baseId = textValue.split(':')[0];
+    if (textValue.includes('@lid')) return `${baseId.split('@')[0]}@lid`;
+    if (textValue.includes('@s.whatsapp.net')) return `${baseId.split('@')[0]}@s.whatsapp.net`;
+    return textValue;
+  }
+
+  if (defaultSuffix && /^\d+$/.test(textValue)) {
+    return `${textValue}${defaultSuffix}`;
+  }
+
+  return textValue;
+};
+
+const assignParticipantField = (ids, key, value) => {
+  const normalizedKey = String(key || '').toLowerCase();
+  const defaultSuffix = normalizedKey === 'lid' ? '@lid' : '@s.whatsapp.net';
+  const normalizedId = normalizeWhatsAppId(value, defaultSuffix);
+  if (!normalizedId) return;
+
+  if (normalizedId.endsWith('@lid')) {
+    ids.lid = ids.lid || normalizedId;
+    return;
+  }
+
+  if (normalizedId.endsWith('@s.whatsapp.net')) {
+    ids.id = ids.id || normalizedId;
+    return;
+  }
+
+  ids.participant = ids.participant || normalizedId;
+};
+
+const parseParticipantStringObject = (rawParticipant) => {
+  const textValue = rawParticipant.trim();
+
+  try {
+    return JSON.parse(textValue);
+  } catch {
+    const parsedFields = {};
+    const fieldRegex = /["']?(jid|pn|id|participantPn|participant|lid)["']?\s*:\s*["']?([^"',}\s]+)["']?/gi;
+    let fieldMatch;
+
+    while ((fieldMatch = fieldRegex.exec(textValue)) !== null) {
+      parsedFields[fieldMatch[1]] = fieldMatch[2];
+    }
+
+    return Object.keys(parsedFields).length ? parsedFields : null;
+  }
+};
+
+export const parseJoinRequestParticipant = (rawParticipant) => {
+  const ids = { id: '', lid: '', participant: '' };
+  const parsedParticipant = typeof rawParticipant === 'string' && rawParticipant.trim().startsWith('{')
+    ? parseParticipantStringObject(rawParticipant)
+    : rawParticipant;
+
+  if (parsedParticipant && typeof parsedParticipant === 'object') {
+    const fieldPriority = ['pn', 'jid', 'id', 'participantPn', 'participant', 'lid'];
+    for (const fieldName of fieldPriority) {
+      assignParticipantField(ids, fieldName, parsedParticipant[fieldName]);
+    }
+  } else if (typeof rawParticipant === 'string') {
+    assignParticipantField(ids, 'participant', rawParticipant);
+  }
+
+  if (ids.id && ids.lid) {
+    addJidLidToCache(ids.id, ids.lid);
+  }
+
+  const resolvedJidFromLid = ids.lid ? getJidFromLid(ids.lid) : null;
+  const participantJid = ids.id || resolvedJidFromLid || ids.lid || ids.participant;
+  const mentionJid = ids.id || resolvedJidFromLid || ids.lid || participantJid;
+  const displayUser = getUserName(mentionJid || participantJid);
+
+  return {
+    participantJid,
+    mentionJid,
+    displayUser,
+    ids: {
+      ...ids,
+      participant: participantJid || ids.participant
+    }
+  };
+};
 
 /**
  * Middleware para processar solicitações de entrada de grupos (join requests via messageStubType)
@@ -34,8 +127,12 @@ export async function handleJoinRequest(bot, info, from, isGroup, GRUPOS_DIR, de
       console.log('[DEBUG STUB 172] messageStubParameters:', messageStubParameters);
     }
     
-    // O primeiro parâmetro é o JID do participante
-    const participantJid = messageStubParameters[0];
+    // O primeiro parâmetro identifica o participante. Em alguns eventos o Baileys
+    // envia um objeto stringificado com pn/jid/lid; pn/jid devem ter prioridade
+    // para que a menção não vire o número interno do LID.
+    const participantInfo = parseJoinRequestParticipant(messageStubParameters[0]);
+    const { participantJid, mentionJid, displayUser, ids: participantIds } = participantInfo;
+    
     // Para novas solicitações, assumimos 'created' se não houver segundo parâmetro
     const action = messageStubParameters[1] || 'created';
     
@@ -83,8 +180,7 @@ export async function handleJoinRequest(bot, info, from, isGroup, GRUPOS_DIR, de
           };
           
           // Adiciona ao índice de captcha para busca rápida
-          const groupFileName = `${from.replace('@g.us', '')}.json`;
-          addCaptcha(participantJid, from, correctAnswer, Date.now() + (5 * 60 * 1000), groupFileName);
+          addCaptcha(participantIds, from, correctAnswer, Date.now() + (5 * 60 * 1000), participantIds.lid || participantJid);
           
           // Salva arquivo de forma assíncrona para não bloquear
           writeJsonFileAsync(groupFile, groupSettings).catch(err => 
@@ -120,8 +216,8 @@ export async function handleJoinRequest(bot, info, from, isGroup, GRUPOS_DIR, de
             // Notificação X9
             if (groupSettings.x9) {
               await bot.sendMessage(from, {
-                text: MESSAGES.middleware.joinRequest.approved(participantJid.split('@')[0]),
-                mentions: [participantJid],
+                text: MESSAGES.middleware.joinRequest.approved(displayUser),
+                mentions: [mentionJid],
               }).catch(err => console.error(`❌ Erro ao enviar X9: ${err.message}`));
             }
           } catch (err) {
@@ -133,8 +229,8 @@ export async function handleJoinRequest(bot, info, from, isGroup, GRUPOS_DIR, de
         if (groupSettings.x9) {
           try {
             await bot.sendMessage(from, {
-              text: MESSAGES.middleware.joinRequest.pending(participantJid.split('@')[0]),
-              mentions: [participantJid],
+              text: MESSAGES.middleware.joinRequest.pending(displayUser),
+              mentions: [mentionJid],
             }).catch(err => console.error(`❌ Erro ao enviar X9: ${err.message}`));
           } catch (err) {
             console.error(`[JOIN REQUEST] Erro ao enviar notificação X9:`, err);
@@ -158,8 +254,8 @@ export async function handleJoinRequest(bot, info, from, isGroup, GRUPOS_DIR, de
         const statusText = action === 'revoked' ? 'cancelou a solicitação' : 'teve a solicitação recusada';
         try {
           await bot.sendMessage(from, {
-            text: MESSAGES.middleware.joinRequest.statusUpdate(participantJid.split('@')[0], statusText),
-            mentions: [participantJid],
+            text: MESSAGES.middleware.joinRequest.statusUpdate(displayUser, statusText),
+            mentions: [mentionJid],
           }).catch(err => console.error(`❌ Erro ao enviar X9: ${err.message}`));
         } catch (err) {
           console.error(`[JOIN REQUEST] Erro ao enviar notificação X9:`, err);
