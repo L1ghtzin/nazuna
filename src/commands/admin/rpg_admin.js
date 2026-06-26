@@ -20,14 +20,19 @@ export default {
         const sub = command.toLowerCase();
 
         if (sub === 'modorpg' || sub === 'rpgmode') {
-            groupData.modorpg = !groupData.modorpg;
-            await optimizer.saveJsonWithCache(groupFile, groupData);
+            const newState = !groupData.modorpg;
+            groupData.modorpg = newState;
             
-            return reply(MESSAGES.rpg.admin.toggle(groupData.modorpg));
+            await optimizer.saveJsonWithCache(groupFile, groupData);
+            if (typeof optimizer.invalidateGroup === 'function') {
+                optimizer.invalidateGroup(from);
+            }
+            
+            return reply(MESSAGES.rpg.core.admin.toggle(newState));
         }
 
         if (sub === 'rpg') {
-            return reply(MESSAGES.rpg.admin.menu(prefix));
+            return reply(MESSAGES.rpg.core.admin.menu(prefix));
         }
 
         if (sub === 'denuncias' || sub === 'reports') {

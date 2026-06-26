@@ -14,7 +14,11 @@ export const writeJsonFileAsync = async (filePath, data) => {
       console.error(`❌ writeJsonFileAsync: Tentativa de salvar dados nulos em ${filePath}`);
       return false;
     }
+    await fsPromises.mkdir(pathz.dirname(filePath), { recursive: true });
     
+    // A serialização (stringify) DEVE ocorrer após os awaits anteriores.
+    // Isso garante que capturamos o estado mais recente do objeto (que pode
+    // ter sido mutado de forma síncrona enquanto a thread estava pausada no mkdir).
     let jsonString;
     try {
       jsonString = JSON.stringify(data, null, 2);
@@ -30,8 +34,6 @@ export const writeJsonFileAsync = async (filePath, data) => {
       console.error(`❌ writeJsonFileAsync: JSON inválido gerado para ${filePath}`);
       return false;
     }
-    
-    await fsPromises.mkdir(pathz.dirname(filePath), { recursive: true });
     
     // Escreve em arquivo temporário primeiro (operação atômica)
     tempPath = `${filePath}.${Date.now()}.${Math.random().toString(36).substring(2, 7)}.tmp`;
