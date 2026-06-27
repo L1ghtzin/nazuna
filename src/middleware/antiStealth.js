@@ -787,12 +787,15 @@ export async function processAntiStealth(ChainySock, m, performanceOptimizer) {
 
 // ── Handlers de Comando ──────────────────────────────────
 
-async function toggleAntiStealthStatus(sub, groupData, groupFilePath, optimizer, reply, prefix, config) {
+async function toggleAntiStealthStatus(sub, from, groupData, groupFilePath, optimizer, reply, prefix, config) {
     if (sub === 'on') groupData.antistealth = true;
     else if (sub === 'off') groupData.antistealth = false;
     else groupData.antistealth = !groupData.antistealth;
 
     await optimizer.saveJsonWithCache(groupFilePath, groupData);
+    // CORREÇÃO: Invalida o cache de grupo para que o middleware leia o valor atualizado
+    // Sem isso, o loadGroupData (TTL 5s) retorna a versão antiga e a proteção não dispara
+    optimizer.invalidateGroup?.(from);
     
     return reply(groupData.antistealth 
         ? MESSAGES.middleware.antiStealth.activated(describeAction(config.action), prefix)
@@ -829,11 +832,12 @@ async function configureAntiStealthAction(val, from, groupData, groupFilePath, o
 
     config.action = val;
     await optimizer.saveJsonWithCache(groupFilePath, groupData);
+    optimizer.invalidateGroup?.(from);
     
     return reply(MESSAGES.middleware.antiStealth.actionConfigured(val, describeAction(val)));
 }
 
-async function configureAntiStealthStrikes(val, groupData, groupFilePath, optimizer, reply, prefix, config) {
+async function configureAntiStealthStrikes(val, from, groupData, groupFilePath, optimizer, reply, prefix, config) {
     const num = parseInt(val, 10);
     if (isNaN(num) || num < 1 || num > 10) {
         return reply(MESSAGES.middleware.antiStealth.configStrikesMenu(prefix, config.limit || 3));
@@ -841,6 +845,7 @@ async function configureAntiStealthStrikes(val, groupData, groupFilePath, optimi
 
     config.limit = num;
     await optimizer.saveJsonWithCache(groupFilePath, groupData);
+    optimizer.invalidateGroup?.(from);
 
     return reply(MESSAGES.middleware.antiStealth.strikesConfigured(num));
 }
@@ -864,7 +869,7 @@ export async function handleAntistealthCommand({
         case '':
         case 'on':
         case 'off':
-            return await toggleAntiStealthStatus(sub, groupData, groupFilePath, optimizer, reply, prefix, config);
+            return await toggleAntiStealthStatus(sub, from, groupData, groupFilePath, optimizer, reply, prefix, config);
         case 'status':
             return showAntiStealthStatus(groupData, config, from, reply);
         case 'acao':
@@ -874,7 +879,7 @@ export async function handleAntistealthCommand({
         case 'strikes':
         case 'limite':
         case 'limit':
-            return await configureAntiStealthStrikes(val, groupData, groupFilePath, optimizer, reply, prefix, config);
+            return await configureAntiStealthStrikes(val, from, groupData, groupFilePath, optimizer, reply, prefix, config);
         default:
             return reply(MESSAGES.middleware.antiStealth.commandsMenu(prefix));
     }
@@ -902,6 +907,8 @@ export async function handleAntipaymentCommand({
     }
 
     await optimizer.saveJsonWithCache(groupFilePath, groupData);
+    // CORREÇÃO: Invalida cache de grupo para o middleware ler o valor atualizado
+    optimizer.invalidateGroup?.(from);
     
     return reply(groupData.antipayment 
         ? MESSAGES.middleware.antiPaymentCmd.activated
