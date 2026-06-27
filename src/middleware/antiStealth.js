@@ -52,6 +52,15 @@ const cleanupInterval = setInterval(() => {
     for (const [key, cached] of decryptedMessagesCache) {
         if (now - cached.timestamp > DECRYPTED_MESSAGES_CACHE_TTL_MS) decryptedMessagesCache.delete(key);
     }
+    // Limpa cache de stealths recentes (flood detection)
+    for (const [key, timestamps] of recentStealths) {
+        const recent = timestamps.filter(t => now - t < FLOOD_WINDOW_MS * 3);
+        if (recent.length === 0) {
+            recentStealths.delete(key);
+        } else {
+            recentStealths.set(key, recent);
+        }
+    }
 }, CACHE_CLEANUP_INTERVAL_MS);
 if (cleanupInterval.unref) cleanupInterval.unref();
 
@@ -491,6 +500,27 @@ function wasMessageDecrypted(msgId) {
 }
 
 /**
+ * Registra um evento stealth recente e detecta padrão de flood
+ * Retorna true se detectar flood (N stealths em X segundos do mesmo usuário)
+ * Flood = ataque claro, não precisa esperar grace period
+ */
+function recordStealthAndDetectFlood(strikeKey) {
+    const now = Date.now();
+    let timestamps = recentStealths.get(strikeKey) || [];
+    
+    // Filtra apenas eventos dentro da janela de flood
+    timestamps = timestamps.filter(t => now - t < FLOOD_WINDOW_MS);
+    timestamps.push(now);
+    recentStealths.set(strikeKey, timestamps);
+    
+    const isFlood = timestamps.length >= FLOOD_THRESHOLD;
+    if (isFlood && DEBUG_MODE) {
+        console.log(`[ANTI-STEALTH] 🌊 FLOOD DETECTADO: ${timestamps.length} stealths em ${FLOOD_WINDOW_MS/1000}s`);
+    }
+    return isFlood;
+}
+
+/**
  * Cancela punição pendente quando uma mensagem é decriptada via retry
  * CORREÇÃO: Agora busca por msgId em vez de chave composta incorreta
  */
@@ -603,9 +633,14 @@ async function processStealthDetection(ChainySock, msgId, groupJid, identity, co
     const isSpammingStealth = Array.from(pendingPunishments.values())
         .some(p => p.strikeKey === strikeKey && p.groupJid === groupJid);
     
-    if (isSpammingStealth) {
+    // CORREÇÃO ANTI-FLOOD: Detecta padrão de flood por timestamp
+    // Se o mesmo usuário mandar FLOOD_THRESHOLD+ stealths em FLOOD_WINDOW_MS, é ataque claro
+    const isFloodingStealth = recordStealthAndDetectFlood(strikeKey);
+    
+    if (isSpammingStealth || isFloodingStealth) {
+        const reason = isSpammingStealth ? 'Ataque Stealth Múltiplo' : `Flood de Stealth (${FLOOD_THRESHOLD}+ em ${FLOOD_WINDOW_MS/1000}s)`;
         if (DEBUG_MODE) {
-            console.log(`[ANTI-STEALTH] 🔴 Ataque Stealth Múltiplo detectado de @${userName}. Punição Imediata!`);
+            console.log(`[ANTI-STEALTH] 🔴 ${reason} detectado de @${userName}. Punição Imediata!`);
         }
         for (const [id, p] of pendingPunishments.entries()) {
             if (p.strikeKey === strikeKey && p.groupJid === groupJid) {
@@ -616,6 +651,7 @@ async function processStealthDetection(ChainySock, msgId, groupJid, identity, co
         
         config.stats.detected++;
         userStrikes.delete(strikeKey);
+        recentStealths.delete(strikeKey); // Limpa contador de flood
         registerCooldown(groupJid, getIdentityActionId(identity));
         await executeAction(ChainySock, groupJid, identity, config, metadataInfo);
         await persistGroupData(true, groupJid, groupFilePath, groupData, performanceOptimizer);
