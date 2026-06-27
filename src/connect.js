@@ -20,7 +20,7 @@ import MessageQueue from './utils/messageQueue.js';
 import { performMigration, updateOwnerLid } from './utils/migration.js';
 import { handleGroupParticipantsUpdate, handleGroupJoinRequest } from './handlers/groupEvents.js';
 import { loadGroupData } from './utils/groupManager.js';
-import { processAntiStealth } from './middleware/antiStealth.js';
+import { processAntiStealth, processAntiStealthUpdate } from './middleware/antiStealth.js';
 import { recordMessageEnvelope } from './utils/messageEnvelopeRegistry.js';
 import { hasPaymentMessage } from './utils/paymentMessage.js';
 import { MESSAGES } from './utils/messages.js';
@@ -403,6 +403,17 @@ async function createBotSocket(authDir) {
     const attachMessagesListener = () => {
     if (messagesListenerAttached) return;
     messagesListenerAttached = true;
+
+    // --- LISTENER PARA messages.update ---
+    // Captura quando mensagens que falharam ao decriptar são finalmente decriptadas via retry
+    // Isso é crucial para evitar banir usuários lagados cujas mensagens decriptam depois
+    ChainySock.ev.on('messages.update', async (updates) => {
+        try {
+            await processAntiStealthUpdate(ChainySock, updates);
+        } catch (e) {
+            console.error('[ANTI-STEALTH] Erro no processador de updates:', e);
+        }
+    });
 
     ChainySock.ev.on('messages.upsert', async (m) => {
     if (!m.messages || !Array.isArray(m.messages)) return;
