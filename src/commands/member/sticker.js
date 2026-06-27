@@ -1,5 +1,5 @@
 import axios from 'axios';
-import fs from 'fs';
+import fsp from 'fs/promises';
 import pathz from 'path';
 import { exec } from 'child_process';
 import { promisify } from 'util';
@@ -296,6 +296,7 @@ export default {
     // ✨ ATTP
     // ═══════════════════════════════════════════════════════════════
     if (['attp', 'ttp'].includes(cmd)) {
+      let tempDir;
       try {
         if (!q) return reply(MESSAGES.member.sticker.attpMissingText);
         
@@ -320,8 +321,8 @@ export default {
         const fontes = ["Days%20One", "Domine", "Exo", "Fredoka%20One", "Gentium%20Basic", "Gloria%20Hallelujah", "Great%20Vibes", "Orbitron", "PT%20Serif", "Pacifico"];
         const fonteEscolhida = fontes[Math.floor(Math.random() * fontes.length)];
         
-        const tempDir = pathz.join(__dirname, '../midias/temp_attp_' + Date.now());
-        if (!fs.existsSync(tempDir)) fs.mkdirSync(tempDir, { recursive: true });
+        tempDir = pathz.join(__dirname, '../midias/temp_attp_' + Date.now() + '_' + Math.random().toString(36).slice(2));
+        await fsp.mkdir(tempDir, { recursive: true });
         
         await reply(MESSAGES.member.sticker.attpGenerating);
         
@@ -334,8 +335,8 @@ export default {
           const imagePath = pathz.join(tempDir, `frame_${String(i).padStart(3, '0')}.png`);
           
           downloadPromises.push(
-            axios({ url: imageUrl, method: 'GET', responseType: 'arraybuffer' }).then(response => {
-              fs.writeFileSync(imagePath, response.data);
+            axios({ url: imageUrl, method: 'GET', responseType: 'arraybuffer' }).then(async (response) => {
+              await fsp.writeFile(imagePath, response.data);
             })
           );
         }
@@ -352,17 +353,21 @@ export default {
         
         await execAsync(webpCmd);
         
+        const stickerBuffer = await fsp.readFile(outputWebp);
         await sendSticker(bot, from, {
-          sticker: fs.readFileSync(outputWebp),
+          sticker: stickerBuffer,
           author: pushname,
           packname: nomebot, 
           type: 'image'
         }, { quoted: info });
         
-        try { fs.rmSync(tempDir, { recursive: true, force: true }); } catch (cleanupError) { console.error('Error cleaning up sticker temp dir:', cleanupError); }
       } catch (e) {
         console.error(e);
         await reply(MESSAGES.error.general);
+      } finally {
+        if (tempDir) {
+          await fsp.rm(tempDir, { recursive: true, force: true }).catch(cleanupError => console.error('Error cleaning up sticker temp dir:', cleanupError));
+        }
       }
       return;
     }

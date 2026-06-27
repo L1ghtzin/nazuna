@@ -254,7 +254,7 @@ export default {
     if (['limpar', 'clean'].includes(cmd)) {
       if (!isBotAdmin) return reply(MESSAGES.permission.botAdminOnly);
       try {
-        await sendCleanChat({ bot, from, reply, successMessage: 'Limpeza concluída!' });
+        await sendCleanChat({ socket: bot, remoteJid: from, sendSuccessReply: reply, successMessage: MESSAGES.admin.group_security.clean.fallback });
       } catch (error) {
         console.error('[CLEAN] Erro ao limpar chat:', error.message);
         // Fallback para limpeza simples se o relayMessage falhar

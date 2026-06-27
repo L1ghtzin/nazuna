@@ -272,7 +272,7 @@ export default {
         const res = await lyrics(q);
         if (!res) return reply(MESSAGES.member.download.lyricsNotFound);
         await reply(res);
-      } catch (e) { reply(`💔 ${e.message || MESSAGES.error.general}`); }
+      } catch (e) { reply(MESSAGES.error.general); }
       return;
     }
 

@@ -1,7 +1,10 @@
 import { execFile } from 'child_process';
-import fs from 'fs';
+import { promisify } from 'util';
+import fsp from 'fs/promises';
 import path from 'path';
 import { fileURLToPath } from 'url';
+
+const execFileAsync = promisify(execFile);
 
 
 const __filename = fileURLToPath(import.meta.url);
@@ -46,53 +49,50 @@ export default {
           rotate: 'rotate=90*PI/180'
         };
 
-        const rane = path.join(__dirname, `../../../dados/database/tmp/${Math.random()}.mp4`);
-        const buffimg = await getFileBuffer(encmedia, 'video');
-        fs.writeFileSync(rane, buffimg);
+        const inputFile = path.join(__dirname, `../../../dados/database/tmp/${Math.random()}.mp4`);
+        const mediaBuffer = await getFileBuffer(encmedia, 'video');
+        await fsp.writeFile(inputFile, mediaBuffer);
         
-        const media = rane;
         const outputExt = command === 'tomp3' ? '.mp3' : '.mp4';
-        const ran = path.join(__dirname, `../../../dados/database/tmp/${Math.random()}${outputExt}`);
+        const outputFile = path.join(__dirname, `../../../dados/database/tmp/${Math.random()}${outputExt}`);
         
         let ffmpegArgs;
         if (command === 'tomp3') {
-          ffmpegArgs = ['-i', media, '-q:a', '0', '-map', 'a', ran];
+          ffmpegArgs = ['-i', inputFile, '-q:a', '0', '-map', 'a', outputFile];
         } else if (command === 'videoloop') {
-          ffmpegArgs = ['-stream_loop', '2', '-i', media, '-c', 'copy', ran];
+          ffmpegArgs = ['-stream_loop', '2', '-i', inputFile, '-c', 'copy', outputFile];
         } else if (command === 'videomudo') {
-          ffmpegArgs = ['-i', media, '-an', ran];
+          ffmpegArgs = ['-i', inputFile, '-an', outputFile];
         } else {
           const effect = videoEffects[command];
           if (['sepia', 'espelhar', 'rotacionar', 'zoom', 'videobw', 'pretoebranco'].includes(command)) {
-            ffmpegArgs = ['-i', media, '-vf', effect, ran];
+            ffmpegArgs = ['-i', inputFile, '-vf', effect, outputFile];
           } else {
-            ffmpegArgs = ['-i', media, '-filter_complex', effect, '-map', '[v]', '-map', '[a]', ran];
+            ffmpegArgs = ['-i', inputFile, '-filter_complex', effect, '-map', '[v]', '-map', '[a]', outputFile];
           }
         }
 
-        execFile('ffmpeg', ffmpegArgs, async (err) => {
-          if (fs.existsSync(media)) fs.unlinkSync(media);
-          if (err) {
-            console.error(`FFMPEG Error (Video Effect ${command}):`, err);
-            return reply(MESSAGES.error.general);
-          }
-          
-          if (fs.existsSync(ran)) {
-            const buffer453 = fs.readFileSync(ran);
-            const messageType = command === 'tomp3' ? {
-              audio: buffer453,
-              mimetype: 'audio/mpeg'
-            } : {
-              video: buffer453,
-              mimetype: 'video/mp4'
-            };
-            
-            await bot.sendMessage(from, messageType, {
-              quoted: info
-            });
-            fs.unlinkSync(ran);
-          }
-        });
+        try {
+          await execFileAsync('ffmpeg', ffmpegArgs);
+        } catch (ffmpegError) {
+          console.error(`FFMPEG Error (Video Effect ${command}):`, ffmpegError);
+          await fsp.unlink(inputFile).catch(() => {});
+          return reply(MESSAGES.error.general);
+        }
+
+        await fsp.unlink(inputFile).catch(() => {});
+        
+        const outputBuffer = await fsp.readFile(outputFile);
+        const messageType = command === 'tomp3' ? {
+          audio: outputBuffer,
+          mimetype: 'audio/mpeg'
+        } : {
+          video: outputBuffer,
+          mimetype: 'video/mp4'
+        };
+        
+        await bot.sendMessage(from, messageType, { quoted: info });
+        await fsp.unlink(outputFile).catch(() => {});
       } else {
         reply(command === 'tomp3' ? MESSAGES.member.videoeffects.missingToMp3 : MESSAGES.member.videoeffects.missingEffect);
       }

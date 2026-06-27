@@ -16,11 +16,13 @@ const BAN_COOLDOWN_MS = 10_000;
 const CACHE_CLEANUP_INTERVAL_MS = 60_000;
 const DEFAULT_ACTION = 'avisar';
 const STEALTH_STUB_TYPES = new Set([2]); // messageStubType 2 = CIPHERTEXT
+const GROUP_ACTION_COOLDOWN_MS = 30_000;
 
 const recentBans = new Map();
 const activeTimers = new Map();
 const userStrikes = new Map(); // key -> { count: number, lastTime: number }
 const pendingPunishments = new Map(); // messageId -> { timer, groupJid, participant }
+const lastGroupAction = new Map(); // groupJid -> timestamp
 
 // Limpeza de cache periódica
 const cleanupInterval = setInterval(() => {
@@ -30,6 +32,9 @@ const cleanupInterval = setInterval(() => {
     }
     for (const [key, data] of userStrikes) {
         if (now - data.lastTime > 10 * 60 * 1000) userStrikes.delete(key);
+    }
+    for (const [key, timestamp] of lastGroupAction) {
+        if (now - timestamp > GROUP_ACTION_COOLDOWN_MS * 2) lastGroupAction.delete(key);
     }
 }, CACHE_CLEANUP_INTERVAL_MS);
 if (cleanupInterval.unref) cleanupInterval.unref();
@@ -192,12 +197,32 @@ function scheduleGroupReopening(ChainySock, groupJid, flags, groupName) {
     activeTimers.set(groupJid, timerId);
 }
 
+function isGroupOnCooldown(groupJid) {
+    const lastAction = lastGroupAction.get(groupJid);
+    return lastAction && Date.now() - lastAction < GROUP_ACTION_COOLDOWN_MS;
+}
+
+function registerGroupAction(groupJid) {
+    lastGroupAction.set(groupJid, Date.now());
+}
+
 async function executeAction(ChainySock, groupJid, participant, config) {
+    // Verifica cooldown do grupo para evitar spam de alertas
+    if (isGroupOnCooldown(groupJid)) {
+        if (DEBUG_MODE) {
+            console.log(`[ANTI-STEALTH] ⏳ Grupo ${groupJid} em cooldown, pulando ação`);
+        }
+        return;
+    }
+    
     const flags = parseAction(config.action, config.limit);
     const userName = participant.split('@')[0];
     
     const { groupName, groupOwner } = await fetchGroupMetadata(ChainySock, groupJid);
     const { groupMsg, mentions } = buildAlertMessage(flags, userName, participant, groupOwner);
+
+    // Registra ação ANTES de executar para evitar race conditions
+    registerGroupAction(groupJid);
 
     // Envia mensagem de alerta
     await ChainySock.sendMessage(groupJid, { text: groupMsg, mentions }).catch(() => {});

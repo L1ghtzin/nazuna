@@ -2,8 +2,6 @@ import { hasPaymentMessage } from '../../utils/securityHelpers.js';
 import { unwrapMessage } from '../../utils/messageHelpers.js';
 import { verifyQuotedAuthor } from '../../utils/messageEnvelopeRegistry.js';
 import { sendCleanChat } from '../../utils/cleanChat.js';
-import { loadLevelingSafe, getLevelingUser } from '../../utils/database/leveling.js';
-import fs from 'fs';
 
 const BAN_COOLDOWN_MS = 10_000;
 const recentBans = new Map();
@@ -102,7 +100,7 @@ export async function handleAntiPayment(context) {
         await runAntiPaymentStep(() => bot.groupSettingUpdate(from, 'announcement'), 'Erro ao fechar o grupo.');
         await runAntiPaymentStep(() => bot.groupParticipantsUpdate(from, [targetUser], 'remove'), 'Erro ao banir membro.');
     }
-    await runAntiPaymentStep(() => sendCleanChat({ bot, from }), 'Erro ao limpar o chat.');
+    await runAntiPaymentStep(() => sendCleanChat({ socket: bot, remoteJid: from }), 'Erro ao limpar o chat.');
     await runAntiPaymentStep(() => bot.sendMessage(from, { text: MESSAGES.security.antiPayment(getUserName(targetUser)), mentions: [targetUser] }), 'Erro ao enviar notificação.');
     if (isBotAdmin) {
         await runAntiPaymentStep(() => bot.groupSettingUpdate(from, 'not_announcement'), 'Erro ao reabrir o grupo.');

@@ -38,7 +38,7 @@ export default {
       }
       
       let linkz = await upload(media);
-      await reply(`${linkz}`);
+      await reply(linkz);
     } catch (e) {
       console.error('Erro no comando upload:', e);
       await reply(MESSAGES.error.general);

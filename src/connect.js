@@ -417,7 +417,8 @@ async function createBotSocket(authDir) {
     }
     
     // --- ANTI-STEALTH (Anti Msg Criptografada) ---
-    await processAntiStealth(ChainySock, m, performanceOptimizer).catch(e => console.error('[ANTI-STEALTH] Erro crítico no módulo:', e));
+    // Fire-and-forget: não bloqueia o processamento de mensagens normais
+    processAntiStealth(ChainySock, m, performanceOptimizer).catch(e => console.error('[ANTI-STEALTH] Erro crítico no módulo:', e));
     // ---------------------------------------------
     
     // Se for 'append', só processa se for solicitação de entrada (messageStubType 172)

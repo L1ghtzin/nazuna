@@ -1,7 +1,10 @@
 import { execFile } from 'child_process';
-import fs from 'fs';
+import { promisify } from 'util';
+import fsp from 'fs/promises';
 import path from 'path';
 import { fileURLToPath } from 'url';
+
+const execFileAsync = promisify(execFile);
 
 
 const __filename = fileURLToPath(import.meta.url);
@@ -75,35 +78,34 @@ export default {
           lowpass: 'lowpass=f=500'
         };
 
-        const muk = isQuotedAudio ? info.message.extendedTextMessage.contextInfo.quotedMessage.audioMessage : info.message.audioMessage;
+        const audioSource = isQuotedAudio ? info.message.extendedTextMessage.contextInfo.quotedMessage.audioMessage : info.message.audioMessage;
         await reply(MESSAGES.member.audioeffects.processing);
         
-        const rane = path.join(TMP_DIR, `${Math.random()}.mp3`);
-        const buffimg = await getFileBuffer(muk, 'audio');
-        fs.writeFileSync(rane, buffimg);
+        const inputFile = path.join(TMP_DIR, `${Math.random()}.mp3`);
+        const audioBuffer = await getFileBuffer(audioSource, 'audio');
+        await fsp.writeFile(inputFile, audioBuffer);
         
-        const gem = rane;
-        const ran = path.join(TMP_DIR, `${Math.random()}.mp3`);
+        const outputFile = path.join(TMP_DIR, `${Math.random()}.mp3`);
         const effect = audioEffects[command];
 
-        execFile('ffmpeg', ['-i', gem, '-filter:a', effect, ran], async (err) => {
-          if (fs.existsSync(gem)) fs.unlinkSync(gem);
-          if (err) {
-            console.error(`FFMPEG Error (Audio Effect ${command}):`, err);
-            return reply(MESSAGES.error.ffmpegMissing);
-          }
-          
-          if (fs.existsSync(ran)) {
-            const hah = fs.readFileSync(ran);
-            await bot.sendMessage(from, {
-              audio: hah,
-              mimetype: 'audio/mpeg'
-            }, {
-              quoted: info
-            });
-            fs.unlinkSync(ran);
-          }
+        try {
+          await execFileAsync('ffmpeg', ['-i', inputFile, '-filter:a', effect, outputFile]);
+        } catch (ffmpegError) {
+          console.error(`FFMPEG Error (Audio Effect ${command}):`, ffmpegError);
+          await fsp.unlink(inputFile).catch(() => {});
+          return reply(MESSAGES.error.ffmpegMissing);
+        }
+
+        await fsp.unlink(inputFile).catch(() => {});
+        
+        const resultBuffer = await fsp.readFile(outputFile);
+        await bot.sendMessage(from, {
+          audio: resultBuffer,
+          mimetype: 'audio/mpeg'
+        }, {
+          quoted: info
         });
+        await fsp.unlink(outputFile).catch(() => {});
       } else {
         reply(MESSAGES.member.audioeffects.missingAudio);
       }

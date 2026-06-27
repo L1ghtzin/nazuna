@@ -1,4 +1,5 @@
 import baileys from 'baileys';
+import { MESSAGES } from './messages.js';
 const { delay } = baileys;
 
 export function clearChat() {

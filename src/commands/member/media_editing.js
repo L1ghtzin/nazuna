@@ -1,7 +1,10 @@
 import { execFile } from 'child_process';
+import { promisify } from 'util';
 import pathz from 'path';
-import fs from 'fs';
+import fsp from 'fs/promises';
 import { downloadContentFromMessage } from 'baileys';
+
+const execFileAsync = promisify(execFile);
 
 export default {
   name: "media_editing",
@@ -96,25 +99,24 @@ export default {
         const raneVideoCut = pathz.join(process.cwd(), `dados/database/tmp/${tempId}.mp4`);
         const ranVideoCut = pathz.join(process.cwd(), `dados/database/tmp/${tempId}_cut.mp4`);
         
-        const buffimgVideo = await getFileBuffer(encmediaVideo, 'video');
-        fs.writeFileSync(raneVideoCut, buffimgVideo);
+        const videoBuffer = await getFileBuffer(encmediaVideo, 'video');
+        await fsp.writeFile(raneVideoCut, videoBuffer);
         
         const ffmpegArgs = ['-y', '-ss', inicioVid, '-i', raneVideoCut, '-to', fimVid, '-c:v', 'libx264', '-preset', 'fast', '-crf', '23', '-c:a', 'aac', '-b:a', '128k', ranVideoCut];
         
-        execFile('ffmpeg', ffmpegArgs, async (err) => {
-          if (fs.existsSync(raneVideoCut)) fs.unlinkSync(raneVideoCut);
-          
-          if (err) {
-            console.error('FFMPEG Error (Cortar Vídeo):', err);
-            return reply(MESSAGES.error.general);
-          }
-          
-          if (fs.existsSync(ranVideoCut)) {
-            const bufferVideo = fs.readFileSync(ranVideoCut);
-            await bot.sendMessage(from, { video: bufferVideo, mimetype: 'video/mp4' }, { quoted: info });
-            fs.unlinkSync(ranVideoCut);
-          }
-        });
+        try {
+          await execFileAsync('ffmpeg', ffmpegArgs);
+        } catch (ffmpegError) {
+          console.error('FFMPEG Error (Cortar Vídeo):', ffmpegError);
+          await fsp.unlink(raneVideoCut).catch(() => {});
+          return reply(MESSAGES.error.general);
+        }
+
+        await fsp.unlink(raneVideoCut).catch(() => {});
+        
+        const outputVideoBuffer = await fsp.readFile(ranVideoCut);
+        await bot.sendMessage(from, { video: outputVideoBuffer, mimetype: 'video/mp4' }, { quoted: info });
+        await fsp.unlink(ranVideoCut).catch(() => {});
       } catch (e) {
         console.error('Erro ao cortar vídeo:', e);
         return reply(MESSAGES.error.general);
