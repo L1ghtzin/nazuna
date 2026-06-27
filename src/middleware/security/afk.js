@@ -1,12 +1,13 @@
 export async function handleAFK(context) {
-    const { isGroup, groupData, sender, writeJsonFile, groupFile, optimizer, from, reply, MESSAGES } = context;
+    const { isGroup, groupData, sender, groupFile, optimizer, reply, MESSAGES } = context;
     if (!isGroup || !groupData.afkUsers || !groupData.afkUsers[sender]) return false;
 
     try {
         const afkSince = new Date(groupData.afkUsers[sender].since || Date.now()).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });
         delete groupData.afkUsers[sender];
-        if (writeJsonFile && groupFile) writeJsonFile(groupFile, groupData);
-        if (optimizer) optimizer.invalidateGroup(from);
+        if (optimizer?.saveJsonWithCache && groupFile) {
+            await optimizer.saveJsonWithCache(groupFile, groupData);
+        }
         await reply(MESSAGES.security.afkWelcome(afkSince));
     } catch (error) {
         console.error("Erro ao processar remoção de AFK:", error);

@@ -96,7 +96,7 @@ export default {
       const blockedUsers = loadedBlocks.users && Object.keys(loadedBlocks.users).length > 0
         ? Object.entries(loadedBlocks.users).map(([user, data]) => `👤 *${user.split('@')[0]}* - Motivo: ${data.reason}`).join('\n')
         : MESSAGES.owner.owner.listblocks.noUsers;
-      return reply(`${MESSAGES.owner.owner.listblocks.header}${blockedCommands}${MESSAGES.owner.owner.listblocks.usersHeader}${blockedUsers}`);
+      return reply(MESSAGES.owner.owner.listblocks.summary(blockedCommands, blockedUsers));
     }
 
     if (cmd === 'boton' || cmd === 'botoff') {

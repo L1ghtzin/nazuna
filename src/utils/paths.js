@@ -34,6 +34,7 @@ const CMD_NOT_FOUND_FILE = path.join(DONO_DIR, 'cmdNotFound.json');
 const CUSTOM_COMMANDS_FILE = path.join(DONO_DIR, 'customCommands.json');
 const ANTIFLOOD_FILE = path.join(DATABASE_DIR, 'antiflood.json');
 const ANTIPV_FILE = path.join(DATABASE_DIR, 'antipv.json');
+const ANTITOXIC_FILE = path.join(DATABASE_DIR, 'antitoxic.json');
 const GLOBAL_BLOCKS_FILE = path.join(DATABASE_DIR, 'globalBlocks.json');
 const CMD_LIMIT_FILE = path.join(DATABASE_DIR, 'cmdlimit.json');
 const CMD_USER_LIMITS_FILE = path.join(DATABASE_DIR, 'cmduserlimits.json');
@@ -85,6 +86,7 @@ export {
   CUSTOM_COMMANDS_FILE,
   ANTIFLOOD_FILE,
   ANTIPV_FILE,
+  ANTITOXIC_FILE,
   GLOBAL_BLOCKS_FILE,
   CMD_LIMIT_FILE,
   CMD_USER_LIMITS_FILE,

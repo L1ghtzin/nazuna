@@ -43,7 +43,7 @@ export default {
         groupData.mark = groupData.mark || {};
         groupData.mark[sender] = opt;
         await optimizer.saveJsonWithCache(path, groupData);
-        return reply(`*${options[opt]}*`);
+        return reply(MESSAGES.admin.tools.mention.selected(options[opt]));
       }
       return reply(MESSAGES.admin.tools.mention.invalid(prefix));
     }

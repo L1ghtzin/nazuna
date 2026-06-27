@@ -1,6 +1,52 @@
 import fsPromises from 'fs/promises';
+import pathz from 'path';
 import { idsMatch } from './helpers.js';
 import { writeJsonFileAsync, readJsonFileAsync } from './asyncFs.js';
+import { GRUPOS_DIR } from './paths.js';
+import { getPerformanceOptimizer } from './performanceOptimizer.js';
+
+export const buildGroupFilePath = (groupId) => pathz.join(GRUPOS_DIR, `${groupId}.json`);
+
+export async function loadGroupDataById(groupId, {
+  defaultValue = {},
+  groupFile = buildGroupFilePath(groupId),
+  optimizer = getPerformanceOptimizer()
+} = {}) {
+  if (!groupId) return defaultValue;
+
+  try {
+    if (optimizer?.loadJsonWithCache) {
+      return await optimizer.loadJsonWithCache(groupFile, defaultValue);
+    }
+    return await readJsonFileAsync(groupFile, defaultValue);
+  } catch (error) {
+    console.error(`Erro ao carregar dados do grupo ${groupId}:`, error.message);
+    return defaultValue;
+  }
+}
+
+export async function saveGroupDataById(groupId, groupData, {
+  groupFile = buildGroupFilePath(groupId),
+  optimizer = getPerformanceOptimizer()
+} = {}) {
+  if (!groupId || !groupData || typeof groupData !== 'object') return false;
+
+  try {
+    const saved = optimizer?.saveJsonWithCache
+      ? await optimizer.saveJsonWithCache(groupFile, groupData)
+      : await writeJsonFileAsync(groupFile, groupData);
+
+    if (saved) {
+      optimizer?.invalidateGroup?.(groupId);
+      optimizer?.invalidateJson?.(groupFile);
+    }
+
+    return saved;
+  } catch (error) {
+    console.error(`Erro ao salvar dados do grupo ${groupId}:`, error.message);
+    return false;
+  }
+}
 
 /**
  * Loads group data securely, ensuring no blocking and proper error handling, utilizing cache

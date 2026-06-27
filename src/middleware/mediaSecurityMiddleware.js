@@ -17,9 +17,9 @@ export async function processMediaSecurity({
   type,
   sender,
   groupFile,
-  writeJsonFile,
   optimizer,
-  isUserWhitelisted
+  isUserWhitelisted,
+  MESSAGES
 }) {
   // AntiSticker Plus (Lottie)
   if (isGroup && antistickerplus) {
@@ -60,10 +60,10 @@ export async function processMediaSecurity({
         
         const warnCount = groupData.warnings[sender].count;
         const warnLimit = groupData.antifig.warnLimit || 3;
-        let warnMessage = `🚫 @${getUserName(sender)}, figurinhas não são permitidas neste grupo! Advertência ${warnCount}/${warnLimit}.`;
+        let warnMessage = MESSAGES.security.antifigWarn(getUserName(sender), warnCount, warnLimit);
         
         if (warnCount >= warnLimit && isBotAdmin) {
-          warnMessage += `\n⚠️ Você atingiu o limite de advertências e será removido.`;
+          warnMessage += MESSAGES.security.antifigRemoveSuffix;
           await bot.groupParticipantsUpdate(from, [sender], 'remove');
           delete groupData.warnings[sender];
         }
@@ -73,10 +73,7 @@ export async function processMediaSecurity({
           mentions: [sender]
         });
         
-        writeJsonFile(groupFile, groupData);
-        if (isGroup) {
-          optimizer.invalidateGroup(from);
-        }
+        await optimizer.saveJsonWithCache(groupFile, groupData);
         return true;
       } catch (error) {
         console.error("Erro no sistema antifig:", error);

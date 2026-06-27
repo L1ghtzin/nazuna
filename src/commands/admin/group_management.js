@@ -473,7 +473,9 @@ export default {
       if (!target) return reply(MESSAGES.error.missing('alguém'));
       try {
         await bot.groupRequestParticipantsUpdate(from, [target], type);
-        return reply(`${type === 'approve' ? MESSAGES.admin.group_management.requests.actionSuccess : MESSAGES.admin.group_management.requests.actionReject}`);
+        return reply(type === 'approve'
+          ? MESSAGES.admin.group_management.requests.actionSuccess
+          : MESSAGES.admin.group_management.requests.actionReject);
       } catch (e) { return reply(MESSAGES.admin.group_management.requests.actionError); }
     }
 

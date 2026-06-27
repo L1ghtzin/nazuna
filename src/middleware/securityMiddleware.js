@@ -47,8 +47,9 @@ export async function processSecurity({
   // AntiPalavra (Blacklist de palavras)
   if (isGroup && antipalavra && body) {
     try {
-      if (antipalavra.isActive(from) && !isGroupAdmin) {
-        const detectionResult = antipalavra.checkMessage(from, body);
+      const antipalavraPersistence = { groupData, groupFile, optimizer };
+      if (await antipalavra.isActive(from, antipalavraPersistence) && !isGroupAdmin) {
+        const detectionResult = await antipalavra.checkMessage(from, body, antipalavraPersistence);
         
         if (detectionResult && detectionResult.detected) {
           if (process.env.DEBUG_MODE === 'true') {
@@ -71,7 +72,10 @@ export async function processSecurity({
             console.error('[ANTIPALAVRA] Erro ao remover usuário:', err.message)
           );
           
-          antipalavra.registerBan(from, sender, detectionResult.palavra);
+          await antipalavra.registerBan(from, sender, detectionResult.palavra, {
+            ...antipalavraPersistence,
+            groupData: detectionResult.groupData || groupData
+          });
           
           await bot.sendMessage(from, {
             text: MESSAGES.middleware.antipalavra.banned(sender.split('@')[0], detectionResult.palavra),

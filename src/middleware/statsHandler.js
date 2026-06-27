@@ -3,7 +3,7 @@ import { loadLevelingSafe, getLevelingUser, checkLevelUp, saveLevelingSafe } fro
 export async function processStats(context) {
     const { 
         bot, info, isGroup, sender, groupData, isCmd, type, pushname, 
-        writeJsonFile, groupFile, optimizer, from
+        groupFile, optimizer
     } = context;
 
     // 1. Message Counter (Group Only)
@@ -38,9 +38,8 @@ export async function processStats(context) {
           });
         }
         
-        if (writeJsonFile && groupFile) {
-          writeJsonFile(groupFile, groupData);
-          if (optimizer) optimizer.invalidateGroup(from);
+        if (optimizer?.saveJsonWithCache && groupFile) {
+          await optimizer.saveJsonWithCache(groupFile, groupData);
         }
       } catch (error) {
         console.error("Erro no sistema de contagem de mensagens:", error);

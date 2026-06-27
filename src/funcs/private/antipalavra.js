@@ -1,430 +1,345 @@
 // --- SISTEMA ANTIPALAVRA ---
-// Sistema de blacklist de palavras que resultam em banimento automático
-// Configurável por grupo - apenas administradores podem gerenciar
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
+// Sistema de blacklist de palavras que resultam em banimento automático.
+// A persistência fica centralizada em groupManager para respeitar o cache global.
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+import { MESSAGES } from '../../utils/messages.js';
+import { loadGroupDataById, saveGroupDataById } from '../../utils/groupManager.js';
 
-const GRUPOS_DIR = path.join(__dirname, '../../../dados/database/grupos');
+const MAX_BAN_HISTORY = 100;
 
-// --- HELPERS ---
+const nowIso = () => new Date().toISOString();
 
-/**
- * Remove acentos e normaliza texto para comparação
- */
 const normalizeText = (text) => {
     if (!text || typeof text !== 'string') return '';
     return text
         .toLowerCase()
         .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '') // Remove acentos
+        .replace(/[\u0300-\u036f]/g, '')
         .trim();
 };
 
-/**
- * Carrega dados do grupo
- */
-const loadGroupData = (groupId) => {
-    try {
-        const groupFile = path.join(GRUPOS_DIR, `${groupId}.json`);
-        if (fs.existsSync(groupFile)) {
-            const data = JSON.parse(fs.readFileSync(groupFile, 'utf8'));
-            return data;
-        }
-        return {};
-    } catch (err) {
-        console.error(`[ANTIPALAVRA] Erro ao carregar dados do grupo ${groupId}:`, err.message);
-        return {};
+const createDefaultConfig = () => ({
+    enabled: false,
+    blacklist: [],
+    stats: {
+        totalBans: 0,
+        totalDetections: 0,
+        lastUpdate: nowIso()
     }
+});
+
+const resolveGroupData = async (groupId, persistence = {}) => {
+    if (persistence.groupData && typeof persistence.groupData === 'object') {
+        return persistence.groupData;
+    }
+
+    return loadGroupDataById(groupId, {
+        defaultValue: {},
+        groupFile: persistence.groupFile,
+        optimizer: persistence.optimizer
+    });
 };
 
-/**
- * Salva dados do grupo
- */
-const saveGroupData = (groupId, data) => {
-    try {
-        const dir = path.dirname(path.join(GRUPOS_DIR, `${groupId}.json`));
-        if (!fs.existsSync(dir)) {
-            fs.mkdirSync(dir, { recursive: true });
-        }
-        const groupFile = path.join(GRUPOS_DIR, `${groupId}.json`);
-        fs.writeFileSync(groupFile, JSON.stringify(data, null, 2));
-        return true;
-    } catch (err) {
-        console.error(`[ANTIPALAVRA] Erro ao salvar dados do grupo ${groupId}:`, err.message);
-        return false;
-    }
+const saveGroupData = async (groupId, groupData, persistence = {}) => {
+    return saveGroupDataById(groupId, groupData, {
+        groupFile: persistence.groupFile,
+        optimizer: persistence.optimizer
+    });
 };
 
-/**
- * Obtém ou inicializa configuração de antipalavra do grupo
- */
+const normalizeBlacklistItem = (item) => {
+    const palavra = typeof item === 'string' ? item : item?.palavra;
+    if (!palavra || typeof palavra !== 'string') return null;
+
+    return {
+        palavra: palavra.trim(),
+        palavraNormalizada: normalizeText(item.palavraNormalizada || palavra),
+        addedAt: item.addedAt || nowIso(),
+        detections: Number.isFinite(item.detections) ? item.detections : 0
+    };
+};
+
 const getAntipalavraConfig = (groupData) => {
-    if (!groupData.antipalavra) {
-        groupData.antipalavra = {
-            enabled: false,
-            blacklist: [],
-            stats: {
-                totalBans: 0,
-                totalDetections: 0,
-                lastUpdate: new Date().toISOString()
-            }
-        };
+    if (!groupData.antipalavra || typeof groupData.antipalavra !== 'object') {
+        groupData.antipalavra = createDefaultConfig();
     }
-    
-    // Garante que todos os campos existem
-    if (!groupData.antipalavra.blacklist) {
-        groupData.antipalavra.blacklist = [];
+
+    const config = groupData.antipalavra;
+    config.enabled = config.enabled === true;
+    config.blacklist = Array.isArray(config.blacklist)
+        ? config.blacklist.map(normalizeBlacklistItem).filter(Boolean)
+        : [];
+
+    if (!config.stats || typeof config.stats !== 'object') {
+        config.stats = createDefaultConfig().stats;
     }
-    if (!groupData.antipalavra.stats) {
-        groupData.antipalavra.stats = {
-            totalBans: 0,
-            totalDetections: 0,
-            lastUpdate: new Date().toISOString()
-        };
-    }
-    
-    return groupData.antipalavra;
+
+    config.stats.totalBans = Number.isFinite(config.stats.totalBans) ? config.stats.totalBans : 0;
+    config.stats.totalDetections = Number.isFinite(config.stats.totalDetections) ? config.stats.totalDetections : 0;
+    config.stats.lastUpdate = config.stats.lastUpdate || nowIso();
+
+    return config;
 };
 
-// --- FUNÇÕES DE GERENCIAMENTO DA BLACKLIST ---
+const sortBlacklistByDetections = (blacklist) => {
+    return [...blacklist].sort((leftItem, rightItem) => {
+        return (rightItem.detections || 0) - (leftItem.detections || 0);
+    });
+};
 
-/**
- * Ativa o sistema antipalavra no grupo
- */
-const enableAntipalavra = (groupId) => {
-    const groupData = loadGroupData(groupId);
+const buildResult = (success, message, extra = {}) => ({
+    success,
+    message,
+    ...extra
+});
+
+const enableAntipalavra = async (groupId, persistence = {}) => {
+    const groupData = await resolveGroupData(groupId, persistence);
     const config = getAntipalavraConfig(groupData);
-    
+
     if (config.enabled) {
-        return {
-            success: false,
-            message: '⚠️ O sistema antipalavra já está ativo neste grupo!'
-        };
+        return buildResult(false, MESSAGES.funcs.antiPalavra.alreadyEnabled);
     }
-    
+
     config.enabled = true;
-    config.stats.lastUpdate = new Date().toISOString();
-    
-    if (saveGroupData(groupId, groupData)) {
-        return {
-            success: true,
-            message: '✅ Sistema antipalavra ativado! Use comandos para adicionar palavras à blacklist.'
-        };
-    }
-    
-    return {
-        success: false,
-        message: '❌ Erro ao ativar o sistema antipalavra.'
-    };
+    config.stats.lastUpdate = nowIso();
+
+    const saved = await saveGroupData(groupId, groupData, persistence);
+    return saved
+        ? buildResult(true, MESSAGES.funcs.antiPalavra.enabled)
+        : buildResult(false, MESSAGES.funcs.antiPalavra.enableError);
 };
 
-/**
- * Desativa o sistema antipalavra no grupo
- */
-const disableAntipalavra = (groupId) => {
-    const groupData = loadGroupData(groupId);
+const disableAntipalavra = async (groupId, persistence = {}) => {
+    const groupData = await resolveGroupData(groupId, persistence);
     const config = getAntipalavraConfig(groupData);
-    
+
     if (!config.enabled) {
-        return {
-            success: false,
-            message: '⚠️ O sistema antipalavra já está desativado neste grupo!'
-        };
+        return buildResult(false, MESSAGES.funcs.antiPalavra.alreadyDisabled);
     }
-    
+
     config.enabled = false;
-    config.stats.lastUpdate = new Date().toISOString();
-    
-    if (saveGroupData(groupId, groupData)) {
-        return {
-            success: true,
-            message: '✅ Sistema antipalavra desativado! A blacklist foi mantida.'
-        };
-    }
-    
-    return {
-        success: false,
-        message: '❌ Erro ao desativar o sistema antipalavra.'
-    };
+    config.stats.lastUpdate = nowIso();
+
+    const saved = await saveGroupData(groupId, groupData, persistence);
+    return saved
+        ? buildResult(true, MESSAGES.funcs.antiPalavra.disabled)
+        : buildResult(false, MESSAGES.funcs.antiPalavra.disableError);
 };
 
-/**
- * Adiciona uma palavra à blacklist
- */
-const addPalavraBlacklist = (groupId, palavra) => {
+const addPalavraBlacklist = async (groupId, palavra, persistence = {}) => {
     if (!palavra || typeof palavra !== 'string') {
-        return {
-            success: false,
-            message: '❌ Palavra inválida!'
-        };
+        return buildResult(false, MESSAGES.funcs.antiPalavra.invalidWord);
     }
-    
-    const groupData = loadGroupData(groupId);
-    const config = getAntipalavraConfig(groupData);
+
     const palavraNormalizada = normalizeText(palavra);
-    
     if (!palavraNormalizada) {
-        return {
-            success: false,
-            message: '❌ A palavra não pode estar vazia!'
-        };
+        return buildResult(false, MESSAGES.funcs.antiPalavra.emptyWord);
     }
-    
-    // Verifica se já existe
-    const exists = config.blacklist.some(item => 
-        normalizeText(item.palavra) === palavraNormalizada
-    );
-    
+
+    const groupData = await resolveGroupData(groupId, persistence);
+    const config = getAntipalavraConfig(groupData);
+    const exists = config.blacklist.some((item) => item.palavraNormalizada === palavraNormalizada);
+
     if (exists) {
-        return {
-            success: false,
-            message: '⚠️ Esta palavra já está na blacklist!'
-        };
+        return buildResult(false, MESSAGES.funcs.antiPalavra.alreadyBlacklisted);
     }
-    
-    // Adiciona à blacklist
+
     config.blacklist.push({
         palavra: palavra.trim(),
-        palavraNormalizada: palavraNormalizada,
-        addedAt: new Date().toISOString(),
+        palavraNormalizada,
+        addedAt: nowIso(),
         detections: 0
     });
-    
-    config.stats.lastUpdate = new Date().toISOString();
-    
-    if (saveGroupData(groupId, groupData)) {
-        return {
-            success: true,
-            message: `✅ Palavra "${palavra}" adicionada à blacklist!\n📊 Total de palavras: ${config.blacklist.length}`
-        };
-    }
-    
-    return {
-        success: false,
-        message: '❌ Erro ao adicionar palavra à blacklist.'
-    };
+    config.stats.lastUpdate = nowIso();
+
+    const saved = await saveGroupData(groupId, groupData, persistence);
+    return saved
+        ? buildResult(true, MESSAGES.funcs.antiPalavra.added(palavra.trim(), config.blacklist.length))
+        : buildResult(false, MESSAGES.funcs.antiPalavra.addError);
 };
 
-/**
- * Remove uma palavra da blacklist
- */
-const removePalavraBlacklist = (groupId, palavra) => {
+const removePalavraBlacklist = async (groupId, palavra, persistence = {}) => {
     if (!palavra || typeof palavra !== 'string') {
-        return {
-            success: false,
-            message: '❌ Palavra inválida!'
-        };
+        return buildResult(false, MESSAGES.funcs.antiPalavra.invalidWord);
     }
-    
-    const groupData = loadGroupData(groupId);
-    const config = getAntipalavraConfig(groupData);
+
     const palavraNormalizada = normalizeText(palavra);
-    
+    const groupData = await resolveGroupData(groupId, persistence);
+    const config = getAntipalavraConfig(groupData);
     const initialLength = config.blacklist.length;
-    config.blacklist = config.blacklist.filter(item => 
-        normalizeText(item.palavra) !== palavraNormalizada
-    );
-    
+
+    config.blacklist = config.blacklist.filter((item) => item.palavraNormalizada !== palavraNormalizada);
+
     if (config.blacklist.length === initialLength) {
-        return {
-            success: false,
-            message: '⚠️ Esta palavra não está na blacklist!'
-        };
+        return buildResult(false, MESSAGES.funcs.antiPalavra.notBlacklisted);
     }
-    
-    config.stats.lastUpdate = new Date().toISOString();
-    
-    if (saveGroupData(groupId, groupData)) {
-        return {
-            success: true,
-            message: `✅ Palavra "${palavra}" removida da blacklist!\n📊 Total de palavras: ${config.blacklist.length}`
-        };
-    }
-    
-    return {
-        success: false,
-        message: '❌ Erro ao remover palavra da blacklist.'
-    };
+
+    config.stats.lastUpdate = nowIso();
+
+    const saved = await saveGroupData(groupId, groupData, persistence);
+    return saved
+        ? buildResult(true, MESSAGES.funcs.antiPalavra.removed(palavra.trim(), config.blacklist.length))
+        : buildResult(false, MESSAGES.funcs.antiPalavra.removeError);
 };
 
-/**
- * Lista todas as palavras da blacklist
- */
-const listPalavrasBlacklist = (groupId) => {
-    const groupData = loadGroupData(groupId);
+const listPalavrasBlacklist = async (groupId, persistence = {}) => {
+    const groupData = await resolveGroupData(groupId, persistence);
     const config = getAntipalavraConfig(groupData);
-    
+
     if (config.blacklist.length === 0) {
-        return {
-            success: true,
-            message: '📋 A blacklist está vazia. Use o comando para adicionar palavras.',
-            blacklist: []
-        };
+        return buildResult(true, MESSAGES.funcs.antiPalavra.emptyList, { blacklist: [] });
     }
-    
-    // Ordena por número de detecções (maior primeiro)
-    const sorted = [...config.blacklist].sort((a, b) => b.detections - a.detections);
-    
-    let message = `📋 *BLACKLIST DE PALAVRAS*\n`;
-    message += `━━━━━━━━━━━━━━━━━━━━━\n`;
-    message += `📊 Status: ${config.enabled ? '✅ Ativo' : '❌ Desativado'}\n`;
-    message += `🔢 Total de palavras: ${config.blacklist.length}\n`;
-    message += `🚫 Total de bans: ${config.stats.totalBans}\n`;
-    message += `🔍 Total de detecções: ${config.stats.totalDetections}\n`;
-    message += `━━━━━━━━━━━━━━━━━━━━━\n\n`;
-    
-    sorted.forEach((item, index) => {
-        message += `${index + 1}. "${item.palavra}"\n`;
-        message += `   ├ 🔍 Detecções: ${item.detections}\n`;
-        message += `   └ 📅 Adicionada: ${new Date(item.addedAt).toLocaleDateString('pt-BR')}\n\n`;
+
+    const sortedBlacklist = sortBlacklistByDetections(config.blacklist);
+    return buildResult(true, MESSAGES.funcs.antiPalavra.list(config, sortedBlacklist), {
+        blacklist: sortedBlacklist
     });
-    
-    return {
-        success: true,
-        message: message.trim(),
-        blacklist: sorted
-    };
 };
 
-/**
- * Limpa toda a blacklist
- */
-const clearBlacklist = (groupId) => {
-    const groupData = loadGroupData(groupId);
+const clearBlacklist = async (groupId, persistence = {}) => {
+    const groupData = await resolveGroupData(groupId, persistence);
     const config = getAntipalavraConfig(groupData);
-    
+
     if (config.blacklist.length === 0) {
-        return {
-            success: false,
-            message: '⚠️ A blacklist já está vazia!'
-        };
+        return buildResult(false, MESSAGES.funcs.antiPalavra.alreadyEmpty);
     }
-    
-    const count = config.blacklist.length;
+
+    const removedCount = config.blacklist.length;
     config.blacklist = [];
-    config.stats.lastUpdate = new Date().toISOString();
-    
-    if (saveGroupData(groupId, groupData)) {
-        return {
-            success: true,
-            message: `✅ Blacklist limpa! ${count} palavra(s) removida(s).`
-        };
-    }
-    
-    return {
-        success: false,
-        message: '❌ Erro ao limpar blacklist.'
-    };
+    config.stats.lastUpdate = nowIso();
+
+    const saved = await saveGroupData(groupId, groupData, persistence);
+    return saved
+        ? buildResult(true, MESSAGES.funcs.antiPalavra.cleared(removedCount))
+        : buildResult(false, MESSAGES.funcs.antiPalavra.clearError);
 };
 
-// --- VERIFICAÇÃO DE MENSAGENS ---
-
-/**
- * Verifica se uma mensagem contém palavras da blacklist
- * Retorna a primeira palavra detectada ou null
- */
-const checkMessage = (groupId, messageText) => {
+const checkMessage = async (groupId, messageText, persistence = {}) => {
     if (!messageText || typeof messageText !== 'string') {
         return null;
     }
-    
-    const groupData = loadGroupData(groupId);
+
+    const groupData = await resolveGroupData(groupId, persistence);
     const config = getAntipalavraConfig(groupData);
-    
-    // Se desativado ou sem palavras, não verifica
+
     if (!config.enabled || config.blacklist.length === 0) {
         return null;
     }
-    
+
     const messageNormalized = normalizeText(messageText);
-    
-    // Verifica cada palavra da blacklist
-    for (const item of config.blacklist) {
-        // Verifica se a palavra existe na mensagem (como palavra completa ou parte de palavra)
-        if (messageNormalized.includes(item.palavraNormalizada)) {
-            // Incrementa contador de detecções
-            item.detections++;
-            config.stats.totalDetections++;
-            config.stats.lastUpdate = new Date().toISOString();
-            saveGroupData(groupId, groupData);
-            
-            return {
-                detected: true,
-                palavra: item.palavra,
-                palavraOriginal: item.palavra
-            };
-        }
-    }
-    
-    return null;
-};
-
-/**
- * Registra um banimento
- */
-const registerBan = (groupId, userId, palavra) => {
-    const groupData = loadGroupData(groupId);
-    const config = getAntipalavraConfig(groupData);
-    
-    config.stats.totalBans++;
-    config.stats.lastUpdate = new Date().toISOString();
-    
-    // Adiciona ao histórico de bans (opcional, para estatísticas)
-    if (!config.banHistory) {
-        config.banHistory = [];
-    }
-    
-    config.banHistory.push({
-        userId: userId,
-        palavra: palavra,
-        bannedAt: new Date().toISOString()
+    const detectedItem = config.blacklist.find((item) => {
+        return item.palavraNormalizada && messageNormalized.includes(item.palavraNormalizada);
     });
-    
-    // Mantém apenas os últimos 100 bans
-    if (config.banHistory.length > 100) {
-        config.banHistory = config.banHistory.slice(-100);
-    }
-    
-    saveGroupData(groupId, groupData);
+
+    if (!detectedItem) return null;
+
+    detectedItem.detections++;
+    config.stats.totalDetections++;
+    config.stats.lastUpdate = nowIso();
+    await saveGroupData(groupId, groupData, persistence);
+
+    return {
+        detected: true,
+        palavra: detectedItem.palavra,
+        palavraOriginal: detectedItem.palavra,
+        groupData
+    };
 };
 
-/**
- * Obtém estatísticas do antipalavra
- */
-const getStats = (groupId) => {
-    const groupData = loadGroupData(groupId);
+const registerBan = async (groupId, userId, palavra, persistence = {}) => {
+    const groupData = await resolveGroupData(groupId, persistence);
     const config = getAntipalavraConfig(groupData);
-    
+
+    config.stats.totalBans++;
+    config.stats.lastUpdate = nowIso();
+    config.banHistory = Array.isArray(config.banHistory) ? config.banHistory : [];
+    config.banHistory.push({
+        userId,
+        palavra,
+        bannedAt: nowIso()
+    });
+
+    if (config.banHistory.length > MAX_BAN_HISTORY) {
+        config.banHistory = config.banHistory.slice(-MAX_BAN_HISTORY);
+    }
+
+    return saveGroupData(groupId, groupData, persistence);
+};
+
+const getStats = async (groupId, persistence = {}) => {
+    const groupData = await resolveGroupData(groupId, persistence);
+    const config = getAntipalavraConfig(groupData);
+
     return {
         enabled: config.enabled,
         totalWords: config.blacklist.length,
         totalBans: config.stats.totalBans,
         totalDetections: config.stats.totalDetections,
         lastUpdate: config.stats.lastUpdate,
-        topWords: config.blacklist
-            .sort((a, b) => b.detections - a.detections)
+        topWords: sortBlacklistByDetections(config.blacklist)
             .slice(0, 5)
-            .map(item => ({
+            .map((item) => ({
                 palavra: item.palavra,
                 detections: item.detections
             }))
     };
 };
 
-/**
- * Verifica se o sistema está ativo
- */
-const isActive = (groupId) => {
-    const groupData = loadGroupData(groupId);
+const isActive = async (groupId, persistence = {}) => {
+    const groupData = await resolveGroupData(groupId, persistence);
     const config = getAntipalavraConfig(groupData);
     return config.enabled === true;
 };
 
-// --- EXPORTS ---
+const handleCommand = async (_bot, from, args, groupData, {
+    reply,
+    prefix,
+    groupFile,
+    optimizer
+}) => {
+    const subcommand = args[0]?.toLowerCase();
+    const word = args.slice(1).join(' ').trim();
+    const persistence = { groupData, groupFile, optimizer };
+
+    if (!subcommand) {
+        return reply(MESSAGES.funcs.antiPalavra.usage(prefix));
+    }
+
+    if (['on', 'ativar', 'ligar', 'enable'].includes(subcommand)) {
+        const result = await enableAntipalavra(from, persistence);
+        return reply(result.message);
+    }
+
+    if (['off', 'desativar', 'desligar', 'disable'].includes(subcommand)) {
+        const result = await disableAntipalavra(from, persistence);
+        return reply(result.message);
+    }
+
+    if (['add', 'adicionar', 'addpalavra', 'adicionarpalavra'].includes(subcommand)) {
+        if (!word) return reply(MESSAGES.funcs.antiPalavra.usage(prefix));
+        const result = await addPalavraBlacklist(from, word, persistence);
+        return reply(result.message);
+    }
+
+    if (['del', 'remover', 'remove', 'rm', 'delete', 'deletar'].includes(subcommand)) {
+        if (!word) return reply(MESSAGES.funcs.antiPalavra.usage(prefix));
+        const result = await removePalavraBlacklist(from, word, persistence);
+        return reply(result.message);
+    }
+
+    if (['list', 'lista', 'listar', 'status'].includes(subcommand)) {
+        const result = await listPalavrasBlacklist(from, persistence);
+        return reply(result.message);
+    }
+
+    if (['limpar', 'clear', 'reset'].includes(subcommand)) {
+        const result = await clearBlacklist(from, persistence);
+        return reply(result.message);
+    }
+
+    return reply(MESSAGES.funcs.antiPalavra.invalidSubcommand(prefix));
+};
 
 export {
     enableAntipalavra,
@@ -436,5 +351,20 @@ export {
     checkMessage,
     registerBan,
     getStats,
-    isActive
+    isActive,
+    handleCommand
+};
+
+export default {
+    enableAntipalavra,
+    disableAntipalavra,
+    addPalavraBlacklist,
+    removePalavraBlacklist,
+    listPalavrasBlacklist,
+    clearBlacklist,
+    checkMessage,
+    registerBan,
+    getStats,
+    isActive,
+    handleCommand
 };

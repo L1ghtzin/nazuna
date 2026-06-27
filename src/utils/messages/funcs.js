@@ -47,6 +47,8 @@ export const funcsMessages = {
   antiSticker: {
     warnAdmin: (user) => `🚫 @${user}, figurinhas Lottie (WhatsApp Plus) não são permitidas neste grupo. Você foi removido!`,
     warnUser: (user) => `⚠️ @${user}, figurinhas Lottie (WhatsApp Plus) não são permitidas neste grupo!`,
+    statusEnabled: "ativado ✅",
+    statusDisabled: "desativado ❌",
     status: (status, actionMsg, prefix) => `🛡️ *AntiSticker Plus:* ${status}\n\n` +
             (actionMsg ? `${actionMsg}\n\n` : '') +
             `*Configuração:* \n` +
@@ -57,6 +59,47 @@ export const funcsMessages = {
     configApagar: "✅ Configurado para apenas *apagar* figurinhas Lottie.",
     configRemover: "✅ Configurado para *remover* quem enviar figurinhas Lottie.",
     invalidSubcommand: (prefix) => `❓ Subcomando inválido.\nUse: ${prefix}antistickerplus [apagar/remover] ou apenas ${prefix}antistickerplus para ligar/desligar.`
+  },
+  antiPalavra: {
+    usage: (prefix) => `📋 *ANTIPALAVRA*\n\nUse:\n• ${prefix}antipalavra on\n• ${prefix}antipalavra off\n• ${prefix}antipalavra add <palavra>\n• ${prefix}antipalavra del <palavra>\n• ${prefix}antipalavra list\n• ${prefix}antipalavra limpar`,
+    alreadyEnabled: "⚠️ O sistema antipalavra já está ativo neste grupo!",
+    enabled: "✅ Sistema antipalavra ativado! Use comandos para adicionar palavras à blacklist.",
+    enableError: "❌ Erro ao ativar o sistema antipalavra.",
+    alreadyDisabled: "⚠️ O sistema antipalavra já está desativado neste grupo!",
+    disabled: "✅ Sistema antipalavra desativado! A blacklist foi mantida.",
+    disableError: "❌ Erro ao desativar o sistema antipalavra.",
+    invalidWord: "❌ Palavra inválida!",
+    emptyWord: "❌ A palavra não pode estar vazia!",
+    alreadyBlacklisted: "⚠️ Esta palavra já está na blacklist!",
+    added: (word, total) => `✅ Palavra "${word}" adicionada à blacklist!\n📊 Total de palavras: ${total}`,
+    addError: "❌ Erro ao adicionar palavra à blacklist.",
+    notBlacklisted: "⚠️ Esta palavra não está na blacklist!",
+    removed: (word, total) => `✅ Palavra "${word}" removida da blacklist!\n📊 Total de palavras: ${total}`,
+    removeError: "❌ Erro ao remover palavra da blacklist.",
+    emptyList: "📋 A blacklist está vazia. Use o comando para adicionar palavras.",
+    list: (config, sortedItems) => {
+      const status = config.enabled ? "✅ Ativo" : "❌ Desativado";
+      let message = `📋 *BLACKLIST DE PALAVRAS*\n`;
+      message += `━━━━━━━━━━━━━━━━━━━━━\n`;
+      message += `📊 Status: ${status}\n`;
+      message += `🔢 Total de palavras: ${config.blacklist.length}\n`;
+      message += `🚫 Total de bans: ${config.stats.totalBans}\n`;
+      message += `🔍 Total de detecções: ${config.stats.totalDetections}\n`;
+      message += `━━━━━━━━━━━━━━━━━━━━━\n\n`;
+
+      sortedItems.forEach((item, index) => {
+        const addedAt = item.addedAt ? new Date(item.addedAt).toLocaleDateString('pt-BR') : 'desconhecida';
+        message += `${index + 1}. "${item.palavra}"\n`;
+        message += `   ├ 🔍 Detecções: ${item.detections || 0}\n`;
+        message += `   └ 📅 Adicionada: ${addedAt}\n\n`;
+      });
+
+      return message.trim();
+    },
+    alreadyEmpty: "⚠️ A blacklist já está vazia!",
+    cleared: (count) => `✅ Blacklist limpa! ${count} palavra(s) removida(s).`,
+    clearError: "❌ Erro ao limpar blacklist.",
+    invalidSubcommand: (prefix) => `❓ Subcomando inválido.\nUse: ${prefix}antipalavra <on/off/add/del/list/limpar>.`
   },
   tictactoe: {
     invalidInvite: '❌ Dados inválidos para o convite',

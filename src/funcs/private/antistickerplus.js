@@ -5,46 +5,15 @@
  * e aplica punições configuradas por grupo.
  */
 
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
 import { MESSAGES } from '../../utils/messages.js';
+import { saveGroupDataById } from '../../utils/groupManager.js';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-const GRUPOS_DIR = path.join(__dirname, '../../../dados/database/grupos');
-
-// --- HELPERS ---
-
-/**
- * Carrega dados do grupo
- */
-const loadGroupData = (groupId) => {
-    try {
-        const groupFile = path.join(GRUPOS_DIR, `${groupId}.json`);
-        if (fs.existsSync(groupFile)) {
-            return JSON.parse(fs.readFileSync(groupFile, 'utf8'));
-        }
-        return {};
-    } catch (err) {
-        console.error(`[AntiStickerPlus] Erro ao carregar dados do grupo ${groupId}:`, err.message);
-        return {};
+const persistGroupData = async (groupId, groupData, { groupFile, optimizer } = {}) => {
+    const saved = await saveGroupDataById(groupId, groupData, { groupFile, optimizer });
+    if (!saved) {
+        console.error(`[AntiStickerPlus] Erro ao salvar dados do grupo ${groupId}`);
     }
-};
-
-/**
- * Salva dados do grupo
- */
-const saveGroupData = (groupId, data) => {
-    try {
-        const groupFile = path.join(GRUPOS_DIR, `${groupId}.json`);
-        fs.writeFileSync(groupFile, JSON.stringify(data, null, 2));
-        return true;
-    } catch (err) {
-        console.error(`[AntiStickerPlus] Erro ao salvar dados do grupo ${groupId}:`, err.message);
-        return false;
-    }
+    return saved;
 };
 
 // --- LOGICA DE DETECÇÃO ---
@@ -98,7 +67,7 @@ export const checkSticker = async (bot, from, info, groupData, { isGroupAdmin, i
 /**
  * Lida com o comando antistickerplus
  */
-export const handleCommand = async (bot, from, args, groupData, { reply, prefix }) => {
+export const handleCommand = async (bot, from, args, groupData, { reply, prefix, groupFile, optimizer }) => {
     const arg = args[0] ? args[0].toLowerCase() : '';
 
     if (!arg) {
@@ -109,13 +78,15 @@ export const handleCommand = async (bot, from, args, groupData, { reply, prefix 
             groupData.antistickerplus_apagar = true;
         }
 
-        const status = groupData.antistickerplus ? 'ativado ✅' : 'desativado ❌';
+        const status = groupData.antistickerplus
+            ? MESSAGES.funcs.antiSticker.statusEnabled
+            : MESSAGES.funcs.antiSticker.statusDisabled;
         const actionMsg = groupData.antistickerplus 
             ? (groupData.antistickerplus_remover ? MESSAGES.funcs.antiSticker.actionRemove : MESSAGES.funcs.antiSticker.actionDelete)
             : '';
         const msg = MESSAGES.funcs.antiSticker.status(status, actionMsg, prefix);
 
-        saveGroupData(from, groupData);
+        await persistGroupData(from, groupData, { groupFile, optimizer });
         return reply(msg);
     }
 
@@ -123,7 +94,7 @@ export const handleCommand = async (bot, from, args, groupData, { reply, prefix 
         groupData.antistickerplus = true;
         groupData.antistickerplus_apagar = true;
         groupData.antistickerplus_remover = false;
-        saveGroupData(from, groupData);
+        await persistGroupData(from, groupData, { groupFile, optimizer });
         return reply(MESSAGES.funcs.antiSticker.configApagar);
     }
 
@@ -131,7 +102,7 @@ export const handleCommand = async (bot, from, args, groupData, { reply, prefix 
         groupData.antistickerplus = true;
         groupData.antistickerplus_remover = true;
         groupData.antistickerplus_apagar = false;
-        saveGroupData(from, groupData);
+        await persistGroupData(from, groupData, { groupFile, optimizer });
         return reply(MESSAGES.funcs.antiSticker.configRemover);
     }
 

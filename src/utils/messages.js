@@ -78,6 +78,8 @@ export const MESSAGES = {
     antiBtnUser: (user) => `⚠️ Atenção, @${user}! Mensagens com botões não são permitidas. Não consigo remover você, mas evite usar esse tipo de mensagem.`,
     antiMediaAdmin: (user, type) => `🚫 @${user}, o envio de *${type}* é proibido neste grupo. Você foi removido!`,
     antiMediaUser: (user, type, extra = '') => `⚠️ @${user}, o envio de *${type}* está proibido neste grupo!${extra}`,
+    antifigWarn: (user, warnCount, warnLimit) => `🚫 @${user}, figurinhas não são permitidas neste grupo! Advertência ${warnCount}/${warnLimit}.`,
+    antifigRemoveSuffix: "\n⚠️ Você atingiu o limite de advertências e será removido.",
     antiPayment: (user) => `🛡️ *Anti-Payment:* Pagamento detectado!\n\n🚫 @${user} foi removido e o grupo foi fechado temporariamente por segurança.`,
     antiStatusAdmin: (user) => `🚫 @${user}, Status não são permitidos neste grupo. Você foi removido.`,
     antiStatusUser: (user, extra = '') => `🚫 @${user}, Status não são permitidos neste grupo!${extra}`,

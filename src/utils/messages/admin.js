@@ -349,6 +349,7 @@ export const adminMessages = {
         marca: '🔔 A partir de agora, você será mencionado apenas quando um administrador marcar.',
         games: '🎮 Você optou por ser mencionado somente em jogos do bot.',
         '0': '📴 Silêncio ativado! Você não será mais mencionado pelo bot, nem em marcações nem em jogos.',
+        selected: (message) => `*${message}*`,
         invalid: (prefix) => `❌ Opção inválida! Use *${prefix}mention* para ver as opções.`
       },
       del: {

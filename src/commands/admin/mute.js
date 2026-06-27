@@ -1,10 +1,4 @@
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
 import { normalizeUserId, getUserName } from '../../utils/helpers.js';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 export default {
   name: "mute",
@@ -22,8 +16,7 @@ export default {
     info,
     MESSAGES,
     optimizer,
-    buildGroupFilePath,
-    writeJsonFile
+    buildGroupFilePath
   }) => {
     try {
       if (!isBotAdmin) return reply(MESSAGES.permission.botAdminOnly);
@@ -41,7 +34,6 @@ export default {
       }
       
       await optimizer.saveJsonWithCache(groupFilePath, groupData);
-      optimizer.invalidateGroup(from);
       
       await bot.sendMessage(from, {
         text: MESSAGES.admin.mute.success(getUserName(menc_os2)),

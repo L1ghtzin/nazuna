@@ -1,5 +1,3 @@
-import path from 'path';
-
 export default {
     name: "rpg_admin",
     description: "Configurações e menus do sistema RPG",
@@ -11,7 +9,6 @@ export default {
         groupData, 
         groupFile, 
         optimizer, 
-        from, 
         command,
         bot,
         prefix,
@@ -25,9 +22,6 @@ export default {
             groupData.modorpg = newState;
             
             await optimizer.saveJsonWithCache(groupFile, groupData);
-            if (typeof optimizer.invalidateGroup === 'function') {
-                optimizer.invalidateGroup(from);
-            }
             
             return reply(MESSAGES.rpg.admin.toggle(newState));
         }

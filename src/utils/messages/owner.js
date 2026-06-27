@@ -162,7 +162,8 @@ export const ownerMessages = {
       header: "🔒 *Bloqueios Globais* 🔒\n\n📜 *Comandos Bloqueados*:\n",
       usersHeader: "\n\n👥 *Usuários Bloqueados*:\n",
       noCmds: "Nenhum comando bloqueado.",
-      noUsers: "Nenhum usuário bloqueado."
+      noUsers: "Nenhum usuário bloqueado.",
+      summary: (blockedCommands, blockedUsers) => `🔒 *Bloqueios Globais* 🔒\n\n📜 *Comandos Bloqueados*:\n${blockedCommands}\n\n👥 *Usuários Bloqueados*:\n${blockedUsers}`
     },
     botState: {
       success: (action) => `✅ Bot ${action}!`, // ativado/desativado

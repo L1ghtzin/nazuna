@@ -1,14 +1,7 @@
-import { debouncedSaveJson } from '../../utils/helpers.js';
 // --- SISTEMA ANTITOXIC ---
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import { debouncedSaveJson, loadJsonFile } from '../../utils/helpers.js';
 import { MESSAGES } from '../../utils/messages.js';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-const ANTITOXIC_FILE = path.join(__dirname, '../../../dados/database/antitoxic.json');
+import { ANTITOXIC_FILE } from '../../utils/paths.js';
 
 const CONFIG = {
     COOLDOWN_MS: 30 * 1000, // Cooldown entre avisos para o mesmo usuário
@@ -52,23 +45,18 @@ const getUserName = (userId) => {
 
 // --- PERSISTÊNCIA ---
 
+const createDefaultAntitoxicData = () => ({ groups: {}, userWarnings: {} });
+
 const loadAntitoxic = () => {
-    try {
-        if (fs.existsSync(ANTITOXIC_FILE)) {
-            return JSON.parse(fs.readFileSync(ANTITOXIC_FILE, 'utf8'));
-        }
-    } catch (err) {
-        console.error('[ANTITOXIC] Erro ao carregar:', err.message);
-    }
-    return { groups: {}, userWarnings: {} };
+    const data = loadJsonFile(ANTITOXIC_FILE, createDefaultAntitoxicData());
+    return {
+        groups: data?.groups && typeof data.groups === 'object' ? data.groups : {},
+        userWarnings: data?.userWarnings && typeof data.userWarnings === 'object' ? data.userWarnings : {}
+    };
 };
 
 const saveAntitoxic = (data) => {
     try {
-        const dir = path.dirname(ANTITOXIC_FILE);
-        if (!fs.existsSync(dir)) {
-            fs.mkdirSync(dir, { recursive: true });
-        }
         debouncedSaveJson(ANTITOXIC_FILE, data, 1000);
     } catch (err) {
         console.error('[ANTITOXIC] Erro ao salvar:', err.message);

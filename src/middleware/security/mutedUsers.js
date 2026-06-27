@@ -1,5 +1,5 @@
 export async function handleMutedUsers(context) {
-    const { isGroup, isMuted, isMuted2, isGroupAdmin, isOwner, bot, from, sender, reply, info, groupData, writeJsonFile, groupFile, optimizer, getUserName, isBotAdmin, MESSAGES } = context;
+    const { isGroup, isMuted, isMuted2, isGroupAdmin, isOwner, bot, from, sender, reply, info, groupData, groupFile, optimizer, getUserName, isBotAdmin, MESSAGES } = context;
     if (!isGroup || isGroupAdmin || isOwner) return false;
 
     if (isMuted) {
@@ -12,8 +12,9 @@ export async function handleMutedUsers(context) {
                 await reply(MESSAGES.security.mutedUserCantRemove);
             }
             delete groupData.mutedUsers[sender];
-            if (writeJsonFile && groupFile) writeJsonFile(groupFile, groupData);
-            if (optimizer) optimizer.invalidateGroup(from);
+            if (optimizer?.saveJsonWithCache && groupFile) {
+                await optimizer.saveJsonWithCache(groupFile, groupData);
+            }
             return true;
         } catch (error) {
             console.error("Erro ao processar usuário mutado:", error);

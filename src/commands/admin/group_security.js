@@ -280,7 +280,7 @@ export default {
         return reply(MESSAGES.admin.group_security.protections.antifigOff);
       } catch (e) {
         console.error('Erro no comando antifig:', e);
-        return reply(MESSAGES.error?.generic || "Ocorreu um erro ao gerenciar o antifig 💔");
+        return reply(MESSAGES.error.general);
       }
     }
 
@@ -308,7 +308,7 @@ export default {
 
     if (['antistickerplus', 'antisticker+', 'antisl', 'antistickerplusbot'].includes(cmd)) {
       if (!antistickerplus) return reply(MESSAGES.admin.group_security.protections.unavailable('AntistickerPlus'));
-      await antistickerplus.handleCommand(bot, from, args, groupData, { reply, prefix });
+      await antistickerplus.handleCommand(bot, from, args, groupData, { reply, prefix, groupFile, optimizer });
       return;
     }
 
@@ -320,7 +320,7 @@ export default {
 
     if (['antipalavra', 'antiword'].includes(cmd)) {
       if (!antipalavra) return reply(MESSAGES.admin.group_security.protections.unavailable('Antipalavra'));
-      await antipalavra.handleCommand(bot, from, args, groupData, { reply, prefix });
+      await antipalavra.handleCommand(bot, from, args, groupData, { reply, prefix, groupFile, optimizer });
       return;
     }
 
