@@ -20,6 +20,10 @@ const STRIKE_TTL_MS = 10 * 60 * 1000;
 const RETRY_GRACE_MS = 45_000; // Aumentado de 15s para 45s - conexões ruins precisam de mais tempo para retry
 const METADATA_CACHE_TTL_MS = 30_000;
 const DECRYPTED_MESSAGES_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutos
+// Detecção de flood de stealth - permite punição imediata sem esperar grace period
+// Flood = N stealths do mesmo usuário dentro da janela = ataque claro (não lag)
+const FLOOD_WINDOW_MS = 10_000; // 10 segundos de janela
+const FLOOD_THRESHOLD = 3; // 3+ stealths em 10s = flood confirmado
 const NON_CONTENT_MESSAGE_KEYS = new Set([
     'messageContextInfo',
     'senderKeyDistributionMessage'
@@ -32,6 +36,7 @@ const pendingPunishments = new Map(); // pendingKey -> { timer, groupJid, partic
 const lastGroupAction = new Map(); // groupJid -> timestamp
 const metadataCache = new Map(); // groupJid -> { timestamp, data }
 const decryptedMessagesCache = new Map(); // msgId -> { timestamp, groupJid, participant } - mensagens que falharam mas depois decriptaram
+const recentStealths = new Map(); // strikeKey -> [timestamp, timestamp, ...] - usado para detectar flood de stealth
 
 // Limpeza de cache periódica
 const cleanupInterval = setInterval(() => {
