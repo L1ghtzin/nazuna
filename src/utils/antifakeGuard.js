@@ -1,79 +1,110 @@
 /**
- * Módulo centralizado de Anti-Fake.
- * Verifica DDI, whitelist, resolve LIDs e registra logs de ações.
+ * Modulo centralizado de Anti-Fake.
+ * Verifica DDI, whitelist, resolve LIDs e registra logs de acoes.
  */
 
-import { resolveNumber } from './resolveParticipant.js';
-import fs from 'fs/promises';
 import path from 'path';
-import { fileURLToPath } from 'url';
+import { readJsonFileAsync, writeJsonFileAsync } from './asyncFs.js';
+import { GRUPOS_DIR } from './paths.js';
+import { resolveParticipant } from './resolveParticipant.js';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const DATABASE_DIR = path.join(__dirname, '..', '..', 'dados', 'database');
+const antifakeLogWriteQueues = new Map();
+
+function normalizeNumeric(value) {
+    return String(value || '').replace(/\D/g, '');
+}
+
+function getAntifakeLogPath(groupId) {
+    return path.join(GRUPOS_DIR, `${groupId}_antifake.json`);
+}
 
 export function getAllowedDDIs(groupSettings) {
     const raw = groupSettings?.antifakeDDI || '55';
-    return raw.split(',').map(d => d.trim()).filter(Boolean);
+    const ddis = String(raw)
+        .split(',')
+        .map(normalizeNumeric)
+        .filter(Boolean);
+
+    return ddis.length ? ddis : ['55'];
 }
 
 export function isWhitelisted(number, groupSettings) {
     const whitelist = groupSettings?.antifakeWhitelist || [];
-    return whitelist.some(entry => number.startsWith(entry) || number === entry);
+    const normalizedNumber = normalizeNumeric(number);
+
+    return whitelist.some(entry => {
+        const normalizedEntry = normalizeNumeric(entry);
+        return normalizedEntry && normalizedNumber === normalizedEntry;
+    });
 }
 
 export async function logAntifakeAction(groupId, entry) {
-    const logPath = path.join(DATABASE_DIR, 'grupos', `${groupId}_antifake.json`);
+    const logPath = getAntifakeLogPath(groupId);
+    const previousQueue = antifakeLogWriteQueues.get(logPath) || Promise.resolve();
+
+    const nextQueue = previousQueue.then(async () => {
+        const currentLogs = await readJsonFileAsync(logPath, []);
+        const logs = Array.isArray(currentLogs) ? currentLogs : [];
+        const nextLogs = [
+            ...logs,
+            { timestamp: new Date().toISOString(), ...entry }
+        ].slice(-100);
+
+        const saved = await writeJsonFileAsync(logPath, nextLogs);
+        if (!saved) {
+            throw new Error('writeJsonFileAsync retornou false');
+        }
+    });
+
+    const queuedWrite = nextQueue.catch(() => {});
+    antifakeLogWriteQueues.set(logPath, queuedWrite);
+
     try {
-        let logs = [];
-        try {
-            const data = await fs.readFile(logPath, 'utf-8');
-            logs = JSON.parse(data);
-        } catch { }
-
-        logs.push({ timestamp: new Date().toISOString(), ...entry });
-        if (logs.length > 100) logs = logs.slice(-100);
-
-        await fs.writeFile(logPath, JSON.stringify(logs, null, 2));
+        await nextQueue;
     } catch (err) {
         console.error(`[AntiFake] Erro ao salvar log: ${err.message}`);
+    } finally {
+        if (antifakeLogWriteQueues.get(logPath) === queuedWrite) {
+            antifakeLogWriteQueues.delete(logPath);
+        }
     }
 }
 
 export async function getAntifakeLogs(groupId, limit = 10) {
-    const logPath = path.join(DATABASE_DIR, 'grupos', `${groupId}_antifake.json`);
-    try {
-        const data = await fs.readFile(logPath, 'utf-8');
-        return JSON.parse(data).slice(-limit);
-    } catch {
-        return [];
-    }
+    const logs = await readJsonFileAsync(getAntifakeLogPath(groupId), []);
+    return Array.isArray(logs) ? logs.slice(-limit) : [];
 }
 
-export async function checkAntifake(participantJid, groupSettings, ChainySock) {
+export async function checkAntifake(participantJid, groupSettings, ChainySock, groupMetadata = null) {
     if (!groupSettings?.antifake) {
         return { allowed: true, number: '', reason: '', resolved: true };
     }
 
-    const { number, isLid, resolved } = await resolveNumber(participantJid, ChainySock);
+    const { number, isLid, resolved } = await resolveParticipant(participantJid, ChainySock, groupMetadata);
+    const normalizedNumber = normalizeNumeric(number);
 
-    // LID não resolvido — sem dados para julgar, deixar passar
+    // LID nao resolvido: sem dados para julgar, deixa passar.
     if (isLid && !resolved) {
         return { allowed: true, number, reason: 'lid_nao_resolvido', resolved: false };
     }
 
-    if (isWhitelisted(number, groupSettings)) {
-        return { allowed: true, number, reason: 'whitelist', resolved };
+    if (!normalizedNumber) {
+        return { allowed: true, number, reason: 'numero_nao_identificado', resolved };
+    }
+
+    if (isWhitelisted(normalizedNumber, groupSettings)) {
+        return { allowed: true, number: normalizedNumber, reason: 'whitelist', resolved };
     }
 
     const allowedDDIs = getAllowedDDIs(groupSettings);
-    if (allowedDDIs.some(ddi => number.startsWith(ddi))) {
-        return { allowed: true, number, reason: '', resolved };
+    if (allowedDDIs.some(ddi => normalizedNumber.startsWith(ddi))) {
+        return { allowed: true, number: normalizedNumber, reason: '', resolved };
     }
 
     return {
         allowed: false,
-        number,
-        reason: `DDI não permitido (permitidos: ${allowedDDIs.join(', ')})`,
+        number: normalizedNumber,
+        reason: `DDI nao permitido (permitidos: ${allowedDDIs.join(', ')})`,
         resolved
     };
 }

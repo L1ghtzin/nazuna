@@ -161,7 +161,7 @@ export async function handleGroupParticipantsUpdate(ChainySock, inf) {
                         continue;
                     }
 
-                    const antifakeResult = await checkAntifake(participant, groupSettings, ChainySock);
+                    const antifakeResult = await checkAntifake(participant, groupSettings, ChainySock, groupMetadata);
                     if (!antifakeResult.allowed) {
                         membersToRemove.push(participant);
                         
