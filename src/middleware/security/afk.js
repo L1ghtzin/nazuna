@@ -1,6 +1,9 @@
 export async function handleAFK(context) {
-    const { isGroup, groupData, sender, groupFile, optimizer, reply, MESSAGES } = context;
+    const { isGroup, groupData, sender, groupFile, optimizer, reply, MESSAGES, command } = context;
     if (!isGroup || !groupData.afkUsers || !groupData.afkUsers[sender]) return false;
+    
+    // Ignora se o usuário está executando comandos relacionados a AFK
+    if (command === 'afk' || command === 'voltei') return false;
 
     try {
         const afkSince = new Date(groupData.afkUsers[sender].since || Date.now()).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });
