@@ -18,6 +18,8 @@ const STEALTH_STUB_TYPES = new Set([2]); // messageStubType 2 = CIPHERTEXT
 const GROUP_ACTION_COOLDOWN_MS = 30_000;
 const STRIKE_TTL_MS = 10 * 60 * 1000;
 const RETRY_GRACE_MS = 45_000; // Aumentado de 15s para 45s - conexões ruins precisam de mais tempo para retry
+const RETRY_GRACE_MAC_MS = 15_000; // MAC = sessão corrompida, retry raramente resolve. Grace period reduzido.
+const RETRY_GRACE_HIGH_RETRY_MS = 10_000; // 2+ retries sem sucesso = sessão provavelmente irrecuperável.
 const METADATA_CACHE_TTL_MS = 30_000;
 const DECRYPTED_MESSAGES_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutos
 // Detecção de flood de stealth - permite punição imediata sem esperar grace period
@@ -180,6 +182,44 @@ function hasCryptoFailureHint(info) {
         const text = typeof param === 'string' ? param.toLowerCase() : '';
         return text.includes('decrypt') || text.includes('session') || text.includes('cipher') || text.includes('bad mac');
     });
+}
+
+/**
+ * Extrai a classificação estruturada de falha de decriptação gerada pelo
+ * patch do baileys (decode-wa-message.js). O patch escreve um JSON em
+ * messageStubParameters[1] contendo category/code/isRecoverable/retryCount/messageAge.
+ *
+ * Esses dados permitem distinguir com precisão:
+ * - NO_SESSION / NO_MESSAGE / BAD_KEY -> recuperação provável (lag)
+ * - MAC -> sessão corrompida (potencial ataque stealth real)
+ * - GENERIC -> tratado como recuperável por segurança
+ *
+ * @param {object} info mensagem/stub recebido do baileys
+ * @returns {{category:string, isRecoverable:boolean, retryCount:number, messageAge:number, code:string} | null}
+ */
+function getStealthClassification(info) {
+    const params = Array.isArray(info?.messageStubParameters)
+        ? info.messageStubParameters
+        : Array.isArray(info?.message?.messageStubParameters)
+            ? info.message.messageStubParameters
+            : null;
+    if (!params || params.length < 2) return null;
+
+    const raw = params[1];
+    if (typeof raw !== 'string' || raw.charAt(0) !== '{') return null;
+
+    try {
+        const parsed = JSON.parse(raw);
+        return {
+            category: String(parsed.category || 'GENERIC').toUpperCase(),
+            code: String(parsed.code || 'generic'),
+            isRecoverable: typeof parsed.isRecoverable === 'boolean' ? parsed.isRecoverable : true,
+            retryCount: Number.isFinite(parsed.retryCount) ? parsed.retryCount : 0,
+            messageAge: Number.isFinite(parsed.messageAge) ? parsed.messageAge : 0
+        };
+    } catch {
+        return null;
+    }
 }
 
 function isDecryptionFailure(info) {
@@ -574,7 +614,7 @@ function handleResolvedLag(msgId, groupJid) {
     }
 }
 
-async function processStealthDetection(ChainySock, msgId, groupJid, identity, config, groupData, groupFilePath, performanceOptimizer, metadataInfo) {
+async function processStealthDetection(ChainySock, msgId, groupJid, identity, config, groupData, groupFilePath, performanceOptimizer, metadataInfo, classification) {
     const flags = parseAction(config.action, config.limit);
     const strikeKey = buildStrikeKey(groupJid, identity);
     const participant = identity.participant;
@@ -585,11 +625,38 @@ async function processStealthDetection(ChainySock, msgId, groupJid, identity, co
     const levelingData = loadLevelingSafe();
     const messageCount = getBestMessageCount(levelingData, identity);
 
+    // --- CLASSIFICAÇÃO ESTRUTURADA DE FALHA (patch baileys) ---
+    // category MAC = sessão corrompida (potencial ataque stealth real)
+    // category NO_SESSION/NO_MESSAGE/BAD_KEY/GENERIC = recuperável (lag)
+    const stealthCategory = classification?.category || 'GENERIC';
+    const stealthIsRecoverable = classification ? classification.isRecoverable : true;
+    const stealthRetryCount = classification?.retryCount || 0;
+
+    // MAC = verificação de integridade falhou. A mensagem NUNCA vai decriptar
+    // via retry (a sessão está definitivamente fora de sincronia). Em contas
+    // novas/suspeitas isso é ataque stealth clássico. Não há motivo para aguardar
+    // grace period, pois o retry nunca resolverá.
+    const isMacAttack = stealthCategory === 'MAC' && !stealthIsRecoverable;
+
+    // Conta genuinamente nova sem sessão estabelecida = lag esperado na primeira
+    // mensagem. Não deve ser tratada como ataque (evita banir quem acabou de entrar).
+    const isNewAccountLag = stealthCategory === 'NO_SESSION' || stealthCategory === 'NO_MESSAGE';
+
+    // Conta nova com falha NÃO classificada como lag (MAC, BAD_KEY ou GENERIC em
+    // conta sem histórico) = alto risco. Reduz o grace period drasticamente pois
+    // retries repetidos sem sucesso indicam sessão irrecuperável.
+    const isSuspectNewAccount = messageCount < 5 && !isNewAccountLag;
+
+    if (DEBUG_MODE && classification) {
+        console.log(`[ANTI-STEALTH] 🔍 Falha classificada: category=${stealthCategory} recoverable=${stealthIsRecoverable} retryCount=${stealthRetryCount} age=${classification.messageAge}s @${userName}`);
+    }
+
     // --- SISTEMA DE PREVENÇÃO DE FALSOS POSITIVOS ---
     // Membros que já conversam bastante costumam ter problemas reais de criptografia do WhatsApp.
-    if (messageCount >= 30) {
+    // Para falhas recuperáveis (NO_SESSION), membros ativos quase sempre resolvem via retry.
+    if (!isMacAttack && messageCount >= 30) {
         if (DEBUG_MODE) {
-            console.log(`[ANTI-STEALTH] 🟢 Falso Positivo Evitado: @${userName} é membro ativo (${messageCount} msgs). Ignorando mensagem indecriptável.`);
+            console.log(`[ANTI-STEALTH] 🟢 Falso Positivo Evitado: @${userName} é membro ativo (${messageCount} msgs, ${stealthCategory}). Ignorando mensagem indecriptável.`);
         }
         for (const [id, p] of pendingPunishments.entries()) {
             if (p.strikeKey === strikeKey && p.groupJid === groupJid) {
@@ -600,13 +667,14 @@ async function processStealthDetection(ChainySock, msgId, groupJid, identity, co
         return;
     }
 
-    // Membros que mal conversaram e enviam stealth são quase 100% de chance de ser ataque.
-    if (messageCount < 5) {
+    // MAC attack (sessão corrompida) OU conta nova suspeita com falha não-lag.
+    // Ambos os casos justificam punição imediata: integridade quebrada nunca
+    // resolve via retry, e conta sem histórico com falha anômala é alto risco.
+    if (isMacAttack && messageCount < 30) {
         if (DEBUG_MODE) {
-            console.log(`[ANTI-STEALTH] 🔴 Ataque Stealth de conta suspeita: @${userName} tem apenas ${messageCount} mensagens. Punição Imediata!`);
+            console.log(`[ANTI-STEALTH] 🔴 Ataque Stealth (MAC) de conta suspeita: @${userName} tem ${messageCount} msgs e falha de integridade. Punição Imediata!`);
         }
         
-        // Remove qualquer timer pendente para esse usuário/grupo, se houver
         for (const [id, p] of pendingPunishments.entries()) {
             if (p.strikeKey === strikeKey && p.groupJid === groupJid) {
                 clearTimeout(p.timer);
@@ -663,8 +731,20 @@ async function processStealthDetection(ChainySock, msgId, groupJid, identity, co
         return;
     }
 
+    // Grace period adaptativo baseado na classificação da falha:
+    // - MAC (sessão corrompida): retry raramente resolve -> janela curta.
+    // - Recuperável com 2+ retries sem sucesso: sessão provavelmente irrecuperável
+    //   (stealthRetryCount conta quantos retry-receipts já foram trocados sem êxito).
+    // - Recuperável normal (NO_SESSION/BAD_KEY sem histórico de retry): janela generosa.
+    const computeGraceMs = () => {
+        if (isMacAttack) return RETRY_GRACE_MAC_MS;
+        if (stealthRetryCount >= 2) return RETRY_GRACE_HIGH_RETRY_MS;
+        return RETRY_GRACE_MS;
+    };
+    const graceMs = computeGraceMs();
+
     if (DEBUG_MODE) {
-        console.log(`[ANTI-STEALTH] ⏳ Punição pendente para @${userName}. Aguardando ${RETRY_GRACE_MS/1000}s por retry (Lag Detection)...`);
+        console.log(`[ANTI-STEALTH] ⏳ Punição pendente para @${userName}. Aguardando ${graceMs/1000}s por retry (${stealthCategory}, rc=${stealthRetryCount})...`);
     }
     
     // CORREÇÃO: Verifica se a mensagem já foi decriptada antes de criar o timer
@@ -693,7 +773,7 @@ async function processStealthDetection(ChainySock, msgId, groupJid, identity, co
         
         await executeAction(ChainySock, groupJid, identity, config, metadataInfo);
         await persistGroupData(true, groupJid, groupFilePath, groupData, performanceOptimizer);
-    }, RETRY_GRACE_MS);
+    }, graceMs);
     
     if (timer.unref) timer.unref();
     
@@ -775,8 +855,13 @@ export async function processAntiStealth(ChainySock, m, performanceOptimizer) {
                 if (isOnCooldown(groupJid, actionId)) continue;
                 if (shouldSkipParticipant(identity, botIdPrefix, groupData, metadataInfo.groupMetadata)) continue;
 
+                // Extrai a classificação estruturada gerada pelo patch do baileys.
+                // Permite distinguir "No session found" (lag, recuperável) de
+                // "Bad MAC" (sessão corrompida, ataque stealth real).
+                const classification = getStealthClassification(info);
+
                 const config = getStealthConfig(groupData);
-                await processStealthDetection(ChainySock, msgId, groupJid, identity, config, groupData, groupFilePath, performanceOptimizer, metadataInfo);
+                await processStealthDetection(ChainySock, msgId, groupJid, identity, config, groupData, groupFilePath, performanceOptimizer, metadataInfo, classification);
             }
 
         } catch (e) {

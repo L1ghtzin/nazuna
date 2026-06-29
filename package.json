@@ -9,7 +9,8 @@
         "dev": "nodemon src/.scripts/start.js",
         "config": "node src/.scripts/config.js",
         "config:install": "node src/.scripts/config.js --install",
-        "update": "node src/.scripts/update.js"
+        "update": "node src/.scripts/update.js",
+        "postinstall": "patch-package"
     },
     "repository": {
         "type": "git",
@@ -28,7 +29,9 @@
         "node-cache": "^5.1.2",
         "node-cron": "^4.2.1",
         "node-webpmux": "^3.2.1",
+        "patch-package": "^8.0.1",
         "pino": "^10.1.0",
+        "postinstall-postinstall": "^2.1.0",
         "qrcode-terminal": "^0.12.0",
         "yt-search": "^2.13.1"
     },

@@ -73,30 +73,12 @@ export async function loadGroupData(isGroup, from, groupFile, groupName, optimiz
           optimizer.invalidateJson(groupFile);
         }
         
-        try {
-          let rawContent = await fsPromises.readFile(groupFile, 'utf-8');
-          if (!rawContent || rawContent.trim() === '') {
-            parsedData = { mark: {}, createdAt: new Date().toISOString() };
-          } else {
-            rawContent = rawContent.replace(/^\uFEFF/, '').replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
-            try {
-              parsedData = JSON.parse(rawContent);
-            } catch (parseError) {
-              console.error(`❌ JSON inválido no grupo ${from}, tentando recuperar:`, parseError.message);
-              try {
-                rawContent = rawContent.replace(/,\s*([\]}])/g, '$1');
-                parsedData = JSON.parse(rawContent);
-              } catch (retryError) {
-                parsedData = { mark: {}, createdAt: new Date().toISOString(), recovered: true };
-              }
-            }
-          }
-        } catch (readError) {
-          if (readError.code !== 'ENOENT') {
-            console.error(`❌ Erro ao ler arquivo do grupo ${from}:`, readError.message);
-          }
-          parsedData = { mark: {} };
+        if (optimizer?.loadJsonWithCache) {
+          parsedData = await optimizer.loadJsonWithCache(groupFile, { mark: {}, createdAt: new Date().toISOString(), recovered: true });
+        } else {
+          parsedData = await readJsonFileAsync(groupFile, { mark: {}, createdAt: new Date().toISOString() });
         }
+        
         return parsedData;
       },
       5000 // 5 seconds TTL

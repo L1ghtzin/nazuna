@@ -417,8 +417,23 @@ class PerformanceOptimizer {
     try {
       let data;
       if (await this.fileExists(filePath)) {
-        const content = fs.readFileSync(filePath, 'utf-8');
-        data = JSON.parse(content);
+        let content = fs.readFileSync(filePath, 'utf-8');
+        if (!content || content.trim() === '') {
+          data = defaultValue;
+        } else {
+          content = content.replace(/^\uFEFF/, '').replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
+          try {
+            data = JSON.parse(content);
+          } catch (parseError) {
+            console.error(`❌ JSON inválido ao carregar cache ${filePath}, tentando recuperar:`, parseError.message);
+            try {
+              content = content.replace(/,\s*([\]}])/g, '$1');
+              data = JSON.parse(content);
+            } catch (retryError) {
+              data = defaultValue;
+            }
+          }
+        }
       } else {
         data = defaultValue;
       }
@@ -461,6 +476,12 @@ class PerformanceOptimizer {
 
       // Invalida o cache para que a próxima leitura pegue o dado novo
       this.invalidateJson(filePath);
+      
+      // Se for um arquivo de grupo, invalida também o cache de grupo em indexGroupMeta
+      if (filePath.includes('grupos')) {
+        const groupId = path.basename(filePath, '.json');
+        this.invalidateGroup(groupId);
+      }
       
       return true;
     } catch (error) {
