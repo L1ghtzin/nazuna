@@ -74,7 +74,7 @@ export async function loadGroupData(isGroup, from, groupFile, groupName, optimiz
         }
         
         if (optimizer?.loadJsonWithCache) {
-          parsedData = await optimizer.loadJsonWithCache(groupFile, { mark: {}, createdAt: new Date().toISOString(), recovered: true });
+          parsedData = await optimizer.loadJsonWithCache(groupFile, { mark: {}, createdAt: new Date().toISOString() });
         } else {
           parsedData = await readJsonFileAsync(groupFile, { mark: {}, createdAt: new Date().toISOString() });
         }

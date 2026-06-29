@@ -417,7 +417,7 @@ class PerformanceOptimizer {
     try {
       let data;
       if (await this.fileExists(filePath)) {
-        let content = fs.readFileSync(filePath, 'utf-8');
+        let content = await fs.promises.readFile(filePath, 'utf-8');
         if (!content || content.trim() === '') {
           data = defaultValue;
         } else {

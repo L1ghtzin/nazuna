@@ -689,6 +689,29 @@ async function processStealthDetection(ChainySock, msgId, groupJid, identity, co
         await persistGroupData(true, groupJid, groupFilePath, groupData, performanceOptimizer);
         return;
     }
+
+    // Conta nova (<5 msgs) com falha NÃO classificada como lag (BAD_KEY/GENERIC).
+    // Sem histórico de conversa + erro anômalo = alto risco de ataque stealth.
+    // Punição imediata para manter a proteção contra contas recém-criadas.
+    if (isSuspectNewAccount) {
+        if (DEBUG_MODE) {
+            console.log(`[ANTI-STEALTH] 🔴 Conta suspeita sem histórico: @${userName} tem ${messageCount} msgs e falha ${stealthCategory}. Punição Imediata!`);
+        }
+
+        for (const [id, p] of pendingPunishments.entries()) {
+            if (p.strikeKey === strikeKey && p.groupJid === groupJid) {
+                clearTimeout(p.timer);
+                pendingPunishments.delete(id);
+            }
+        }
+
+        config.stats.detected++;
+        userStrikes.delete(strikeKey);
+        registerCooldown(groupJid, getIdentityActionId(identity));
+        await executeAction(ChainySock, groupJid, identity, config, metadataInfo);
+        await persistGroupData(true, groupJid, groupFilePath, groupData, performanceOptimizer);
+        return;
+    }
     
     let strikes = userStrikes.get(strikeKey) || { count: 0, lastTime: 0 };
     strikes.count++;
