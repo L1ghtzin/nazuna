@@ -3,6 +3,7 @@
 // Este módulo é importado uma vez pelo aggregator (database.js).
 
 import { ensureDirectoryExists, ensureJsonFileExists } from '../helpers.js';
+import { migrateLegacyFiles } from './unifiedConfig.js';
 import {
   DATABASE_DIR,
   GRUPOS_DIR,
@@ -46,6 +47,9 @@ ensureDirectoryExists(USERS_DIR);
 ensureDirectoryExists(DONO_DIR);
 ensureDirectoryExists(PARCERIAS_DIR);
 ensureDirectoryExists(TMP_DIR);
+
+// === MIGRAÇÃO ===
+migrateLegacyFiles();
 
 // === ARQUIVOS JSON ===
 ensureJsonFileExists(ANTIFLOOD_FILE);

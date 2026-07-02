@@ -1,5 +1,6 @@
 import fsPromises from 'fs/promises';
 import pathz from 'path';
+import { isUnifiedPath, setUnifiedValueAsync } from './database/unifiedConfig.js';
 
 /**
  * Versão assíncrona do writeJsonFile - não bloqueia o event loop
@@ -8,6 +9,10 @@ import pathz from 'path';
  * @returns {Promise<boolean>}
  */
 export const writeJsonFileAsync = async (filePath, data) => {
+  if (isUnifiedPath(filePath)) {
+    await setUnifiedValueAsync(filePath, data);
+    return true;
+  }
   let tempPath = null;
   try {
     if (data === undefined || data === null) {

@@ -3,6 +3,7 @@ import pathz from 'path';
 import { fileURLToPath } from 'url';
 import { lidCache } from './lidCache.js';
 import { toLID } from './toLID.js';
+import { isUnifiedPath, getUnifiedValue, setUnifiedValue, loadUnifiedSettings } from './database/unifiedConfig.js';
 
 // Inicializa o caminho do cache
 function initJidLidCache(cacheFilePath) {
@@ -547,6 +548,15 @@ function ensureDirectoryExists(dirPath) {
 
 function ensureJsonFileExists(filePath, defaultContent = {}) {
   try {
+    if (isUnifiedPath(filePath)) {
+      const settings = loadUnifiedSettings();
+      const key = pathz.basename(filePath).toLowerCase();
+      if (settings[key] === undefined) {
+        setUnifiedValue(filePath, defaultContent);
+      }
+      return true;
+    }
+
     if (!fs.existsSync(filePath)) {
       const dirPath = pathz.dirname(filePath);
       ensureDirectoryExists(dirPath);
@@ -565,6 +575,10 @@ const JSON_CACHE_TTL = 30000; // 30 segundos
 
 const loadJsonFile = (path, defaultValue = {}, useCache = false) => {
   try {
+    if (isUnifiedPath(path)) {
+      return getUnifiedValue(path, defaultValue);
+    }
+
     // Verifica dados pendentes (debouncedSaveJson)
     if (pendingData.has(path)) {
       try {
@@ -966,6 +980,11 @@ async function saveJsonFileAsync(filePath, data, createBackupFile = true) {
  * Sistema de Debounce Global para não floodar o disco com operações pesadas (RPG, Leveling)
  */
 function debouncedSaveJson(filePath, data, delayMs = 3000) {
+  if (isUnifiedPath(filePath)) {
+    setUnifiedValue(filePath, data);
+    return;
+  }
+
   // Atualiza a memória instantaneamente para quem ler depois
   pendingData.set(filePath, JSON.stringify(data, null, 2));
 

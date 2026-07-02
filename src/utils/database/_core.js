@@ -4,15 +4,14 @@
 import fs from 'fs';
 import pathz from 'path';
 import { ensureDirectoryExists, loadJsonFile } from '../helpers.js';
-import {
-  ECONOMY_FILE,
-  LEVELING_FILE,
-  COMMAND_ALIASES_FILE,
-  CUSTOM_AUTORESPONSES_FILE,
-  CMD_NOT_FOUND_FILE
-} from '../paths.js';
+import { ECONOMY_FILE, LEVELING_FILE, COMMAND_ALIASES_FILE, CUSTOM_AUTORESPONSES_FILE, CMD_NOT_FOUND_FILE } from '../paths.js';
+import { isUnifiedPath, setUnifiedValue } from './unifiedConfig.js';
 
 export function writeJsonFile(filePath, data) {
+  if (isUnifiedPath(filePath)) {
+    setUnifiedValue(filePath, data);
+    return true;
+  }
   try {
     if (data === undefined || data === null) {
       console.error(`❌ writeJsonFile: Tentativa de salvar dados nulos em ${filePath}`);
