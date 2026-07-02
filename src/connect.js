@@ -1,11 +1,9 @@
 import { useMultiFileAuthState, DisconnectReason, fetchLatestBaileysVersion, makeCacheableSignalKeyStore, makeWASocket, isJidBroadcast, isJidStatusBroadcast, isJidNewsletter } from 'baileys';
-import { Boom } from '@hapi/boom';
 import NodeCache from 'node-cache';
 import readline from 'readline';
 import pino from 'pino';
 import fs from 'fs/promises';
 import path, { dirname, join } from 'path';
-import qrcode from 'qrcode-terminal';
 import { readFileSync, existsSync } from 'fs';
 import { fileURLToPath } from 'url';
 
@@ -19,10 +17,9 @@ import CaptchaIndex from './utils/captchaIndex.js';
 import MessageQueue from './utils/messageQueue.js';
 import { performMigration, updateOwnerLid, migrateBlacklists } from './utils/migration.js';
 import { handleGroupParticipantsUpdate, handleGroupJoinRequest } from './handlers/groupEvents.js';
+import { handleConnectionUpdate } from './handlers/connectionEvents.js';
+import { handleMessagesUpdate, handleMessagesUpsert } from './handlers/messageEvents.js';
 import { loadGroupData } from './utils/groupManager.js';
-import { processAntiStealth, processAntiStealthUpdate } from './middleware/antiStealth.js';
-import { recordMessageEnvelope } from './utils/messageEnvelopeRegistry.js';
-import { hasPaymentMessage } from './utils/paymentMessage.js';
 import { MESSAGES } from './utils/messages.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -79,6 +76,18 @@ let msgRetryCounterCache;
 let messagesCache;
 let sock = null;
 
+const reconnectState = {
+  reconnectAttempts: 0,
+  isReconnecting: false,
+  reconnectTimer: null,
+  forbidden403Attempts: 0,
+  MAX_RECONNECT_ATTEMPTS: 10,
+  MAX_403_ATTEMPTS: 3,
+  RECONNECT_DELAY_BASE: 5000,
+  ownerMsgTimer: null,
+  cacheCleanupInterval: null
+};
+
 async function initializeOptimizedCaches(ChainySock) {
     try {
         // Inicializa índice de captcha para busca rápida
@@ -109,11 +118,10 @@ async function initializeOptimizedCaches(ChainySock) {
 let codeMode = process.argv.includes('--code') || process.env.CHAINY_CODE_MODE === '1' || process.env.NAZUNA_CODE_MODE === '1';
 
 // Cleanup otimizado do cache de mensagens
-let cacheCleanupInterval = null;
 const setupMessagesCacheCleanup = () => {
-    if (cacheCleanupInterval) clearInterval(cacheCleanupInterval);
+    if (reconnectState.cacheCleanupInterval) clearInterval(reconnectState.cacheCleanupInterval);
     
-    cacheCleanupInterval = setInterval(() => {
+    reconnectState.cacheCleanupInterval = setInterval(() => {
     if (!messagesCache || messagesCache.size <= 500) return;
     
     const keysToDelete = Math.floor(messagesCache.size * 0.4); // Remove 40% dos mais antigos
@@ -171,18 +179,6 @@ async function clearAuthDir(dirToRemove = AUTH_DIR) {
     }
 }
 
-// Variáveis de controle de reconexão (declaradas aqui para evitar temporal dead zone)
-let reconnectAttempts = 0;
-let isReconnecting = false; // Flag para evitar múltiplas reconexões simultâneas
-let reconnectTimer = null; // Timer de reconexão para poder cancelar
-let forbidden403Attempts = 0; // Contador específico para erro 403
-const MAX_RECONNECT_ATTEMPTS = 10;
-const MAX_403_ATTEMPTS = 3; // Máximo de 3 tentativas para erro 403
-const RECONNECT_DELAY_BASE = 5000; // 5 segundos base
-
-// CORREÇÃO: Timers do evento 'open' agora têm referência para serem cancelados
-// caso o bot desconecte antes deles dispararem, evitando timers órfãos usando socket antigo.
-let ownerMsgTimer = null;
 // fetchLatestBaileysVersion() faz uma requisição HTTP — se a rede estava instável
 // (causa da desconexão), essa chamada podia falhar e impedir a reconexão.
 let _cachedWAVersion = null;
@@ -388,257 +384,32 @@ async function createBotSocket(authDir) {
     if (ChainySock.messagesListenerAttached) return;
     ChainySock.messagesListenerAttached = true;
 
-    // --- LISTENER PARA messages.update ---
-    // Captura quando mensagens que falharam ao decriptar são finalmente decriptadas via retry
-    // Isso é crucial para evitar banir usuários lagados cujas mensagens decriptam depois
     ChainySock.ev.on('messages.update', async (updates) => {
-        try {
-            await processAntiStealthUpdate(ChainySock, updates);
-        } catch (e) {
-            console.error('[ANTI-STEALTH] Erro no processador de updates:', e);
-        }
+        await handleMessagesUpdate(ChainySock, updates);
     });
 
     ChainySock.ev.on('messages.upsert', async (m) => {
-    if (!m.messages || !Array.isArray(m.messages)) return;
-
-    // Registra o envelope de toda mensagem de grupo recebida para corroborar marcações de pagamento
-    for (const msg of m.messages) {
-        try {
-            recordMessageEnvelope(msg, hasPaymentMessage(msg));
-        } catch (e) {
-            console.error('[ANTI-STEALTH] Erro ao registrar envelope:', e);
-        }
-    }
-    
-    // --- ANTI-STEALTH (Anti Msg Criptografada) ---
-    // Fire-and-forget: não bloqueia o processamento de mensagens normais
-    processAntiStealth(ChainySock, m).catch(e => console.error('[ANTI-STEALTH] Erro crítico no módulo:', e));
-    // ---------------------------------------------
-    
-    // Se for 'append', só processa se for solicitação de entrada (messageStubType 172)
-    if (m.type === 'append') {
-        const isJoinRequest = m.messages.some(info => info?.messageStubType === 172);
-        if (!isJoinRequest) return;
-    }
-    
-    // Processa 'notify' (mensagens normais) e 'append' (apenas solicitações de entrada)
-    if (m.type !== 'notify' && m.type !== 'append') return;
-        
-    try {
-        
-        const messageProcessingPromises = m.messages.map(info =>
-        messageQueue.add(info, processMessage).catch(err => {
-        console.error(`❌ Failed to queue message ${info.key?.id}: ${err.message}`);
-        })
-        );
-        
-        await Promise.allSettled(messageProcessingPromises);
-        
-    } catch (err) {
-        console.error(`❌ Error in message upsert handler: ${err.message}`);
-    }
+        await handleMessagesUpsert(ChainySock, m, { messageQueue, processMessage });
     });
     };
 
     ChainySock.ev.on('connection.update', async (update) => {
-    const {
-    connection,
-    lastDisconnect,
-    qr
-    } = update;
-    const hasSessionNow = ChainySock.authState.creds.me || ChainySock.authState.creds.registered || existsSync(path.join(AUTH_DIR, 'creds.json'));
-    if (qr && !hasSessionNow && !codeMode) {
-    console.log('🔗 QR Code gerado para autenticação:');
-    qrcode.generate(qr, {
-        small: true
-    }, (qrcodeText) => {
-        console.log(qrcodeText);
-    });
-    console.log('📱 Escaneie o QR code acima com o WhatsApp para autenticar o bot.');
-    }
-    if (connection === 'open') {
-    try {
-        /*
-         CORREÇÃO: Reset dos contadores de tentativa feito aqui, após conexão confirmada.
-         Antes era feito no início de startNazu() — antes de qualquer sucesso —
-         fazendo o limite MAX_RECONNECT_ATTEMPTS nunca ser atingido de fato.
-        */
-        reconnectAttempts = 0;
-        forbidden403Attempts = 0;
-        console.log(`🔄 Conexão aberta. Inicializando sistema de otimização...`);
-        
-        await initializeOptimizedCaches(ChainySock);
-        
-        await updateOwnerLid(ChainySock, numerodono, config, configPath);
-        
-        setTimeout(() => {
-            performMigration(ChainySock, DATABASE_DIR, configPath).catch(err => {
-                console.error('❌ Erro na migração (não-bloqueante):', err.message);
-            });
-            migrateBlacklists(ChainySock, DATABASE_DIR).catch(err => {
-                console.error('❌ Erro na migração de blacklists (não-bloqueante):', err.message);
-            });
-        }, 10_000);
-        
-        rentalExpirationManager.bot = ChainySock;
-        await rentalExpirationManager.initialize();
-        
-        attachMessagesListener();
-        setupMessagesCacheCleanup(); // Inicia o sistema de limpeza de cache
-
-        // Verifica se há alguma atualização pendente de finalização visual
-        try {
-            const pendingUpdatePath = path.join(process.cwd(), 'dados', 'database', 'pendingUpdate.json');
-            if (existsSync(pendingUpdatePath)) {
-                const data = JSON.parse(readFileSync(pendingUpdatePath, 'utf8'));
-                if (data && data.key && data.from) {
-                    const successText = `⚙️ *PROCESSO DE ATUALIZAÇÃO DO BOT* ⚙️\n\n` +
-                      `✅ *1.* 🔍 Verificando requisitos\n` +
-                      `✅ *2.* 📁 Criando backup\n` +
-                      `✅ *3.* 📥 Baixando do GitHub\n` +
-                      `✅ *4.* 🧹 Limpando arquivos\n` +
-                      `✅ *5.* 🚀 Aplicando nova versão\n` +
-                      `✅ *6.* 📂 Restaurando backup\n` +
-                      `✅ *7.* 📦 Instalando dependências\n` +
-                      `✅ *8.* 🎉 Finalizando atualização\n\n` +
-                      `🎉 *ATUALIZAÇÃO CONCLUÍDA COM SUCESSO!*`;
-                    
-                    await ChainySock.sendMessage(data.from, { edit: data.key, text: successText });
-                    console.log('✅ Mensagem de atualização finalizada com sucesso!');
-                }
-                await fs.unlink(pendingUpdatePath).catch(() => {});
-            }
-        } catch (updateErr) {
-            console.error('❌ Erro ao finalizar mensagem de atualização pendente:', updateErr.message);
-        }
-        
-        // Envia mensagem de boas-vindas para o dono
-        try {
-            const msgBotOnConfig = loadMsgBotOn();
-            
-            if (msgBotOnConfig.enabled) {
-                if (ownerMsgTimer) clearTimeout(ownerMsgTimer);
-                // Aguarda 3 segundos para garantir que o bot está totalmente conectado
-                ownerMsgTimer = setTimeout(async () => {
-                    ownerMsgTimer = null;
-                    try {
-                        const ownerJid = buildUserId(numerodono, config);
-                        const finalMessage = msgBotOnConfig.message
-                            .replace(/{prefix}/g, config.prefixo || '!')
-                            .replace(/{botName}/g, config.nomebot || 'Chainy')
-                            .replace(/{ownerName}/g, config.nomedono || 'Dono');
-                        await ChainySock.sendMessage(ownerJid, { 
-                            text: finalMessage 
-                        });
-                        console.log('✅ Mensagem de inicialização enviada para o dono');
-                    } catch (sendError) {
-                        console.error('❌ Erro ao enviar mensagem de inicialização:', sendError.message);
-                    }
-                }, 3000);
-            } else {
-                console.log('ℹ️ Mensagem de inicialização desativada');
-            }
-        } catch (msgError) {
-            console.error('❌ Erro ao processar mensagem de inicialização:', msgError.message);
-        }
-        
-        console.log(`✅ Bot ${nomebot} iniciado com sucesso! Prefixo: ${prefixo} | Dono: ${nomedono}`);
-    } catch (initErr) {
-        console.error('❌ Erro crítico na inicialização pós-conexão:', initErr.message);
-        setTimeout(() => startChainy(), 5000);
-    }
-    }
-    if (connection === 'close') {
-    // Se não houver erro, foi um fechamento intencional (ex: Ctrl+C)
-    const isIntentional = !lastDisconnect?.error;
-    const reason = isIntentional ? 200 : new Boom(lastDisconnect.error)?.output?.statusCode;
-    const reasonMessage = {
-        200: 'Fechamento intencional',
-        [DisconnectReason.loggedOut]: 'Deslogado do WhatsApp',
-        401: 'Sessão expirada',
-        403: 'Acesso proibido (Forbidden)',
-        [DisconnectReason.connectionClosed]: 'Conexão fechada',
-        [DisconnectReason.connectionLost]: 'Conexão perdida',
-        [DisconnectReason.connectionReplaced]: 'Conexão substituída',
-        [DisconnectReason.timedOut]: 'Tempo de conexão esgotado',
-        [DisconnectReason.badSession]: 'Sessão inválida',
-        [DisconnectReason.restartRequired]: 'Reinício necessário',
-    } [reason] || 'Motivo desconhecido';
-    
-    console.log(`❌ Conexão fechada. Código: ${reason} | Motivo: ${reasonMessage}`);
-    
-    // Limpa recursos antes de reconectar
-    if (cacheCleanupInterval) {
-        clearInterval(cacheCleanupInterval);
-        cacheCleanupInterval = null;
-    }
-    
-    if (ownerMsgTimer) {
-        clearTimeout(ownerMsgTimer);
-        ownerMsgTimer = null;
-    }
-    
-    // Tratamento especial para erro 403 (Forbidden)
-    if (reason === 403) {
-        forbidden403Attempts++;
-        console.log(`⚠️ Erro 403 detectado. Tentativa ${forbidden403Attempts}/${MAX_403_ATTEMPTS}`);
-        
-        if (forbidden403Attempts >= MAX_403_ATTEMPTS) {
-        console.log('❌ Máximo de tentativas para erro 403 atingido. Apagando QR code e parando...');
-        await clearAuthDir(authDir);
-        console.log('🗑️ Autenticação removida. Reinicie o bot para gerar um novo QR code.');
-        process.exit(1);
-        }
-        
-        // Aguarda antes de tentar reconectar
-        console.log('🔄 Tentando reconectar em 5 segundos...');
-        if (reconnectTimer) {
-        clearTimeout(reconnectTimer);
-        }
-        reconnectTimer = setTimeout(() => {
-        startChainy();
-        }, 5000);
-        return;
-    }
-    
-    // Reset do contador 403 se for outro tipo de erro
-    forbidden403Attempts = 0;
-    
-    if (reason === DisconnectReason.badSession || reason === DisconnectReason.loggedOut) {
-        await clearAuthDir(authDir);
-        console.log('🔄 Nova autenticação será necessária na próxima inicialização.');
-    }
-    
-    // Não reconecta se conexão foi substituída (outra instância assumiu)
-    if (reason === DisconnectReason.connectionReplaced) {
-        console.log('⚠️ Conexão substituída por outra instância. Não reconectando para evitar conflito.');
-        return;
-    }
-    
-    // Delay antes de reconectar baseado no motivo
-    let reconnectDelay = 5000;
-    if (reason === DisconnectReason.timedOut) {
-        reconnectDelay = 3000; // Reconexão mais rápida para timeout
-    } else if (reason === DisconnectReason.connectionLost) {
-        reconnectDelay = 2000; // Reconexão ainda mais rápida para perda de conexão
-    } else if (reason === DisconnectReason.loggedOut || reason === DisconnectReason.badSession) {
-        reconnectDelay = 10000; // Delay maior para problemas de autenticação
-    }
-    
-    console.log(`🔄 Aguardando ${reconnectDelay / 1000} segundos antes de reconectar...`);
-    
-    // Cancela timer anterior se existir
-    if (reconnectTimer) {
-        clearTimeout(reconnectTimer);
-    }
-    
-    reconnectTimer = setTimeout(() => {
-        reconnectAttempts = 0; // Reset ao reconectar por desconexão normal
-        forbidden403Attempts = 0; // Reset contador de erro 403
-        startChainy();
-    }, reconnectDelay);
-    }
+        await handleConnectionUpdate(ChainySock, update, {
+            AUTH_DIR,
+            codeMode,
+            numerodono,
+            config,
+            configPath,
+            rentalExpirationManager,
+            attachMessagesListener,
+            setupMessagesCacheCleanup,
+            initializeOptimizedCaches,
+            DATABASE_DIR,
+            reconnectState,
+            startChainy,
+            clearAuthDir,
+            authDir: AUTH_DIR
+        });
     });
     return ChainySock;
     } catch (err) {
@@ -649,12 +420,12 @@ async function createBotSocket(authDir) {
 
 async function startChainy() {
     // Evita múltiplas instâncias sendo criadas ao mesmo tempo
-    if (isReconnecting) {
+    if (reconnectState.isReconnecting) {
         console.log('⚠️ Reconexão já em andamento, ignorando chamada duplicada...');
         return;
     }
 
-    isReconnecting = true;
+    reconnectState.isReconnecting = true;
 
     /*
      CORREÇÃO: try/finally garante que isReconnecting SEMPRE volta para false,
@@ -676,30 +447,30 @@ async function startChainy() {
         await createBotSocket(AUTH_DIR);
         // isReconnecting = false é feito no finally abaixo
     } catch (err) {
-        reconnectAttempts++;
-        console.error(`❌ Erro ao iniciar o bot (tentativa ${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS}): ${err.message}`);
+        reconnectState.reconnectAttempts++;
+        console.error(`❌ Erro ao iniciar o bot (tentativa ${reconnectState.reconnectAttempts}/${reconnectState.MAX_RECONNECT_ATTEMPTS}): ${err.message}`);
 
         // Se excedeu tentativas, para de tentar
-        if (reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
-            console.error(`❌ Máximo de tentativas de reconexão alcançado (${MAX_RECONNECT_ATTEMPTS}). Parando...`);
+        if (reconnectState.reconnectAttempts >= reconnectState.MAX_RECONNECT_ATTEMPTS) {
+            console.error(`❌ Máximo de tentativas de reconexão alcançado (${reconnectState.MAX_RECONNECT_ATTEMPTS}). Parando...`);
             process.exit(1);
         }
 
         // Delay exponencial (backoff) para evitar spam de conexões
-        const delay = Math.min(RECONNECT_DELAY_BASE * Math.pow(1.5, reconnectAttempts - 1), 60000);
+        const delay = Math.min(reconnectState.RECONNECT_DELAY_BASE * Math.pow(1.5, reconnectState.reconnectAttempts - 1), 60000);
         console.log(`🔄 Aguardando ${Math.round(delay / 1000)} segundos antes de tentar novamente...`);
 
         // Cancela timer anterior se existir
-        if (reconnectTimer) {
-            clearTimeout(reconnectTimer);
+        if (reconnectState.reconnectTimer) {
+            clearTimeout(reconnectState.reconnectTimer);
         }
 
-        reconnectTimer = setTimeout(() => {
+        reconnectState.reconnectTimer = setTimeout(() => {
             startChainy();
         }, delay);
     } finally {
         // CORREÇÃO: isReconnecting sempre liberado aqui — tanto em sucesso quanto em erro.
-        isReconnecting = false;
+        reconnectState.isReconnecting = false;
     }
 }
 
@@ -711,11 +482,11 @@ async function gracefulShutdown(signal) {
     console.log(`📡 ${signalName} recebido, parando bot graciosamente...`);
     
     // Cancela qualquer timer de reconexão pendente
-    if (reconnectTimer) {
-    clearTimeout(reconnectTimer);
-    reconnectTimer = null;
+    if (reconnectState.reconnectTimer) {
+    clearTimeout(reconnectState.reconnectTimer);
+    reconnectState.reconnectTimer = null;
     }
-    isReconnecting = false;
+    reconnectState.isReconnecting = false;
     
     let shutdownTimeout;
     
@@ -734,16 +505,14 @@ async function gracefulShutdown(signal) {
         }
 
     // Limpa recursos
-    if (cacheCleanupInterval) {
-    clearInterval(cacheCleanupInterval);
-    cacheCleanupInterval = null;
+    if (reconnectState.cacheCleanupInterval) {
+    clearInterval(reconnectState.cacheCleanupInterval);
+    reconnectState.cacheCleanupInterval = null;
     }
     
     // Finaliza fila de mensagens
     await messageQueue.shutdown();
     console.log('✅ MessageQueue finalizado');
-    
-
     
     clearTimeout(shutdownTimeout);
     console.log('✅ Desligamento concluído');
