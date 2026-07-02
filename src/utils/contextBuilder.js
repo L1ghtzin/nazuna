@@ -12,7 +12,7 @@ import pathz from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
 
-import { PerformanceOptimizer, getPerformanceOptimizer } from './performanceOptimizer.js';
+import { groupCache } from './groupCache.js';
 import { MESSAGES } from './messages.js';
 import { writeJsonFileAsync, readJsonFileAsync, fileExistsAsync } from './asyncFs.js';
 import { Commands, getTotalCommands, getTopSimilarCommands, getCommandListCached } from './commandSearch.js';
@@ -270,18 +270,13 @@ const buildGroupFilePath = (groupId) => pathz.join(GRUPOS_DIR, `${groupId}.json`
  * @returns {object|null} ctx - Objeto com todas as variáveis necessárias, ou null se mensagem inválida.
  */
 export async function buildMessageContext(bot, info, store, messagesCache, rentalExpirationManager, topLevel) {
-  const { initializePerformanceOptimizer, ensureDatabaseIntegrity, botVersion, __dirname: indexDir } = topLevel;
+  const { ensureDatabaseIntegrity, botVersion, __dirname: indexDir } = topLevel;
 
   // Log de início de processamento para debug paralelo
   const msgId = info?.key?.id?.slice(-6) || 'unknown';
   const from = info?.key?.remoteJid || 'unknown';
 
-  const optimizer = await initializePerformanceOptimizer();
-  let config = await optimizer.getCachedFile(
-    CONFIG_FILE,
-    10000, // 10 segundos
-    (path) => loadJsonFile(path, {})
-  );
+  const config = loadJsonFile(CONFIG_FILE, {});
 
   // Verificação e correção do prefixo reservado $ ao inicializar
   if (config.prefixo === '$') {
@@ -381,19 +376,7 @@ export async function buildMessageContext(bot, info, store, messagesCache, renta
 
   async function getCachedGroupMetadata(groupId) {
     try {
-      const optimizer = await initializePerformanceOptimizer();
-      if (optimizer?.modules?.cacheManager) {
-        const cached = await optimizer.modules.cacheManager.getIndexGroupMeta(groupId);
-        if (cached) {
-          return cached;
-        }
-
-        const freshData = await bot.groupMetadata(groupId).catch(() => ({}));
-        await optimizer.modules.cacheManager.setIndexGroupMeta(groupId, freshData);
-        return freshData;
-      }
-
-      return await bot.groupMetadata(groupId).catch(() => ({}));
+      return await groupCache.ensure(groupId, bot);
     } catch (error) {
       return await bot.groupMetadata(groupId).catch(() => ({}));
     }
@@ -430,28 +413,17 @@ export async function buildMessageContext(bot, info, store, messagesCache, renta
 
   const modoLiteFile = DATABASE_DIR + '/modolite.json';
 
-  const [
-    antipvData,
-    premiumListaZinha,
-    banGpIds,
-    antifloodData,
-    antiSpamGlobal,
-    globalBlocks,
-    botState,
-    modoLiteGlobal
-  ] = await Promise.all([
-    optimizer.getCachedFile(DATABASE_DIR + '/antipv.json', 5000, (path) => loadJsonFile(path)),
-    optimizer.getCachedFile(DONO_DIR + '/premium.json', 60000, (path) => loadJsonFile(path)),
-    optimizer.getCachedFile(DONO_DIR + '/bangp.json', 30000, (path) => loadJsonFile(path)),
-    optimizer.getCachedFile(DATABASE_DIR + '/antiflood.json', 30000, (path) => loadJsonFile(path)),
-    optimizer.getCachedFile(DATABASE_DIR + '/antispam.json', 30000, (path) => loadJsonFile(path, { enabled: false, limit: 5, interval: 10, blockTime: 600, users: {}, blocks: {} })),
-    optimizer.getCachedFile(DATABASE_DIR + '/globalBlocks.json', 30000, (path) => loadJsonFile(path, { commands: {}, users: {} })),
-    optimizer.getCachedFile(DATABASE_DIR + '/botState.json', 30000, (path) => loadJsonFile(path, { status: 'on' })),
-    optimizer.getCachedFile(modoLiteFile, 30000, (path) => loadJsonFile(path, { status: false }))
-  ]);
+  const antipvData = loadJsonFile(DATABASE_DIR + '/antipv.json', {});
+  const premiumListaZinha = loadJsonFile(DONO_DIR + '/premium.json', {});
+  const banGpIds = loadJsonFile(DONO_DIR + '/bangp.json', {});
+  const antifloodData = loadJsonFile(DATABASE_DIR + '/antiflood.json', {});
+  const antiSpamGlobal = loadJsonFile(DATABASE_DIR + '/antispam.json', { enabled: false, limit: 5, interval: 10, blockTime: 600, users: {}, blocks: {} });
+  const globalBlocks = loadJsonFile(DATABASE_DIR + '/globalBlocks.json', { commands: {}, users: {} });
+  const botState = loadJsonFile(DATABASE_DIR + '/botState.json', { status: 'on' });
+  const modoLiteGlobal = loadJsonFile(modoLiteFile, { status: false });
   if (!modoLiteFileChecked) {
-    if (!(await fileExistsAsync(modoLiteFile))) {
-      await writeJsonFileAsync(modoLiteFile, modoLiteGlobal);
+    if (!fs.existsSync(modoLiteFile)) {
+      writeJsonFile(modoLiteFile, modoLiteGlobal);
     }
     modoLiteFileChecked = true;
   }
@@ -507,7 +479,7 @@ export async function buildMessageContext(bot, info, store, messagesCache, renta
     const pushname = info.pushName || '';
     const isStatus = from?.endsWith('@broadcast') || false;
     const nmrdn = buildUserId(numerodono, config);
-    const subDonoList = await optimizer.memoize('subdonos:global', () => Promise.resolve(loadSubdonos()), 30000);
+    const subDonoList = loadSubdonos();
     const isSubOwner = isSubdono(sender);
     const ownerJid = `${numerodono}@s.whatsapp.net`;
     const botId = getBotId(bot);
@@ -570,20 +542,16 @@ export async function buildMessageContext(bot, info, store, messagesCache, renta
     }
 
     const groupName = groupMetadata?.subject || '';
-    const groupData = await loadGroupData(isGroup, from, groupFile, groupName, optimizer);
+    const groupData = await loadGroupData(isGroup, from, groupFile, groupName);
 
     // Otimização: Cache de parcerias
     let parceriasData = {};
     if (isGroup) {
-      parceriasData = await optimizer.memoize(
-        `parcerias:${from}`,
-        () => Promise.resolve(loadParceriasData(from)),
-        10000 // 10 segundos
-      );
+      parceriasData = loadParceriasData(from);
     }
 
     // Wrappers para usar groupData no escopo atual
-    const persistGroupDataLocal = () => persistGroupData(isGroup, from, groupFile, groupData, optimizer);
+    const persistGroupDataLocal = () => persistGroupData(isGroup, from, groupFile, groupData);
     const isUserWhitelisted = (userId, antiType) => isUserWhitelistedCore(groupData, userId, antiType);
 
     const groupPrefix = groupData.customPrefix || prefixo;
@@ -593,7 +561,7 @@ export async function buildMessageContext(bot, info, store, messagesCache, renta
     // Suporte para "! comando" (com espaço após o prefixo)
     const bodyWithoutPrefix = body.trim().slice(groupPrefix.length).trimStart();
 
-    const aliases = await optimizer.memoize('aliases:global', () => Promise.resolve(loadCommandAliases()), 30000);
+    const aliases = loadCommandAliases();
     const matchedAlias = aliases.find(item => normalizar(bodyWithoutPrefix.split(/ +/).shift().trim()) === item.alias);
 
     // Se encontrou um alias, aplicar parâmetros fixos
@@ -805,7 +773,7 @@ export async function buildMessageContext(bot, info, store, messagesCache, renta
       bot, info, isGroup, sender, groupData, command, isCmd, isImage, isVideo,
       isVisuU, isVisuU2, isBotAdmin, isGroupAdmin, isOwner, isStatusMention, isButtonMessage,
       from, pushname, reply, messagesCache, type, body, isOwnerOrSub, antiSpamGlobal, writeJsonFile,
-      DATABASE_DIR, optimizer, groupFile, getUserName, isUserWhitelisted, getGroupRentalStatus,
+      DATABASE_DIR, groupFile, getUserName, isUserWhitelisted, getGroupRentalStatus,
       isRentalModeActive, validateActivationCode, useActivationCode, isMuted, isMuted2, MESSAGES,
       idInArray, groupAdmins, botNumberLid
     });
@@ -815,7 +783,7 @@ export async function buildMessageContext(bot, info, store, messagesCache, renta
     // Stats em fire-and-forget: não bloqueia o pipeline do comando
     processStats({
       bot, info, isGroup, sender, groupData, isCmd, type, pushname,
-      writeJsonFile, groupFile, optimizer, from
+      writeJsonFile, groupFile, from
     }).catch(e => console.error('❌ Erro no processStats:', e.message));
 
 
@@ -873,7 +841,7 @@ export async function buildMessageContext(bot, info, store, messagesCache, renta
       reply, reagir, debugLog, persistGroupDataLocal, persistGroupData: persistGroupDataLocal, isUserWhitelisted,
       getCachedGroupMetadata, deleteChatByLastMessage, clearChatHistorySafe,
       // Módulos
-      menus, modules: modulesExport, optimizer,
+      menus, modules: modulesExport,
       youtube, tiktok, pinterest, igdl, kwai, sendSticker, Dicionary, styleText,
       emojiMix, upload, mcPlugin, tictactoe, toolsJson, vabJson,
       Lyrics, commandStats, VerifyUpdate, temuScammer, relationshipManager,

@@ -1,5 +1,6 @@
 import fs from 'fs/promises';
 import path from 'path';
+import { readJsonFileAsync, writeJsonFileAsync } from '../../utils/asyncFs.js';
 
 async function removeFileIfExists(filePath) {
   try {
@@ -16,7 +17,7 @@ export default {
   commands: ["activate", "ajuda", "antipv", "antipv2", "antipv3", "antipv4", "antipvmessage", "antipvmsg", "ativar", "audiomenu", "configcmdnotfound", "deactivate", "desativar", "entrar", "fotomenu", "guia", "list", "lista", "mediamenu", "menuaudio", "midiamenu", "off", "on", "sairgp", "setcmdmsg", "setmenuaudio", "tutorial", "videomenu"],
   handle: async ({ 
     bot, from, info, command, reply, q, args, prefix,
-    MESSAGES, optimizer, getFileBuffer, getMediaInfo,
+    MESSAGES, getFileBuffer, getMediaInfo,
     setMenuAudio, removeMenuAudio, DATABASE_DIR, pathz
   }) => {
     const cmd = command.toLowerCase();
@@ -24,7 +25,7 @@ export default {
     // --- ANTIPV ---
     if (['antipv', 'antipv2', 'antipv3', 'antipv4'].includes(cmd)) {
       const dbPath = pathz.join(DATABASE_DIR, 'antipv.json');
-      let antipvData = await optimizer.loadJsonWithCache(dbPath, { mode: null, message: MESSAGES.permission.groupOnly });
+      let antipvData = await readJsonFileAsync(dbPath, { mode: null, message: MESSAGES.permission.groupOnly });
 
       const arg0 = args[0] ? args[0].toLowerCase() : '';
       let statusChanged = true;
@@ -44,7 +45,7 @@ export default {
         return reply(MESSAGES.owner.bot_config.antipv.statusUnchanged(cmd, currentStatus));
       }
 
-      await optimizer.saveJsonWithCache(dbPath, antipvData);
+      await writeJsonFileAsync(dbPath, antipvData);
 
       const status = antipvData.mode ? 'ativado' : 'desativado';
       let infoMsg = 'O bot responde normalmente no privado.';
@@ -59,10 +60,10 @@ export default {
     if (cmd === 'antipvmessage' || cmd === 'antipvmsg') {
       if (!q) return reply(MESSAGES.owner.bot_config.antipv.missingMessage(prefix));
       const dbPath = pathz.join(DATABASE_DIR, 'antipv.json');
-      let antipvData = await optimizer.loadJsonWithCache(dbPath, { mode: null, message: MESSAGES.permission.groupOnly });
+      let antipvData = await readJsonFileAsync(dbPath, { mode: null, message: MESSAGES.permission.groupOnly });
       
       antipvData.message = q.trim();
-      await optimizer.saveJsonWithCache(dbPath, antipvData);
+      await writeJsonFileAsync(dbPath, antipvData);
       
       return reply(MESSAGES.owner.bot_config.antipv.messageUpdated(antipvData.message));
     }

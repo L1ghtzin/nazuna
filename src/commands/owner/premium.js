@@ -1,4 +1,5 @@
 import pathz from 'path';
+import { writeJsonFileAsync } from '../../utils/asyncFs.js';
 
 export default {
   name: "premium_mgmt",
@@ -10,7 +11,7 @@ export default {
   ],
   handle: async ({ 
     bot, from, info, command, reply, prefix, sender, menc_os2,
-    isOwner, premiumListaZinha, DATABASE_DIR, optimizer, getUserName,
+    isOwner, premiumListaZinha, DATABASE_DIR, getUserName,
     MESSAGES
   }) => {
     const cmd = command.toLowerCase();
@@ -22,7 +23,7 @@ export default {
       
       premiumListaZinha[menc_os2] = true;
       const filePath = pathz.join(DATABASE_DIR, 'dono/premium.json');
-      await optimizer.saveJsonWithCache(filePath, premiumListaZinha);
+      await writeJsonFileAsync(filePath, premiumListaZinha);
       
       return bot.sendMessage(from, {
         text: MESSAGES.owner.premium.add.success(getUserName(menc_os2)),
@@ -37,7 +38,7 @@ export default {
       
       delete premiumListaZinha[menc_os2];
       const filePath = pathz.join(DATABASE_DIR, 'dono/premium.json');
-      await optimizer.saveJsonWithCache(filePath, premiumListaZinha);
+      await writeJsonFileAsync(filePath, premiumListaZinha);
       
       return bot.sendMessage(from, {
         text: MESSAGES.owner.premium.remove.success(getUserName(menc_os2)),

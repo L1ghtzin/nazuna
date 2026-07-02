@@ -1,4 +1,5 @@
 import { isUserInMap } from '../utils/groupManager.js';
+import { findInBlacklistMap } from '../utils/helpers.js';
 
 /**
  * Middleware para sistemas de controle de acesso, blacklists e limites
@@ -31,18 +32,18 @@ export async function processAccessControl({
 
   // Blacklist Global
   const globalBlacklist = loadGlobalBlacklist();
-  if (isCmd && sender && globalBlacklist.users && (isUserInMap(globalBlacklist.users, sender) || globalBlacklist.users[getUserName(sender)])) {
-    const blacklistEntry = globalBlacklist.users[sender] || globalBlacklist.users[getUserName(sender)];
-    const dateStr = new Date(blacklistEntry.addedAt).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });
-    await reply(MESSAGES.middleware.accessControl.globalBlacklist(blacklistEntry.reason, blacklistEntry.addedBy, dateStr));
+  const globalBlacklistEntry = findInBlacklistMap(globalBlacklist.users, sender);
+  if (isCmd && sender && globalBlacklistEntry) {
+    const dateStr = new Date(globalBlacklistEntry.addedAt).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+    await reply(MESSAGES.middleware.accessControl.globalBlacklist(globalBlacklistEntry.reason, globalBlacklistEntry.addedBy, dateStr));
     return true;
   }
   
   // Blacklist do Grupo
-  if (isGroup && isCmd && groupData.blacklist && (groupData.blacklist[sender] || groupData.blacklist[getUserName(sender)])) {
-    const blacklistEntry = groupData.blacklist[sender] || groupData.blacklist[getUserName(sender)];
-    const dateStr = new Date(blacklistEntry.date || blacklistEntry.timestamp).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });
-    await reply(MESSAGES.middleware.accessControl.groupBlacklist(blacklistEntry.reason, dateStr));
+  const groupBlacklistEntry = findInBlacklistMap(groupData.blacklist, sender);
+  if (isGroup && isCmd && groupBlacklistEntry) {
+    const dateStr = new Date(groupBlacklistEntry.date || groupBlacklistEntry.timestamp).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+    await reply(MESSAGES.middleware.accessControl.groupBlacklist(groupBlacklistEntry.reason, dateStr));
     return true;
   }
 

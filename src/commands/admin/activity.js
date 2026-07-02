@@ -1,3 +1,4 @@
+import { writeJsonFileAsync } from '../../utils/asyncFs.js';
 
 
 export default {
@@ -19,7 +20,6 @@ export default {
     buildGroupFilePath,
     AllgroupMembers,
     getUserName,
-    optimizer,
     MESSAGES,
     menc_os2,
     sender
@@ -99,7 +99,7 @@ export default {
 
     if (['limparatividade', 'resetatividade'].includes(command)) {
       groupData.contador = [];
-      await optimizer.saveJsonWithCache(groupFile, groupData);
+      await writeJsonFileAsync(groupFile, groupData);
       return reply(MESSAGES.admin.activity.resetSuccess);
     }
 
@@ -107,7 +107,7 @@ export default {
       const sub = args[0]?.toLowerCase();
       if (!sub) return reply(MESSAGES.admin.activity.preserveUsage(prefix));
       groupData.preservarContador = sub === 'on';
-      await optimizer.saveJsonWithCache(groupFile, groupData);
+      await writeJsonFileAsync(groupFile, groupData);
       return reply(MESSAGES.admin.activity.preserveToggle(groupData.preservarContador));
     }
   },

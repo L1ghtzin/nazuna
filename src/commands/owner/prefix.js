@@ -1,4 +1,5 @@
 import { CONFIG_FILE } from '../../utils/paths.js';
+import { readJsonFileAsync, writeJsonFileAsync } from '../../utils/asyncFs.js';
 
 export default {
   name: "prefix",
@@ -11,7 +12,6 @@ export default {
     prefix,
     command,
     config,
-    optimizer,
     MESSAGES
   }) => {
     try {
@@ -28,9 +28,9 @@ export default {
         await reply(MESSAGES.owner.prefix.success(newPrefix));
       }
       
-      const nextConfig = { ...(config || await optimizer.loadJsonWithCache(CONFIG_FILE, {})), prefixo: newPrefix };
+      const nextConfig = { ...(config || await readJsonFileAsync(CONFIG_FILE, {})), prefixo: newPrefix };
       
-      await optimizer.saveJsonWithCache(CONFIG_FILE, nextConfig);
+      await writeJsonFileAsync(CONFIG_FILE, nextConfig);
       
     } catch (e) {
       console.error(e);

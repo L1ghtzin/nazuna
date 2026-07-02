@@ -1,15 +1,82 @@
 export default {
   name: "system_management",
   description: "Gerenciamento avançado do sistema, subdonos e limites",
-  commands: ["addblackglobal", "addsubdono", "atualizar", "atualizarbot", "cmddeslimitar", "cmdlimit", "cmdlimitar", "cmdlimites", "cmdlimits", "cmdremovelimit", "delsubdono", "limitarcmd", "listasubdonos", "listblackglobal", "listcmdlimites", "listsubdonos", "remsubdono", "rmblackglobal", "rmcmdlimit", "rmsubdono", "update", "updates", "viewmsg"],
+  commands: ["addblackglobal", "addsubdono", "atualizar", "atualizarbot", "cmddeslimitar", "cmdlimit", "cmdlimitar", "cmdlimites", "cmdlimits", "cmdremovelimit", "delsubdono", "limitarcmd", "listasubdonos", "listblackglobal", "listcmdlimites", "listsubdonos", "migrarblacklists", "remsubdono", "rmblackglobal", "rmcmdlimit", "rmsubdono", "update", "updates", "viewmsg"],
   handle: async ({ 
     bot, from, info, command, reply, q, args, isOwner, isSubOwner, isOwnerOrSub, prefix, sender, numerodono, config,
     addSubdono, removeSubdono, getSubdonos, addGlobalBlacklist, removeGlobalBlacklist, getGlobalBlacklist,
-    isValidJid, isValidLid, buildUserId, getLidFromJidCached, groupMetadata, isGroup, pushname, menc_os2,
-    MESSAGES, botState, optimizer, DATABASE_DIR
+    isValidJid, isValidLid, buildUserId, getLidFromJidCached, groupMetadata, isGroup, pushname, menc_os2, getUserName,
+    MESSAGES, botState, DATABASE_DIR
   }) => {
     const cmd = command.toLowerCase();
-    // --- UPDATES ---
+    // --- MIGRAR BLACKLISTS ---
+    if (cmd === 'migrarblacklists') {
+      if (!isOwner) return reply(MESSAGES.error.ownerOnly);
+      await reply("⏳ Iniciando migração de TODAS as blacklists para dupla-chave (JID+LID). Isso pode levar alguns segundos...");
+      
+      try {
+        const fs = await import('fs/promises');
+        const pathz = await import('path');
+        let globaisAtualizados = 0;
+        let gruposAtualizados = 0;
+
+        // 1. Blacklist Global
+        const globalBLPath = pathz.join(DATABASE_DIR, 'dono', 'globalBlacklist.json');
+        let globalData = { users: {}, groups: {} };
+        try {
+            globalData = JSON.parse(await fs.readFile(globalBLPath, 'utf-8'));
+        } catch(e){}
+        
+        let globalModified = false;
+        for (const key of Object.keys(globalData.users)) {
+            if (isValidJid(key)) {
+                const lid = await getLidFromJidCached(bot, key);
+                if (lid && lid.includes('@lid') && !globalData.users[lid]) {
+                    globalData.users[lid] = globalData.users[key];
+                    globalModified = true;
+                    globaisAtualizados++;
+                }
+            }
+        }
+        if (globalModified) {
+            await fs.writeFile(globalBLPath, JSON.stringify(globalData, null, 2));
+        }
+
+        // 2. Blacklists de Grupo
+        const gruposDir = pathz.join(DATABASE_DIR, 'grupos');
+        const files = await fs.readdir(gruposDir).catch(() => []);
+        
+        for (const file of files) {
+            if (!file.endsWith('.json')) continue;
+            const groupPath = pathz.join(gruposDir, file);
+            try {
+                const groupData = JSON.parse(await fs.readFile(groupPath, 'utf-8'));
+                if (groupData.blacklist) {
+                    let groupModified = false;
+                    for (const key of Object.keys(groupData.blacklist)) {
+                        if (isValidJid(key)) {
+                            const lid = await getLidFromJidCached(bot, key);
+                            if (lid && lid.includes('@lid') && !groupData.blacklist[lid]) {
+                                groupData.blacklist[lid] = groupData.blacklist[key];
+                                groupModified = true;
+                                gruposAtualizados++;
+                            }
+                        }
+                    }
+                    if (groupModified) {
+                        await fs.writeFile(groupPath, JSON.stringify(groupData, null, 2));
+                    }
+                }
+            } catch(e){}
+        }
+        
+        return reply(`✅ Migração concluída com sucesso!\n\n🌍 Globais atualizados: ${globaisAtualizados}\n👥 Grupos atualizados: ${gruposAtualizados}`);
+      } catch (err) {
+        console.error("Erro na migração:", err);
+        return reply("❌ Ocorreu um erro durante a migração. Verifique os logs.");
+      }
+    }
+
     // --- UPDATES ---
     if (['updates', 'atualizar', 'update', 'atualizarbot'].includes(cmd)) {
       if (!q || q.toLowerCase() !== 'sim') {
@@ -248,18 +315,15 @@ export default {
         let target = menc_os2;
         let reason = q.trim();
         
-        // Se não respondeu a uma mensagem, o primeiro argumento pode ser o número e o resto o motivo
-        if (!target && q) {
-          const parts = q.split(' ');
-          target = parts[0];
-          reason = parts.slice(1).join(' ').trim();
-        }
+        const mentionIndex = args.findIndex(arg => arg.includes('@'));
         
-        // Se citou/marcou alguém, o 'q' inteiro é o motivo
-        if (menc_os2 && q) {
+        if (!target && args[0]) {
+          target = args[0];
+          reason = args.slice(1).join(' ').trim();
+        } else if (menc_os2 && q) {
           reason = q.trim();
         }
-
+        
         if (!target) return reply(MESSAGES.owner.system_management.blacklist.missingTarget);
 
         if (target && !target.includes('@')) {
@@ -282,7 +346,16 @@ export default {
         return reply(res.message, { mentions: [target] });
       }
       const list = getGlobalBlacklist();
-      return reply(MESSAGES.owner.system_management.blacklist.listHeader + Object.keys(list.users).join('\n'));
+      const usersArray = Array.isArray(list.users) ? list.users : [];
+      if (!usersArray.length) {
+        return reply(MESSAGES.owner.system_management.blacklist.listHeader + '📭 Nenhum usuário na blacklist global.');
+      }
+      
+      const formatted = usersArray.map((u, idx) => {
+        const identifier = u.lid || (u.number ? u.number + '@s.whatsapp.net' : 'Desconhecido');
+        return `${idx + 1}. @${getUserName(identifier)} (${u.reason || 'Sem motivo'})`;
+      }).join('\n');
+      return reply(MESSAGES.owner.system_management.blacklist.listHeader + formatted, { mentions: usersArray.map(u => u.lid || (u.number ? u.number + '@s.whatsapp.net' : null)).filter(Boolean) });
     }
 
     // --- VIEWMSG (Marcar como lida) ---
@@ -294,8 +367,9 @@ export default {
       }
       
       const path = await import('path');
+      const fs = await import('fs/promises');
       botState.viewMessages = (opt === 'on');
-      await optimizer.saveJsonWithCache(path.join(DATABASE_DIR, 'botState.json'), botState);
+      await fs.writeFile(path.join(DATABASE_DIR, 'botState.json'), JSON.stringify(botState, null, 2));
       
       return reply(MESSAGES.owner.system_management.viewMsg.success(opt));
     }

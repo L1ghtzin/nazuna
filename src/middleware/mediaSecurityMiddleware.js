@@ -1,3 +1,5 @@
+import { writeJsonFileAsync } from '../utils/asyncFs.js';
+
 /**
  * Middleware para sistemas de moderação visual e mídias
  */
@@ -17,7 +19,6 @@ export async function processMediaSecurity({
   type,
   sender,
   groupFile,
-  optimizer,
   isUserWhitelisted,
   MESSAGES
 }) {
@@ -73,7 +74,7 @@ export async function processMediaSecurity({
           mentions: [sender]
         });
         
-        await optimizer.saveJsonWithCache(groupFile, groupData);
+        await writeJsonFileAsync(groupFile, groupData);
         return true;
       } catch (error) {
         console.error("Erro no sistema antifig:", error);

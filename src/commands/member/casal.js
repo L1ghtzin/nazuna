@@ -1,9 +1,10 @@
+import { readJsonFileAsync } from '../../utils/asyncFs.js';
 export default {
   name: "casal",
   description: "Forma um casal aleatório no grupo",
   commands: ["casal"],
   usage: `${global.prefix}casal`,
-  handle: async ({  reply, isGroup, isModoBn, from, buildGroupFilePath, optimizer, AllgroupMembers, getUserName , MESSAGES }) => {
+  handle: async ({  reply, isGroup, isModoBn, from, buildGroupFilePath, AllgroupMembers, getUserName , MESSAGES }) => {
     try {
       if (!isGroup) return reply(MESSAGES.member.casal.groupOnlyError);
       if (!isModoBn) return reply(MESSAGES.member.casal.gameModeDisabled);
@@ -11,7 +12,7 @@ export default {
       
       let path = buildGroupFilePath(from);
       // Otimização: Usar cache para leitura de arquivo
-      let data = await optimizer.loadJsonWithCache(path, { mark: {} });
+      let data = await readJsonFileAsync(path, { mark: {} });
       
       let membros = AllgroupMembers.filter(m => !['0', 'marca'].includes(data.mark[m]));
       

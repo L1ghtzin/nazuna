@@ -5,11 +5,9 @@ import { loadReminders, saveReminders, writeJsonFile, loadDonoDivulgacao, saveDo
 import { GRUPOS_DIR } from '../utils/paths.js';
 import { normalizeScheduleTime, getTodayStr, recordScheduleRun, hasRunForScheduleToday } from '../utils/timeHelpers.js';
 import { ensureDirectoryExists, isGroupId } from '../utils/helpers.js';
-import { PerformanceOptimizer, getPerformanceOptimizer } from '../utils/performanceOptimizer.js';
 import { MESSAGES } from '../utils/messages.js';
 
-// Reusing global optimizer if possible, or instantiating a local one
-const optimizer = getPerformanceOptimizer();
+
 
 let workersStarted = false;
 const gpCronJobs = {};
@@ -31,11 +29,7 @@ const startRemindersWorker = (bot) => {
   try {
     setInterval(async () => {
       try {
-        const list = await optimizer.memoize(
-          'reminders:all',
-          () => Promise.resolve(loadReminders()),
-          5000 // 5 segundos
-        );
+        const list = loadReminders();
         if (!Array.isArray(list) || list.length === 0) return;
         const now = Date.now();
         let changed = false;
@@ -61,7 +55,6 @@ const startRemindersWorker = (bot) => {
         }
         if (changed) {
           saveReminders(list);
-          optimizer.clearStatic('reminders:all');
         }
       } catch (err) {
         console.error("Reminder worker error:", err);

@@ -10,14 +10,14 @@ import { readFileSync, existsSync } from 'fs';
 import { fileURLToPath } from 'url';
 
 
-import PerformanceOptimizer from './utils/performanceOptimizer.js';
 import RentalExpirationManager from './utils/rentalExpirationManager.js';
+import { groupCache } from './utils/groupCache.js';
 import { loadMsgBotOn } from './utils/database.js';
 import { buildUserId, normalizeMessageContent } from './utils/helpers.js';
 import { initCaptchaIndex, loadCaptchaJson, saveCaptchaJson } from './utils/captchaIndex.js';
 import CaptchaIndex from './utils/captchaIndex.js';
 import MessageQueue from './utils/messageQueue.js';
-import { performMigration, updateOwnerLid } from './utils/migration.js';
+import { performMigration, updateOwnerLid, migrateBlacklists } from './utils/migration.js';
 import { handleGroupParticipantsUpdate, handleGroupJoinRequest } from './handlers/groupEvents.js';
 import { loadGroupData } from './utils/groupManager.js';
 import { processAntiStealth, processAntiStealthUpdate } from './middleware/antiStealth.js';
@@ -46,7 +46,7 @@ if (DEBUG_MODE) {
 
 const indexModule = (await import('./index.js')).default ?? (await import('./index.js'));
 
-const performanceOptimizer = new PerformanceOptimizer();
+
 
 const {
     prefixo,
@@ -78,31 +78,26 @@ const GLOBAL_BLACKLIST_PATH = path.join(__dirname, '..', 'dados', 'database', 'd
 let msgRetryCounterCache;
 let messagesCache;
 let sock = null;
+let messagesListenerAttached = false;
 
 async function initializeOptimizedCaches(ChainySock) {
     try {
-        await performanceOptimizer.initialize();
-
         // Inicializa índice de captcha para busca rápida
         const requestCaptchaMsg = async (dataCaptcha) => {
-            /*
-                Vai receber apenas os ids expirados
-            */
             await ChainySock.sendMessage(dataCaptcha.groupId, { text: MESSAGES.middleware.captcha.expired(dataCaptcha.idOrigin.split('@')[0]), mentions: [dataCaptcha.idOrigin] });
             await ChainySock.groupParticipantsUpdate(dataCaptcha.groupId, [dataCaptcha.idOrigin], 'remove').catch(() => { });
         };
         await initCaptchaIndex(requestCaptchaMsg);
 
-        msgRetryCounterCache = {
-            get: (key) => performanceOptimizer.cacheGet('msgRetry', key),
-            set: (key, value, ttl) => performanceOptimizer.cacheSet('msgRetry', key, value, ttl),
-            del: (key) => performanceOptimizer.modules.cacheManager?.del('msgRetry', key)
-        };
+        msgRetryCounterCache = new NodeCache({
+            stdTTL: 5 * 60,
+            useClones: false
+        });
 
         messagesCache = new Map();
 
     } catch (error) {
-        console.error('❌ Erro ao inicializar sistema de otimização:', error.message);
+        console.error('❌ Erro ao inicializar caches:', error.message);
 
         msgRetryCounterCache = new NodeCache({
             stdTTL: 5 * 60,
@@ -273,6 +268,7 @@ async function createBotSocket(authDir) {
     };
 
     sock = ChainySock;
+    groupCache.registerEvents(ChainySock);
 
     if (codeMode && !hasSession) {
     console.log('📱 Insira o número de telefone (com código de país, ex: +5511912345678 ou +554112345678): ');
@@ -336,28 +332,17 @@ async function createBotSocket(authDir) {
     await handleGroupJoinRequest(ChainySock, inf);
     });
 
-    let messagesListenerAttached = false;
-
     const queueErrorHandler = async (item, error) => {
-    console.error(`❌ Critical error processing message ${item.id}:`, error);
-    
-    if (error.message.includes('ENOSPC') || error.message.includes('ENOMEM')) {
-    console.error('🚨 Critical system error detected, triggering emergency cleanup...');
-    try {
-        await performanceOptimizer.emergencyCleanup();
-    } catch (cleanupErr) {
-        console.error('❌ Emergency cleanup failed:', cleanupErr.message);
-    }
-    }
-    
-    console.error({
-    messageId: item.id,
-    errorType: error.constructor.name,
-    errorMessage: error.message,
-    stack: error.stack,
-    messageTimestamp: item.timestamp,
-    queueStatus: messageQueue.getStatus()
-    });
+        console.error(`❌ Critical error processing message ${item.id}:`, error);
+        
+        console.error({
+            messageId: item.id,
+            errorType: error.constructor.name,
+            errorMessage: error.message,
+            stack: error.stack,
+            messageTimestamp: item.timestamp,
+            queueStatus: messageQueue.getStatus()
+        });
     };
 
     messageQueue.setErrorHandler(queueErrorHandler);
@@ -429,7 +414,7 @@ async function createBotSocket(authDir) {
     
     // --- ANTI-STEALTH (Anti Msg Criptografada) ---
     // Fire-and-forget: não bloqueia o processamento de mensagens normais
-    processAntiStealth(ChainySock, m, performanceOptimizer).catch(e => console.error('[ANTI-STEALTH] Erro crítico no módulo:', e));
+    processAntiStealth(ChainySock, m).catch(e => console.error('[ANTI-STEALTH] Erro crítico no módulo:', e));
     // ---------------------------------------------
     
     // Se for 'append', só processa se for solicitação de entrada (messageStubType 172)
@@ -453,15 +438,6 @@ async function createBotSocket(authDir) {
         
     } catch (err) {
         console.error(`❌ Error in message upsert handler: ${err.message}`);
-        
-        if (err.message.includes('ENOSPC') || err.message.includes('ENOMEM')) {
-        console.error('🚨 Critical system error detected, triggering emergency cleanup...');
-        try {
-        await performanceOptimizer.emergencyCleanup();
-        } catch (cleanupErr) {
-        console.error('❌ Emergency cleanup failed:', cleanupErr.message);
-        }
-        }
     }
     });
     };
@@ -500,6 +476,9 @@ async function createBotSocket(authDir) {
         setTimeout(() => {
             performMigration(ChainySock, DATABASE_DIR, configPath).catch(err => {
                 console.error('❌ Erro na migração (não-bloqueante):', err.message);
+            });
+            migrateBlacklists(ChainySock, DATABASE_DIR).catch(err => {
+                console.error('❌ Erro na migração de blacklists (não-bloqueante):', err.message);
             });
         }, 10_000);
         
@@ -707,16 +686,6 @@ async function startChainy() {
             process.exit(1);
         }
 
-        if (err.message.includes('ENOSPC') || err.message.includes('ENOMEM')) {
-            console.log('🧹 Tentando limpeza de emergência...');
-            try {
-                await performanceOptimizer.emergencyCleanup();
-                console.log('✅ Limpeza de emergência concluída');
-            } catch (cleanupErr) {
-                console.error('❌ Falha na limpeza de emergência:', cleanupErr.message);
-            }
-        }
-
         // Delay exponencial (backoff) para evitar spam de conexões
         const delay = Math.min(RECONNECT_DELAY_BASE * Math.pow(1.5, reconnectAttempts - 1), 60000);
         console.log(`🔄 Aguardando ${Math.round(delay / 1000)} segundos antes de tentar novamente...`);
@@ -775,9 +744,7 @@ async function gracefulShutdown(signal) {
     await messageQueue.shutdown();
     console.log('✅ MessageQueue finalizado');
     
-    // Finaliza otimizador
-    await performanceOptimizer.shutdown();
-    console.log('✅ Performance optimizer finalizado');
+
     
     clearTimeout(shutdownTimeout);
     console.log('✅ Desligamento concluído');
@@ -795,14 +762,6 @@ process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 process.on('uncaughtException', async (error) => {
     console.error('🚨 Erro não capturado — reiniciando processo:', error.message);
     console.error(error.stack);
-    
-    if (error.message.includes('ENOSPC') || error.message.includes('ENOMEM')) {
-        try {
-            await performanceOptimizer.emergencyCleanup();
-        } catch (cleanupErr) {
-            console.error('❌ Falha na limpeza de emergência:', cleanupErr.message);
-        }
-    }
     
     process.exit(1);
 });

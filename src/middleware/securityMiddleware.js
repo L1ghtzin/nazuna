@@ -1,3 +1,5 @@
+import { writeJsonFileAsync } from '../utils/asyncFs.js';
+
 /**
  * Middleware para sistemas de proteção e moderação de conteúdo
  */
@@ -14,7 +16,6 @@ export async function processSecurity({
   antipalavra,
   groupData,
   groupFile,
-  optimizer,
   MESSAGES
 }) {
   // AntiToxic
@@ -30,10 +31,10 @@ export async function processSecurity({
           } else if (toxicResult.action === 'avisar') {
             bot.sendMessage(from, warningData).catch(() => {});
           } else if (toxicResult.action === 'mute') {
-            if (groupData && optimizer && groupFile) {
+            if (groupData && groupFile) {
               groupData.mutedUsers = groupData.mutedUsers || {};
               groupData.mutedUsers[sender] = true;
-              optimizer.saveJsonWithCache(groupFile, groupData).catch(() => {});
+              writeJsonFileAsync(groupFile, groupData).catch(() => {});
             }
             bot.sendMessage(from, warningData).catch(() => {});
           }
@@ -47,7 +48,7 @@ export async function processSecurity({
   // AntiPalavra (Blacklist de palavras)
   if (isGroup && antipalavra && body) {
     try {
-      const antipalavraPersistence = { groupData, groupFile, optimizer };
+      const antipalavraPersistence = { groupData, groupFile };
       if (await antipalavra.isActive(from, antipalavraPersistence) && !isGroupAdmin) {
         const detectionResult = await antipalavra.checkMessage(from, body, antipalavraPersistence);
         

@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { readJsonFileAsync } from '../../utils/asyncFs.js';
 
 
 const __filename = fileURLToPath(import.meta.url);
@@ -19,8 +20,7 @@ export default {
     args, 
     prefix, 
     menc_os2,
-    MESSAGES,
-    optimizer
+    MESSAGES
   }) => {
     if (!isGroup) return reply(MESSAGES.member.naval.groupOnly);
 
@@ -36,7 +36,7 @@ export default {
       ]
     };
     try {
-      const navalData = await optimizer.loadJsonWithCache(navalPath, { config: {} });
+      const navalData = await readJsonFileAsync(navalPath, { config: {} });
       configNaval = { ...configNaval, ...navalData.config };
     } catch (e) {
       console.error('Erro ao carregar batalhanaval.json:', e);

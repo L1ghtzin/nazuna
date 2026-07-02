@@ -1,3 +1,4 @@
+import { writeJsonFileAsync } from '../../utils/asyncFs.js';
 
 
 export default {
@@ -6,7 +7,7 @@ export default {
   commands: ["listagp", "listgp", "listbangp", "bangp", "unbangp", "desbangp", "listblocksgp", "blocklist", "modoliteglobal"],
   handle: async ({ 
     bot, from, command, reply, isOwner, isGroup,
-    optimizer, banGpIds, getCachedGroupMetadata, DATABASE_DIR, fs, __dirname
+    banGpIds, getCachedGroupMetadata, DATABASE_DIR, fs, __dirname
   , MESSAGES }) => {
     const cmd = command.toLowerCase();
 
@@ -35,7 +36,7 @@ export default {
       if (!isGroup) return reply(MESSAGES.permission.groupOnly);
       banGpIds[from] = !banGpIds[from];
       const filePath = DATABASE_DIR + `/dono/bangp.json`;
-      await optimizer.saveJsonWithCache(filePath, banGpIds);
+      await writeJsonFileAsync(filePath, banGpIds);
       return reply(banGpIds[from] ? MESSAGES.owner.owner_group_mgmt.bangp.banned : MESSAGES.owner.owner_group_mgmt.bangp.unbanned);
     }
   }

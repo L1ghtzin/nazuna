@@ -1,11 +1,12 @@
 import fs from 'fs';
+import { readJsonFileAsync } from '../../utils/asyncFs.js';
 
 export default {
   name: "suruba",
   description: "Cria uma brincadeira de suruba marcando membros aleatórios",
   commands: ["surubao", "suruba"],
   usage: `${global.prefix}surubao <quantidade>`,
-  handle: async ({  bot, reply, isGroup, command, info, isModoLite, isModoBn, q, from, buildGroupFilePath, optimizer, AllgroupMembers, getUserName, sender , MESSAGES }) => {
+  handle: async ({  bot, reply, isGroup, command, info, isModoLite, isModoBn, q, from, buildGroupFilePath, AllgroupMembers, getUserName, sender , MESSAGES }) => {
     try {
       // isModoLite e isModoBn normalmente vem do contexto de configuração
       const modoLite = isModoLite !== undefined ? isModoLite : false;
@@ -24,7 +25,7 @@ export default {
       const context = frasekk[Math.floor(Math.random() * frasekk.length)](q);
       
       let path = buildGroupFilePath(from);
-      let data = await optimizer.loadJsonWithCache(path, { mark: {} });
+      let data = await readJsonFileAsync(path, { mark: {} });
       let membros = AllgroupMembers.filter(m => !['0', 'marca'].includes(data.mark[m]));
       
       let ABC = `${emojis2} @${getUserName(sender)} ${context}\n\n`;

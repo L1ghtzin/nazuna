@@ -1,14 +1,15 @@
 
 import { sendCleanChat } from '../../utils/cleanChat.js';
+import { writeJsonFileAsync } from '../../utils/asyncFs.js';
 
 export default {
   name: "group_security",
   description: "Segurança e moderação avançada de grupos",
-  commands: ["aceitarticket", "addblacklist", "addparceria", "addpartnership", "adv", "advertir", "antifig", "antipalavra", "antisl", "antistatus", "antisticker+", "antistickerplus", "antistickerplusbot", "antitoxic", "antitóxico", "antiword", "banghost", "bemvindo", "blacklist", "boasvindas", "bv", "clean", "configsaida", "delblacklist", "delfotobv", "delfotosaiu", "delparceria", "delpartnership", "exit", "exitimg", "exitmsg", "fotobv", "fotosaida", "fotosaiu", "imgsaiu", "legendasaiu", "limpar", "listadv", "listblacklist", "modoparceria", "parcerias", "partnerships", "removeradv", "removerfotobv", "removerfotosaiu", "rmadv", "rmexitimg", "rmfotobv", "rmfotosaiu", "rmwelcomeimg", "saida", "suporte", "suporteaceitar", "suporteticket", "textsaiu", "ticket", "ticket.aceitar", "ticketaceitar", "ticketsuporte", "unblacklist", "unwarning", "warning", "warninglist", "welcome", "welcomeimg", "antiimagem", "antivideo", "antiaudio", "antidoc", "antievento", "antiproduto"],
+  commands: ["aceitarticket", "addblacklist", "addparceria", "addpartnership", "adv", "advertir", "antifig", "antipalavra", "antisl", "antistatus", "antisticker+", "antistickerplus", "antistickerplusbot", "antitoxic", "antitóxico", "antiword", "banghost", "bemvindo", "blacklist", "boasvindas", "bv", "clean", "configsaida", "delblacklist", "delfotobv", "delfotosaiu", "delparceria", "delpartnership", "exit", "exitimg", "exitmsg", "fotobv", "fotosaida", "fotosaiu", "imgsaiu", "legendasaiu", "limpar", "listadv", "listblacklist", "modoparceria", "parcerias", "partnerships", "removeradv", "removerfotobv", "removerfotosaiu", "rmadv", "rmexitimg", "rmfotobv", "rmfotosaiu", "rmwelcomeimg", "saida", "suporte", "suporteaceitar", "suporteticket", "textsaiu", "ticket", "ticket.aceitar", "ticketaceitar", "ticketsuporte", "unblacklist", "unwarning", "warning", "warninglist", "welcome", "welcomeimg", "antiimagem", "antifoto", "antiphoto", "antivideo", "antiaudio", "antidoc", "antievento", "antiproduto"],
   handle: async ({ 
     bot, from, info, command, args, reply, prefix, pushname, sender, q,
     isGroup, isGroupAdmin, isBotAdmin, AllgroupMembers, groupData, groupFile,
-    getUserName, optimizer, GRUPOS_DIR, DATABASE_DIR, buildGroupFilePath,
+    getUserName, GRUPOS_DIR, DATABASE_DIR, buildGroupFilePath,
     isQuotedMsg, isQuotedImage, isImage, getFileBuffer, upload,
     menc_os2, menc_jid2, botNumber, botNumberLid, nmrdn,
     fs, pathz, groupAdmins, groupName, idInArray,
@@ -32,7 +33,7 @@ export default {
         groupData.exit.enabled = !groupData.exit.enabled;
       }
       
-      await optimizer.saveJsonWithCache(groupFile, groupData);
+      await writeJsonFileAsync(groupFile, groupData);
       
       if (isWelcome) {
         if (groupData.bemvindo) {
@@ -58,7 +59,7 @@ export default {
         const feature = ['fotobv', 'welcomeimg'].includes(cmd) ? 'welcome' : 'exit';
         groupData[feature] = groupData[feature] || {};
         groupData[feature].image = url;
-        await optimizer.saveJsonWithCache(groupFile, groupData);
+        await writeJsonFileAsync(groupFile, groupData);
         return reply(MESSAGES.admin.group_security.welcome.imgSuccess);
       } catch (e) {
         return reply(MESSAGES.admin.group_security.welcome.imgError);
@@ -68,14 +69,14 @@ export default {
     if (['removerfotobv', 'rmfotobv', 'delfotobv', 'rmwelcomeimg'].includes(cmd)) {
       if (!groupData.welcome?.image) return reply(MESSAGES.admin.group_security.welcome.imgNone);
       delete groupData.welcome.image;
-      await optimizer.saveJsonWithCache(groupFile, groupData);
+      await writeJsonFileAsync(groupFile, groupData);
       return reply(MESSAGES.admin.group_security.welcome.imgRmWelcome);
     }
 
     if (['removerfotosaiu', 'rmfotosaiu', 'delfotosaiu', 'rmexitimg'].includes(cmd)) {
       if (!groupData.exit?.image) return reply(MESSAGES.admin.group_security.welcome.imgNone);
       delete groupData.exit.image;
-      await optimizer.saveJsonWithCache(groupFile, groupData);
+      await writeJsonFileAsync(groupFile, groupData);
       return reply(MESSAGES.admin.group_security.welcome.imgRmExit);
     }
 
@@ -84,7 +85,7 @@ export default {
       groupData.exit = groupData.exit || {};
       groupData.exit.text = q;
       groupData.exit.enabled = true;
-      await optimizer.saveJsonWithCache(groupFile, groupData);
+      await writeJsonFileAsync(groupFile, groupData);
       return reply(MESSAGES.admin.group_security.welcome.msgSuccess);
     }
 
@@ -131,7 +132,7 @@ export default {
         if (!groupData.warnings[menc_os2]) return reply(MESSAGES.admin.group_security.warnings.empty);
         groupData.warnings[menc_os2].pop();
         if (!groupData.warnings[menc_os2].length) delete groupData.warnings[menc_os2];
-        await optimizer.saveJsonWithCache(groupFile, groupData);
+        await writeJsonFileAsync(groupFile, groupData);
         return reply(MESSAGES.admin.group_security.warnings.removed);
       }
 
@@ -151,11 +152,11 @@ export default {
         }
         if (isBotAdmin) await bot.groupParticipantsUpdate(from, [targetId], 'remove');
         delete groupData.warnings[menc_os2];
-        await optimizer.saveJsonWithCache(groupFile, groupData);
+        await writeJsonFileAsync(groupFile, groupData);
         return reply(MESSAGES.admin.group_security.warnings.banned(getUserName(menc_os2), reason), { mentions: [menc_os2] });
       }
 
-      await optimizer.saveJsonWithCache(groupFile, groupData);
+      await writeJsonFileAsync(groupFile, groupData);
       return reply(MESSAGES.admin.group_security.warnings.warned(getUserName(menc_os2), groupData.warnings[menc_os2].length, reason), { mentions: [menc_os2] });
     }
 
@@ -191,12 +192,15 @@ export default {
     // 📋 BLACKLIST DO GRUPO
     // ═══════════════════════════════════════════════════════════════
     if (['blacklist', 'addblacklist', 'delblacklist', 'unblacklist', 'listblacklist', 'listablacklist', 'listblacklistgp', 'listblacklistgrupal', 'blacklistlista', 'blacklista'].includes(cmd)) {
-      groupData.blacklist = groupData.blacklist || {};
-
       if (['listblacklist', 'listablacklist', 'listblacklistgp', 'listblacklistgrupal', 'blacklistlista', 'blacklista'].includes(cmd)) {
-        const keys = Object.keys(groupData.blacklist);
-        if (!keys.length) return reply(MESSAGES.admin.group_security.blacklist.empty);
-        return reply(MESSAGES.admin.group_security.blacklist.header + keys.map(u => `@${getUserName(u)}`).join('\n'), { mentions: keys });
+        const blacklistArray = Array.isArray(groupData.blacklist) ? groupData.blacklist : [];
+        if (!blacklistArray.length) return reply(MESSAGES.admin.group_security.blacklist.empty);
+        const mentions = blacklistArray.map(u => u.lid || (u.number ? u.number + '@s.whatsapp.net' : null)).filter(Boolean);
+        const formatted = blacklistArray.map((u, idx) => {
+          const identifier = u.lid || (u.number ? u.number + '@s.whatsapp.net' : 'Desconhecido');
+          return `${idx + 1}. @${getUserName(identifier)} (${u.reason || 'Sem motivo'})`;
+        }).join('\n');
+        return reply(MESSAGES.admin.group_security.blacklist.header + formatted, { mentions });
       }
 
       let target = menc_os2;
@@ -206,9 +210,7 @@ export default {
         const parts = q.split(' ');
         target = parts[0];
         reason = parts.slice(1).join(' ').trim() || "Sem motivo";
-      }
-
-      if (menc_os2 && q) {
+      } else if (menc_os2 && q) {
         reason = q.trim() || "Sem motivo";
       }
 
@@ -218,33 +220,66 @@ export default {
         target = buildUserId(target, config);
       }
 
-      const searchTarget = target.split('@')[0];
+      // Normalizar para LID quando possível (resolve mismatch JID vs LID)
+      const originalTarget = target;
+      if (isValidJid(target)) {
+        try {
+          const lidResolvido = await getLidFromJidCached(bot, target);
+          if (lidResolvido && lidResolvido.includes('@lid')) target = lidResolvido;
+        } catch { }
+      }
 
       if (['delblacklist', 'unblacklist'].includes(cmd)) {
-        let removido = false;
-        for (const k of Object.keys(groupData.blacklist)) {
-           if (k === target || k.startsWith(searchTarget) || k.includes(searchTarget)) {
-              delete groupData.blacklist[k];
-              removido = true;
-           }
-        }
+        const blacklistArray = Array.isArray(groupData.blacklist) ? groupData.blacklist : [];
+        const initialLength = blacklistArray.length;
         
-        if (removido) {
-           await optimizer.saveJsonWithCache(groupFile, groupData);
+        groupData.blacklist = blacklistArray.filter(entry => 
+          entry.lid !== target && 
+          (!originalTarget || entry.number !== originalTarget.replace(/\D/g, '')) &&
+          !idsMatch(entry.lid, target)
+        );
+        
+        if (groupData.blacklist.length !== initialLength) {
+           await writeJsonFileAsync(groupFile, groupData);
            return reply(MESSAGES.admin.group_security.blacklist.removed);
         } else {
            return reply(MESSAGES.admin.group_security.blacklist.notIn);
         }
       }
 
-      for (const k of Object.keys(groupData.blacklist)) {
-         if (k === target || k.startsWith(searchTarget) || k.includes(searchTarget)) {
-            return reply(MESSAGES.admin.group_security.blacklist.alreadyIn);
-         }
+      const blacklistArray = Array.isArray(groupData.blacklist) ? groupData.blacklist : [];
+      
+      const exists = blacklistArray.find(entry => 
+        (target && entry.lid === target) || 
+        (originalTarget && entry.number === originalTarget.replace(/\D/g, '')) ||
+        idsMatch(entry.lid, target)
+      );
+
+      if (exists) {
+        let modified = false;
+        if (target.includes('@lid') && !exists.lid) { exists.lid = target; modified = true; }
+        const cleanNumber = originalTarget.replace(/\D/g, '');
+        if (cleanNumber && !exists.number) { exists.number = cleanNumber; modified = true; }
+        if (modified) {
+          await writeJsonFileAsync(groupFile, groupData);
+          return reply(`✨ Mapeamento do usuário @${getUserName(originalTarget)} atualizado na blacklist!`);
+        }
+        return reply(MESSAGES.admin.group_security.blacklist.alreadyIn);
       }
 
-      groupData.blacklist[target] = { reason: reason, date: Date.now() };
-      await optimizer.saveJsonWithCache(groupFile, groupData);
+      const entry = {
+        lid: target.includes('@lid') ? target : '',
+        number: originalTarget.replace(/\D/g, ''),
+        name: getUserName(originalTarget) || undefined,
+        reason: reason,
+        createdAt: new Date().toISOString(),
+        createdBy: sender
+      };
+      
+      groupData.blacklist = blacklistArray;
+      groupData.blacklist.push(entry);
+      
+      await writeJsonFileAsync(groupFile, groupData);
       return reply(MESSAGES.admin.group_security.blacklist.added);
     }
 
@@ -272,7 +307,7 @@ export default {
         groupData.antifig = groupData.antifig || {};
         groupData.antifig.enabled = !groupData.antifig.enabled;
         
-        await optimizer.saveJsonWithCache(groupFile, groupData);
+        await writeJsonFileAsync(groupFile, groupData);
         
         if (groupData.antifig.enabled) {
           return reply(MESSAGES.admin.group_security.protections.antifigOn);
@@ -292,12 +327,12 @@ export default {
       if (action === 'apagar' || action === 'banir') {
         groupData.antistatus = true;
         groupData.antistatus_action = action;
-        await optimizer.saveJsonWithCache(groupFile, groupData);
+        await writeJsonFileAsync(groupFile, groupData);
         return reply(MESSAGES.admin.group_security.protections.genericAction('AntiStatus', action));
       }
 
       groupData.antistatus = !groupData.antistatus;
-      await optimizer.saveJsonWithCache(groupFile, groupData);
+      await writeJsonFileAsync(groupFile, groupData);
 
       if (groupData.antistatus) {
         const currentAction = groupData.antistatus_action || 'banir';
@@ -308,7 +343,7 @@ export default {
 
     if (['antistickerplus', 'antisticker+', 'antisl', 'antistickerplusbot'].includes(cmd)) {
       if (!antistickerplus) return reply(MESSAGES.admin.group_security.protections.unavailable('AntistickerPlus'));
-      await antistickerplus.handleCommand(bot, from, args, groupData, { reply, prefix, groupFile, optimizer });
+      await antistickerplus.handleCommand(bot, from, args, groupData, { reply, prefix, groupFile });
       return;
     }
 
@@ -320,28 +355,28 @@ export default {
 
     if (['antipalavra', 'antiword'].includes(cmd)) {
       if (!antipalavra) return reply(MESSAGES.admin.group_security.protections.unavailable('Antipalavra'));
-      await antipalavra.handleCommand(bot, from, args, groupData, { reply, prefix, groupFile, optimizer });
+      await antipalavra.handleCommand(bot, from, args, groupData, { reply, prefix, groupFile });
       return;
     }
 
-    if (['antiimagem', 'antiimage'].includes(cmd)) {
+    if (['antiimagem', 'antiimage', 'antifoto', 'antiphoto'].includes(cmd)) {
       const action = args[0]?.toLowerCase();
 
       if (action === 'vizu') {
         groupData.antiimage_vizu = !groupData.antiimage_vizu;
-        await optimizer.saveJsonWithCache(groupFile, groupData);
+        await writeJsonFileAsync(groupFile, groupData);
         return reply(MESSAGES.admin.group_security.protections.mediaVizuToggle('Anti-Imagem', groupData.antiimage_vizu));
       }
 
       if (action === 'apagar' || action === 'banir') {
         groupData.antiimage = true;
         groupData.antiimage_action = action;
-        await optimizer.saveJsonWithCache(groupFile, groupData);
+        await writeJsonFileAsync(groupFile, groupData);
         return reply(MESSAGES.admin.group_security.protections.genericAction('Anti-Imagem', action));
       }
 
       groupData.antiimage = !groupData.antiimage;
-      await optimizer.saveJsonWithCache(groupFile, groupData);
+      await writeJsonFileAsync(groupFile, groupData);
 
       if (groupData.antiimage) {
         const currentAction = groupData.antiimage_action || 'apagar';
@@ -356,19 +391,19 @@ export default {
 
       if (action === 'vizu') {
         groupData.antivideo_vizu = !groupData.antivideo_vizu;
-        await optimizer.saveJsonWithCache(groupFile, groupData);
+        await writeJsonFileAsync(groupFile, groupData);
         return reply(MESSAGES.admin.group_security.protections.mediaVizuToggle('Anti-Vídeo', groupData.antivideo_vizu));
       }
 
       if (action === 'apagar' || action === 'banir') {
         groupData.antivideo = true;
         groupData.antivideo_action = action;
-        await optimizer.saveJsonWithCache(groupFile, groupData);
+        await writeJsonFileAsync(groupFile, groupData);
         return reply(MESSAGES.admin.group_security.protections.genericAction('Anti-Vídeo', action));
       }
 
       groupData.antivideo = !groupData.antivideo;
-      await optimizer.saveJsonWithCache(groupFile, groupData);
+      await writeJsonFileAsync(groupFile, groupData);
 
       if (groupData.antivideo) {
         const currentAction = groupData.antivideo_action || 'apagar';
@@ -383,19 +418,19 @@ export default {
 
       if (action === 'vizu') {
         groupData.antiaudio_vizu = !groupData.antiaudio_vizu;
-        await optimizer.saveJsonWithCache(groupFile, groupData);
+        await writeJsonFileAsync(groupFile, groupData);
         return reply(MESSAGES.admin.group_security.protections.mediaVizuToggle('Anti-Áudio', groupData.antiaudio_vizu));
       }
 
       if (action === 'apagar' || action === 'banir') {
         groupData.antiaudio = true;
         groupData.antiaudio_action = action;
-        await optimizer.saveJsonWithCache(groupFile, groupData);
+        await writeJsonFileAsync(groupFile, groupData);
         return reply(MESSAGES.admin.group_security.protections.genericAction('Anti-Áudio', action));
       }
 
       groupData.antiaudio = !groupData.antiaudio;
-      await optimizer.saveJsonWithCache(groupFile, groupData);
+      await writeJsonFileAsync(groupFile, groupData);
 
       if (groupData.antiaudio) {
         const currentAction = groupData.antiaudio_action || 'apagar';
@@ -411,12 +446,12 @@ export default {
       if (action === 'apagar' || action === 'banir') {
         groupData.antidoc = true;
         groupData.antidoc_action = action;
-        await optimizer.saveJsonWithCache(groupFile, groupData);
+        await writeJsonFileAsync(groupFile, groupData);
         return reply(MESSAGES.admin.group_security.protections.genericAction('Anti-Documento', action));
       }
 
       groupData.antidoc = !groupData.antidoc;
-      await optimizer.saveJsonWithCache(groupFile, groupData);
+      await writeJsonFileAsync(groupFile, groupData);
 
       if (groupData.antidoc) {
         const currentAction = groupData.antidoc_action || 'apagar';
@@ -431,12 +466,12 @@ export default {
       if (action === 'apagar' || action === 'banir') {
         groupData.antievento = true;
         groupData.antievento_action = action;
-        await optimizer.saveJsonWithCache(groupFile, groupData);
+        await writeJsonFileAsync(groupFile, groupData);
         return reply(MESSAGES.admin.group_security.protections.genericAction('Anti-Evento', action));
       }
 
       groupData.antievento = !groupData.antievento;
-      await optimizer.saveJsonWithCache(groupFile, groupData);
+      await writeJsonFileAsync(groupFile, groupData);
 
       if (groupData.antievento) {
         const currentAction = groupData.antievento_action || 'apagar';
@@ -451,12 +486,12 @@ export default {
       if (action === 'apagar' || action === 'banir') {
         groupData.antiproduto = true;
         groupData.antiproduto_action = action;
-        await optimizer.saveJsonWithCache(groupFile, groupData);
+        await writeJsonFileAsync(groupFile, groupData);
         return reply(MESSAGES.admin.group_security.protections.genericAction('Anti-Produto', action));
       }
 
       groupData.antiproduto = !groupData.antiproduto;
-      await optimizer.saveJsonWithCache(groupFile, groupData);
+      await writeJsonFileAsync(groupFile, groupData);
 
       if (groupData.antiproduto) {
         const currentAction = groupData.antiproduto_action || 'apagar';

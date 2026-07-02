@@ -1,13 +1,14 @@
 import pathz from 'path';
+import { readJsonFileAsync, writeJsonFileAsync } from '../../utils/asyncFs.js';
 
 export default {
   name: "indication_management",
   description: "Gerenciamento de indicacoes",
   commands: ["addindicacao", "addindicar", "addindica", "delindicacao", "rmindicacao", "removerindicacao"],
-  handle: async ({ reply, command, menc_os2, DATABASE_DIR, optimizer, getUserName, MESSAGES }) => {
+  handle: async ({ reply, command, menc_os2, DATABASE_DIR, getUserName, MESSAGES }) => {
     const cmd = command.toLowerCase();
     const filePath = pathz.join(DATABASE_DIR, 'indicacoes.json');
-    const data = await optimizer.loadJsonWithCache(filePath, { users: {} });
+    const data = await readJsonFileAsync(filePath, { users: {} });
     data.users = data.users || {};
 
     if (cmd.startsWith('add')) {
@@ -18,14 +19,14 @@ export default {
       }
 
       data.users[menc_os2].count += 1;
-      await optimizer.saveJsonWithCache(filePath, data);
+      await writeJsonFileAsync(filePath, data);
       return reply(MESSAGES.member.indications.addSuccess(getUserName(menc_os2), data.users[menc_os2].count), { mentions: [menc_os2] });
     }
 
     if (!menc_os2 || !data.users[menc_os2]) return reply(MESSAGES.member.indications.userNotFound);
 
     delete data.users[menc_os2];
-    await optimizer.saveJsonWithCache(filePath, data);
+    await writeJsonFileAsync(filePath, data);
     return reply(MESSAGES.member.indications.removeSuccess);
   }
 };

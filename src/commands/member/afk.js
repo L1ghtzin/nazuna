@@ -1,4 +1,5 @@
 import fs from 'fs';
+import { writeJsonFileAsync } from '../../utils/asyncFs.js';
 
 export default {
   name: "afk",
@@ -12,7 +13,6 @@ export default {
     sender,
     groupData,
     groupFile,
-    optimizer,
     MESSAGES
   }) => {
     try {
@@ -26,7 +26,7 @@ export default {
         reason: reason || 'Não especificado',
         since: Date.now()
       };
-      await optimizer.saveJsonWithCache(groupFile, groupData);
+      await writeJsonFileAsync(groupFile, groupData);
       
       await reply(MESSAGES.member.afk.success(reason));
     } catch (e) {

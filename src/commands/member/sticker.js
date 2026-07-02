@@ -4,6 +4,7 @@ import pathz from 'path';
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import { fileURLToPath } from 'url';
+import { readJsonFileAsync, writeJsonFileAsync } from '../../utils/asyncFs.js';
 
 const execAsync = promisify(exec);
 const __filename = fileURLToPath(import.meta.url);
@@ -16,7 +17,7 @@ export default {
   handle: async ({ 
     bot, from, info, command, q, reply, prefix, pushname,
     sendSticker, getFileBuffer, isQuotedSticker, isQuotedImage, isQuotedVideo,
-    isImage, isVideo, nomebot, sender, USERS_DIR, optimizer, isGroup,
+    isImage, isVideo, nomebot, sender, USERS_DIR, isGroup,
     MESSAGES
   }) => {
     const cmd = command.toLowerCase();
@@ -209,9 +210,9 @@ export default {
         if (!pack) return reply(MESSAGES.member.sticker.invalidFormatTake(prefix, command));
         
         const filePath = pathz.join(USERS_DIR, 'take.json');
-        const dataTake = await optimizer.loadJsonWithCache(filePath, {});
+        const dataTake = await readJsonFileAsync(filePath, {});
         dataTake[sender] = { author, pack };
-        await optimizer.saveJsonWithCache(filePath, dataTake);
+        await writeJsonFileAsync(filePath, dataTake);
         reply(MESSAGES.member.sticker.takeSaveSuccess(author, pack));
       } catch (e) {
         console.error(e);
@@ -227,7 +228,7 @@ export default {
       try {
         if (!isQuotedSticker) return reply(MESSAGES.member.sticker.missingQuotedStickerRename);
         const filePath = pathz.join(USERS_DIR, 'take.json');
-        const dataTake = await optimizer.loadJsonWithCache(filePath, {});
+        const dataTake = await readJsonFileAsync(filePath, {});
         if (!Object.keys(dataTake).length) return reply(MESSAGES.member.sticker.takeNoSaved);
         if (!dataTake[sender]) return reply(MESSAGES.member.sticker.takeMissingSaved);
         

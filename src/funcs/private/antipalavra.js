@@ -35,15 +35,13 @@ const resolveGroupData = async (groupId, persistence = {}) => {
 
     return loadGroupDataById(groupId, {
         defaultValue: {},
-        groupFile: persistence.groupFile,
-        optimizer: persistence.optimizer
+        groupFile: persistence.groupFile
     });
 };
 
 const saveGroupData = async (groupId, groupData, persistence = {}) => {
     return saveGroupDataById(groupId, groupData, {
-        groupFile: persistence.groupFile,
-        optimizer: persistence.optimizer
+        groupFile: persistence.groupFile
     });
 };
 
@@ -295,12 +293,11 @@ const isActive = async (groupId, persistence = {}) => {
 const handleCommand = async (_bot, from, args, groupData, {
     reply,
     prefix,
-    groupFile,
-    optimizer
+    groupFile
 }) => {
     const subcommand = args[0]?.toLowerCase();
     const word = args.slice(1).join(' ').trim();
-    const persistence = { groupData, groupFile, optimizer };
+    const persistence = { groupData, groupFile };
 
     if (!subcommand) {
         return reply(MESSAGES.funcs.antiPalavra.usage(prefix));

@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { readJsonFileAsync } from '../../utils/asyncFs.js';
 
 
 const __filename = fileURLToPath(import.meta.url);
@@ -19,13 +20,12 @@ export default {
     args, 
     prefix, 
     normalizar,
-    MESSAGES,
-    optimizer
+    MESSAGES
   }) => {
     const anagramaPath = path.join(__dirname, '../../funcs/json/anagrama.json');
     let palavrasAnagrama = [];
     try {
-      const anagramaData = await optimizer.loadJsonWithCache(anagramaPath, 'utf-8');
+      const anagramaData = await readJsonFileAsync(anagramaPath, 'utf-8');
       palavrasAnagrama = anagramaData.palavras || [];
     } catch (e) {
       console.error('Erro ao carregar anagrama.json:', e);

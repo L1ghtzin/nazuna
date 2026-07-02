@@ -1,4 +1,5 @@
 import pathz from 'path';
+import { writeJsonFileAsync } from '../../utils/asyncFs.js';
 
 export default {
   name: "group_admin_extra",
@@ -8,7 +9,7 @@ export default {
   ],
   handle: async ({ 
     reply, command, isGroup, isGroupAdmin, isBotAdmin, from, q, 
-    groupData, DATABASE_DIR, optimizer, prefix, MESSAGES
+    groupData, DATABASE_DIR, prefix, MESSAGES
   }) => {
 
     const cmd = command.toLowerCase();
@@ -17,14 +18,14 @@ export default {
     // --- AUTOSTICKER ---
     if (cmd === 'autosticker') {
       groupData.autoSticker = !groupData.autoSticker;
-      await optimizer.saveJsonWithCache(groupFilePath, groupData);
+      await writeJsonFileAsync(groupFilePath, groupData);
       return reply(MESSAGES.admin.group_admin_extra.autostickerToggle(groupData.autoSticker));
     }
 
     // --- AUTOREPO / AUTOREPOSTA ---
     if (['autorepo', 'autoresposta'].includes(cmd)) {
       groupData.autorepo = !groupData.autorepo;
-      await optimizer.saveJsonWithCache(groupFilePath, groupData);
+      await writeJsonFileAsync(groupFilePath, groupData);
       return reply(MESSAGES.admin.group_admin_extra.autorepoToggle(groupData.autorepo));
     }
 
@@ -32,7 +33,7 @@ export default {
     if (['legendabv', 'textbv', 'welcomemsg'].includes(cmd)) {
       if (!q) return reply(MESSAGES.admin.group_admin_extra.welcomeUsage(prefix));
       groupData.textbv = q;
-      await optimizer.saveJsonWithCache(groupFilePath, groupData);
+      await writeJsonFileAsync(groupFilePath, groupData);
       return reply(MESSAGES.admin.group_admin_extra.welcomeSuccess(groupData.textbv));
     }
 

@@ -1,4 +1,5 @@
 import fs from 'fs';
+import { writeJsonFileAsync } from '../../utils/asyncFs.js';
 
 export default {
   name: "modolite",
@@ -13,7 +14,6 @@ export default {
     groupData,
     buildGroupFilePath,
     MESSAGES,
-    optimizer,
     groupFile
   }) => {
     try {
@@ -31,7 +31,7 @@ export default {
         }
       }
       
-      await optimizer.saveJsonWithCache(groupFile || buildGroupFilePath(from), groupData);
+      await writeJsonFileAsync(groupFile || buildGroupFilePath(from), groupData);
       
       if (groupData.modolite) {
         await reply(MESSAGES.admin.modolite.on);

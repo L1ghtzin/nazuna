@@ -1,84 +1,49 @@
 import fs from 'fs';
 import pathz from 'path';
 import { fileURLToPath } from 'url';
-
-// Cache global de JID → LID em memória (para acesso rápido)
-let jidLidMemoryCache = new Map();
-let jidLidCacheFile = null;
-let cacheModified = false;
-let saveCacheTimeout = null;
+import { lidCache } from './lidCache.js';
+import { toLID } from './toLID.js';
 
 // Inicializa o caminho do cache
 function initJidLidCache(cacheFilePath) {
-  jidLidCacheFile = cacheFilePath;
-  
-  // Carrega cache existente do arquivo
-  try {
-    if (fs.existsSync(cacheFilePath)) {
-      const data = JSON.parse(fs.readFileSync(cacheFilePath, 'utf-8'));
-      jidLidMemoryCache = new Map(Object.entries(data.mappings || {}));
-      // console.log(`✅ Cache JID→LID carregado: ${jidLidMemoryCache.size} entradas`);
-    }
-  } catch (error) {
-    console.warn(`⚠️ Erro ao carregar cache JID→LID: ${error.message}`);
-  }
-  
-  // Auto-save periódico (a cada 5 minutos se houver mudanças)
-  setInterval(() => {
-    if (cacheModified) {
-      saveJidLidCache();
-    }
-  }, 5 * 60 * 1000);
+  // O lidCache carrega seu próprio caminho pré-configurado
+  lidCache.load().catch((err) => {
+    console.warn(`⚠️ Erro ao carregar cache JID→LID: ${err.message}`);
+  });
 }
 
-// Salva o cache em disco com debounce
+// Salva o cache em disco
 function saveJidLidCache(force = false) {
-  if (!jidLidCacheFile || (!cacheModified && !force)) return;
-  
-  // Debounce: agrupa salvamentos em 3 segundos
-  if (!force && saveCacheTimeout) {
-    clearTimeout(saveCacheTimeout);
-  }
-  
-  const doSave = () => {
-    try {
-      const data = {
-        version: '1.0',
-        lastUpdate: new Date().toISOString(),
-        mappings: Object.fromEntries(jidLidMemoryCache)
-      };
-      
-      const dirPath = pathz.dirname(jidLidCacheFile);
-      if (!fs.existsSync(dirPath)) {
-        fs.mkdirSync(dirPath, { recursive: true });
-      }
-      
-      fs.writeFileSync(jidLidCacheFile, JSON.stringify(data, null, 2));
-      cacheModified = false;
-    } catch (error) {
-      console.error(`❌ Erro ao salvar cache JID→LID: ${error.message}`);
-    }
-  };
-  
-  if (force) {
-    doSave();
-  } else {
-    saveCacheTimeout = setTimeout(doSave, 3000);
-  }
+  lidCache.flush().catch((err) => {
+    console.error(`❌ Erro ao salvar cache JID→LID: ${err.message}`);
+  });
 }
 
-// Busca LID do cache ou via onWhatsApp
+// Busca LID do cache ou via onWhatsApp/USync
 async function getLidFromJidCached(bot, jid) {
   if (!isValidJid(jid)) {
     return jid; // Já é LID ou outro formato
   }
   
   // 1. Verifica cache em memória primeiro (mais rápido)
-  if (jidLidMemoryCache.has(jid)) {
-    return removeDeviceId(jidLidMemoryCache.get(jid));
+  const cached = lidCache.get(jid);
+  if (cached) {
+    return removeDeviceId(cached);
   }
   
-  // 2. Se não está no cache, busca via API
+  // 2. Tenta o toLID robusto (Baileys signal store & USync query)
+  try {
+    const lid = await toLID(jid, bot);
+    if (lid) {
+      const cleanLid = removeDeviceId(lid);
+      lidCache.set(jid, cleanLid);
+      return cleanLid;
+    }
+  } catch (error) {
+    console.warn(`⚠️ Erro no toLID para ${jid}: ${error.message}`);
+  }
+  
+  // 3. Fallback alternativo via onWhatsApp antigo se o toLID falhou ou não retornou nada
   try {
     const result = await bot.onWhatsApp(jid);
     if (result && result[0] && result[0].lid) {
@@ -88,18 +53,15 @@ async function getLidFromJidCached(bot, jid) {
       lid = removeDeviceId(lid);
       
       // Salva no cache
-      jidLidMemoryCache.set(jid, lid);
-      cacheModified = true;
-      
-      // Debounce automático salvará depois
+      lidCache.set(jid, lid);
       
       return lid;
     }
   } catch (error) {
-    console.warn(`⚠️ Erro ao buscar LID para ${jid}: ${error.message}`);
+    console.warn(`⚠️ Erro ao buscar LID via onWhatsApp para ${jid}: ${error.message}`);
   }
   
-  // 3. Fallback: retorna o JID original
+  // 4. Fallback final: retorna o JID original
   return jid;
 }
 
@@ -107,7 +69,7 @@ async function getLidFromJidCached(bot, jid) {
 function getJidFromLid(lid) {
   if (!lid || !lid.includes('@lid')) return null;
   
-  for (const [jid, cachedLid] of jidLidMemoryCache.entries()) {
+  for (const [jid, cachedLid] of lidCache.entries()) {
     // Normaliza para comparação (remove :XX se houver)
     const normalizedCached = removeDeviceId(cachedLid);
     if (normalizedCached === lid) {
@@ -123,9 +85,8 @@ function addJidLidToCache(jid, lid) {
   if (!jid || !lid || !jid.includes('@s.whatsapp.net') || !lid.includes('@lid')) return;
   const cleanJid = removeDeviceId(jid);
   const cleanLid = removeDeviceId(lid);
-  if (jidLidMemoryCache.get(cleanJid) !== cleanLid) {
-    jidLidMemoryCache.set(cleanJid, cleanLid);
-    cacheModified = true;
+  if (lidCache.get(cleanJid) !== cleanLid) {
+    lidCache.set(cleanJid, cleanLid);
   }
 }
 
@@ -207,6 +168,57 @@ function idInArray(id, array) {
     const baseItem = removeDeviceId(item).split('@')[0];
     return baseItem === baseId;
   });
+}
+
+// Busca um userId em um mapa ou array de blacklist usando resolução cruzada de cache e idsMatch()
+function findInBlacklistMap(blacklist, userId) {
+  if (!blacklist || !userId) return null;
+
+  // Se for o formato de Array
+  if (Array.isArray(blacklist)) {
+    let found = blacklist.find(entry => entry.lid === userId || entry.number === userId.replace(/\D/g, ''));
+    if (found) return found;
+
+    if (isValidJid(userId)) {
+      const cachedLid = lidCache.get(userId);
+      if (cachedLid) {
+        found = blacklist.find(entry => entry.lid === cachedLid);
+        if (found) return found;
+      }
+    } else if (userId.includes('@lid')) {
+      const cachedJid = getJidFromLid(userId);
+      if (cachedJid) {
+        const cleanNumber = cachedJid.replace(/\D/g, '');
+        found = blacklist.find(entry => entry.number === cleanNumber);
+        if (found) return found;
+      }
+    }
+
+    for (const entry of blacklist) {
+      const entryJid = entry.number ? entry.number + '@s.whatsapp.net' : null;
+      if (idsMatch(entry.lid, userId) || (entryJid && idsMatch(entryJid, userId))) {
+        return entry;
+      }
+    }
+    return null;
+  }
+
+  // Fallback para o formato Objeto Legado (Legado do Chainy)
+  if (typeof blacklist === 'object') {
+    if (blacklist[userId]) return blacklist[userId];
+    if (isValidJid(userId)) {
+      const cachedLid = lidCache.get(userId);
+      if (cachedLid && blacklist[cachedLid]) return blacklist[cachedLid];
+    } else if (userId.includes('@lid')) {
+      const cachedJid = getJidFromLid(userId);
+      if (cachedJid && blacklist[cachedJid]) return blacklist[cachedJid];
+    }
+    for (const key of Object.keys(blacklist)) {
+      if (idsMatch(key, userId)) return blacklist[key];
+    }
+  }
+
+  return null;
 }
 
 // Converte qualquer ID (JID ou LID) para o formato unificado (preferencialmente LID)
@@ -1119,6 +1131,7 @@ export {
   convertIdsToLid,
   idsMatch,
   idInArray,
+  findInBlacklistMap,
   // Funções de segurança JSON
   createBackup,
   recoverFromBackup,
@@ -1454,4 +1467,6 @@ export const formatAIResponse = (text) => {
     .replace(/\n{3,}/g, '\n\n')     // Limita quebras de linha
     .trim();
 };
+
+
 

@@ -1,5 +1,7 @@
+import { writeJsonFileAsync } from '../../utils/asyncFs.js';
+
 export async function handleMutedUsers(context) {
-    const { isGroup, isMuted, isMuted2, isGroupAdmin, isOwner, bot, from, sender, reply, info, groupData, groupFile, optimizer, getUserName, isBotAdmin, MESSAGES } = context;
+    const { isGroup, isMuted, isMuted2, isGroupAdmin, isOwner, bot, from, sender, reply, info, groupData, groupFile, getUserName, isBotAdmin, MESSAGES } = context;
     if (!isGroup || isGroupAdmin || isOwner) return false;
 
     if (isMuted) {
@@ -12,8 +14,8 @@ export async function handleMutedUsers(context) {
                 await reply(MESSAGES.security.mutedUserCantRemove);
             }
             delete groupData.mutedUsers[sender];
-            if (optimizer?.saveJsonWithCache && groupFile) {
-                await optimizer.saveJsonWithCache(groupFile, groupData);
+            if (groupFile) {
+                await writeJsonFileAsync(groupFile, groupData);
             }
             return true;
         } catch (error) {

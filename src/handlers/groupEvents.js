@@ -2,9 +2,9 @@ import fs from 'fs/promises';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import CaptchaIndex, { loadCaptchaJson } from '../utils/captchaIndex.js';
-import { getPerformanceOptimizer } from '../utils/performanceOptimizer.js';
 import { resolveParticipant } from '../utils/resolveParticipant.js';
 import { checkAntifake, logAntifakeAction } from '../utils/antifakeGuard.js';
+import { findInBlacklistMap, loadJsonFile } from '../utils/helpers.js';
 import { MESSAGES } from '../utils/messages.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -13,20 +13,12 @@ const DATABASE_DIR = path.join(__dirname, '..', '..', 'dados', 'database');
 const DONO_DIR = path.join(DATABASE_DIR, 'dono');
 const GLOBAL_BLACKLIST_PATH = path.join(DONO_DIR, 'globalBlacklist.json');
 const DEBUG_MODE = process.env.DEBUG_MODE === 'true';
-const performanceOptimizer = getPerformanceOptimizer();
 const joinRequestCache = new Map();
 
 async function loadGroupSettings(groupId) {
     const groupFilePath = path.join(DATABASE_DIR, 'grupos', `${groupId}.json`);
     try {
-        return await performanceOptimizer.getCachedFile(groupFilePath, 30000, async (filePath) => {
-            try {
-                const data = await fs.readFile(filePath, 'utf-8');
-                return JSON.parse(data);
-            } catch (err) {
-                return {};
-            }
-        });
+        return loadJsonFile(groupFilePath, {});
     } catch (e) {
         console.error(`❌ Erro ao ler configurações do grupo ${groupId}: ${e.message}`);
         return {};
@@ -35,14 +27,8 @@ async function loadGroupSettings(groupId) {
 
 async function loadGlobalBlacklist() {
     try {
-        return await performanceOptimizer.getCachedFile(GLOBAL_BLACKLIST_PATH, 30000, async (filePath) => {
-            try {
-                const data = await fs.readFile(filePath, 'utf-8');
-                return JSON.parse(data).users || {};
-            } catch (err) {
-                return {};
-            }
-        });
+        const data = loadJsonFile(GLOBAL_BLACKLIST_PATH, {});
+        return data.users || {};
     } catch (e) {
         console.error(`❌ Erro ao ler blacklist global: ${e.message}`);
         return {};
@@ -147,14 +133,14 @@ export async function handleGroupParticipantsUpdate(ChainySock, inf) {
                     const jid = resolved.jid || `${participantNumber}@s.whatsapp.net`;
                     const lid = resolved.lid || (isLid ? participant : null);
 
-                    const inGlobalBlacklist = globalBlacklist?.[participant] || globalBlacklist?.[jid] || (lid && globalBlacklist?.[lid]);
+                    const inGlobalBlacklist = findInBlacklistMap(globalBlacklist, participant) || findInBlacklistMap(globalBlacklist, jid) || (lid && findInBlacklistMap(globalBlacklist, lid));
                     if (inGlobalBlacklist) {
                         membersToRemove.push(participant);
                         removalReasons.push(`@${participantNumber} (blacklist global)`);
                         continue;
                     }
 
-                    const inGroupBlacklist = groupSettings.blacklist?.[participant] || groupSettings.blacklist?.[jid] || (lid && groupSettings.blacklist?.[lid]);
+                    const inGroupBlacklist = findInBlacklistMap(groupSettings.blacklist, participant) || findInBlacklistMap(groupSettings.blacklist, jid) || (lid && findInBlacklistMap(groupSettings.blacklist, lid));
                     if (inGroupBlacklist) {
                         membersToRemove.push(participant);
                         removalReasons.push(`@${participantNumber} (blacklist grupo)`);
@@ -338,6 +324,24 @@ export async function handleGroupJoinRequest(ChainySock, inf) {
         }
 
         const groupSettings = await loadGroupSettings(from);
+        const globalBlacklist = await loadGlobalBlacklist();
+
+        // Verificar blacklist global e do grupo antes de aceitar
+        const participantNumberJR = participantJid.split('@')[0];
+        const jidCheck = `${participantNumberJR}@s.whatsapp.net`;
+        const lidCheck = typeIds.lid || null;
+        const inGlobalBL = findInBlacklistMap(globalBlacklist, participantJid) || findInBlacklistMap(globalBlacklist, jidCheck) || (lidCheck && findInBlacklistMap(globalBlacklist, lidCheck));
+        const inGroupBL = findInBlacklistMap(groupSettings.blacklist, participantJid) || findInBlacklistMap(groupSettings.blacklist, jidCheck) || (lidCheck && findInBlacklistMap(groupSettings.blacklist, lidCheck));
+        if (inGlobalBL || inGroupBL) {
+            const tipoBlacklist = inGlobalBL ? 'global' : 'grupo';
+            if (DEBUG_MODE) console.log(`🚫 [Blacklist] Rejeitando pedido de ${participantJid} (blacklist ${tipoBlacklist})`);
+            try {
+                await ChainySock.groupRequestParticipantsUpdate(from, [participantJid], 'reject');
+            } catch (err) {
+                console.error(`❌ [Blacklist] Erro ao rejeitar ${participantJid}:`, err.message);
+            }
+            return;
+        }
 
         const antifakeResult = await checkAntifake(participantJid, groupSettings, ChainySock);
         if (!antifakeResult.allowed) {

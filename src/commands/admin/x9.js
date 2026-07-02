@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { writeJsonFileAsync } from '../../utils/asyncFs.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -18,12 +19,11 @@ export default {
     isGroupAdmin,
     groupData,
     groupFile,
-    optimizer,
     MESSAGES
   }) => {
     try {
       groupData.x9 = !groupData.x9;
-      await optimizer.saveJsonWithCache(groupFile, groupData);
+      await writeJsonFileAsync(groupFile, groupData);
       
       const status = groupData.x9 ? 'ativado' : 'desativado';
       const emoji = groupData.x9 ? '✅' : '❌';

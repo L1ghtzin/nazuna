@@ -1,5 +1,6 @@
 import pathz from 'path';
 import fs from 'fs';
+import { writeJsonFileAsync } from '../../utils/asyncFs.js';
 
 
 export default {
@@ -18,7 +19,6 @@ export default {
     prefix, 
     groupData,
     buildGroupFilePath,
-    optimizer,
     quotedMessageContent,
     isQuotedImage,
     isQuotedVideo,
@@ -95,7 +95,7 @@ export default {
       }
 
       data.autoMessages.push(msgConfig);
-      await optimizer.saveJsonWithCache(groupFilePath, data);
+      await writeJsonFileAsync(groupFilePath, data);
       
       return reply(MESSAGES.admin.automsg.addSuccess(normalizedTime));
     }
@@ -128,7 +128,7 @@ export default {
       }
 
       if (data.autoMessages.length < initialCount) {
-        await optimizer.saveJsonWithCache(groupFilePath, data);
+        await writeJsonFileAsync(groupFilePath, data);
         return reply(MESSAGES.admin.automsg.delSuccess);
       } else {
         return reply(MESSAGES.admin.automsg.delNotFound);

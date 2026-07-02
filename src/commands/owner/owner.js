@@ -1,6 +1,7 @@
 import fs from 'fs/promises';
 import pathz from 'path';
 import { getAllCommandList } from '../../utils/dynamicCommand.js';
+import { readJsonFileAsync, writeJsonFileAsync } from '../../utils/asyncFs.js';
 
 export default {
   name: "owner",
@@ -9,7 +10,7 @@ export default {
   handle: async ({ 
     bot, from, info, command, q, reply, prefix, sender, pushname,
     botState, globalBlocks, transmissao,
-    isOwner, DATABASE_DIR, optimizer, getUserName, getFileBuffer,
+    isOwner, DATABASE_DIR, getUserName, getFileBuffer,
     isImage, isVideo, isQuotedImage, isQuotedVideo, menc_os2, isGroup,
     MESSAGES, AllgroupMembers, idsMatch }) => {
     const cmd = command.toLowerCase();
@@ -61,11 +62,11 @@ export default {
       }
       
       const blockFile = pathz.join(DATABASE_DIR, 'globalBlocks.json');
-      const loadedBlocks = await optimizer.loadJsonWithCache(blockFile, { users: {}, commands: {} });
+      const loadedBlocks = await readJsonFileAsync(blockFile, { users: {}, commands: {} });
       loadedBlocks.commands = loadedBlocks.commands || {};
       loadedBlocks.commands[cmdToBlock] = { reason: q.split(' ').slice(1).join(' ') || 'Sem motivo', timestamp: Date.now() };
       
-      await optimizer.saveJsonWithCache(blockFile, loadedBlocks);
+      await writeJsonFileAsync(blockFile, loadedBlocks);
       return reply(MESSAGES.owner.owner.blockcmdg.success(cmdToBlock, loadedBlocks.commands[cmdToBlock].reason));
     }
 
@@ -75,20 +76,20 @@ export default {
       if (!cmdToUnblock) return reply(MESSAGES.owner.owner.unblockcmdg.missingCmd(prefix));
       
       const blockFile = pathz.join(DATABASE_DIR, 'globalBlocks.json');
-      const loadedBlocks = await optimizer.loadJsonWithCache(blockFile, { users: {}, commands: {} });
+      const loadedBlocks = await readJsonFileAsync(blockFile, { users: {}, commands: {} });
       loadedBlocks.commands = loadedBlocks.commands || {};
       
       if (!loadedBlocks.commands[cmdToUnblock]) {
         return reply(MESSAGES.owner.owner.unblockcmdg.notBlocked(cmdToUnblock));
       }
       delete loadedBlocks.commands[cmdToUnblock];
-      await optimizer.saveJsonWithCache(blockFile, loadedBlocks);
+      await writeJsonFileAsync(blockFile, loadedBlocks);
       return reply(MESSAGES.owner.owner.unblockcmdg.success(cmdToUnblock));
     }
 
     if (cmd === 'listblocks') {
       const blockFile = pathz.join(DATABASE_DIR, 'globalBlocks.json');
-      const loadedBlocks = await optimizer.loadJsonWithCache(blockFile, { users: {}, commands: {} });
+      const loadedBlocks = await readJsonFileAsync(blockFile, { users: {}, commands: {} });
       
       const blockedCommands = loadedBlocks.commands && Object.keys(loadedBlocks.commands).length > 0
         ? Object.entries(loadedBlocks.commands).map(([cmd, data]) => `🔧 *${cmd}* - Motivo: ${data.reason}`).join('\n')
@@ -101,7 +102,7 @@ export default {
 
     if (cmd === 'boton' || cmd === 'botoff') {
       botState.status = (cmd === 'boton' ? 'on' : 'off');
-      await optimizer.saveJsonWithCache(pathz.join(DATABASE_DIR, 'botState.json'), botState);
+      await writeJsonFileAsync(pathz.join(DATABASE_DIR, 'botState.json'), botState);
       return reply(MESSAGES.owner.owner.botState.success(cmd === 'boton' ? 'ativado' : 'desativado'));
     }
 
@@ -154,9 +155,9 @@ export default {
       let target = menc_os2.includes(' ') ? menc_os2.split(' ')[0] : menc_os2;
       
       const blockFile = pathz.join(DATABASE_DIR, 'globalBlocks.json');
-      const globalBlocks = await optimizer.loadJsonWithCache(blockFile, { users: {}, commands: {} });
+      const globalBlocks = await readJsonFileAsync(blockFile, { users: {}, commands: {} });
       globalBlocks.users[target] = { reason, timestamp: Date.now() };
-      await optimizer.saveJsonWithCache(blockFile, globalBlocks);
+      await writeJsonFileAsync(blockFile, globalBlocks);
       
       return reply(MESSAGES.owner.owner.blockuserg.success(target.split('@')[0], reason), { mentions: [target] });
     }
@@ -166,14 +167,14 @@ export default {
       let target = menc_os2.includes(' ') ? menc_os2.split(' ')[0] : menc_os2;
       
       const blockFile = pathz.join(DATABASE_DIR, 'globalBlocks.json');
-      const globalBlocks = await optimizer.loadJsonWithCache(blockFile, { users: {}, commands: {} });
+      const globalBlocks = await readJsonFileAsync(blockFile, { users: {}, commands: {} });
       
       if (!globalBlocks.users[target]) {
          return reply(MESSAGES.owner.owner.unblockuserg.notBlocked);
       }
       
       delete globalBlocks.users[target];
-      await optimizer.saveJsonWithCache(blockFile, globalBlocks);
+      await writeJsonFileAsync(blockFile, globalBlocks);
       return reply(MESSAGES.owner.owner.unblockuserg.success(target.split('@')[0]), { mentions: [target] });
     }
 

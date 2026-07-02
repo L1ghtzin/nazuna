@@ -1,10 +1,11 @@
+import { readJsonFileAsync, writeJsonFileAsync } from '../../utils/asyncFs.js';
 export default {
   name: "transmissao_subs",
   description: "Comandos de transmissão do dono para inscritos do PV",
   commands: ["tm2", "inscrevertm", "inscrevertm2", "desinscrever", "desinscrevertm", "cancelartm", "statustm", "statustm2"],
   handle: async ({ 
     bot, from, info, command, reply, prefix, sender, q,
-    isGroup, optimizer, DATABASE_DIR,
+    isGroup, DATABASE_DIR,
     isImage, isVideo, isQuotedImage, isQuotedVideo, getFileBuffer,
     pathz, MESSAGES
   }) => {
@@ -14,14 +15,14 @@ export default {
       if (isGroup) return reply(MESSAGES.owner.owner_broadcast.tm2.privateOnly);
       
       const subFile = pathz.join(DATABASE_DIR, 'transmissao_subs.json');
-      const subs = await optimizer.loadJsonWithCache(subFile, { users: [] });
+      const subs = await readJsonFileAsync(subFile, { users: [] });
       
       if (subs.users.includes(sender)) {
         return reply(MESSAGES.owner.owner_broadcast.tm2.alreadySubbed(subs.users.length));
       }
       
       subs.users.push(sender);
-      await optimizer.saveJsonWithCache(subFile, subs);
+      await writeJsonFileAsync(subFile, subs);
       return reply(MESSAGES.owner.owner_broadcast.tm2.successSub(prefix));
     }
 
@@ -29,20 +30,20 @@ export default {
       if (isGroup) return reply(MESSAGES.owner.owner_broadcast.tm2.privateOnlyUnsub);
       
       const subFile = pathz.join(DATABASE_DIR, 'transmissao_subs.json');
-      const subs = await optimizer.loadJsonWithCache(subFile, { users: [] });
+      const subs = await readJsonFileAsync(subFile, { users: [] });
       
       if (!subs.users.includes(sender)) {
         return reply(MESSAGES.owner.owner_broadcast.tm2.notSubbed);
       }
       
       subs.users = subs.users.filter(u => u !== sender);
-      await optimizer.saveJsonWithCache(subFile, subs);
+      await writeJsonFileAsync(subFile, subs);
       return reply(MESSAGES.owner.owner_broadcast.tm2.successUnsub(prefix));
     }
 
     if (cmd === 'statustm' || cmd === 'statustm2') {
       const subFile = pathz.join(DATABASE_DIR, 'transmissao_subs.json');
-      const subs = await optimizer.loadJsonWithCache(subFile, { users: [] });
+      const subs = await readJsonFileAsync(subFile, { users: [] });
       return reply(MESSAGES.owner.owner_broadcast.tm2.status(subs.users.length));
     }
 
@@ -52,7 +53,7 @@ export default {
       }
       
       const subFile = pathz.join(DATABASE_DIR, 'transmissao_subs.json');
-      const subs = await optimizer.loadJsonWithCache(subFile, { users: [] });
+      const subs = await readJsonFileAsync(subFile, { users: [] });
       
       if (subs.users.length === 0) {
         return reply(MESSAGES.owner.owner_broadcast.tm2.noSubs);

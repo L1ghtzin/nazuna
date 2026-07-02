@@ -1,5 +1,6 @@
 import fs from 'fs/promises';
 import path, { join } from 'path';
+import { toLID } from './toLID.js';
 
 const isValidJid = (str) => /^\d+@s\.whatsapp\.net$/.test(str);
 
@@ -258,6 +259,11 @@ export async function performMigration(ChainySock, databaseDir, configPath) {
     } catch (err) {
         console.error(`❌ Erro durante a migração: ${err.message}`);
     }
+    
+    // Roda a migração de blacklists em paralelo
+    await migrateBlacklists(ChainySock, databaseDir).catch(err => {
+        console.error('❌ Erro na migração de blacklists:', err.message);
+    });
 }
 
 /**
@@ -276,6 +282,162 @@ export async function updateOwnerLid(ChainySock, numerodono, config, configPath)
         console.error(`❌ Erro ao atualizar LID do dono: ${err.message}`);
     }
     return null;
+}
+
+/**
+ * Migra todas as blacklists locais (Global e de Grupo) para o formato array-of-objects
+ */
+export async function migrateBlacklists(ChainySock, databaseDir) {
+    const flagFile = join(databaseDir, '.blacklist_migration_complete_v4');
+    try {
+        await fs.access(flagFile);
+        return; // Já migrado
+    } catch (e) {}
+
+    // Limpa as flags das tentativas de migração parciais antigas
+    for (const oldFlag of ['.blacklist_migration_complete', '.blacklist_migration_complete_v2', '.blacklist_migration_complete_v3']) {
+        try {
+            await fs.unlink(join(databaseDir, oldFlag));
+        } catch (err) {}
+    }
+
+    console.log('⏳ [MIGRAÇÃO] Iniciando migração e resolução de LIDs das blacklists...');
+    try {
+        let globaisAtualizados = 0;
+        let gruposAtualizados = 0;
+
+        // 1. Blacklist Global
+        const globalBLPath = join(databaseDir, 'dono', 'globalBlacklist.json');
+        let globalData = null;
+        try {
+            const content = await fs.readFile(globalBLPath, 'utf-8');
+            globalData = JSON.parse(content);
+        } catch (e) {}
+        
+        if (globalData && globalData.users) {
+            // Conversão de dicionário legado para array caso ainda não seja
+            if (!Array.isArray(globalData.users)) {
+                const arrayUsers = [];
+                for (const [key, entry] of Object.entries(globalData.users)) {
+                    const cleanJid = key.endsWith('@s.whatsapp.net') ? key : null;
+                    const cleanLid = key.endsWith('@lid') ? key : null;
+                    
+                    const existing = arrayUsers.find(u => (cleanLid && u.lid === cleanLid) || (cleanJid && u.number === cleanJid.replace(/\D/g, '')));
+                    if (!existing) {
+                        arrayUsers.push({
+                            lid: cleanLid || '',
+                            number: cleanJid ? cleanJid.replace(/\D/g, '') : '',
+                            name: entry.addedBy || '',
+                            reason: entry.reason || '',
+                            createdAt: entry.addedAt || new Date().toISOString(),
+                            createdBy: entry.addedBy || 'Desconhecido'
+                        });
+                    }
+                }
+                globalData.users = arrayUsers;
+            }
+
+            // Resolução profunda de LIDs pendentes
+            let globalModified = false;
+            for (const entry of globalData.users) {
+                if (!entry.lid && entry.number) {
+                    const jid = `${entry.number}@s.whatsapp.net`;
+                    try {
+                        let lid = await toLID(jid, ChainySock);
+                        if (!lid) {
+                            const result = await ChainySock.onWhatsApp(jid);
+                            if (result && result[0] && result[0].lid) {
+                                lid = result[0].lid.replace(/:.*/, '');
+                            }
+                        }
+                        if (lid) {
+                            entry.lid = lid;
+                            globalModified = true;
+                            globaisAtualizados++;
+                        }
+                    } catch (err) {
+                        console.warn(`[MIGRAÇÃO] Falha ao obter LID para ${jid}:`, err.message);
+                    }
+                }
+            }
+
+            if (globalModified || globaisAtualizados > 0) {
+                await fs.writeFile(globalBLPath, JSON.stringify(globalData, null, 2), 'utf-8');
+            }
+        }
+
+        // 2. Blacklists de Grupo
+        const gruposDir = join(databaseDir, 'grupos');
+        let files = [];
+        try {
+            files = await fs.readdir(gruposDir);
+        } catch (e) {}
+        
+        for (const file of files) {
+            if (!file.endsWith('.json')) continue;
+            const groupPath = join(gruposDir, file);
+            try {
+                const groupContent = await fs.readFile(groupPath, 'utf-8');
+                const groupData = JSON.parse(groupContent);
+                if (groupData && groupData.blacklist) {
+                    // Conversão de dicionário legado para array caso ainda não seja
+                    if (!Array.isArray(groupData.blacklist)) {
+                        const arrayBlacklist = [];
+                        for (const [key, entry] of Object.entries(groupData.blacklist)) {
+                            const cleanJid = key.endsWith('@s.whatsapp.net') ? key : null;
+                            const cleanLid = key.endsWith('@lid') ? key : null;
+                            
+                            const existing = arrayBlacklist.find(u => (cleanLid && u.lid === cleanLid) || (cleanJid && u.number === cleanJid.replace(/\D/g, '')));
+                            if (!existing) {
+                                arrayBlacklist.push({
+                                    lid: cleanLid || '',
+                                    number: cleanJid ? cleanJid.replace(/\D/g, '') : '',
+                                    name: '',
+                                    reason: entry.reason || 'Sem motivo',
+                                    createdAt: entry.date ? new Date(entry.date).toISOString() : new Date().toISOString(),
+                                    createdBy: 'Admin'
+                                });
+                            }
+                        }
+                        groupData.blacklist = arrayBlacklist;
+                    }
+
+                    // Resolução profunda de LIDs pendentes
+                    let groupModified = false;
+                    for (const entry of groupData.blacklist) {
+                        if (!entry.lid && entry.number) {
+                            const jid = `${entry.number}@s.whatsapp.net`;
+                            try {
+                                let lid = await toLID(jid, ChainySock);
+                                if (!lid) {
+                                    const result = await ChainySock.onWhatsApp(jid);
+                                    if (result && result[0] && result[0].lid) {
+                                        lid = result[0].lid.replace(/:.*/, '');
+                                    }
+                                }
+                                if (lid) {
+                                    entry.lid = lid;
+                                    groupModified = true;
+                                    gruposAtualizados++;
+                                }
+                            } catch (err) {
+                                console.warn(`[MIGRAÇÃO] Falha ao obter LID para ${jid} no grupo ${file}:`, err.message);
+                            }
+                        }
+                    }
+
+                    if (groupModified || gruposAtualizados > 0) {
+                        await fs.writeFile(groupPath, JSON.stringify(groupData, null, 2), 'utf-8');
+                    }
+                }
+            } catch (e) {}
+        }
+
+        console.log(`✅ [MIGRAÇÃO] LIDs de Blacklists resolvidos! Globais atualizados: ${globaisAtualizados}, Grupos atualizados: ${gruposAtualizados}`);
+        await fs.writeFile(flagFile, 'Migration completed at ' + new Date().toISOString(), 'utf-8');
+    } catch (err) {
+        console.error('❌ [MIGRAÇÃO] Erro ao migrar blacklists:', err.message);
+    }
 }
 
 

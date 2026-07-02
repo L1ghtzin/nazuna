@@ -1,23 +1,19 @@
 import fsPromises from 'fs/promises';
+import fs from 'fs';
 import pathz from 'path';
 import { idsMatch } from './helpers.js';
 import { writeJsonFileAsync, readJsonFileAsync } from './asyncFs.js';
 import { GRUPOS_DIR } from './paths.js';
-import { getPerformanceOptimizer } from './performanceOptimizer.js';
 
 export const buildGroupFilePath = (groupId) => pathz.join(GRUPOS_DIR, `${groupId}.json`);
 
 export async function loadGroupDataById(groupId, {
   defaultValue = {},
-  groupFile = buildGroupFilePath(groupId),
-  optimizer = getPerformanceOptimizer()
+  groupFile = buildGroupFilePath(groupId)
 } = {}) {
   if (!groupId) return defaultValue;
 
   try {
-    if (optimizer?.loadJsonWithCache) {
-      return await optimizer.loadJsonWithCache(groupFile, defaultValue);
-    }
     return await readJsonFileAsync(groupFile, defaultValue);
   } catch (error) {
     console.error(`Erro ao carregar dados do grupo ${groupId}:`, error.message);
@@ -26,22 +22,12 @@ export async function loadGroupDataById(groupId, {
 }
 
 export async function saveGroupDataById(groupId, groupData, {
-  groupFile = buildGroupFilePath(groupId),
-  optimizer = getPerformanceOptimizer()
+  groupFile = buildGroupFilePath(groupId)
 } = {}) {
   if (!groupId || !groupData || typeof groupData !== 'object') return false;
 
   try {
-    const saved = optimizer?.saveJsonWithCache
-      ? await optimizer.saveJsonWithCache(groupFile, groupData)
-      : await writeJsonFileAsync(groupFile, groupData);
-
-    if (saved) {
-      optimizer?.invalidateGroup?.(groupId);
-      optimizer?.invalidateJson?.(groupFile);
-    }
-
-    return saved;
+    return await writeJsonFileAsync(groupFile, groupData);
   } catch (error) {
     console.error(`Erro ao salvar dados do grupo ${groupId}:`, error.message);
     return false;
@@ -49,42 +35,26 @@ export async function saveGroupDataById(groupId, groupData, {
 }
 
 /**
- * Loads group data securely, ensuring no blocking and proper error handling, utilizing cache
+ * Loads group data securely, ensuring no blocking and proper error handling
  */
-export async function loadGroupData(isGroup, from, groupFile, groupName, optimizer) {
+export async function loadGroupData(isGroup, from, groupFile, groupName) {
   if (!isGroup) return {};
 
   let groupData = {};
 
   try {
-    groupData = await optimizer.getGroupDataCached(
-      from,
-      async () => {
-        // Fallback for cache miss
-        let parsedData = {};
-        const fileExists = await optimizer.fileExists(groupFile);
-        
-        if (!fileExists) {
-          await writeJsonFileAsync(groupFile, {
-            mark: {},
-            createdAt: new Date().toISOString(),
-            groupName: groupName
-          });
-          optimizer.invalidateJson(groupFile);
-        }
-        
-        if (optimizer?.loadJsonWithCache) {
-          parsedData = await optimizer.loadJsonWithCache(groupFile, { mark: {}, createdAt: new Date().toISOString() });
-        } else {
-          parsedData = await readJsonFileAsync(groupFile, { mark: {}, createdAt: new Date().toISOString() });
-        }
-        
-        return parsedData;
-      },
-      5000 // 5 seconds TTL
-    );
+    const fileExists = fs.existsSync(groupFile);
+    if (!fileExists) {
+      await writeJsonFileAsync(groupFile, {
+        mark: {},
+        createdAt: new Date().toISOString(),
+        groupName: groupName
+      });
+    }
+    
+    groupData = await readJsonFileAsync(groupFile, { mark: {}, createdAt: new Date().toISOString() });
   } catch (e) {
-    console.error('Erro ao carregar groupData com cache:', e);
+    console.error('Erro ao carregar groupData:', e);
     try {
       groupData = await readJsonFileAsync(groupFile, {});
     } catch (e2) {
@@ -115,9 +85,7 @@ export async function loadGroupData(isGroup, from, groupFile, groupName, optimiz
 
   if (groupName && groupData.groupName !== groupName) {
     groupData.groupName = groupName;
-    writeJsonFileAsync(groupFile, groupData).then(() => {
-      optimizer.invalidateGroup(from);
-    }).catch(err => console.error('Erro ao salvar groupData:', err));
+    writeJsonFileAsync(groupFile, groupData).catch(err => console.error('Erro ao salvar groupData:', err));
   }
   
   return groupData;
@@ -126,11 +94,9 @@ export async function loadGroupData(isGroup, from, groupFile, groupName, optimiz
 /**
  * Persists group data asynchronously without blocking
  */
-export const persistGroupData = (isGroup, from, groupFile, groupData, optimizer) => {
+export const persistGroupData = (isGroup, from, groupFile, groupData) => {
   if (isGroup) {
     return writeJsonFileAsync(groupFile, groupData).then(() => {
-      optimizer.invalidateGroup(from);
-      optimizer.invalidateJson?.(groupFile);
       return true;
     }).catch(err => {
       console.error('Erro ao persistir groupData:', err);

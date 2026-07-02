@@ -6,7 +6,6 @@ import pathz from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
 
-import { PerformanceOptimizer, getPerformanceOptimizer } from './utils/performanceOptimizer.js';
 import { initJidLidCache, saveJidLidCache } from './utils/helpers.js';
 import { runDatabaseSelfTest } from './utils/database.js';
 import { PACKAGE_JSON_PATH, JID_LID_CACHE_FILE } from './utils/paths.js';
@@ -32,29 +31,7 @@ import { MESSAGES } from './utils/messages.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = pathz.dirname(__filename);
 
-let performanceOptimizerInstance = null;
-let performanceOptimizerInitPromise = null;
-async function initializePerformanceOptimizer() {
-  if (performanceOptimizerInstance) return performanceOptimizerInstance;
-  if (!performanceOptimizerInitPromise) {
-    performanceOptimizerInitPromise = (async () => {
-      try {
-        const inst = getPerformanceOptimizer();
-        await inst.initialize();
-        performanceOptimizerInstance = inst;
-        return inst;
-      } catch (e) {
-        console.error('Falha PerformanceOptimizer:', e.message);
-        performanceOptimizerInstance = null;
-        return null;
-      }
-    })();
-  }
-  const inst = await performanceOptimizerInitPromise;
-  if (!inst) performanceOptimizerInitPromise = null;
-  return inst;
-}
-initializePerformanceOptimizer();
+
 
 let dbTestResult = null;
 const ensureDatabaseIntegrity = ({ log = false, force = false } = {}) => {
@@ -96,7 +73,7 @@ async function chainyBotExec(bot, info, store, messagesCache, rentalExpirationMa
   try {
     // 1. Constrói contexto completo (parsing, permissões, cache, reply)
     const ctx = await buildMessageContext(bot, info, store, messagesCache, rentalExpirationManager, {
-      initializePerformanceOptimizer, ensureDatabaseIntegrity, botVersion, __dirname
+      ensureDatabaseIntegrity, botVersion, __dirname
     });
 
     if (!ctx) return;

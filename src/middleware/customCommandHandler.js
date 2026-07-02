@@ -5,12 +5,21 @@ import { normalizar } from '../utils/helpers.js';
 import { loadNoPrefixCommands, findCustomCommand } from '../utils/database.js';
 import { parseArgsFromString, escapeRegExp, buildUsageFromParams, validateParamValue } from '../utils/helpers.js';
 
+const normalizeCommand = (cmd) => {
+  if (!cmd || typeof cmd !== 'string') return '';
+  const prefixRegex = /^[!\.\/#\$\%\&\*\+\-\.\:\;\<\=\>\?\@\[\]\^\_\{\}\|\\]/;
+  if (prefixRegex.test(cmd)) {
+    cmd = cmd.substring(1);
+  }
+  return cmd.toLowerCase().trim();
+};
+
 export async function handleCustomCommand(ctx) {
   const {
     isGroup, isOwner, isGroupAdmin, isOnlyAdmin, body, budy2,
     from, groupPrefix, nomedono, numerodono, nomebot, pushname,
     groupName, groupMetadata, quotedMessageContent, menc_os2,
-    info, reply, bot, getUserName, optimizer, args, q, MESSAGES
+    info, reply, bot, getUserName, args, q, MESSAGES
   } = ctx;
   let { isCmd, command } = ctx;
 
@@ -18,12 +27,10 @@ export async function handleCustomCommand(ctx) {
   if (!isCmd) {
     if (isGroup && isOnlyAdmin && !isGroupAdmin && !isOwner) return false;
     
-    const noPrefixCommands = await optimizer.memoize(
-      `noprefix:${from}`, () => Promise.resolve(loadNoPrefixCommands()), 10000
-    );
-    const splitRegex = optimizer.getRegex('commandSplit') || /\s+/;
+    const noPrefixCommands = loadNoPrefixCommands();
+    const splitRegex = /\s+/;
     const firstWord = budy2.split(splitRegex)[0]?.trim();
-    const matchedCommand = noPrefixCommands.find(item => firstWord === (optimizer.normalizeCommand(item.trigger) || normalizar(item.trigger)));
+    const matchedCommand = noPrefixCommands.find(item => firstWord === (normalizeCommand(item.trigger) || normalizar(item.trigger)));
     
     if (!matchedCommand) return false;
     
@@ -43,10 +50,8 @@ export async function handleCustomCommand(ctx) {
   if (!isCmd || !command) return false;
 
   // === COMANDOS PERSONALIZADOS DO DONO ===
-  const normalizedTrigger = optimizer.normalizeCommand(command) || normalizar(command);
-  const customCmd = await optimizer.memoize(
-    `customcmd:${from}:${normalizedTrigger}`, () => Promise.resolve(findCustomCommand(normalizedTrigger)), 5000
-  );
+  const normalizedTrigger = normalizeCommand(command) || normalizar(command);
+  const customCmd = findCustomCommand(normalizedTrigger);
   
   if (!customCmd) return false;
 

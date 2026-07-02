@@ -1,11 +1,12 @@
 import { AUTO_HORARIOS_FILE } from '../../utils/paths.js';
+import { readJsonFileAsync, writeJsonFileAsync } from '../../utils/asyncFs.js';
 
 export default {
   name: "autohorarios",
   description: "Gerencia o envio automático de horários pagantes",
   commands: ["autohorarios"],
   usage: `${global.prefix}autohorarios <on|off|status|link>`,
-  handle: async ({ reply, args, prefix, from, optimizer, MESSAGES }) => {
+  handle: async ({ reply, args, prefix, from, MESSAGES }) => {
     try {
       const action = args[0]?.toLowerCase();
       
@@ -14,7 +15,7 @@ export default {
         return;
       }
       
-      const autoSchedules = await optimizer.loadJsonWithCache(AUTO_HORARIOS_FILE, {});
+      const autoSchedules = await readJsonFileAsync(AUTO_HORARIOS_FILE, {});
       
       if (!autoSchedules[from]) {
         autoSchedules[from] = {
@@ -27,13 +28,13 @@ export default {
       switch (action) {
         case 'on':
           autoSchedules[from].enabled = true;
-          await optimizer.saveJsonWithCache(AUTO_HORARIOS_FILE, autoSchedules);
+          await writeJsonFileAsync(AUTO_HORARIOS_FILE, autoSchedules);
           await reply(MESSAGES.admin.autohorarios.activated);
           break;
           
         case 'off':
           autoSchedules[from].enabled = false;
-          await optimizer.saveJsonWithCache(AUTO_HORARIOS_FILE, autoSchedules);
+          await writeJsonFileAsync(AUTO_HORARIOS_FILE, autoSchedules);
           await reply(MESSAGES.admin.autohorarios.deactivated);
           break;
           
@@ -49,11 +50,11 @@ export default {
           
           if (!linkUrl) {
             autoSchedules[from].link = null;
-            await optimizer.saveJsonWithCache(AUTO_HORARIOS_FILE, autoSchedules);
+            await writeJsonFileAsync(AUTO_HORARIOS_FILE, autoSchedules);
             await reply(MESSAGES.admin.autohorarios.linkRemoved);
           } else {
             autoSchedules[from].link = linkUrl;
-            await optimizer.saveJsonWithCache(AUTO_HORARIOS_FILE, autoSchedules);
+            await writeJsonFileAsync(AUTO_HORARIOS_FILE, autoSchedules);
             await reply(MESSAGES.admin.autohorarios.linkConfigured(linkUrl));
           }
           break;

@@ -1,5 +1,7 @@
+import { writeJsonFileAsync } from '../../utils/asyncFs.js';
+
 export async function handleAFK(context) {
-    const { isGroup, groupData, sender, groupFile, optimizer, reply, MESSAGES, command } = context;
+    const { isGroup, groupData, sender, groupFile, reply, MESSAGES, command } = context;
     if (!isGroup || !groupData.afkUsers || !groupData.afkUsers[sender]) return false;
     
     // Ignora se o usuário está executando comandos relacionados a AFK
@@ -8,8 +10,8 @@ export async function handleAFK(context) {
     try {
         const afkSince = new Date(groupData.afkUsers[sender].since || Date.now()).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });
         delete groupData.afkUsers[sender];
-        if (optimizer?.saveJsonWithCache && groupFile) {
-            await optimizer.saveJsonWithCache(groupFile, groupData);
+        if (groupFile) {
+            await writeJsonFileAsync(groupFile, groupData);
         }
         await reply(MESSAGES.security.afkWelcome(afkSince));
     } catch (error) {

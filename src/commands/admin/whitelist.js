@@ -1,11 +1,12 @@
 import fs from 'fs';
+import { writeJsonFileAsync } from '../../utils/asyncFs.js';
 
 export default {
   name: "whitelist",
   description: "Gerencia a whitelist de administradores para os sistemas anti do grupo",
   commands: ["addwhitelist", "listawhitelist", "removewhitelist", "whitelistlista", "wl.add", "wl.lista", "wl.remove", "wladd", "wllist", "wlremove"],
   usage: `${global.prefix}wl.add @usuário | antilink,antistatus\n${global.prefix}wl.remove @usuário\n${global.prefix}wl.lista`,
-  handle: async ({  reply, isGroup, isGroupAdmin, command, menc_os2, q, prefix, groupData, groupFile, sender, getUserName, optimizer , MESSAGES }) => {
+  handle: async ({  reply, isGroup, isGroupAdmin, command, menc_os2, q, prefix, groupData, groupFile, sender, getUserName, MESSAGES }) => {
     const cmd = command.toLowerCase();
     groupData.adminWhitelist = groupData.adminWhitelist || {};
 
@@ -24,14 +25,14 @@ export default {
       const antis = q.split('|')[1]?.split(',').map(a => a.trim().toLowerCase()) || [];
       if (!antis.length) return reply(MESSAGES.admin.whitelist.missingAntis);
       groupData.adminWhitelist[menc_os2] = { antis, addedBy: sender, addedAt: Date.now() };
-      await optimizer.saveJsonWithCache(groupFile, groupData);
+      await writeJsonFileAsync(groupFile, groupData);
       return reply(MESSAGES.admin.whitelist.addSuccess(getUserName(menc_os2)), { mentions: [menc_os2] });
     }
 
     if (['wl.remove', 'wlremove', 'removewhitelist', 'unwhitelist'].includes(cmd)) {
       if (!menc_os2) return reply(MESSAGES.admin.whitelist.missingUser);
       delete groupData.adminWhitelist[menc_os2];
-      await optimizer.saveJsonWithCache(groupFile, groupData);
+      await writeJsonFileAsync(groupFile, groupData);
       return reply(MESSAGES.admin.whitelist.removeSuccess);
     }
   }

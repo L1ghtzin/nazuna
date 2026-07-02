@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { readJsonFileAsync } from '../../utils/asyncFs.js';
 
 
 const __filename = fileURLToPath(import.meta.url);
@@ -19,14 +20,13 @@ export default {
     args, 
     prefix, 
     normalizar,
-    MESSAGES,
-    optimizer
+    MESSAGES
   }) => {
     // Carregar palavras do JSON
     const forcaPath = path.join(__dirname, '../../funcs/json/forca.json');
     let palavrasForca = [];
     try {
-      const forcaData = await optimizer.loadJsonWithCache(forcaPath, 'utf-8');
+      const forcaData = await readJsonFileAsync(forcaPath, 'utf-8');
       palavrasForca = forcaData.palavras || [];
     } catch (e) {
       console.error('Erro ao carregar forca.json:', e);

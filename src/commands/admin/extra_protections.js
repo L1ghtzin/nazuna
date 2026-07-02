@@ -1,5 +1,6 @@
 import pathz from 'path';
 import { handleAntistealthCommand, handleAntipaymentCommand } from '../../middleware/antiStealth.js';
+import { writeJsonFileAsync } from '../../utils/asyncFs.js';
 
 export default {
   name: "extra_protections",
@@ -7,7 +8,7 @@ export default {
   commands: ["antilinkgp", "antilinkcanal", "antilinkch", "antilinksoft", "antiporn", "antigore", "antistealth", "antipagamento", "antipayment"],
   handle: async ({ 
     reply, command, isGroup, isGroupAdmin, isBotAdmin, from, 
-    groupData, DATABASE_DIR, optimizer, MESSAGES, args, prefix, bot
+    groupData, DATABASE_DIR, MESSAGES, args, prefix, bot
   }) => {
 
     const cmd = command.toLowerCase();
@@ -17,7 +18,7 @@ export default {
     if (cmd === 'antiporn') {
       if (!isBotAdmin) return reply(MESSAGES.permission.botAdminOnly);
       groupData.antiporn = !groupData.antiporn;
-      await optimizer.saveJsonWithCache(groupFilePath, groupData);
+      await writeJsonFileAsync(groupFilePath, groupData);
       return reply(groupData.antiporn 
         ? MESSAGES.admin.extra_protections.antipornOn 
         : MESSAGES.admin.extra_protections.antipornOff);
@@ -27,7 +28,7 @@ export default {
     if (cmd === 'antigore') {
       if (!isBotAdmin) return reply(MESSAGES.permission.botAdminOnly);
       groupData.antigore = !groupData.antigore;
-      await optimizer.saveJsonWithCache(groupFilePath, groupData);
+      await writeJsonFileAsync(groupFilePath, groupData);
       return reply(groupData.antigore 
         ? MESSAGES.admin.extra_protections.antigoreOn 
         : MESSAGES.admin.extra_protections.antigoreOff);
@@ -37,7 +38,7 @@ export default {
     if (cmd === 'antistealth') {
       return handleAntistealthCommand({ 
         reply, args, isGroup, isGroupAdmin, isBotAdmin, from, 
-        groupData, DATABASE_DIR, optimizer, MESSAGES, prefix, ChainySock: bot 
+        groupData, DATABASE_DIR, MESSAGES, prefix, ChainySock: bot 
       });
     }
 
@@ -45,7 +46,7 @@ export default {
     if (['antipagamento', 'antipayment'].includes(cmd)) {
       return handleAntipaymentCommand({ 
         reply, args, isGroup, isGroupAdmin, isBotAdmin, from, 
-        groupData, DATABASE_DIR, optimizer, MESSAGES, prefix, ChainySock: bot 
+        groupData, DATABASE_DIR, MESSAGES, prefix, ChainySock: bot 
       });
     }
 
@@ -57,7 +58,7 @@ export default {
       if (!isBotAdmin) return reply(MESSAGES.permission.botAdminOnly);
       
       groupData[key] = !groupData[key];
-      await optimizer.saveJsonWithCache(groupFilePath, groupData);
+      await writeJsonFileAsync(groupFilePath, groupData);
       
       if (key === 'antilinkgp') {
         const message = groupData.antilinkgp 

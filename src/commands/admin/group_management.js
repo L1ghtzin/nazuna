@@ -1,5 +1,6 @@
 import { normalizeScheduleTime, validateTimeFormat } from "../../utils/timeHelpers.js";
 import { scheduleGroupJob, unscheduleGroupJob } from "../../workers/index.js";
+import { readJsonFileAsync, writeJsonFileAsync } from '../../utils/asyncFs.js';
 
 export default {
   name: "group_management",
@@ -8,7 +9,7 @@ export default {
   handle: async ({ 
     bot, from, info, command, args, reply, prefix, pushname, sender, q,
     isGroup, isGroupAdmin, isBotAdmin, isOwner, AllgroupMembers, groupData, groupFile,
-    getUserName, optimizer, GRUPOS_DIR, DATABASE_DIR, buildGroupFilePath,
+    getUserName, GRUPOS_DIR, DATABASE_DIR, buildGroupFilePath,
     getFileBuffer, isQuotedMsg, isQuotedImage, isQuotedVideo, isQuotedAudio, 
     isQuotedDocument, isQuotedDocW, isQuotedSticker, checkMassMentionLimit,
     registerMassMentionUse, MASS_MENTION_THRESHOLD, loadMassMentionConfig,
@@ -22,7 +23,7 @@ export default {
     if (cmd === 'sorteio' || cmd === 'sorteionome') {
       try {
         const path = buildGroupFilePath(from);
-        const data = await optimizer.loadJsonWithCache(path, { mark: {} });
+        const data = await readJsonFileAsync(path, { mark: {} });
         
         if (cmd === 'sorteionome') {
           if (!q) return reply(MESSAGES.admin.group_management.sorteio.nameUsage(prefix));
@@ -62,7 +63,7 @@ export default {
         const massCheck = checkMassMentionLimit(from, AllgroupMembers.length);
         if (!massCheck.allowed) return reply(massCheck.message);
 
-        const data = await optimizer.loadJsonWithCache(buildGroupFilePath(from), { mark: {} });
+        const data = await readJsonFileAsync(buildGroupFilePath(from), { mark: {} });
         const mentions = AllgroupMembers.filter(m => !['0', 'games'].includes(data.mark?.[m]));
 
         let messageToSend = {};
@@ -141,7 +142,7 @@ export default {
       if (cmd === 'antiflood') {
         if (!q) return reply(MESSAGES.admin.group_management.protections.floodUsage(prefix));
         const antifloodFile = pathz.join(DATABASE_DIR, 'antiflood.json');
-        let floodData = await optimizer.loadJsonWithCache(antifloodFile, {});
+        let floodData = await readJsonFileAsync(antifloodFile, {});
         floodData[from] = floodData[from] || {};
         if (q.toLowerCase() === 'off') {
           floodData[from].enabled = false;
@@ -151,12 +152,12 @@ export default {
           floodData[from].enabled = true;
           floodData[from].interval = interval;
         }
-        await optimizer.saveJsonWithCache(antifloodFile, floodData);
+        await writeJsonFileAsync(antifloodFile, floodData);
         return reply(MESSAGES.admin.group_management.protections.floodToggle(floodData[from].enabled));
       }
 
       groupData[feature] = !groupData[feature];
-      await optimizer.saveJsonWithCache(groupFile, groupData);
+      await writeJsonFileAsync(groupFile, groupData);
       return reply(MESSAGES.admin.group_management.protections.genericToggle(feature, groupData[feature]));
     }
 
@@ -181,7 +182,7 @@ export default {
           return reply(MESSAGES.admin.group_management.antifake.ddiInvalid(prefix));
         }
         groupData.antifakeDDI = ddis.join(',');
-        await optimizer.saveJsonWithCache(groupFile, groupData);
+        await writeJsonFileAsync(groupFile, groupData);
         return reply(MESSAGES.admin.group_management.antifake.ddiSuccess(ddis.join(', ')));
       }
 
@@ -198,7 +199,7 @@ export default {
             return reply(MESSAGES.admin.group_management.antifake.wlAddExists(wlNumber));
           }
           groupData.antifakeWhitelist.push(wlNumber);
-          await optimizer.saveJsonWithCache(groupFile, groupData);
+          await writeJsonFileAsync(groupFile, groupData);
           return reply(MESSAGES.admin.group_management.antifake.wlAddSuccess(wlNumber));
         }
 
@@ -208,7 +209,7 @@ export default {
           const idx = groupData.antifakeWhitelist.indexOf(wlNumber);
           if (idx === -1) return reply(MESSAGES.admin.group_management.antifake.wlRemNotFound(wlNumber));
           groupData.antifakeWhitelist.splice(idx, 1);
-          await optimizer.saveJsonWithCache(groupFile, groupData);
+          await writeJsonFileAsync(groupFile, groupData);
           return reply(MESSAGES.admin.group_management.antifake.wlRemSuccess(wlNumber));
         }
 
@@ -242,7 +243,7 @@ export default {
 
       // --- Toggle on/off ---
       groupData.antifake = !groupData.antifake;
-      await optimizer.saveJsonWithCache(groupFile, groupData);
+      await writeJsonFileAsync(groupFile, groupData);
 
       const currentDDI = groupData.antifakeDDI || '55';
       const wlCount = (groupData.antifakeWhitelist || []).length;
@@ -262,20 +263,20 @@ export default {
       const newPrefix = q.trim().charAt(0);
       if (newPrefix === '$') return reply(MESSAGES.admin.group_management.config.prefixReserved);
       groupData.customPrefix = newPrefix;
-      await optimizer.saveJsonWithCache(groupFile, groupData);
+      await writeJsonFileAsync(groupFile, groupData);
       return reply(MESSAGES.admin.group_management.config.prefixSuccess(newPrefix));
     }
 
     if (['modobrincadeira', 'modobrincadeiras', 'modobn', 'gamemode'].includes(cmd)) {
       groupData.modobrincadeira = !groupData.modobrincadeira;
-      await optimizer.saveJsonWithCache(groupFile, groupData);
+      await writeJsonFileAsync(groupFile, groupData);
       return reply(MESSAGES.admin.group_management.config.gameModeToggle(groupData.modobrincadeira));
     }
 
     if (['limitmessage', 'dellimitmessage'].includes(cmd)) {
       if (cmd === 'dellimitmessage') {
         delete groupData.messageLimit;
-        await optimizer.saveJsonWithCache(groupFile, groupData);
+        await writeJsonFileAsync(groupFile, groupData);
         return reply(MESSAGES.admin.group_management.config.limitDelSuccess);
       }
 
@@ -291,7 +292,7 @@ export default {
       else if (timeMatch[2] === 'h') seconds *= 3600;
 
       groupData.messageLimit = { enabled: true, limit, interval: seconds, action, users: {} };
-      await optimizer.saveJsonWithCache(groupFile, groupData);
+      await writeJsonFileAsync(groupFile, groupData);
       return reply(MESSAGES.admin.group_management.config.limitSuccess(limit, args[1], action));
     }
 
@@ -339,7 +340,7 @@ export default {
             delete groupData.schedule.lastRun;
           }
         }
-        await optimizer.saveJsonWithCache(groupFile, groupData);
+        await writeJsonFileAsync(groupFile, groupData);
         try { unscheduleGroupJob(from, 'open'); } catch (e) { console.error('Error unscheduling group open job:', e); }
         return reply(MESSAGES.admin.group_management.status.openScheduleRemSuccess);
       }
@@ -362,7 +363,7 @@ export default {
         }
       }
 
-      await optimizer.saveJsonWithCache(groupFile, groupData);
+      await writeJsonFileAsync(groupFile, groupData);
       try { scheduleGroupJob(from, 'open', normalizedTime, bot); } catch (e) { console.error('Erro ao agendar open cron:', e); }
 
       return reply(MESSAGES.admin.group_management.status.openScheduleSuccess(normalizedTime, isBotAdmin));
@@ -386,7 +387,7 @@ export default {
             delete groupData.schedule.lastRun;
           }
         }
-        await optimizer.saveJsonWithCache(groupFile, groupData);
+        await writeJsonFileAsync(groupFile, groupData);
         try { unscheduleGroupJob(from, 'close'); } catch (e) { console.error('Error unscheduling group close job:', e); }
         return reply(MESSAGES.admin.group_management.status.closeScheduleRemSuccess);
       }
@@ -409,7 +410,7 @@ export default {
         }
       }
 
-      await optimizer.saveJsonWithCache(groupFile, groupData);
+      await writeJsonFileAsync(groupFile, groupData);
       try { scheduleGroupJob(from, 'close', normalizedTime, bot); } catch (e) { console.error('Erro ao agendar close cron:', e); }
 
       return reply(MESSAGES.admin.group_management.status.closeScheduleSuccess(normalizedTime, isBotAdmin));
@@ -445,7 +446,7 @@ export default {
 
     if (cmd === 'soadm' || cmd === 'adminonly' || cmd === 'soadmin') {
       groupData.soadm = !groupData.soadm;
-      await optimizer.saveJsonWithCache(groupFile, groupData);
+      await writeJsonFileAsync(groupFile, groupData);
       
       return reply(MESSAGES.admin.group_management.media.onlyAdmToggle(groupData.soadm));
     }
@@ -484,7 +485,7 @@ export default {
       if (!subCmd) return reply(MESSAGES.admin.group_management.requests.autoUsage(prefix, cmd));
       const feature = cmd === 'captchasolic' ? 'captchaEnabled' : 'autoAcceptRequests';
       groupData[feature] = subCmd === 'on';
-      await optimizer.saveJsonWithCache(groupFile, groupData);
+      await writeJsonFileAsync(groupFile, groupData);
       return reply(MESSAGES.admin.group_management.requests.autoToggle(cmd === 'captchasolic' ? 'Captcha' : 'Auto-aprovação', groupData[feature]));
     }
   }

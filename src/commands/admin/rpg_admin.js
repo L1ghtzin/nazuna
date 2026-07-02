@@ -1,3 +1,4 @@
+import { writeJsonFileAsync } from '../../utils/asyncFs.js';
 export default {
     name: "rpg_admin",
     description: "Configurações e menus do sistema RPG",
@@ -7,8 +8,7 @@ export default {
         isGroup, 
         isGroupAdmin, 
         groupData, 
-        groupFile, 
-        optimizer, 
+        groupFile,
         command,
         bot,
         prefix,
@@ -21,7 +21,7 @@ export default {
             const newState = !groupData.modorpg;
             groupData.modorpg = newState;
             
-            await optimizer.saveJsonWithCache(groupFile, groupData);
+            await writeJsonFileAsync(groupFile, groupData);
             
             return reply(MESSAGES.rpg.admin.toggle(newState));
         }

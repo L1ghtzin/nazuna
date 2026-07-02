@@ -1,9 +1,10 @@
+import { readJsonFileAsync } from '../../utils/asyncFs.js';
 export default {
   name: "shipo",
   description: "Forma um casal com a pessoa marcada",
   commands: ["shipo"],
   usage: `${global.prefix}shipo <@usuário>`,
-  handle: async ({  reply, isGroup, isModoBn, menc_os2, from, buildGroupFilePath, optimizer, AllgroupMembers, getUserName, prefix , MESSAGES }) => {
+  handle: async ({  reply, isGroup, isModoBn, menc_os2, from, buildGroupFilePath, AllgroupMembers, getUserName, prefix , MESSAGES }) => {
     try {
       if (!isGroup) return reply(MESSAGES.permission.groupOnly);
       if (!isModoBn) return reply(MESSAGES.error.modoBnDisabled);
@@ -12,7 +13,7 @@ export default {
       
       let path = buildGroupFilePath(from);
       // Otimização: Usar cache para leitura de arquivo
-      let data = await optimizer.loadJsonWithCache(path, { mark: {} });
+      let data = await readJsonFileAsync(path, { mark: {} });
       let membros = AllgroupMembers.filter(m => !['0', 'marca'].includes(data.mark[m]));
       
       if (membros.length < 2) membros = AllgroupMembers; // fallback

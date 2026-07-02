@@ -4,7 +4,8 @@
 import fs from 'fs';
 import pathz from 'path';
 import { PREFIX } from '../../config.js';
-import { ensureDirectoryExists, loadJsonFile, normalizar, getUserName, isUserId, isValidJid, isGroupId, buildUserId, getLidFromJidCached, idsMatch , debouncedSaveJson} from '../helpers.js';
+import { ensureDirectoryExists, loadJsonFile, normalizar, getUserName, isUserId, isValidJid, isGroupId, buildUserId, getLidFromJidCached, idsMatch, debouncedSaveJson } from '../helpers.js';
+import { writeJsonFile } from './_core.js';
 import {
   DATABASE_DIR,
   DONO_DIR,
@@ -377,13 +378,36 @@ export const getSubdonos = () => {
 // ==================== GLOBAL BLACKLIST ====================
 
 export const loadGlobalBlacklist = () => {
-  return loadJsonFile(GLOBAL_BLACKLIST_FILE, { users: {}, groups: {} });
+  const data = loadJsonFile(GLOBAL_BLACKLIST_FILE, { users: [], groups: [] });
+  // Se 'users' ainda for um objeto legatório, converte para array
+  if (data && data.users && !Array.isArray(data.users)) {
+    const arrayUsers = [];
+    for (const [key, entry] of Object.entries(data.users)) {
+      const cleanJid = key.endsWith('@s.whatsapp.net') ? key : null;
+      const cleanLid = key.endsWith('@lid') ? key : null;
+      
+      const existing = arrayUsers.find(u => (cleanLid && u.lid === cleanLid) || (cleanJid && u.number === cleanJid.replace(/\D/g, '')));
+      if (!existing) {
+        arrayUsers.push({
+          lid: cleanLid || '',
+          number: cleanJid ? cleanJid.replace(/\D/g, '') : '',
+          name: entry.addedBy || '',
+          reason: entry.reason || '',
+          createdAt: entry.addedAt || new Date().toISOString(),
+          createdBy: entry.addedBy || 'Desconhecido'
+        });
+      }
+    }
+    data.users = arrayUsers;
+    saveGlobalBlacklist(data);
+  }
+  return data;
 };
 
-export const saveGlobalBlacklist = data => {
+export const saveGlobalBlacklist = async data => {
   try {
     ensureDirectoryExists(DONO_DIR);
-    debouncedSaveJson(GLOBAL_BLACKLIST_FILE, data, 1000);
+    writeJsonFile(GLOBAL_BLACKLIST_FILE, data);
     return true;
   } catch (error) {
     console.error('❌ Erro ao salvar blacklist global:', error);
@@ -395,27 +419,57 @@ export const addGlobalBlacklist = async (userId, reason, addedBy, bot = null) =>
   if (!userId || typeof userId !== 'string' || (!isUserId(userId) && !isValidJid(userId))) {
     return { success: false, message: 'ID de usuário inválido. Use o LID ou marque o usuário.' };
   }
-  const originalId = userId;
-  if (bot && isValidJid(userId)) {
+  
+  let number = userId.replace(/\D/g, '');
+  let lid = userId.includes('@lid') ? userId : '';
+  
+  if (bot) {
     try {
-      const lid = await getLidFromJidCached(bot, userId);
-      if (lid && lid.includes('@lid')) userId = lid;
-    } catch (e) {
-      console.warn('Erro ao normalizar JID para LID em addGlobalBlacklist:', e.message);
+      const resolvedLid = await getLidFromJidCached(bot, userId);
+      if (resolvedLid && resolvedLid.includes('@lid')) {
+        lid = resolvedLid;
+      }
+    } catch (e) {}
+  }
+  
+  if (userId.includes('@lid')) {
+    const resolvedJid = getJidFromLid(userId);
+    if (resolvedJid) {
+      number = resolvedJid.replace(/\D/g, '');
     }
   }
+
   let blacklistData = loadGlobalBlacklist();
-  const alreadyExistsKey = Object.keys(blacklistData.users).find(k => idsMatch(k, userId));
-  if (alreadyExistsKey) {
-    return { success: false, message: `✨ Usuário @${getUserName(originalId)} já está na blacklist global!` };
+  blacklistData.users = Array.isArray(blacklistData.users) ? blacklistData.users : [];
+  
+  const exists = blacklistData.users.find(entry => 
+    (lid && entry.lid === lid) || 
+    (number && entry.number === number) ||
+    idsMatch(entry.lid, userId)
+  );
+  
+  if (exists) {
+    let modified = false;
+    if (lid && !exists.lid) { exists.lid = lid; modified = true; }
+    if (number && !exists.number) { exists.number = number; modified = true; }
+    if (modified) {
+      await saveGlobalBlacklist(blacklistData);
+      return { success: true, message: `✨ Mapeamento do usuário @${getUserName(userId)} atualizado na blacklist global!` };
+    }
+    return { success: false, message: `✨ Usuário @${getUserName(userId)} já está na blacklist global!` };
   }
-  blacklistData.users[userId] = {
+  
+  blacklistData.users.push({
+    lid: lid,
+    number: number,
+    name: getUserName(userId) || undefined,
     reason: reason || 'Não especificado',
-    addedBy: addedBy || 'Desconhecido',
-    addedAt: new Date().toISOString()
-  };
-  if (saveGlobalBlacklist(blacklistData)) {
-    return { success: true, message: `🎉 Usuário @${getUserName(originalId)} adicionado à blacklist global com sucesso! Motivo: ${reason || 'Não especificado'}` };
+    createdAt: new Date().toISOString(),
+    createdBy: addedBy || 'Desconhecido'
+  });
+  
+  if (await saveGlobalBlacklist(blacklistData)) {
+    return { success: true, message: `🎉 Usuário @${getUserName(userId)} adicionado à blacklist global com sucesso! Motivo: ${reason || 'Não especificado'}` };
   } else {
     return { success: false, message: '😥 Erro ao salvar a blacklist global. Tente novamente!' };
   }
@@ -425,27 +479,35 @@ export const removeGlobalBlacklist = async (userId, bot = null) => {
   if (!userId || typeof userId !== 'string' || (!isUserId(userId) && !isValidJid(userId))) {
     return { success: false, message: 'ID de usuário inválido. Use o LID ou marque o usuário.' };
   }
-  const originalId = userId;
+  
+  let number = userId.replace(/\D/g, '');
+  let lid = userId.includes('@lid') ? userId : '';
+  
   if (bot && isValidJid(userId)) {
     try {
-      const lid = await getLidFromJidCached(bot, userId);
-      if (lid && lid.includes('@lid')) userId = lid;
-    } catch (e) {
-      console.warn('Erro ao normalizar JID para LID em removeGlobalBlacklist:', e.message);
-    }
+      const resolvedLid = await getLidFromJidCached(bot, userId);
+      if (resolvedLid && resolvedLid.includes('@lid')) {
+        lid = resolvedLid;
+      }
+    } catch (e) {}
   }
+  
   let blacklistData = loadGlobalBlacklist();
-  let foundKey = Object.keys(blacklistData.users).find(k => idsMatch(k, userId));
-  if (!blacklistData.users[userId] && !foundKey) {
-    return { success: false, message: `🤔 Usuário @${getUserName(originalId)} não está na blacklist global.` };
+  blacklistData.users = Array.isArray(blacklistData.users) ? blacklistData.users : [];
+  
+  const initialLength = blacklistData.users.length;
+  blacklistData.users = blacklistData.users.filter(entry => 
+    (!lid || entry.lid !== lid) && 
+    (!number || entry.number !== number) &&
+    !idsMatch(entry.lid, userId)
+  );
+  
+  if (blacklistData.users.length === initialLength) {
+    return { success: false, message: `🤔 Usuário @${getUserName(userId)} não está na blacklist global.` };
   }
-  if (foundKey) {
-    delete blacklistData.users[foundKey];
-  } else {
-    delete blacklistData.users[userId];
-  }
-  if (saveGlobalBlacklist(blacklistData)) {
-    return { success: true, message: `👋 Usuário @${getUserName(originalId)} removido da blacklist global com sucesso!` };
+  
+  if (await saveGlobalBlacklist(blacklistData)) {
+    return { success: true, message: `👋 Usuário @${getUserName(userId)} removido da blacklist global com sucesso!` };
   } else {
     return { success: false, message: '😥 Erro ao salvar a blacklist global após remoção. Tente novamente!' };
   }

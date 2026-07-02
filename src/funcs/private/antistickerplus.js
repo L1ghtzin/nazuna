@@ -8,8 +8,8 @@
 import { MESSAGES } from '../../utils/messages.js';
 import { saveGroupDataById } from '../../utils/groupManager.js';
 
-const persistGroupData = async (groupId, groupData, { groupFile, optimizer } = {}) => {
-    const saved = await saveGroupDataById(groupId, groupData, { groupFile, optimizer });
+const persistGroupData = async (groupId, groupData, { groupFile } = {}) => {
+    const saved = await saveGroupDataById(groupId, groupData, { groupFile });
     if (!saved) {
         console.error(`[AntiStickerPlus] Erro ao salvar dados do grupo ${groupId}`);
     }
@@ -67,7 +67,7 @@ export const checkSticker = async (bot, from, info, groupData, { isGroupAdmin, i
 /**
  * Lida com o comando antistickerplus
  */
-export const handleCommand = async (bot, from, args, groupData, { reply, prefix, groupFile, optimizer }) => {
+export const handleCommand = async (bot, from, args, groupData, { reply, prefix, groupFile }) => {
     const arg = args[0] ? args[0].toLowerCase() : '';
 
     if (!arg) {
@@ -86,7 +86,7 @@ export const handleCommand = async (bot, from, args, groupData, { reply, prefix,
             : '';
         const msg = MESSAGES.funcs.antiSticker.status(status, actionMsg, prefix);
 
-        await persistGroupData(from, groupData, { groupFile, optimizer });
+        await persistGroupData(from, groupData, { groupFile });
         return reply(msg);
     }
 
@@ -94,7 +94,7 @@ export const handleCommand = async (bot, from, args, groupData, { reply, prefix,
         groupData.antistickerplus = true;
         groupData.antistickerplus_apagar = true;
         groupData.antistickerplus_remover = false;
-        await persistGroupData(from, groupData, { groupFile, optimizer });
+        await persistGroupData(from, groupData, { groupFile });
         return reply(MESSAGES.funcs.antiSticker.configApagar);
     }
 
@@ -102,7 +102,7 @@ export const handleCommand = async (bot, from, args, groupData, { reply, prefix,
         groupData.antistickerplus = true;
         groupData.antistickerplus_remover = true;
         groupData.antistickerplus_apagar = false;
-        await persistGroupData(from, groupData, { groupFile, optimizer });
+        await persistGroupData(from, groupData, { groupFile });
         return reply(MESSAGES.funcs.antiSticker.configRemover);
     }
 

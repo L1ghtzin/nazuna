@@ -94,7 +94,6 @@ export default {
     pushname,
     prefix,
     command,
-    optimizer,
     MESSAGES
   }) => {
     const sub = command.toLowerCase();
@@ -125,26 +124,16 @@ export default {
         status: 'pending'
       };
 
-      const list = await optimizer.memoize(
-        'reminders:all',
-        () => Promise.resolve(loadReminders()),
-        5000
-      );
+      const list = loadReminders();
       list.push(newReminder);
       saveReminders(list);
-      optimizer.clearStatic('reminders:all');
-      
       await reply(MESSAGES.member.lembrete.addSuccess(tzFormat(at), message));
       return;
     }
 
     // LISTAR MEUS LEMBRETES
     if (['meuslembretes', 'listalembretes'].includes(sub)) {
-      const allReminders = await optimizer.memoize(
-        'reminders:all',
-        () => Promise.resolve(loadReminders()),
-        5000
-      );
+      const allReminders = loadReminders();
       const list = allReminders.filter(r => r.userId === sender && r.status !== 'sent');
       if (!list.length) return reply(MESSAGES.member.lembrete.emptyList);
       const lines = list
@@ -159,18 +148,13 @@ export default {
       const idArg = (q||'').trim();
       if (!idArg) return reply(MESSAGES.member.lembrete.usageRemove(prefix));
       
-      let list = await optimizer.memoize(
-        'reminders:all',
-        () => Promise.resolve(loadReminders()),
-        5000
-      );
+      let list = loadReminders();
 
       if (['tudo','todos','all'].includes(idArg.toLowerCase())) {
         const before = list.length;
         list = list.filter(r => !(r.userId === sender && r.status !== 'sent'));
         const removed = before - list.length;
         saveReminders(list);
-        optimizer.clearStatic('reminders:all');
         return reply(MESSAGES.member.lembrete.removedAll(removed));
       }
 
@@ -178,7 +162,6 @@ export default {
       if (idx === -1) return reply(MESSAGES.member.lembrete.notFound);
       const removed = list.splice(idx,1)[0];
       saveReminders(list);
-      optimizer.clearStatic('reminders:all');
       await reply(MESSAGES.member.lembrete.removeSuccess(removed.message));
       return;
     }

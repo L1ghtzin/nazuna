@@ -1,5 +1,6 @@
 import { join } from 'path';
 import { loadGroupData, persistGroupData, isUserWhitelisted as isUserWhitelistedCore } from '../utils/groupManager.js';
+import { writeJsonFileAsync } from '../utils/asyncFs.js';
 import { loadLevelingSafe } from '../utils/database/leveling.js';
 import { GRUPOS_DIR } from '../utils/paths.js';
 import { NUMERODONO } from '../config.js';
@@ -490,7 +491,7 @@ async function executeAction(ChainySock, groupJid, identity, config, metadataInf
     }
 }
 
-async function executePaymentAction(ChainySock, groupJid, participant, performanceOptimizer) {
+async function executePaymentAction(ChainySock, groupJid, participant) {
     try {
         const userName = participant.split('@')[0];
         const { groupName } = await fetchGroupMetadata(ChainySock, groupJid);
@@ -614,7 +615,7 @@ function handleResolvedLag(msgId, groupJid) {
     }
 }
 
-async function processStealthDetection(ChainySock, msgId, groupJid, identity, config, groupData, groupFilePath, performanceOptimizer, metadataInfo, classification) {
+async function processStealthDetection(ChainySock, msgId, groupJid, identity, config, groupData, groupFilePath, metadataInfo, classification) {
     const flags = parseAction(config.action, config.limit);
     const strikeKey = buildStrikeKey(groupJid, identity);
     const participant = identity.participant;
@@ -686,7 +687,7 @@ async function processStealthDetection(ChainySock, msgId, groupJid, identity, co
         userStrikes.delete(strikeKey);
         registerCooldown(groupJid, getIdentityActionId(identity));
         await executeAction(ChainySock, groupJid, identity, config, metadataInfo);
-        await persistGroupData(true, groupJid, groupFilePath, groupData, performanceOptimizer);
+        await persistGroupData(true, groupJid, groupFilePath, groupData);
         return;
     }
 
@@ -709,7 +710,7 @@ async function processStealthDetection(ChainySock, msgId, groupJid, identity, co
         userStrikes.delete(strikeKey);
         registerCooldown(groupJid, getIdentityActionId(identity));
         await executeAction(ChainySock, groupJid, identity, config, metadataInfo);
-        await persistGroupData(true, groupJid, groupFilePath, groupData, performanceOptimizer);
+        await persistGroupData(true, groupJid, groupFilePath, groupData);
         return;
     }
     
@@ -722,7 +723,7 @@ async function processStealthDetection(ChainySock, msgId, groupJid, identity, co
         if (DEBUG_MODE) {
             console.log(`[ANTI-STEALTH] ⚠️ Strike ${strikes.count}/${flags.limite} para @${userName} no grupo ${groupJid}`);
         }
-        await persistGroupData(true, groupJid, groupFilePath, groupData, performanceOptimizer);
+        await persistGroupData(true, groupJid, groupFilePath, groupData);
         return;
     }
     
@@ -750,7 +751,7 @@ async function processStealthDetection(ChainySock, msgId, groupJid, identity, co
         recentStealths.delete(strikeKey); // Limpa contador de flood
         registerCooldown(groupJid, getIdentityActionId(identity));
         await executeAction(ChainySock, groupJid, identity, config, metadataInfo);
-        await persistGroupData(true, groupJid, groupFilePath, groupData, performanceOptimizer);
+        await persistGroupData(true, groupJid, groupFilePath, groupData);
         return;
     }
 
@@ -795,7 +796,7 @@ async function processStealthDetection(ChainySock, msgId, groupJid, identity, co
         registerCooldown(groupJid, getIdentityActionId(identity));
         
         await executeAction(ChainySock, groupJid, identity, config, metadataInfo);
-        await persistGroupData(true, groupJid, groupFilePath, groupData, performanceOptimizer);
+        await persistGroupData(true, groupJid, groupFilePath, groupData);
     }, graceMs);
     
     if (timer.unref) timer.unref();
@@ -831,7 +832,7 @@ export async function processAntiStealthUpdate(ChainySock, updates) {
     }
 }
 
-export async function processAntiStealth(ChainySock, m, performanceOptimizer) {
+export async function processAntiStealth(ChainySock, m) {
     if (m.type !== 'notify' && m.type !== 'append') return;
     
     const botIdPrefix = ChainySock.user?.id?.split(':')[0];
@@ -863,7 +864,7 @@ export async function processAntiStealth(ChainySock, m, performanceOptimizer) {
 
         try {
             const groupFilePath = join(GRUPOS_DIR, `${groupJid}.json`);
-            const groupData = await loadGroupData(true, groupJid, groupFilePath, 'Grupo', performanceOptimizer);
+            const groupData = await loadGroupData(true, groupJid, groupFilePath, 'Grupo');
 
             // --- DETECÇÃO DE ANTI-STEALTH (Ciphertext / Falha de Decifragem) ---
             // Nota: Se uma trava de pagamento chegar ofuscada/criptografada, ela falhará na decriptação
@@ -884,7 +885,7 @@ export async function processAntiStealth(ChainySock, m, performanceOptimizer) {
                 const classification = getStealthClassification(info);
 
                 const config = getStealthConfig(groupData);
-                await processStealthDetection(ChainySock, msgId, groupJid, identity, config, groupData, groupFilePath, performanceOptimizer, metadataInfo, classification);
+                await processStealthDetection(ChainySock, msgId, groupJid, identity, config, groupData, groupFilePath, metadataInfo, classification);
             }
 
         } catch (e) {
@@ -895,15 +896,12 @@ export async function processAntiStealth(ChainySock, m, performanceOptimizer) {
 
 // ── Handlers de Comando ──────────────────────────────────
 
-async function toggleAntiStealthStatus(sub, from, groupData, groupFilePath, optimizer, reply, prefix, config) {
+async function toggleAntiStealthStatus(sub, from, groupData, groupFilePath, reply, prefix, config) {
     if (sub === 'on') groupData.antistealth = true;
     else if (sub === 'off') groupData.antistealth = false;
     else groupData.antistealth = !groupData.antistealth;
 
-    await optimizer.saveJsonWithCache(groupFilePath, groupData);
-    // CORREÇÃO: Invalida o cache de grupo para que o middleware leia o valor atualizado
-    // Sem isso, o loadGroupData (TTL 5s) retorna a versão antiga e a proteção não dispara
-    optimizer.invalidateGroup?.(from);
+    await writeJsonFileAsync(groupFilePath, groupData);
     
     return reply(groupData.antistealth 
         ? MESSAGES.middleware.antiStealth.activated(describeAction(config.action), prefix)
@@ -920,7 +918,7 @@ function showAntiStealthStatus(groupData, config, from, reply) {
     );
 }
 
-async function configureAntiStealthAction(val, from, groupData, groupFilePath, optimizer, reply, ChainySock, prefix, config) {
+async function configureAntiStealthAction(val, from, groupData, groupFilePath, reply, ChainySock, prefix, config) {
     if (val === 'abrir') {
         try {
             if (activeTimers.has(from)) {
@@ -939,28 +937,26 @@ async function configureAntiStealthAction(val, from, groupData, groupFilePath, o
     }
 
     config.action = val;
-    await optimizer.saveJsonWithCache(groupFilePath, groupData);
-    optimizer.invalidateGroup?.(from);
+    await writeJsonFileAsync(groupFilePath, groupData);
     
     return reply(MESSAGES.middleware.antiStealth.actionConfigured(val, describeAction(val)));
 }
 
-async function configureAntiStealthStrikes(val, from, groupData, groupFilePath, optimizer, reply, prefix, config) {
+async function configureAntiStealthStrikes(val, from, groupData, groupFilePath, reply, prefix, config) {
     const num = parseInt(val, 10);
     if (isNaN(num) || num < 1 || num > 10) {
         return reply(MESSAGES.middleware.antiStealth.configStrikesMenu(prefix, config.limit || 3));
     }
 
     config.limit = num;
-    await optimizer.saveJsonWithCache(groupFilePath, groupData);
-    optimizer.invalidateGroup?.(from);
+    await writeJsonFileAsync(groupFilePath, groupData);
 
     return reply(MESSAGES.middleware.antiStealth.strikesConfigured(num));
 }
 
 export async function handleAntistealthCommand({ 
     reply, args, isGroup, isGroupAdmin, isBotAdmin, from, 
-    groupData, DATABASE_DIR, optimizer, MESSAGES, prefix, ChainySock 
+    groupData, DATABASE_DIR, MESSAGES, prefix, ChainySock 
 }) {
     if (!isGroup) return reply(MESSAGES.permission.groupOnly);
     if (!isGroupAdmin) return reply(MESSAGES.permission.userAdminOnly);
@@ -977,17 +973,17 @@ export async function handleAntistealthCommand({
         case '':
         case 'on':
         case 'off':
-            return await toggleAntiStealthStatus(sub, from, groupData, groupFilePath, optimizer, reply, prefix, config);
+            return await toggleAntiStealthStatus(sub, from, groupData, groupFilePath, reply, prefix, config);
         case 'status':
             return showAntiStealthStatus(groupData, config, from, reply);
         case 'acao':
         case 'ação':
         case 'action':
-            return await configureAntiStealthAction(val, from, groupData, groupFilePath, optimizer, reply, ChainySock, prefix, config);
+            return await configureAntiStealthAction(val, from, groupData, groupFilePath, reply, ChainySock, prefix, config);
         case 'strikes':
         case 'limite':
         case 'limit':
-            return await configureAntiStealthStrikes(val, from, groupData, groupFilePath, optimizer, reply, prefix, config);
+            return await configureAntiStealthStrikes(val, from, groupData, groupFilePath, reply, prefix, config);
         default:
             return reply(MESSAGES.middleware.antiStealth.commandsMenu(prefix));
     }
@@ -995,7 +991,7 @@ export async function handleAntistealthCommand({
 
 export async function handleAntipaymentCommand({ 
     reply, args, isGroup, isGroupAdmin, isBotAdmin, from, 
-    groupData, DATABASE_DIR, optimizer, MESSAGES, prefix, ChainySock 
+    groupData, DATABASE_DIR, MESSAGES, prefix, ChainySock 
 }) {
     if (!isGroup) return reply(MESSAGES.permission.groupOnly);
     if (!isGroupAdmin) return reply(MESSAGES.permission.userAdminOnly);
@@ -1014,9 +1010,7 @@ export async function handleAntipaymentCommand({
         return reply(MESSAGES.middleware.antiPaymentCmd.invalidOption(prefix));
     }
 
-    await optimizer.saveJsonWithCache(groupFilePath, groupData);
-    // CORREÇÃO: Invalida cache de grupo para o middleware ler o valor atualizado
-    optimizer.invalidateGroup?.(from);
+    await writeJsonFileAsync(groupFilePath, groupData);
     
     return reply(groupData.antipayment 
         ? MESSAGES.middleware.antiPaymentCmd.activated

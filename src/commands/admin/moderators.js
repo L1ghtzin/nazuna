@@ -1,11 +1,12 @@
 import fs from 'fs';
+import { writeJsonFileAsync } from '../../utils/asyncFs.js';
 
 export default {
   name: "moderadores",
   description: "Gerencia moderadores do grupo e suas permissões globais",
   commands: ["addmod", "addmodcmd", "delmod", "delmodcmd", "grantmodcmd", "listmodcmds", "listmods", "modlist", "revokemodcmd"],
   usage: `${global.prefix}addmod @usuário\n${global.prefix}grantmodcmd ban`,
-  handle: async ({  reply, isGroup, isGroupAdmin, command, menc_os2, q, prefix, groupData, groupFile, getUserName, groupName, optimizer , MESSAGES }) => {
+  handle: async ({  reply, isGroup, isGroupAdmin, command, menc_os2, q, prefix, groupData, groupFile, getUserName, groupName, MESSAGES }) => {
     const cmd = command.toLowerCase();
     groupData.moderators = groupData.moderators || [];
     groupData.allowedModCommands = groupData.allowedModCommands || [];
@@ -18,7 +19,7 @@ export default {
         return reply(MESSAGES.admin.moderators.alreadyMod(getUserName(modToAdd)), { mentions: [modToAdd] });
       }
       groupData.moderators.push(modToAdd);
-      await optimizer.saveJsonWithCache(groupFile, groupData);
+      await writeJsonFileAsync(groupFile, groupData);
       return reply(MESSAGES.admin.moderators.addSuccess(getUserName(modToAdd)), { mentions: [modToAdd] });
     }
 
@@ -30,7 +31,7 @@ export default {
         return reply(MESSAGES.admin.moderators.notMod(getUserName(modToRemove)), { mentions: [modToRemove] });
       }
       groupData.moderators.splice(modIndex, 1);
-      await optimizer.saveJsonWithCache(groupFile, groupData);
+      await writeJsonFileAsync(groupFile, groupData);
       return reply(MESSAGES.admin.moderators.delSuccess(getUserName(modToRemove)), { mentions: [modToRemove] });
     }
 
@@ -55,7 +56,7 @@ export default {
         return reply(MESSAGES.admin.moderators.alreadyGranted(cmdToAllow));
       }
       groupData.allowedModCommands.push(cmdToAllow);
-      await optimizer.saveJsonWithCache(groupFile, groupData);
+      await writeJsonFileAsync(groupFile, groupData);
       return reply(MESSAGES.admin.moderators.grantSuccess(prefix, cmdToAllow));
     }
 
@@ -67,7 +68,7 @@ export default {
         return reply(MESSAGES.admin.moderators.notGranted(cmdToDeny));
       }
       groupData.allowedModCommands.splice(cmdIndex, 1);
-      await optimizer.saveJsonWithCache(groupFile, groupData);
+      await writeJsonFileAsync(groupFile, groupData);
       return reply(MESSAGES.admin.moderators.revokeSuccess(prefix, cmdToDeny));
     }
 

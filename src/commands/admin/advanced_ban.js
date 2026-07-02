@@ -1,4 +1,5 @@
 import pathz from 'path';
+import { writeJsonFileAsync } from '../../utils/asyncFs.js';
 
 export default {
   name: "advanced_ban",
@@ -6,7 +7,7 @@ export default {
   commands: ["ban2", "banir2", "bam", "banfake", "setbammsg", "editarbam", "verbammsg", "verbam", "resetbammsg", "resetarbam"],
   handle: async ({ 
     bot, from, info, command, reply, isGroup, menc_os2,
-    groupData, DATABASE_DIR, optimizer, nomedono, q, prefix, MESSAGES,
+    groupData, DATABASE_DIR, nomedono, q, prefix, MESSAGES,
     isBotAdmin, idsMatch, ownerJid, lidowner, botNumber, botNumberLid, idInArray, groupAdmins, AllgroupMembers
   }) => {
     const cmd = command.toLowerCase();
@@ -77,7 +78,7 @@ export default {
     if (['setbammsg', 'editarbam'].includes(cmd)) {
       if (!q) return reply(MESSAGES.admin.bam.setUsage(prefix, cmd));
       groupData.bamMessage = q;
-      await optimizer.saveJsonWithCache(groupFilePath, groupData);
+      await writeJsonFileAsync(groupFilePath, groupData);
       return reply(MESSAGES.admin.bam.setSuccess);
     }
 
@@ -87,7 +88,7 @@ export default {
 
     if (['resetbammsg', 'resetarbam'].includes(cmd)) {
       delete groupData.bamMessage;
-      await optimizer.saveJsonWithCache(groupFilePath, groupData);
+      await writeJsonFileAsync(groupFilePath, groupData);
       return reply(MESSAGES.admin.bam.resetSuccess);
     }
   }

@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { readJsonFileAsync } from '../../utils/asyncFs.js';
 
 
 const __filename = fileURLToPath(import.meta.url);
@@ -21,8 +22,7 @@ export default {
     normalizar, 
     menc_os2, 
     q,
-    MESSAGES,
-    optimizer
+    MESSAGES
   }) => {
     if (!isGroup) return reply(MESSAGES.permission.groupOnly);
 
@@ -30,7 +30,7 @@ export default {
     const digitacaoPath = path.join(__dirname, '../../funcs/json/digitacao.json');
     let frasesDigitacao = [];
     try {
-      const digitacaoData = await optimizer.loadJsonWithCache(digitacaoPath, 'utf-8');
+      const digitacaoData = await readJsonFileAsync(digitacaoPath, 'utf-8');
       frasesDigitacao = digitacaoData.frases || [];
     } catch (e) {
       console.error('Erro ao carregar digitacao.json:', e);

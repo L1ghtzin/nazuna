@@ -1,4 +1,5 @@
 import pathz from 'path';
+import { readJsonFileAsync } from '../../utils/asyncFs.js';
 
 
 export default {
@@ -10,7 +11,7 @@ export default {
     bot, from, info, command, args, reply, pushname, isGroup, isGroupAdmin, isBotAdmin, 
     AllgroupMembers, groupAdmins, q, getUserName,
     checkMassMentionLimit, loadMassMentionConfig, registerMassMentionUse,
-    MASS_MENTION_THRESHOLD, optimizer, buildGroupFilePath,
+    MASS_MENTION_THRESHOLD, buildGroupFilePath,
     MESSAGES
   }) => {
     const cmd = command.toLowerCase();
@@ -29,7 +30,7 @@ export default {
 
       const path = buildGroupFilePath(from);
       
-      let data = await optimizer.loadJsonWithCache(path, { mark: {} });
+      let data = await readJsonFileAsync(path, { mark: {} });
       if (!data.mark) data.mark = {};
 
       let membros = AllgroupMembers.filter(m => !['0', 'games'].includes(data.mark[m]));

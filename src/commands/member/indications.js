@@ -1,12 +1,13 @@
 import pathz from 'path';
+import { readJsonFileAsync } from '../../utils/asyncFs.js';
 
 export default {
   name: "indication_rank",
   description: "Ranking de indicacoes e recomendacoes",
   commands: ["topindica", "topindicacao", "rankindicacao", "rankindicacoes"],
-  handle: async ({ reply, DATABASE_DIR, optimizer, MESSAGES }) => {
+  handle: async ({ reply, DATABASE_DIR, MESSAGES }) => {
     const filePath = pathz.join(DATABASE_DIR, 'indicacoes.json');
-    const data = await optimizer.loadJsonWithCache(filePath, { users: {} });
+    const data = await readJsonFileAsync(filePath, { users: {} });
     data.users = data.users || {};
 
     const users = Object.entries(data.users)

@@ -1,4 +1,5 @@
 import { CONFIG_FILE } from '../../utils/paths.js';
+import { readJsonFileAsync, writeJsonFileAsync } from '../../utils/asyncFs.js';
 
 export default {
   name: "nomedono",
@@ -11,15 +12,14 @@ export default {
     prefix,
     command,
     config,
-    optimizer,
     MESSAGES
   }) => {
     try {
       if (!q) return reply(MESSAGES.owner.nomedono.missingName(prefix, command));
       
-      const nextConfig = { ...(config || await optimizer.loadJsonWithCache(CONFIG_FILE, {})), nomedono: q };
+      const nextConfig = { ...(config || await readJsonFileAsync(CONFIG_FILE, {})), nomedono: q };
       
-      await optimizer.saveJsonWithCache(CONFIG_FILE, nextConfig);
+      await writeJsonFileAsync(CONFIG_FILE, nextConfig);
       
       await reply(MESSAGES.owner.nomedono.success(q));
       

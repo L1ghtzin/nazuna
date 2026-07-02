@@ -1,5 +1,6 @@
 import { JID_LID_CACHE_FILE } from "../../utils/paths.js";
 import { saveJidLidCache } from "../../utils/helpers.js";
+import { readJsonFileAsync } from '../../utils/asyncFs.js';
 
 export default {
   name: "cachedebug",
@@ -7,13 +8,9 @@ export default {
   commands: ["cachedebug", "debugcache"],
   usage: `${global.prefix}cachedebug`,
   handle: async ({ 
-    reply, optimizer,
+    reply,
     MESSAGES
   }) => {
-    // Simulando `isOwnerOrSub` baseado na estrutura usual (dono principal ou array de subdonos)
-    // O ideal seria injetar isOwnerOrSub via loader, mas podemos resolver aqui usando as dependências 
-    // ou assumir isOwner por enquanto (pode ser ajustado)
-    // Para simplificar, vou permitir se for isOwner.
     try {
       const cacheFilePath = JID_LID_CACHE_FILE;
       
@@ -21,8 +18,7 @@ export default {
       saveJidLidCache();
       
       // Lê o arquivo de cache
-      optimizer.invalidateJson(cacheFilePath);
-      const cacheData = await optimizer.loadJsonWithCache(cacheFilePath, { mappings: {}, version: 'N/A', lastUpdate: 'N/A' });
+      const cacheData = await readJsonFileAsync(cacheFilePath, { mappings: {}, version: 'N/A', lastUpdate: 'N/A' });
       
       const mappings = cacheData.mappings || {};
       const entries = Object.entries(mappings);

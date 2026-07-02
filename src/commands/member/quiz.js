@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { readJsonFileAsync } from '../../utils/asyncFs.js';
 
 
 const __filename = fileURLToPath(import.meta.url);
@@ -20,14 +21,13 @@ export default {
     prefix, 
     normalizar, 
     menc_os2,
-    MESSAGES,
-    optimizer
+    MESSAGES
   }) => {
     // Carregar perguntas do JSON
     const quizPath = path.join(__dirname, '../../funcs/json/quiz.json');
     let quizDB = {};
     try {
-      quizDB = await optimizer.loadJsonWithCache(quizPath, 'utf-8');
+      quizDB = await readJsonFileAsync(quizPath, 'utf-8');
     } catch (e) {
       console.error('Erro ao carregar quiz.json:', e);
       quizDB = {

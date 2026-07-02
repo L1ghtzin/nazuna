@@ -1,5 +1,6 @@
 import { normalizeUserId, getUserName } from '../../utils/helpers.js';
 import { removeUserFromMap } from '../../utils/groupManager.js';
+import { readJsonFileAsync, writeJsonFileAsync } from '../../utils/asyncFs.js';
 
 export default {
   name: "unmute2",
@@ -15,7 +16,6 @@ export default {
     menc_os2,
     info,
     MESSAGES,
-    optimizer,
     buildGroupFilePath
   }) => {
     try {
@@ -23,7 +23,7 @@ export default {
       if (!menc_os2) return reply(MESSAGES.error.missing('alguém'));
       
       const groupFilePath = buildGroupFilePath(from);
-      let groupData = await optimizer.loadJsonWithCache(groupFilePath, { mutedUsers2: {} });
+      let groupData = await readJsonFileAsync(groupFilePath, { mutedUsers2: {} });
       
       groupData.mutedUsers2 = groupData.mutedUsers2 || {};
       const targetId = await normalizeUserId(bot, menc_os2);
@@ -32,7 +32,7 @@ export default {
                       removeUserFromMap(groupData.mutedUsers2, menc_os2);
       
       if (removed) {
-        await optimizer.saveJsonWithCache(groupFilePath, groupData);
+        await writeJsonFileAsync(groupFilePath, groupData);
         await bot.sendMessage(from, {
           text: MESSAGES.admin.unmute2.success(getUserName(menc_os2)),
           mentions: [menc_os2]
