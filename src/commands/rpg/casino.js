@@ -3,9 +3,12 @@ import { resolveParamAlias, timeLeft } from "../../utils/helpers.js";
 export default {
   name: "casino",
   description: "Jogos de azar e cassino do RPG",
-  commands: ["apostar", "bet", "blackjack", "bj", "coinflip", "crash", "dados", "dice", "moeda", "roleta", "slots", "slotmachine", "cacaniquel"],
-  usage: "{prefix}roleta <cor> <valor>",
+  commands: ["apostar", "bet", "blackjack", "bj", "coinflip", "crash", "dados", "dice", "moeda", "roleta", "slots", "slotmachine", "cacaniquel", "roletadasorte", "roletads", "roletapvp"],
+  usage: "{prefix}roleta <cor> <valor> ou {prefix}roletadasorte",
   handle: async ({ 
+    bot,
+    from,
+    groupMetadata,
     reply, 
     isGroup, 
     groupData, 
@@ -270,6 +273,63 @@ export default {
       
       saveEconomy(econ);
       return reply(MESSAGES.rpg.casino.blackjackResult(pCards.join(' '), pSum, bCards.join(' '), bSum, resultMsg));
+    }
+
+    // --- ROLETA DA SORTE ---
+    if (['roletadasorte', 'roletads', 'roletapvp'].includes(command)) {
+      const cd = me.cooldowns?.roletadasorte || 0;
+      const now = Date.now();
+      if (now < cd) {
+        return reply(`│\n│  🎡 *ROLETA DA SORTE*\n├──────────────\n│  🚫 *Você já girou recentemente!*\n│  ⏳ Volte em: *${timeLeft(cd)}*`);
+      }
+
+      if ((me.wallet || 0) < 100) {
+        return reply(`│\n│  🎡 *ROLETA DA SORTE*\n├──────────────\n│  ❌ *Saldo Insuficiente!*\n│  💰 Você precisa de pelo menos *100* moedas na carteira para girar a roleta.`);
+      }
+
+      const participants = groupMetadata?.participants || [];
+      const eligibleRivals = participants.filter(p => p.id !== sender && p.id !== bot.user.id);
+      if (eligibleRivals.length === 0) {
+        return reply("❌ Não há outros membros no grupo para jogar com você!");
+      }
+
+      const rival = eligibleRivals[Math.floor(Math.random() * eligibleRivals.length)];
+      const rivalJid = rival.id;
+
+      const outcome = Math.floor(Math.random() * 3); // 0 = Azar, 1 = Sorte, 2 = Empate
+      let msg = "";
+      me.cooldowns = me.cooldowns || {};
+      me.cooldowns.roletadasorte = now + 15 * 60 * 1000; // 15 minutos de cooldown
+
+      if (outcome === 0) {
+        // Azar - perde dinheiro para o oponente
+        const limitLoss = Math.min(me.wallet, 2000);
+        const amount = limitLoss > 50 ? Math.floor(Math.random() * (limitLoss - 50)) + 50 : 50;
+        me.wallet -= amount;
+
+        const rivalEco = getEcoUser(econ, rivalJid);
+        rivalEco.wallet = (rivalEco.wallet || 0) + amount;
+
+        msg = `│\n│  🎡 *ROLETA DA SORTE*\n├──────────────\n│\n│  💥 *AZAR! VERMELHO!*\n│  📉 @${sender.split("@")[0]} rodou e se deu mal!\n│  💸 *PERDEU:* -${amount.toLocaleString()} moedas para @${rivalJid.split("@")[0]}\n│\n├──────────────\n│  _Mais sorte na próxima vez!_ 📉`;
+      } else if (outcome === 1) {
+        // Sorte - ganha dinheiro do oponente
+        const rivalEco = getEcoUser(econ, rivalJid);
+        const rivalWallet = rivalEco.wallet || 0;
+
+        const limitGain = Math.min(rivalWallet, 2000);
+        const amount = limitGain > 50 ? Math.floor(Math.random() * (limitGain - 50)) + 50 : 50;
+
+        rivalEco.wallet = Math.max(0, rivalWallet - amount);
+        me.wallet += amount;
+
+        msg = `│\n│  🎡 *ROLETA DA SORTE*\n├──────────────\n│\n│  🍀 *SORTE! PRETO!*\n│  📈 @${sender.split("@")[0]} tirou a sorte grande!\n│  🤑 *GANHOU:* +${amount.toLocaleString()} moedas de @${rivalJid.split("@")[0]}\n│\n├──────────────\n│  _Levou a grana dele!_ 🤑`;
+      } else {
+        // Empate
+        msg = `│\n│  🎡 *ROLETA DA SORTE*\n├──────────────\n│\n│  ⚪ *EMPATE! VERDE!*\n│  📉 A roleta parou no meio!\n│  🤷‍♂️ @${sender.split("@")[0]} não ganhou nem perdeu nada contra @${rivalJid.split("@")[0]}.\n│\n├──────────────\n│  _Pelo menos não saiu no prejuízo..._ 🤷‍♂️`;
+      }
+
+      saveEconomy(econ);
+      return reply(msg, { mentions: [sender, rivalJid] });
     }
   }
 };
