@@ -78,7 +78,6 @@ const GLOBAL_BLACKLIST_PATH = path.join(__dirname, '..', 'dados', 'database', 'd
 let msgRetryCounterCache;
 let messagesCache;
 let sock = null;
-let messagesListenerAttached = false;
 
 async function initializeOptimizedCaches(ChainySock) {
     try {
@@ -386,8 +385,8 @@ async function createBotSocket(authDir) {
     };
 
     const attachMessagesListener = () => {
-    if (messagesListenerAttached) return;
-    messagesListenerAttached = true;
+    if (ChainySock.messagesListenerAttached) return;
+    ChainySock.messagesListenerAttached = true;
 
     // --- LISTENER PARA messages.update ---
     // Captura quando mensagens que falharam ao decriptar são finalmente decriptadas via retry
