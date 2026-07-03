@@ -96,18 +96,18 @@ function parseAction(actionStr, limitVal) {
     return result;
 }
 
-function isValidAction(val) {
+export function isValidAction(val) {
     return ['banir', '1', 'fechar', '2', 'avisar', '3'].includes(val.toLowerCase());
 }
 
-function describeAction(actionStr) {
+export function describeAction(actionStr) {
     const action = (actionStr || DEFAULT_ACTION).toLowerCase();
     if (action === 'fechar' || action === '2') return '🔒 Fechar o grupo por 5 minutos';
     if (action === 'avisar' || action === '3') return '📢 Apenas avisar o dono do bot';
     return '🚫 Banir o infrator imediatamente';
 }
 
-function getStealthConfig(groupData) {
+export function getStealthConfig(groupData) {
     if (!groupData.antistealthConfig) {
         groupData.antistealthConfig = {
             action: DEFAULT_ACTION,
@@ -125,6 +125,19 @@ function getStealthConfig(groupData) {
     config.stats.closed = Number.isFinite(config.stats.closed) ? config.stats.closed : 0;
 
     return config;
+}
+
+export function hasActiveStealthTimer(from) {
+    return activeTimers.has(from);
+}
+
+export function clearActiveStealthTimer(from) {
+    if (activeTimers.has(from)) {
+        clearTimeout(activeTimers.get(from));
+        activeTimers.delete(from);
+        return true;
+    }
+    return false;
 }
 
 // ── Helpers de Detecção ─────────────────────────────────
@@ -894,125 +907,4 @@ export async function processAntiStealth(ChainySock, m) {
     }
 }
 
-// ── Handlers de Comando ──────────────────────────────────
 
-async function toggleAntiStealthStatus(sub, from, groupData, groupFilePath, reply, prefix, config) {
-    if (sub === 'on') groupData.antistealth = true;
-    else if (sub === 'off') groupData.antistealth = false;
-    else groupData.antistealth = !groupData.antistealth;
-
-    await writeJsonFileAsync(groupFilePath, groupData);
-    
-    return reply(groupData.antistealth 
-        ? MESSAGES.middleware.antiStealth.activated(describeAction(config.action), prefix)
-        : MESSAGES.middleware.antiStealth.desactivated);
-}
-
-function showAntiStealthStatus(groupData, config, from, reply) {
-    const status = groupData.antistealth ? '✅ Ativado' : '❌ Desativado';
-    const timerAtivo = activeTimers.has(from) ? '\n⏱️ Timer de reabertura ativo' : '';
-    
-    return reply(
-        MESSAGES.middleware.antiStealth.statusTitle +
-        MESSAGES.middleware.antiStealth.statusBody(status, config.action, timerAtivo, config.limit || 1, describeAction(config.action), config.stats)
-    );
-}
-
-async function configureAntiStealthAction(val, from, groupData, groupFilePath, reply, ChainySock, prefix, config) {
-    if (val === 'abrir') {
-        try {
-            if (activeTimers.has(from)) {
-                clearTimeout(activeTimers.get(from));
-                activeTimers.delete(from);
-            }
-            await ChainySock.groupSettingUpdate(from, 'not_announcement');
-            return reply(MESSAGES.middleware.antiStealth.groupOpened);
-        } catch (e) {
-            return reply(MESSAGES.middleware.antiStealth.openError(e.message));
-        }
-    }
-
-    if (!val || !isValidAction(val)) {
-        return reply(MESSAGES.middleware.antiStealth.configActionMenu(prefix));
-    }
-
-    config.action = val;
-    await writeJsonFileAsync(groupFilePath, groupData);
-    
-    return reply(MESSAGES.middleware.antiStealth.actionConfigured(val, describeAction(val)));
-}
-
-async function configureAntiStealthStrikes(val, from, groupData, groupFilePath, reply, prefix, config) {
-    const num = parseInt(val, 10);
-    if (isNaN(num) || num < 1 || num > 10) {
-        return reply(MESSAGES.middleware.antiStealth.configStrikesMenu(prefix, config.limit || 3));
-    }
-
-    config.limit = num;
-    await writeJsonFileAsync(groupFilePath, groupData);
-
-    return reply(MESSAGES.middleware.antiStealth.strikesConfigured(num));
-}
-
-export async function handleAntistealthCommand({ 
-    reply, args, isGroup, isGroupAdmin, isBotAdmin, from, 
-    groupData, DATABASE_DIR, MESSAGES, prefix, ChainySock 
-}) {
-    if (!isGroup) return reply(MESSAGES.permission.groupOnly);
-    if (!isGroupAdmin) return reply(MESSAGES.permission.userAdminOnly);
-    if (!isBotAdmin) return reply(MESSAGES.permission.botAdminOnly);
-
-    const sub = args[0]?.toLowerCase() || '';
-    const val = args.slice(1).join(' ').toLowerCase().trim();
-    const groupFilePath = join(DATABASE_DIR, `grupos/${from}.json`);
-    
-    // Ensure config exists before reading/writing
-    const config = getStealthConfig(groupData);
-
-    switch (sub) {
-        case '':
-        case 'on':
-        case 'off':
-            return await toggleAntiStealthStatus(sub, from, groupData, groupFilePath, reply, prefix, config);
-        case 'status':
-            return showAntiStealthStatus(groupData, config, from, reply);
-        case 'acao':
-        case 'ação':
-        case 'action':
-            return await configureAntiStealthAction(val, from, groupData, groupFilePath, reply, ChainySock, prefix, config);
-        case 'strikes':
-        case 'limite':
-        case 'limit':
-            return await configureAntiStealthStrikes(val, from, groupData, groupFilePath, reply, prefix, config);
-        default:
-            return reply(MESSAGES.middleware.antiStealth.commandsMenu(prefix));
-    }
-}
-
-export async function handleAntipaymentCommand({ 
-    reply, args, isGroup, isGroupAdmin, isBotAdmin, from, 
-    groupData, DATABASE_DIR, MESSAGES, prefix, ChainySock 
-}) {
-    if (!isGroup) return reply(MESSAGES.permission.groupOnly);
-    if (!isGroupAdmin) return reply(MESSAGES.permission.userAdminOnly);
-    if (!isBotAdmin) return reply(MESSAGES.permission.botAdminOnly);
-
-    const sub = args[0]?.toLowerCase() || '';
-    const groupFilePath = join(DATABASE_DIR, `grupos/${from}.json`);
-
-    if (sub === 'on' || sub === '1') {
-        groupData.antipayment = true;
-    } else if (sub === 'off' || sub === '0') {
-        groupData.antipayment = false;
-    } else if (sub === '') {
-        groupData.antipayment = !groupData.antipayment;
-    } else {
-        return reply(MESSAGES.middleware.antiPaymentCmd.invalidOption(prefix));
-    }
-
-    await writeJsonFileAsync(groupFilePath, groupData);
-    
-    return reply(groupData.antipayment 
-        ? MESSAGES.middleware.antiPaymentCmd.activated
-        : MESSAGES.middleware.antiPaymentCmd.deactivated);
-}
