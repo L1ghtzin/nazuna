@@ -132,6 +132,7 @@ ensureJsonFileExists(ECONOMY_FILE, {
     "pickaxe_ferro": { name: "Picareta de Ferro", price: 1500, type: "tool", toolType: "pickaxe", tier: "ferro", durability: 60, effect: { mineBonus: 0.25 } },
     "pickaxe_diamante": { name: "Picareta de Diamante", price: 5000, type: "tool", toolType: "pickaxe", tier: "diamante", durability: 150, effect: { mineBonus: 0.5 } },
     "repairkit": { name: "Kit de Reparos", price: 350, type: "consumable", effect: { repair: 40 } },
+    "mate": { name: "🧉 Mate (Chimarrão)", price: 800, type: "consumable", consumable: true, description: "Reduz cooldown de trabalhar" },
     "vault": { name: "Cofre", price: 1000, type: "upgrade", effect: { bankCapacity: 5000 } },
     "lucky": { name: "Amuleto da Sorte", price: 1500, type: "upgrade", effect: { workBonus: 0.2 } },
     "rod": { name: "Vara de Pesca", price: 400, type: "tool", effect: { fishBonus: 0.2 } },

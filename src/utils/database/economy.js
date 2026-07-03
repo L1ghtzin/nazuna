@@ -116,6 +116,8 @@ export function migrateAndValidateEcoUser(user) {
   user.items = validateObject(user.items);
   user.tools = validateObject(user.tools);
   user.materials = validateObject(user.materials);
+  user.consumableUsage = validateObject(user.consumableUsage);
+  user.consumableEffects = validateObject(user.consumableEffects);
   user.job = user.job || null;
   user.challenge = user.challenge || null;
   user.weeklyChallenge = user.weeklyChallenge || null;
@@ -291,9 +293,15 @@ export function ensureEconomyDefaults(econ) {
     "pickaxe_bronze": { name: "Picareta de Bronze", price: 500, type: "tool", toolType: "pickaxe", tier: "bronze", durability: 20, effect: { mineBonus: 0.1 } },
     "pickaxe_ferro": { name: "Picareta de Ferro", price: 1500, type: "tool", toolType: "pickaxe", tier: "ferro", durability: 60, effect: { mineBonus: 0.25 } },
     "pickaxe_diamante": { name: "Picareta de Diamante", price: 5000, type: "tool", toolType: "pickaxe", tier: "diamante", durability: 150, effect: { mineBonus: 0.5 } },
-    "repairkit": { name: "Kit de Reparos", price: 350, type: "consumable", effect: { repair: 40 } }
+    "repairkit": { name: "Kit de Reparos", price: 350, type: "consumable", effect: { repair: 40 } },
+    "mate": { name: "🧉 Mate (Chimarrão)", price: 800, type: "consumable", consumable: true, description: "Reduz cooldown de trabalhar" }
   };
-  for (const [k,v] of Object.entries(defs)) { if (!econ.shop[k]) { econ.shop[k]=v; changed=true; } }
+  for (const [k,v] of Object.entries(defs)) {
+    if (!econ.shop[k] || econ.shop[k].name !== v.name || econ.shop[k].price !== v.price || econ.shop[k].description !== v.description) {
+      econ.shop[k] = v;
+      changed = true;
+    }
+  }
   econ.materialsPrices = econ.materialsPrices || { pedra: 2, ferro: 6, ouro: 12, diamante: 30, madeira: 1, corda: 3, couro: 4, linha: 2, carvao: 5, cristal: 25 };
   econ.recipes = econ.recipes || {
     pickaxe_bronze: { requires: { pedra: 10, ferro: 2 }, gold: 100 }, pickaxe_ferro: { requires: { ferro: 10, ouro: 2 }, gold: 300 }, pickaxe_diamante: { requires: { ouro: 10, diamante: 4 }, gold: 1200 },

@@ -1,17 +1,17 @@
-import { 
-    loadEconomy, 
-    saveEconomy, 
-    getEcoUser, 
-    ensureEconomyDefaults, 
-    ensureUserChallenge, 
-    applyShopBonuses, 
-    loadLevelingSafe, 
-    getUserName, 
-    fmt, 
-    parseAmount, 
-    timeLeft, 
-    getActivePickaxe, 
-    ensureUserSkills, 
+import {
+    loadEconomy,
+    saveEconomy,
+    getEcoUser,
+    ensureEconomyDefaults,
+    ensureUserChallenge,
+    applyShopBonuses,
+    loadLevelingSafe,
+    getUserName,
+    fmt,
+    parseAmount,
+    timeLeft,
+    getActivePickaxe,
+    ensureUserSkills,
     SKILL_LIST,
     getSkillBonus,
     addSkillXP,
@@ -25,6 +25,7 @@ import {
     giveMaterial,
     PICKAXE_TIER_MULT
 } from "../../utils/database.js";
+import { getWorkCooldownReduction, consumeEffect } from "../../funcs/utils/consumables.js";
 
 export default {
     name: "rpg_core",
@@ -283,15 +284,27 @@ export default {
             const bonus = Math.floor(gain * (workBonus || 0));
             me.wallet += (gain + bonus);
             me.exp = (me.exp || 0) + 20;
-            me.cooldowns.work = Date.now() + 20 * 60 * 1000;
+            
+            const workCooldownReduction = getWorkCooldownReduction(me);
+            const baseCooldown = 20 * 60 * 1000;
+            const finalCooldown = Math.max(0, baseCooldown - workCooldownReduction);
+            me.cooldowns.work = Date.now() + finalCooldown;
+            
+            let effectConsumedMsg = '';
+            if (workCooldownReduction > 0) {
+                consumeEffect(me, 'mate');
+                const reductionMin = Math.floor(workCooldownReduction / 60000);
+                effectConsumedMsg = `\n⚡ Efeito do Mate consumido! Cooldown reduzido em ${reductionMin} minutos.`;
+            }
+            
             addSkillXP(me, 'working', 1); updateChallenge(me, 'work', 1, true); updatePeriodChallenge(me, 'work', 1, true);
-            // Rastrear stats
             if (!me.stats) me.stats = {};
             me.stats.totalWork = (me.stats.totalWork || 0) + 1;
             me.stats.workCount = (me.stats.workCount || 0) + 1;
             const levelUpRes = checkEcoLevelUp(me);
             saveEconomy(econ);
             let msg = MESSAGES.rpg.core.working.success(fmt(gain), fmt(bonus), fmt(gain + bonus));
+            msg += effectConsumedMsg;
             if (levelUpRes.leveledUp) msg += MESSAGES.rpg.core.working.levelUp(levelUpRes.newLevel);
             return reply(msg);
         }
