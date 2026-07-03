@@ -60,13 +60,7 @@ async function createGroupMessage(ChainySock, groupMetadata, participants, setti
     const message = { text, mentions };
     
     if (settings.image) {
-        let profilePicUrl = 'https://raw.githubusercontent.com/nazuninha/uploads/main/outros/1747053564257_bzswae.bin';
-        if (participants.length === 1 && isWelcome) {
-            profilePicUrl = await ChainySock.profilePictureUrl(participants[0], 'image').catch(() => profilePicUrl);
-        }
-           
         const image = settings.image !== 'banner' ? { url: settings.image } : null;
-        
         if (image) {
             message.image = image;
             message.caption = text;
@@ -125,8 +119,14 @@ export async function handleGroupParticipantsUpdate(ChainySock, inf) {
                 const removalReasons = [];
                 const entradaPorLink = !inf.author || inf.participants.includes(inf.author);
 
-                for (const participant of inf.participants) {
-                    const resolved = await resolveParticipant(participant, ChainySock, groupMetadata);
+                // Resolvendo participantes em paralelo para otimizar tempo de resposta (sem travar o event loop com onWhatsApp sequencial)
+                const resolvedParticipants = await Promise.all(
+                    inf.participants.map(p => resolveParticipant(p, ChainySock, groupMetadata))
+                );
+
+                for (let i = 0; i < inf.participants.length; i++) {
+                    const participant = inf.participants[i];
+                    const resolved = resolvedParticipants[i];
                     const participantNumber = resolved.number;
                     const participantStripped = participant.replace(/@.*/, '');
                     const isLid = resolved.isLid;
@@ -219,7 +219,7 @@ export async function handleGroupParticipantsUpdate(ChainySock, inf) {
                     }
 
                     if (groupSettings.bemvindo) {
-                        membersToWelcome.push(participant);
+                        membersToWelcome.push(resolved.lid || participant);
                     }
                 }
 

@@ -21,7 +21,12 @@ class LIDCache {
   }
 
   async flush() {
-    const mappings = Object.fromEntries(this.store);
+    const mappings = {};
+    for (const [key, value] of this.store.entries()) {
+      if (key.endsWith('@s.whatsapp.net') || key.endsWith('@c.us')) {
+        mappings[key] = value;
+      }
+    }
     const data = {
       version: '1.0',
       lastUpdate: new Date().toISOString(),
@@ -44,6 +49,7 @@ class LIDCache {
         const mappings = data.mappings || {};
         for (const [jid, lid] of Object.entries(mappings)) {
           this.store.set(jid, lid);
+          this.store.set(lid, jid);
         }
       }
     } catch (e) {
@@ -58,6 +64,7 @@ class LIDCache {
   set(jid, lid) {
     if (this.store.get(jid) === lid) return;
     this.store.set(jid, lid);
+    this.store.set(lid, jid);
     this.scheduleSave();
   }
 
