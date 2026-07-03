@@ -83,18 +83,28 @@ export default {
 
         const reductionMin = result.reductionMin || Math.floor((config.effects.workCooldownReduction || 0) / 60000);
         
-        if (result.appliedDirectly) {
-            return reply(MESSAGES.rpg.consumables.mate.successDirect(
-                reductionMin,
-                result.usageCount,
-                result.dailyLimit
-            ));
+        if (consumableId === 'mate') {
+            const quality = result.quality || 'standard';
+            if (quality === 'washed') {
+                return reply(MESSAGES.rpg.consumables.mate.successWashed(
+                    result.usageCount,
+                    result.dailyLimit
+                ));
+            } else if (quality === 'special') {
+                return reply(MESSAGES.rpg.consumables.mate.successSpecial(
+                    reductionMin,
+                    result.usageCount,
+                    result.dailyLimit
+                ));
+            } else {
+                return reply(MESSAGES.rpg.consumables.mate.successStandard(
+                    reductionMin,
+                    result.usageCount,
+                    result.dailyLimit
+                ));
+            }
         }
 
-        return reply(MESSAGES.rpg.consumables.mate.success(
-            reductionMin,
-            result.usageCount,
-            result.dailyLimit
-        ));
+        return reply(MESSAGES.rpg.consumables.invalidConsumable);
     }
 };

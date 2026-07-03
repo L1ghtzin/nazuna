@@ -723,8 +723,9 @@ export const rpgMessages = {
       notTired: "⚠️ Você não está cansado o suficiente para tomar um mate! Trabalhe primeiro para ter um cooldown ativo.",
       notInInventory: (prefix) => `🧉 Você não tem Mate no inventário! Compre na loja usando *${prefix}comprar mate*.`,
       dailyLimitReached: (limit) => `⚠️ Você já atingiu o limite diário de consumo de Mate (${limit} vezes).`,
-      successDirect: (reduction, count, limit) => `🧉 *CHIMARRÃO* 🧉\n\nVocê tomou um mate quentinho! 😋\n⚡ Seu cooldown de trabalho atual foi reduzido em *${reduction}* minutos!\n📊 Consumos hoje: *${count}/${limit}*`,
-      success: (reduction, count, limit) => `🧉 *CHIMARRÃO* 🧉\n\nVocê tomou um mate quentinho! 😋\n⚡ Seu cooldown de trabalho atual foi reduzido em *${reduction}* minutos!\n📊 Consumos hoje: *${count}/${limit}*`
+      successWashed: (count, limit) => `🧉 *CHIMARRÃO* 🧉\n\n*Bah, que decepção!* 🫖\nO mate estava lavado e sem gosto...\n⚡ Seu cooldown de trabalho atual foi reduzido em apenas *1* minuto.\n📊 Consumos hoje: *${count}/${limit}*`,
+      successStandard: (reduction, count, limit) => `🧉 *CHIMARRÃO* 🧉\n\n*Hummm, no ponto!* 😋\nVocê tomou um chimarrão quentinho e amargo, como deve ser.\n⚡ Seu cooldown de trabalho atual foi reduzido em *${reduction}* minutos!\n📊 Consumos hoje: *${count}/${limit}*`,
+      successSpecial: (reduction, count, limit) => `🧉 *CHIMARRÃO* 🧉\n\n*Mas bah, tchê! Cevado com capricho!* 🌿✨\nEste mate ficou espetacular! Disposição lá no topo!\n⚡ Seu cooldown de trabalho atual foi reduzido em *${reduction}* minutos!\n📊 Consumos hoje: *${count}/${limit}*`
     }
   }
 };

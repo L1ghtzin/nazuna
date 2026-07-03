@@ -149,14 +149,35 @@ export function useConsumable(user, consumableId) {
       return { success: false, error: 'not_tired' };
     }
 
-    // 2. Redução de cooldown de trabalho ativa (aleatória proporcional)
+    // 2. Redução de cooldown de trabalho ativa (aleatória proporcional e baseada em qualidade)
     consumeFromInventory(user, consumableId);
     incrementDailyUsage(user, consumableId);
 
     const remainingMin = Math.ceil((cd - now) / 60000);
-    // maxReduction escala com o tempo restante (mínimo 3, máximo 8 minutos)
-    const maxReduction = Math.min(8, Math.max(3, Math.ceil(remainingMin * 0.5)));
-    const reductionMin = 1 + Math.floor(Math.random() * maxReduction);
+    
+    // Rolar qualidade do mate:
+    // 20% lavado (washed)
+    // 70% quentinho (standard)
+    // 10% especial (special)
+    const roll = Math.random();
+    let quality = 'standard';
+    let reductionMin = 3;
+
+    if (roll < 0.20) {
+      quality = 'washed';
+      reductionMin = 1;
+    } else if (roll < 0.90) {
+      quality = 'standard';
+      const maxReduction = Math.min(5, Math.max(2, Math.ceil(remainingMin * 0.4)));
+      reductionMin = Math.max(2, 1 + Math.floor(Math.random() * maxReduction));
+    } else {
+      quality = 'special';
+      const maxReduction = Math.min(10, Math.max(5, Math.ceil(remainingMin * 0.7)));
+      reductionMin = Math.max(5, 1 + Math.floor(Math.random() * maxReduction));
+    }
+
+    // Garantir que a redução não ultrapasse o tempo de cooldown restante
+    reductionMin = Math.min(remainingMin, reductionMin);
     const reductionMs = reductionMin * 60000;
 
     user.cooldowns.work = Math.max(now, cd - reductionMs);
@@ -170,7 +191,8 @@ export function useConsumable(user, consumableId) {
       usageCount: getDailyUsageCount(user, consumableId),
       dailyLimit: config.dailyLimit,
       appliedDirectly: true,
-      reductionMin
+      reductionMin,
+      quality
     };
   }
 
