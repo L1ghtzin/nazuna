@@ -131,8 +131,8 @@ ensureJsonFileExists(ECONOMY_FILE, {
     "pickaxe_bronze": { name: "Picareta de Bronze", price: 500, type: "tool", toolType: "pickaxe", tier: "bronze", durability: 20, effect: { mineBonus: 0.1 } },
     "pickaxe_ferro": { name: "Picareta de Ferro", price: 1500, type: "tool", toolType: "pickaxe", tier: "ferro", durability: 60, effect: { mineBonus: 0.25 } },
     "pickaxe_diamante": { name: "Picareta de Diamante", price: 5000, type: "tool", toolType: "pickaxe", tier: "diamante", durability: 150, effect: { mineBonus: 0.5 } },
-    "repairkit": { name: "Kit de Reparos", price: 350, type: "consumable", effect: { repair: 40 } },
-    "mate": { name: "🧉 Mate (Chimarrão)", price: 800, type: "consumable", consumable: true, description: "Reduz cooldown de trabalhar" },
+    "repairkit": { name: "Kit de Reparos", price: 200, type: "consumable", effect: { repair: 40 } },
+    "mate": { name: "🧉 Mate (Chimarrão)", price: 200, type: "consumable", consumable: true, description: "Reduz cooldown de trabalhar" },
     "vault": { name: "Cofre", price: 1000, type: "upgrade", effect: { bankCapacity: 5000 } },
     "lucky": { name: "Amuleto da Sorte", price: 1500, type: "upgrade", effect: { workBonus: 0.2 } },
     "rod": { name: "Vara de Pesca", price: 400, type: "tool", effect: { fishBonus: 0.2 } },
@@ -170,13 +170,13 @@ ensureJsonFileExists(ECONOMY_FILE, {
     "tiger_talisman": { name: "Talismã do Tigre", price: 2200, type: "pet_equipment", slot: "accessory", attackBonus: 12, advantage: "tigre", durability: 25 },
     "eagle_eye": { name: "Olho de Águia", price: 2400, type: "pet_equipment", slot: "accessory", critBonus: 15, advantage: "aguia", durability: 30 },
     "mystic_collar": { name: "Coleira Mística", price: 3500, type: "pet_equipment", slot: "accessory", attackBonus: 10, defenseBonus: 10, hpBonus: 20, durability: 50 },
-    "battle_potion": { name: "Poção de Batalha", price: 500, type: "consumable", effect: { tempAttack: 10, duration: 3 } },
-    "defense_potion": { name: "Poção de Defesa", price: 500, type: "consumable", effect: { tempDefense: 10, duration: 3 } },
-    "evolution_stone": { name: "Pedra da Evolução", price: 10000, type: "consumable", effect: { evolve: true } }
+    "battle_potion": { name: "Poção de Batalha", price: 300, type: "consumable", effect: { tempAttack: 10, duration: 3 } },
+    "defense_potion": { name: "Poção de Defesa", price: 300, type: "consumable", effect: { tempDefense: 10, duration: 3 } },
+    "evolution_stone": { name: "Pedra da Evolução", price: 8000, type: "consumable", effect: { evolve: true } }
   },
   materialsPrices: {
-    pedra: 2, ferro: 6, ouro: 12, diamante: 30,
-    madeira: 1, corda: 3, couro: 4, linha: 2, carvao: 5, cristal: 25
+    pedra: 3, ferro: 6, ouro: 12, diamante: 30,
+    madeira: 2, corda: 5, couro: 4, linha: 3, carvao: 5, cristal: 25
   },
   recipes: {
     pickaxe_bronze: { requires: { pedra: 10, ferro: 2 }, gold: 100 },
