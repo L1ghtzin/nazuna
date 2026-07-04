@@ -233,6 +233,31 @@ export function applyShopBonuses(user, econ) {
   return { mineBonus, workBonus, bankCapacity, fishBonus, exploreBonus, huntBonus, forgeBonus };
 }
 
+export function getRewardMultipliers(user) {
+  let xpMultiplier = 1.0;
+  let coinMultiplier = 1.0;
+
+  if (user.permanentBoost) {
+    xpMultiplier += 0.5;
+    coinMultiplier += 0.5;
+  }
+
+  const now = Date.now();
+  if (user.activeBoosts) {
+    if ((user.activeBoosts.xp && user.activeBoosts.xp.expires > now) || 
+        (user.activeBoosts.mega && user.activeBoosts.mega.expires > now)) {
+      xpMultiplier += 1.0;
+    }
+    if ((user.activeBoosts.money && user.activeBoosts.money.expires > now) || 
+        (user.activeBoosts.mega && user.activeBoosts.mega.expires > now)) {
+      coinMultiplier += 0.5;
+    }
+  }
+
+  return { xpMultiplier, coinMultiplier };
+}
+
+
 export function ensureEconomyDefaults(econ) {
   return ensureShopDefaults(econ, migrateAndValidateEcoUser);
 }

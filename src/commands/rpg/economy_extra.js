@@ -1,4 +1,4 @@
-import { timeLeft } from "../../utils/helpers.js";
+import { timeLeft, resolveParamAlias, findKeyIgnoringAccents, normalizeParam } from "../../utils/helpers.js";
 
 export default {
   name: "rpg-extra",
@@ -86,10 +86,66 @@ export default {
     }
 
     // --- BOOST ---
-    if (command === 'boost' || command === 'buff') {
-      let text = `╭━━━⊱ ⚡ *BOOSTS* ⊱━━━╮\n\n`;
-      text += `✨ Boost XP (2x) - 50.000\n💰 Boost Moedas (1.5x) - 75.000\n\n💡 Use ${prefix}boost <tipo>`;
-      return reply(text);
+    if (command === 'boost' || command === 'buff' || command === 'impulsionar') {
+      const boosts = {
+        xp: { name: '✨ Boost XP (2x)', price: 50000, duration: 3600000, effect: 'xpBoost' },
+        money: { name: '💰 Boost Moedas (1.5x)', price: 75000, duration: 3600000, effect: 'moneyBoost' },
+        luck: { name: '🍀 Boost Sorte (+20%)', price: 100000, duration: 3600000, effect: 'luckBoost' },
+        power: { name: '⚔️ Boost Poder (+50%)', price: 80000, duration: 1800000, effect: 'powerBoost' },
+        mega: { name: '🔥 Mega Boost (Todos)', price: 250000, duration: 1800000, effect: 'megaBoost' }
+      };
+
+      const rawSub = (args[0] || '');
+      const sub = rawSub ? (resolveParamAlias(rawSub) || findKeyIgnoringAccents(boosts, rawSub) || normalizeParam(rawSub)) : '';
+
+      if (!sub || sub === 'ver') {
+        let text = `╭━━━⊱ ⚡ *BOOSTS* ⊱━━━╮\n\n`;
+
+        if (me.activeBoosts && Object.keys(me.activeBoosts).length > 0) {
+          let activeCount = 0;
+          let activeText = `🔥 *BOOSTS ATIVOS:*\n`;
+          for (const [key, boost] of Object.entries(me.activeBoosts)) {
+            if (Date.now() < boost.expires) {
+              const remaining = Math.ceil((boost.expires - Date.now()) / 60000);
+              activeText += `• ${boosts[key]?.name || key}: ${remaining} min restantes\n`;
+              activeCount++;
+            }
+          }
+          if (activeCount > 0) {
+            text += activeText + `\n`;
+          }
+        }
+
+        text += `📦 *BOOSTS DISPONÍVEIS:*\n\n`;
+
+        for (const [id, boost] of Object.entries(boosts)) {
+          text += `${boost.name}\n`;
+          text += `   💰 ${boost.price.toLocaleString()}\n`;
+          text += `   ⏰ ${boost.duration / 60000} minutos\n`;
+          text += `   🛒 ${prefix}boost ${id}\n\n`;
+        }
+
+        return reply(text);
+      }
+
+      const boost = boosts[sub];
+      if (!boost) return reply(`❌ Boost não encontrado!\n\n💡 Use ${prefix}boost para ver disponíveis`);
+
+      if (me.wallet < boost.price) {
+        return reply(`❌ Saldo insuficiente!\n\n💰 Necessário: ${boost.price.toLocaleString()}\n💼 Sua carteira: ${me.wallet.toLocaleString()}`);
+      }
+
+      me.wallet -= boost.price;
+
+      if (!me.activeBoosts) me.activeBoosts = {};
+      me.activeBoosts[sub] = {
+        expires: Date.now() + boost.duration,
+        effect: boost.effect
+      };
+
+      saveEconomy(econ);
+
+      return reply(`╭━━━⊱ ⚡ *BOOST ATIVADO* ⊱━━━╮\n\n${boost.name}\n⏰ Duração: ${boost.duration / 60000} minutos\n💰 Custo: -${boost.price.toLocaleString()}\n\n🔥 Aproveite os bônus!\n\n╰━━━━━━━━━━━━━━━━━━━━╯`);
     }
 
     // --- TRIBUTOS ---

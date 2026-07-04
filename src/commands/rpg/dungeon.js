@@ -1,4 +1,4 @@
-import { updateQuestProgress } from "../../utils/database.js";
+import { updateQuestProgress, getRewardMultipliers } from "../../utils/database.js";
 
 export default {
   name: "dungeon",
@@ -62,9 +62,11 @@ export default {
       
       me.lastDungeon = now;
       if (success) {
+        const { xpMultiplier, coinMultiplier } = getRewardMultipliers(me);
         const reward = Math.floor(Math.random() * (dungeon.reward[1] - dungeon.reward[0])) + dungeon.reward[0];
-        me.wallet += reward;
-        me.exp = (me.exp || 0) + dungeon.exp;
+        const finalReward = Math.floor(reward * coinMultiplier);
+        me.wallet += finalReward;
+        me.exp = (me.exp || 0) + Math.floor(dungeon.exp * xpMultiplier);
         updateQuestProgress(me, 'dungeon', 1);
         
         let leveledUp = false;
@@ -81,7 +83,7 @@ export default {
         }
         
         saveEconomy(econ);
-        return reply(MESSAGES.rpg.dungeon.win(dungeon.name, reward.toLocaleString(), dungeon.exp));
+        return reply(MESSAGES.rpg.dungeon.win(dungeon.name, finalReward.toLocaleString(), Math.floor(dungeon.exp * xpMultiplier)));
       } else {
         const loss = Math.floor(me.wallet * 0.1);
         me.wallet -= loss;
@@ -134,14 +136,17 @@ export default {
       if (!me.stats) me.stats = {};
       
       if (bossHp <= 0) {
-        me.wallet += boss.reward;
-        me.exp = (me.exp || 0) + boss.xp;
+        const { xpMultiplier, coinMultiplier } = getRewardMultipliers(me);
+        const finalReward = Math.floor(boss.reward * coinMultiplier);
+        const finalXp = Math.floor(boss.xp * xpMultiplier);
+        me.wallet += finalReward;
+        me.exp = (me.exp || 0) + finalXp;
         me.stats.bossesDefeated = (me.stats.bossesDefeated || 0) + 1;
         
         const levelUpRes = checkEcoLevelUp(me);
         saveEconomy(econ);
         
-        battleLog += MESSAGES.rpg.dungeon.bossWin(boss.emoji, boss.name, boss.reward.toLocaleString(), boss.xp, me.stats.bossesDefeated);
+        battleLog += MESSAGES.rpg.dungeon.bossWin(boss.emoji, boss.name, finalReward.toLocaleString(), finalXp, me.stats.bossesDefeated);
         
         if (levelUpRes.leveledUp) {
           battleLog += MESSAGES.rpg.dungeon.bossLevelUp(levelUpRes.newLevel);

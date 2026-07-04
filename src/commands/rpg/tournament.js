@@ -11,7 +11,7 @@ export default {
     sender, 
     prefix, 
     q, 
-    isGroupAdmins,
+    isGroupAdmin,
     loadEconomy, 
     saveEconomy, 
     getEcoUser,
@@ -30,7 +30,7 @@ export default {
     const tournament = econ.tournament;
     
     // --- CRIAR TORNEIO ---
-    if (q === 'criar' && isGroupAdmins) {
+    if (q === 'criar' && isGroupAdmin) {
       if (tournament.active) return reply(MESSAGES.rpg.tournament.alreadyActive);
       tournament.active = true;
       tournament.participants = [];
@@ -56,7 +56,7 @@ export default {
     }
 
     // --- INICIAR ---
-    if (q === 'iniciar' && isGroupAdmins) {
+    if (q === 'iniciar' && isGroupAdmin) {
       if (tournament.participants.length < 2) return reply(MESSAGES.rpg.tournament.needMorePlayers);
       
       let fighters = [...tournament.participants];

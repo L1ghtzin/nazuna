@@ -1,4 +1,4 @@
-import { updateQuestProgress } from "../../utils/database.js";
+import { updateQuestProgress, getRewardMultipliers } from "../../utils/database.js";
 
 export default {
   name: "combat",
@@ -77,10 +77,11 @@ export default {
       updateQuestProgress(me, 'duel', 1);
 
       if (myHp > oppHp) {
+        const { xpMultiplier } = getRewardMultipliers(me);
         const reward = Math.floor((opponent.wallet || 0) * 0.05);
         me.wallet += reward;
         opponent.wallet = Math.max(0, opponent.wallet - reward);
-        me.exp = (me.exp || 0) + 150;
+        me.exp = (me.exp || 0) + Math.floor(150 * xpMultiplier);
         
         // Incrementar estatísticas de batalha
         if (!me.battlesWon) me.battlesWon = 0;
@@ -152,9 +153,11 @@ export default {
       
       me.lastArena = now;
       if (wins >= arena.enemies * 0.7) {
+        const { xpMultiplier, coinMultiplier } = getRewardMultipliers(me);
         const reward = Math.floor(Math.random() * (arena.reward[1] - arena.reward[0])) + arena.reward[0];
-        me.wallet += reward;
-        me.exp = (me.exp || 0) + (arena.enemies * 50);
+        const finalReward = Math.floor(reward * coinMultiplier);
+        me.wallet += finalReward;
+        me.exp = (me.exp || 0) + Math.floor((arena.enemies * 50) * xpMultiplier);
         
         const levelUpRes = checkEcoLevelUp(me);
         if (levelUpRes.leveledUp) {
@@ -162,7 +165,7 @@ export default {
         }
 
         saveEconomy(econ);
-        return reply(MESSAGES.rpg.combat.arena.win(wins, arena.enemies, reward.toLocaleString()));
+        return reply(MESSAGES.rpg.combat.arena.win(wins, arena.enemies, finalReward.toLocaleString()));
       } else {
         const loss = Math.floor(me.wallet * 0.08);
         me.wallet -= loss;

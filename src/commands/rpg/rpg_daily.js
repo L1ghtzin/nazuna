@@ -4,7 +4,8 @@ import {
     getEcoUser, 
     ensureEconomyDefaults, 
     fmt,
-    timeLeft
+    timeLeft,
+    getRewardMultipliers
 } from "../../utils/database.js";
 
 export default {
@@ -53,12 +54,13 @@ export default {
             bonusMessage += MESSAGES.rpg.daily.bonus30;
         }
         
-        const finalReward = totalReward + extraBonus;
+        const { xpMultiplier, coinMultiplier } = getRewardMultipliers(me);
+        const finalReward = Math.floor((totalReward + extraBonus) * coinMultiplier);
         me.wallet += finalReward;
         me.streak.lastClaim = now;
         me.cooldowns.daily = now + oneDayMs;
         
-        const xpGain = 50 + (me.streak.count * 5);
+        const xpGain = Math.floor((50 + (me.streak.count * 5)) * xpMultiplier);
         me.exp = (me.exp || 0) + xpGain;
         
         // Level up check

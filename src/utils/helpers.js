@@ -414,7 +414,7 @@ const PARAM_ALIASES = {
   'protecao_vip': ['protecao_vip', 'protecaovip', 'vip', 'proteção'],
   'multiplicador_xp': ['multiplicador_xp', 'multxp', 'xpmult', 'multiplicadorxp'],
   // Boosts
-  'xp': ['xp', 'experiencia', 'experiência', 'exp'],
+  'xp': ['xp', 'experiencia', 'experiência', 'exp', 'sxp'],
   'money': ['money', 'dinheiro', 'grana', 'coins', 'moedas'],
   'luck': ['luck', 'sorte', 'lucky'],
   'power': ['power', 'poder', 'força', 'forca'],

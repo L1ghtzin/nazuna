@@ -12,7 +12,8 @@ import {
     updateChallenge,
     updatePeriodChallenge,
     giveMaterial,
-    PICKAXE_TIER_MULT
+    PICKAXE_TIER_MULT,
+    getRewardMultipliers
 } from "../../utils/database.js";
 
 export default {
@@ -42,7 +43,11 @@ export default {
             const raw = Math.floor(base * tierMult);
             const bonus = Math.floor(raw * ((mineBonus || 0) + skillB));
             const total = raw + bonus;
-            me.wallet += total;
+            
+            const { coinMultiplier } = getRewardMultipliers(me);
+            const finalTotal = Math.floor(total * coinMultiplier);
+            const boostBonus = finalTotal - total;
+            me.wallet += finalTotal;
             let drops = { pedra: 2 + Math.floor(Math.random() * 3) };
             if (pk.tier === 'ferro' || pk.tier === 'diamante') {
                 drops.ferro = (drops.ferro || 0) + 1 + Math.floor(Math.random() * 2);
@@ -65,7 +70,7 @@ export default {
             saveEconomy(econ);
             let dropTxt = Object.entries(drops).filter(([, q]) => q > 0).map(([k, q]) => `${k} x${q}`).join(', ');
             const broke = pk.dur === 0 && before > 0;
-            return reply(MESSAGES.rpg.core.mining.success(fmt(total), bonus > 0 ? `(bônus ${fmt(bonus)})` : '', dropTxt || '—', pk.dur, me.tools.pickaxe.max, broke));
+            return reply(MESSAGES.rpg.core.mining.success(fmt(finalTotal), (bonus + boostBonus) > 0 ? `(bônus ${fmt(bonus + boostBonus)})` : '', dropTxt || '—', pk.dur, me.tools.pickaxe.max, broke));
         }
 
         if (sub === 'pescar' || sub === 'fish') {
@@ -75,7 +80,11 @@ export default {
             const skillB = getSkillBonus(me, 'fishing');
             const bonus = Math.floor(base * ((fishBonus || 0) + skillB));
             const total = base + bonus;
-            me.wallet += total;
+            
+            const { coinMultiplier } = getRewardMultipliers(me);
+            const finalTotal = Math.floor(total * coinMultiplier);
+            const boostBonus = finalTotal - total;
+            me.wallet += finalTotal;
             me.cooldowns.fish = Date.now() + 12 * 60 * 1000;
             addSkillXP(me, 'fishing', 1); updateChallenge(me, 'fish', 1, true); updatePeriodChallenge(me, 'fish', 1, true);
             me.ingredients = me.ingredients || {};
@@ -85,8 +94,8 @@ export default {
             me.stats.totalFish = (me.stats.totalFish || 0) + 1;
             me.stats.fishCount = (me.stats.fishCount || 0) + 1;
             saveEconomy(econ);
-            const bonusText = bonus > 0 ? `│ ✨ Bônus: *+${fmt(bonus)}*\n` : '';
-            return reply(MESSAGES.rpg.core.fishing.success(fmt(total), bonusText, fishQty));
+            const bonusText = (bonus + boostBonus) > 0 ? `│ ✨ Bônus: *+${fmt(bonus + boostBonus)}*\n` : '';
+            return reply(MESSAGES.rpg.core.fishing.success(fmt(finalTotal), bonusText, fishQty));
         }
 
         if (sub === 'explorar' || sub === 'explore') {
@@ -96,7 +105,11 @@ export default {
             const skillB = getSkillBonus(me, 'exploring');
             const bonus = Math.floor(base * ((exploreBonus || 0) + skillB));
             const total = base + bonus;
-            me.wallet += total;
+            
+            const { coinMultiplier } = getRewardMultipliers(me);
+            const finalTotal = Math.floor(total * coinMultiplier);
+            const boostBonus = finalTotal - total;
+            me.wallet += finalTotal;
             me.cooldowns.explore = Date.now() + 15 * 60 * 1000;
             addSkillXP(me, 'exploring', 1); updateChallenge(me, 'explore', 1, true); updatePeriodChallenge(me, 'explore', 1, true);
             if (!me.stats) me.stats = {};
@@ -109,9 +122,9 @@ export default {
             if (Math.random() < 0.2) matsGain.cristal = 1;
             for (const [mk, mq] of Object.entries(matsGain)) giveMaterial(me, mk, mq);
             saveEconomy(econ);
-            const bonusText = bonus > 0 ? `│ ✨ Bônus: *+${fmt(bonus)}*\n` : '';
+            const bonusText = (bonus + boostBonus) > 0 ? `│ ✨ Bônus: *+${fmt(bonus + boostBonus)}*\n` : '';
             const matsText = Object.keys(matsGain).length > 0 ? `│ 📦 Materiais: ` + Object.entries(matsGain).map(([k, q]) => `${k} x${q}`).join(', ') + `\n` : '';
-            return reply(MESSAGES.rpg.core.exploring.success(fmt(total), bonusText, matsText));
+            return reply(MESSAGES.rpg.core.exploring.success(fmt(finalTotal), bonusText, matsText));
         }
 
         if (sub === 'cacar' || sub === 'caçar' || sub === 'hunt') {
@@ -121,7 +134,11 @@ export default {
             const skillB = getSkillBonus(me, 'hunting');
             const bonus = Math.floor(base * ((huntBonus || 0) + skillB) * 0.7);
             const total = base + bonus;
-            me.wallet += total;
+            
+            const { coinMultiplier } = getRewardMultipliers(me);
+            const finalTotal = Math.floor(total * coinMultiplier);
+            const boostBonus = finalTotal - total;
+            me.wallet += finalTotal;
             me.cooldowns.hunt = Date.now() + 22 * 60 * 1000;
             addSkillXP(me, 'hunting', 1); updateChallenge(me, 'hunt', 1, true); updatePeriodChallenge(me, 'hunt', 1, true);
             me.ingredients = me.ingredients || {};
@@ -131,9 +148,9 @@ export default {
             if (Math.random() < 0.5) huntMats.couro = 1 + Math.floor(Math.random() * 2);
             for (const [mk, mq] of Object.entries(huntMats)) giveMaterial(me, mk, mq);
             saveEconomy(econ);
-            const bonusText = bonus > 0 ? `│ ✨ Bônus: *+${fmt(bonus)}*\n` : '';
+            const bonusText = (bonus + boostBonus) > 0 ? `│ ✨ Bônus: *+${fmt(bonus + boostBonus)}*\n` : '';
             const matsText = Object.keys(huntMats).length > 0 ? `│ 📦 Materiais: ` + Object.entries(huntMats).map(([k, q]) => `${k} x${q}`).join(', ') + `\n` : '';
-            return reply(MESSAGES.rpg.core.hunting.success(fmt(total), bonusText, meatQty, matsText));
+            return reply(MESSAGES.rpg.core.hunting.success(fmt(finalTotal), bonusText, meatQty, matsText));
         }
     }
 };

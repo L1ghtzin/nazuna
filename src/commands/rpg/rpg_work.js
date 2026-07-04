@@ -11,7 +11,8 @@ import {
     updatePeriodChallenge,
     checkEcoLevelUp,
     findKeyIgnoringAccents,
-    normalizeParam
+    normalizeParam,
+    getRewardMultipliers
 } from "../../utils/database.js";
 import { getWorkCooldownReduction, consumeEffect } from "../../funcs/utils/consumables.js";
 
@@ -37,8 +38,13 @@ export default {
             const job = econ.jobCatalog?.[me.job] || { min: 50, max: 100 };
             const gain = job.min + Math.floor(Math.random() * (job.max - job.min + 1));
             const bonus = Math.floor(gain * (workBonus || 0));
-            me.wallet += (gain + bonus);
-            me.exp = (me.exp || 0) + 20;
+            
+            const { xpMultiplier, coinMultiplier } = getRewardMultipliers(me);
+            const finalGain = Math.floor((gain + bonus) * coinMultiplier);
+            const boostBonus = finalGain - (gain + bonus);
+            
+            me.wallet += finalGain;
+            me.exp = (me.exp || 0) + Math.floor(20 * xpMultiplier);
 
             const workCooldownReduction = getWorkCooldownReduction(me);
             const baseCooldown = 20 * 60 * 1000;
@@ -58,7 +64,7 @@ export default {
             me.stats.workCount = (me.stats.workCount || 0) + 1;
             const levelUpRes = checkEcoLevelUp(me);
             saveEconomy(econ);
-            let msg = MESSAGES.rpg.core.working.success(fmt(gain), fmt(bonus), fmt(gain + bonus));
+            let msg = MESSAGES.rpg.core.working.success(fmt(gain), fmt(bonus + boostBonus), fmt(finalGain));
             msg += effectConsumedMsg;
             if (levelUpRes.leveledUp) msg += MESSAGES.rpg.core.working.levelUp(levelUpRes.newLevel);
             return reply(msg);
