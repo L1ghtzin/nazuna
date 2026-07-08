@@ -50,7 +50,7 @@ export default {
       }
     }
 
-    if (['fotobv', 'welcomeimg', 'fotosaida', 'exitimg'].includes(cmd)) {
+    if (['fotobv', 'welcomeimg', 'fotosaida', 'fotosaiu', 'imgsaiu', 'exitimg'].includes(cmd)) {
       if (!isQuotedImage && !isImage) return reply(MESSAGES.admin.group_security.welcome.imgProvide);
       
       try {
@@ -59,6 +59,9 @@ export default {
         const feature = ['fotobv', 'welcomeimg'].includes(cmd) ? 'welcome' : 'exit';
         groupData[feature] = groupData[feature] || {};
         groupData[feature].image = url;
+        if (feature === 'exit') {
+          groupData[feature].enabled = true;
+        }
         await writeJsonFileAsync(groupFile, groupData);
         return reply(MESSAGES.admin.group_security.welcome.imgSuccess);
       } catch (e) {
