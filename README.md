@@ -12,128 +12,185 @@
 
 ---
 
-### 🌟 O que é a Chainy?
-A **Chainy** é um bot de WhatsApp poderoso, otimizado e modular desenvolvido em **Node.js** com suporte à sintaxe ESM nativa. Baseado no aclamado projeto [Nazuna](https://github.com/DevTokyoVx/nazuna), a Chainy traz uma série de melhorias em performance, segurança, organização de banco de dados e comandos dinâmicos, sendo a escolha ideal tanto para entretenimento (RPG robusto) quanto para a administração completa de grupos.
+## 📌 Índice
+- [🌟 Sobre a Chainy](#-sobre-a-chainy)
+- [📂 Estrutura do Projeto](#-estrutura-do-projeto)
+- [🛠️ Recursos & Módulos Principais](#️-recursos--módulos-principais)
+  - [⚔️ RPG Integrado](#️-rpg-integrado)
+  - [🛡️ Administração](#️-administração)
+  - [👤 Membros & Utilitários](#-membros--utilitários)
+  - [⚙️ Painel do Dono](#️-painel-do-dono)
+- [📋 Pré-requisitos](#-pré-requisitos)
+- [🚀 Instalação e Inicialização](#-instalação-e-inicialização)
+- [🔌 Métodos de Conexão](#-métodos-de-conexão)
+- [🔄 Atualização Automática](#-atualização-automática)
+- [❓ Perguntas Frequentes (FAQ)](#-perguntas-frequentes-faq)
+- [👤 Créditos e Licenciamento](#-créditos-e-licenciamento)
+
+---
+
+## 🌟 Sobre a Chainy
+
+A **Chainy** é um framework modular de bot para WhatsApp desenvolvido em **Node.js** com suporte nativo à sintaxe ESM. Baseado no ecossistema da [Nazuna](https://github.com/DevTokyoVx/nazuna), a Chainy introduz melhorias significativas em performance, segurança, tratamento de concorrência na persistência de dados JSON e gerenciamento automatizado de comandos dinâmicos.
+
+É a escolha ideal tanto para entretenimento (através de um sistema completo de RPG) quanto para moderação profissional de grupos.
 
 > [!WARNING]
 > Ao migrar de bases antigas da Nazuna para a Chainy, é **altamente recomendada** uma instalação limpa para evitar conflitos nas estruturas de dados salvas.
 
 ---
 
-## 🛠️ Funcionalidades e Módulos Principais
+## 📂 Estrutura do Projeto
 
-A Chainy é dividida em módulos estruturados para manter a organização e a facilidade de manutenção:
+A arquitetura do bot é estruturada de forma altamente modular para simplificar a adição de novas funcionalidades e manter a separação de responsabilidades (Clean Code / MVC):
 
-### ⚔️ Sistema de RPG Integrado (`src/commands/rpg/`)
-Um dos RPGs mais completos do ecossistema de bots, contando com:
-- **Clãs e Alianças:** Criação de clãs, convites, gerenciamento e ranking de clãs.
-- **Pets & Combate:** Capture, treine, upe e aposte em batalhas de pets, além de duelos PVP.
-- **Economia Dinâmica:** Sistema de compras, prestígio, mercado entre jogadores, leilão e cassino completo.
-- **Dungeons & Quests:** Explore masmorras perigosas, complete missões diárias e evolua suas skills.
-- **Social & Família:** Sistema de relacionamentos, casamentos, divórcios, adoção de filhos e compra de casas/propriedades.
-
-### 🛡️ Administração de Grupos (`src/commands/admin/`)
-Controle total do seu grupo na ponta dos dedos:
-- **Segurança Avançada:** Whitelist, detecção de spam, proteção contra links nocivos e invasões.
-- **Moderação:** Banimentos temporários ou permanentes, advertências, mute, rebaixamento e promoção de cargos.
-- **Automação:** Mensagens automáticas, controle de horários (abertura/fechamento automático de grupo) e regras dinâmicas.
-
-### 👤 Membros e Utilitários (`src/commands/member/`)
-Interação e ferramentas para o dia a dia dos usuários:
-- **Ferramentas Úteis:** Calculadora, previsão do clima, encurtador de links, consulta à Wikipedia e notícias em tempo real.
-- **Jogos em Grupo:** Stop, caça-palavras, anagrama, forca, wordle e quiz interativo.
-- **Edição de Mídias:** Conversor de figurinhas (stickers) completo, aplicação de efeitos de áudio e vídeo avançados.
-
-### ⚙️ Painel de Dono (`src/commands/owner/`)
-Configuração e controle geral do ecossistema:
-- **Gestão de Subdonos:** Delegação de permissões de administrador global do bot.
-- **Blacklist Global:** Bloqueio de usuários nocivos em todos os grupos onde o bot atua.
-- **Atualização Dinâmica:** Atualização do bot em tempo real via git com painel de progresso editado em mensagem única.
+```text
+chainy/
+├── dados/                       # Armazenamento e persistência de dados
+│   ├── database/                # Cache em memória e arquivos JSON do banco
+│   │   ├── grupos/              # Configurações de segurança e status de cada grupo
+│   │   └── dono/                # Credenciais, configurações globais e blacklist
+│   └── config.json              # Configuração básica do bot (Dono, Prefixo, etc.)
+├── src/                         # Código-fonte principal do bot
+│   ├── commands/                # Comandos dinâmicos (separados por permissão)
+│   │   ├── admin/               # Comandos administrativos do grupo
+│   │   ├── member/              # Comandos livres para qualquer usuário
+│   │   ├── owner/               # Comandos restritos ao dono do bot
+│   │   └── rpg/                 # Comandos do sistema de RPG
+│   ├── handlers/                # Manipuladores de eventos do WhatsApp (Baileys)
+│   ├── middleware/              # Filtros de execução, limites e despacho de comandos
+│   └── utils/                   # Utilitários, mensagens globais e auxiliares
+└── package.json                 # Manifesto do projeto e scripts npm
+```
 
 ---
 
-## 📋 Pré-requisitos do Sistema
+## 🛠️ Recursos & Módulos Principais
+
+### ⚔️ RPG Integrado (`src/commands/rpg/`)
+Um ecossistema de RPG interativo e completo diretamente no WhatsApp:
+- **Clãs e Alianças:** Crie clãs, recrute membros, gerencie permissões e suba no ranking global.
+- **Pets & Duelos:** Capture e treine pets, dispute duelos em turnos PVP e faça apostas nas batalhas.
+- **Economia Dinâmica:** Sistema de inventário, mercado livre entre jogadores, leilões em tempo real e jogos de cassino.
+- **Dungeons & Quests:** Explore masmorras, derrote bosses, complete missões diárias e evolua suas habilidades.
+- **Social & Vida Virtual:** Compre propriedades, case-se com outros usuários, adote filhos virtuais e acúmule prestígio.
+
+### 🛡️ Administração (`src/commands/admin/`)
+Controle total do grupo com segurança automática robusta:
+- **Segurança Antinvasão:** Whitelist de usuários, detecção de spam e proteção contra links externos/nocivos.
+- **Moderação Inteligente:** Aplicação de advertências (warnings), banimentos temporários/permanentes e mutar membros.
+- **Automação de Horários:** Configuração para abrir e fechar grupos automaticamente em horários agendados.
+
+### 👤 Membros & Utilitários (`src/commands/member/`)
+Ferramentas úteis para engajamento e facilidade no dia a dia:
+- **Ferramentas Práticas:** Tradutor, calculadora, previsão do clima, encurtador de links e pesquisas rápidas.
+- **Minijogos Coletivos:** Desafios de Stop, Forca, Caça-Palavras, Anagramas e Quizzes com pontuação.
+- **Manipulação de Mídias:** Conversor avançado de figurinhas (stickers normais e animados), aplicação de filtros em imagens, áudios e vídeos.
+
+### ⚙️ Painel do Dono (`src/commands/owner/`)
+Gestão central do ecossistema e manutenção do bot:
+- **Gestão de Subdonos:** Adicione ou remova permissões de administradores globais do bot.
+- **Blacklist Global:** Bloqueie usuários maliciosos simultaneamente de todos os grupos do bot.
+- **Painel Dinâmico:** Gerencie configurações gerais em tempo real de forma interativa.
+
+---
+
+## 📋 Pré-requisitos
 
 | Requisito | Mínimo | Recomendado |
 | :--- | :--- | :--- |
-| **Node.js** | `>= 20.0.0` | `LTS` |
+| **Node.js** | `>= 20.0.0` | `LTS` (Long Term Support) |
 | **RAM** | `256 MB` | `1 GB` |
-| **Disco Livre** | `256 MB` | `1 GB` (para cache de mídias) |
-| **Sistema Operacional** | Windows, Linux, macOS ou Android (Termux) | Linux (VPS) |
-| **Dependências Externas** | FFmpeg (para mídias), Git | FFmpeg, Git, Yarn |
+| **Armazenamento** | `256 MB` | `1 GB` (ideal para logs e mídias cacheadas) |
+| **Sistema Operacional** | Windows, Linux, macOS ou Termux | Linux (VPS dedicada) |
+| **Dependências Externas** | FFmpeg (configurado no PATH), Git | FFmpeg, Git, Yarn/NPM |
 
 ---
 
-## 🚀 Como Instalar e Configurar
+## 🚀 Instalação e Inicialização
 
-A Chainy acompanha um assistente interativo que facilita a instalação de dependências e a configuração básica do bot.
+A Chainy acompanha um assistente interativo no terminal para simplificar a configuração de credenciais iniciais.
 
-### Passo 1. Clonar o Repositório
+### Passo 1: Clonar o Repositório
 ```bash
 git clone https://github.com/L1ghtzin/chainy.git
 cd chainy
 ```
 
-### Passo 2. Executar o Assistente de Configuração
-Execute o comando abaixo e insira o nome do dono, o número de telefone correspondente, o nome do bot e o prefixo desejado:
+### Passo 2: Configuração Inicial
+Execute o assistente interativo para definir as variáveis essenciais do bot (Nome do Bot, Prefixo, Número do Dono, etc.):
 ```bash
 npm run config
 ```
-*(Opcional: Você pode optar por deixar o assistente instalar todas as dependências automaticamente no final da configuração).*
+*(Nota: No final da configuração, o assistente perguntará se deseja que ele instale todas as dependências do projeto de forma automatizada).*
 
-### Passo 3. Instalar Dependências Manualmente (se não feito no Passo 2)
+### Passo 3: Instalar Dependências (Manualmente, se necessário)
+Se optar por não instalar as dependências durante o Passo 2, execute:
 ```bash
 npm run config:install
 ```
 
-### Passo 4. Iniciar o Bot
+### Passo 4: Iniciar o Bot
 ```bash
 npm start
 ```
-Após o início, escaneie o QR Code que aparecerá no terminal ou utilize o código de pareamento digitando seu número de telefone quando solicitado.
 
 ---
 
-## 🔌 Opções de Conexão
+## 🔌 Métodos de Conexão
 
-* **Opção 1: QR Code (Padrão):** Abra o WhatsApp > Aparelhos conectados > Conectar um aparelho, e escaneie o código QR gerado diretamente no console.
-* **Opção 2: Código de Pareamento:** Caso seu terminal não suporte caracteres especiais para renderização de QR Code, selecione a opção de pareamento informando o número do telefone com código do país e DDD (ex: `5511999999999`). Digite o código de 8 dígitos gerado no seu aplicativo do WhatsApp.
+Após iniciar o bot no terminal, você poderá conectá-lo ao WhatsApp usando dois métodos:
+
+* **Opção 1: QR Code (Padrão)**
+  Abra o WhatsApp no celular > toque em **Aparelhos conectados** > **Conectar um aparelho** e aponte a câmera para escanear o código QR gerado no terminal.
+  
+* **Opção 2: Código de Pareamento**
+  Útil caso seu terminal (ex: VPS sem renderização unicode completa) quebre o visual do QR Code. Informe o número do telefone com código de país e DDD quando solicitado no terminal (ex: `5511999999999`) e digite o código de 8 dígitos gerado no app do WhatsApp.
 
 ---
 
-## 🔄 Mantendo o Bot Atualizado
+## 🔄 Atualização Automática
 
-Para atualizar seu bot sem perder suas configurações locais e dados salvos, utilize o comando integrado:
+Para manter seu bot atualizado sem perder as suas configurações locais ou arquivos de banco de dados (`dados/database/*`), utilize o comando integrado de atualização segura:
+
 ```bash
 npm run update
 ```
-Esse comando roda o script de atualização seguro que faz o backup de arquivos cruciais, puxa a última versão do GitHub, limpa caches obsoletos, reconstrói dependências e reinicia o bot de forma totalmente automatizada. No chat, o dono pode enviar o comando `/atualizar sim` para acompanhar o status dinâmico etapa por etapa em uma mensagem única.
+
+**O que este script faz:**
+1. Realiza backup de arquivos vitais de banco de dados e chaves de sessão.
+2. Efetua o pull das alterações mais recentes do repositório de forma limpa.
+3. Remove arquivos temporários obsoletos e reconstrói as dependências do NPM.
+4. Reinicia o processo do bot de forma automatizada.
+
+> [!TIP]
+> O dono do bot também pode iniciar e monitorar o progresso dessa atualização diretamente no WhatsApp enviando o comando `/atualizar sim`.
 
 ---
 
 ## ❓ Perguntas Frequentes (FAQ)
 
 <details>
-<summary><b>Como definir outro prefixo para o bot?</b></summary>
-Você pode reconfigurar o prefixo a qualquer momento rodando novamente o comando <code>npm run config</code> no terminal ou editando diretamente o arquivo <code>dados/config.json</code>.
+<summary><b>Como reconfigurar o prefixo ou número de dono?</b></summary>
+Você pode rodar novamente o assistente via <code>npm run config</code> ou alterar os valores editando diretamente o arquivo <code>dados/config.json</code>.
 </details>
 
 <details>
-<summary><b>O que fazer se o QR Code quebrar no terminal?</b></summary>
-Aumente a largura da janela do terminal e diminua o zoom para que os blocos de caracteres fiquem alinhados. Se mesmo assim não funcionar, utilize a conexão via código de pareamento.
+<summary><b>O QR Code no terminal está desalinhado/quebrado, o que fazer?</b></summary>
+Aumente o tamanho da janela do console e diminua o zoom para ajustar os blocos. Se o problema persistir, opte pela conexão via Código de Pareamento inserindo seu número diretamente no terminal.
 </details>
 
 <details>
-<summary><b>Como resolver o erro "FFmpeg não encontrado"?</b></summary>
-Certifique-se de que o FFmpeg está instalado em seu sistema operacional e configurado no PATH do sistema. O assistente de configuração (<code>npm run config</code>) tenta instalá-lo de forma automatizada na maioria das plataformas.
+<summary><b>Como resolver erros relativos ao "FFmpeg"?</b></summary>
+Certifique-se de que o executável do FFmpeg está instalado e adicionado às Variáveis de Ambiente (PATH) do seu sistema operacional. O assistente de configuração (<code>npm run config</code>) tentará instalá-lo de forma automatizada na maioria das distribuições.
 </details>
 
 ---
 
 ## 👤 Créditos e Licenciamento
 
-- **Projeto Base:** [Nazuna](https://github.com/DevTokyoVx/nazuna) criado originalmente por **Hiudy** e mantido por **DevTokyoVx**.
-- **Desenvolvimento Chainy:** Personalizações, correções de bugs, sistema de atualização dinâmica e otimizações por **L1ghtzin**.
+- **Projeto Base:** [Nazuna](https://github.com/DevTokyoVx/nazuna) desenvolvido originalmente por **Hiudy** e mantido por **DevTokyoVx**.
+- **Desenvolvimento Chainy:** Personalizações de layout, correções de concorrência, otimizações e scripts de atualização automática por **L1ghtzin**.
 
 > **© 2025/2026 Hiudy & L1ghtzin — Todos os direitos reservados.**  
-> Este software é de código aberto e gratuito. A comercialização do mesmo é **estritamente proibida**.
+> Este software é de código aberto e livre para uso pessoal. A venda ou comercialização deste código é **estritamente proibida**.
