@@ -6,6 +6,7 @@ import pathz from 'path';
 import { ensureDirectoryExists, loadJsonFile } from '../helpers.js';
 import { ECONOMY_FILE, LEVELING_FILE, COMMAND_ALIASES_FILE, CUSTOM_AUTORESPONSES_FILE, CMD_NOT_FOUND_FILE } from '../paths.js';
 import { isUnifiedPath, setUnifiedValue } from './unifiedConfig.js';
+import { serialize } from '../jsonSerializer.js';
 
 export function writeJsonFile(filePath, data) {
   if (isUnifiedPath(filePath)) {
@@ -17,10 +18,15 @@ export function writeJsonFile(filePath, data) {
       console.error(`❌ writeJsonFile: Tentativa de salvar dados nulos em ${filePath}`);
       return false;
     }
-    const jsonString = JSON.stringify(data, null, 2);
+    // Serializa uma única vez via módulo centralizado
+    const result = serialize(data);
+    if (!result.ok) {
+      console.error(`❌ writeJsonFile: Dados não serializáveis para ${filePath}:`, result.error);
+      return false;
+    }
     ensureDirectoryExists(pathz.dirname(filePath));
     const tempPath = filePath + '.tmp';
-    fs.writeFileSync(tempPath, jsonString, 'utf-8');
+    fs.writeFileSync(tempPath, result.json, 'utf-8');
     fs.renameSync(tempPath, filePath);
     return true;
   } catch (error) {

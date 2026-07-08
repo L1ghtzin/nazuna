@@ -16,7 +16,10 @@ export function memoize(fn, maxCacheSize = 100, ttl = 0) {
   let accessOrder = [];
 
   return function(...args) {
-    const key = JSON.stringify(args);
+    // Otimização: para args primitivos, evita JSON.stringify
+    const key = args.length === 1 && typeof args[0] !== 'object'
+      ? String(args[0])
+      : JSON.stringify(args);
     
     // Verifica se está no cache e não expirou
     if (cache.has(key)) {

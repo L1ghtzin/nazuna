@@ -1,6 +1,7 @@
 import fsPromises from 'fs/promises';
 import pathz from 'path';
 import { isUnifiedPath, setUnifiedValueAsync } from './database/unifiedConfig.js';
+import { serialize } from './jsonSerializer.js';
 
 /**
  * Versão assíncrona do writeJsonFile - não bloqueia o event loop
@@ -24,39 +25,16 @@ export const writeJsonFileAsync = async (filePath, data) => {
     // A serialização (stringify) DEVE ocorrer após os awaits anteriores.
     // Isso garante que capturamos o estado mais recente do objeto (que pode
     // ter sido mutado de forma síncrona enquanto a thread estava pausada no mkdir).
-    let jsonString;
-    try {
-      jsonString = JSON.stringify(data, null, 2);
-    } catch (stringifyError) {
-      console.error(`❌ writeJsonFileAsync: Dados não serializáveis para ${filePath}:`, stringifyError.message);
+    // Serializa uma única vez — sem double-parse para validação.
+    const result = serialize(data);
+    if (!result.ok) {
+      console.error(`❌ writeJsonFileAsync: Dados não serializáveis para ${filePath}:`, result.error);
       return false;
     }
     
-    // Valida JSON gerado
-    try {
-      JSON.parse(jsonString);
-    } catch (validateError) {
-      console.error(`❌ writeJsonFileAsync: JSON inválido gerado para ${filePath}`);
-      return false;
-    }
-    
-    // Escreve em arquivo temporário primeiro (operação atômica)
+    // Escreve em arquivo temporário e move (operação atômica)
     tempPath = `${filePath}.${Date.now()}.${Math.random().toString(36).substring(2, 7)}.tmp`;
-    await fsPromises.writeFile(tempPath, jsonString, 'utf-8');
-    
-    // Verifica integridade
-    try {
-      const writtenContent = await fsPromises.readFile(tempPath, 'utf-8');
-      JSON.parse(writtenContent);
-    } catch (verifyError) {
-      console.error(`❌ writeJsonFileAsync: Verificação falhou para ${filePath}`);
-      try { 
-        await fsPromises.unlink(tempPath); 
-      } catch (e) { 
-        if (e.code !== 'ENOENT') console.error('Error cleaning up temp file:', e); 
-      }
-      return false;
-    }
+    await fsPromises.writeFile(tempPath, result.json, 'utf-8');
     
     // Move arquivo temporário para destino (atômico)
     await fsPromises.rename(tempPath, filePath);

@@ -4,6 +4,7 @@ import { fileURLToPath } from 'url';
 import { lidCache } from './lidCache.js';
 import { toLID } from './toLID.js';
 import { isUnifiedPath, getUnifiedValue, setUnifiedValue, loadUnifiedSettings } from './database/unifiedConfig.js';
+import { serialize } from './jsonSerializer.js';
 
 // Inicializa o caminho do cache
 function initJidLidCache(cacheFilePath) {
@@ -579,16 +580,16 @@ const loadJsonFile = (path, defaultValue = {}, useCache = false) => {
       return getUnifiedValue(path, defaultValue);
     }
 
-    // Verifica dados pendentes (debouncedSaveJson)
+    // Verifica dados pendentes (debouncedSaveJson) — pendingData agora armazena objetos clonados
     if (pendingData.has(path)) {
-      try {
-        const data = JSON.parse(pendingData.get(path));
+      const pendingObj = pendingData.get(path);
+      if (pendingObj !== undefined && pendingObj !== null) {
+        // Clona para evitar que o caller modifique os dados pendentes de salvamento
+        const clonedResult = structuredClone(pendingObj);
         if (useCache) {
-          jsonFileCache.set(path, { data, timestamp: Date.now() });
+          jsonFileCache.set(path, { data: clonedResult, timestamp: Date.now() });
         }
-        return data;
-      } catch (e) {
-        console.error(`Erro ao parsear pendingData para ${path}:`, e);
+        return clonedResult;
       }
     }
 
@@ -733,42 +734,47 @@ function sanitizeJsonString(str) {
 }
 
 /**
- * Valida e corrige estrutura de dados comum
+ * Valida e corrige estrutura de dados comum.
+ * Retorna { data, repaired } para evitar comparação O(n) via JSON.stringify.
  */
 function validateAndRepairData(data, expectedStructure) {
   if (data === null || data === undefined) {
-    return expectedStructure;
+    return { data: expectedStructure, repaired: data !== expectedStructure };
   }
   
   if (typeof expectedStructure !== 'object' || expectedStructure === null) {
-    return data;
+    return { data, repaired: false };
   }
   
   // Se data não é objeto, retorna estrutura esperada
   if (typeof data !== 'object') {
-    return expectedStructure;
+    return { data: expectedStructure, repaired: true };
   }
   
   const result = Array.isArray(expectedStructure) ? [] : {};
+  let repaired = false;
   
   // Copia dados existentes
   if (Array.isArray(expectedStructure)) {
     if (Array.isArray(data)) {
-      return data;
+      return { data, repaired: false };
     }
-    return expectedStructure;
+    return { data: expectedStructure, repaired: true };
   }
   
   // Para objetos, garante que todas as chaves esperadas existam
   for (const key in expectedStructure) {
     if (data.hasOwnProperty(key)) {
       if (typeof expectedStructure[key] === 'object' && expectedStructure[key] !== null && !Array.isArray(expectedStructure[key])) {
-        result[key] = validateAndRepairData(data[key], expectedStructure[key]);
+        const nested = validateAndRepairData(data[key], expectedStructure[key]);
+        result[key] = nested.data;
+        if (nested.repaired) repaired = true;
       } else {
         result[key] = data[key];
       }
     } else {
       result[key] = expectedStructure[key];
+      repaired = true;
     }
   }
   
@@ -779,7 +785,7 @@ function validateAndRepairData(data, expectedStructure) {
     }
   }
   
-  return result;
+  return { data: result, repaired };
 }
 
 const pendingData = new Map();
@@ -793,11 +799,12 @@ function loadJsonFileSafe(filePath, defaultValue = {}, expectedStructure = null)
   let recovered = false;
   
   try {
+    // pendingData agora armazena objetos clonados (sem necessidade de JSON.parse)
     if (pendingData.has(filePath)) {
-      try {
-        data = JSON.parse(pendingData.get(filePath));
-      } catch (e) {
-        console.error(`Erro ao fazer parse do pendingData de ${filePath}`, e);
+      const pendingObj = pendingData.get(filePath);
+      if (pendingObj !== undefined && pendingObj !== null) {
+        // Clona para evitar race condition de referências (caller modificar o cache pendente)
+        data = structuredClone(pendingObj);
       }
     }
 
@@ -848,11 +855,11 @@ function loadJsonFileSafe(filePath, defaultValue = {}, expectedStructure = null)
     
     } // Fecha bloco if (!data)
     
-    // Valida e repara estrutura se especificada
+    // Valida e repara estrutura se especificada (sem comparação O(n) via stringify)
     if (expectedStructure && data) {
-      const repairedData = validateAndRepairData(data, expectedStructure);
-      if (JSON.stringify(repairedData) !== JSON.stringify(data)) {
-        data = repairedData;
+      const repairResult = validateAndRepairData(data, expectedStructure);
+      if (repairResult.repaired) {
+        data = repairResult.data;
         recovered = true;
       }
     }
@@ -887,20 +894,10 @@ function saveJsonFileSafe(filePath, data, createBackupFile = true) {
       return false;
     }
     
-    // Testa se dados são serializáveis
-    let jsonString;
-    try {
-      jsonString = JSON.stringify(data, null, 2);
-    } catch (stringifyError) {
-      console.error(`❌ Dados não serializáveis para ${filePath}:`, stringifyError.message);
-      return false;
-    }
-    
-    // Valida JSON gerado
-    try {
-      JSON.parse(jsonString);
-    } catch (validateError) {
-      console.error(`❌ JSON gerado é inválido para ${filePath}`);
+    // Serializa uma única vez (sem double-parse para validação)
+    const result = serialize(data);
+    if (!result.ok) {
+      console.error(`❌ Dados não serializáveis para ${filePath}:`, result.error);
       return false;
     }
     
@@ -915,21 +912,9 @@ function saveJsonFileSafe(filePath, data, createBackupFile = true) {
       fs.mkdirSync(dirPath, { recursive: true });
     }
     
-    // Escreve em arquivo temporário primeiro
+    // Escreve em arquivo temporário e move (operação atômica)
     const tempPath = filePath + '.tmp';
-    fs.writeFileSync(tempPath, jsonString, 'utf-8');
-    
-    // Verifica se arquivo temporário foi escrito corretamente
-    const writtenContent = fs.readFileSync(tempPath, 'utf-8');
-    try {
-      JSON.parse(writtenContent);
-    } catch (verifyError) {
-      console.error(`❌ Verificação falhou para ${filePath}, abortando`);
-      fs.unlinkSync(tempPath);
-      return false;
-    }
-    
-    // Move arquivo temporário para destino final (operação atômica)
+    fs.writeFileSync(tempPath, result.json, 'utf-8');
     fs.renameSync(tempPath, filePath);
     
     return true;
@@ -956,19 +941,15 @@ async function saveJsonFileAsync(filePath, data, createBackupFile = true) {
   try {
     if (data === undefined) return false;
     
-    let jsonString;
-    try {
-      jsonString = JSON.stringify(data, null, 2);
-      JSON.parse(jsonString); // Validate
-    } catch (stringifyError) {
-      return false;
-    }
+    // Serializa uma única vez (sem double-parse)
+    const result = serialize(data);
+    if (!result.ok) return false;
     
     if (createBackupFile && fs.existsSync(filePath)) {
       createBackup(filePath);
     }
     
-    await fs.promises.writeFile(filePath, jsonString, 'utf-8');
+    await fs.promises.writeFile(filePath, result.json, 'utf-8');
     return true;
   } catch (error) {
     console.error(`❌ Erro ao salvar async ${filePath}:`, error.message);
@@ -985,8 +966,12 @@ function debouncedSaveJson(filePath, data, delayMs = 3000) {
     return;
   }
 
-  // Atualiza a memória instantaneamente para quem ler depois
-  pendingData.set(filePath, JSON.stringify(data, null, 2));
+  // Deep-clone defensivo via structuredClone (mais rápido que stringify para clone)
+  // e serializa só no momento do flush, evitando bloquear o event loop agora
+  const clonedData = structuredClone(data);
+
+  // Armazena o clone em vez da string serializada
+  pendingData.set(filePath, clonedData);
 
   if (saveTimers.has(filePath)) {
     clearTimeout(saveTimers.get(filePath));
@@ -996,8 +981,13 @@ function debouncedSaveJson(filePath, data, delayMs = 3000) {
     try {
       const dataToSave = pendingData.get(filePath);
       if (dataToSave) {
-        // Usa writeFile async com os dados em string, muito mais rápido
-        await fs.promises.writeFile(filePath, dataToSave, 'utf-8');
+        // Serializa apenas no momento do flush (lazy serialization)
+        const result = serialize(dataToSave);
+        if (result.ok) {
+          await fs.promises.writeFile(filePath, result.json, 'utf-8');
+        } else {
+          console.error(`❌ Erro ao serializar debounce de ${filePath}:`, result.error);
+        }
       }
       pendingData.delete(filePath);
       saveTimers.delete(filePath);
@@ -1013,9 +1003,15 @@ function debouncedSaveJson(filePath, data, delayMs = 3000) {
  * Força salvar todos os debounces pendentes (útil no exit)
  */
 function flushAllDebouncedSaves() {
-  for (const [filePath, dataStr] of pendingData.entries()) {
+  for (const [filePath, dataObj] of pendingData.entries()) {
     try {
-      fs.writeFileSync(filePath, dataStr, 'utf-8');
+      // pendingData agora armazena objetos — serializa no flush
+      const result = serialize(dataObj);
+      if (result.ok) {
+        fs.writeFileSync(filePath, result.json, 'utf-8');
+      } else {
+        console.error(`Erro ao serializar flush de ${filePath}:`, result.error);
+      }
     } catch (e) {
       console.error(`Erro no flush final de ${filePath}`, e);
     }
