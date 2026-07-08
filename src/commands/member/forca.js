@@ -49,19 +49,19 @@ export default {
 
     if (!global.forcaGames) global.forcaGames = {};
     const gameKey = isGroup ? from : sender;
+    const game = global.forcaGames[gameKey];
 
-    if (args[0] === 'desistir' && global.forcaGames[gameKey]) {
-      const palavra = global.forcaGames[gameKey].palavra;
+    if (args[0] === 'desistir' && game) {
+      const palavra = game.palavra;
       delete global.forcaGames[gameKey];
       return reply(MESSAGES.member.forca.surrender(palavra));
     }
 
-    if (args[0] === 'dica' && global.forcaGames[gameKey]) {
+    if (args[0] === 'dica' && game) {
       return reply(MESSAGES.member.forca.hint(desenhoForca[game.erros], game.progresso.join(' '), game.dica, game.letrasErradas.join(', '), game.erros, prefix));
     }
 
-    if (global.forcaGames[gameKey] && args.length > 0) {
-      const game = global.forcaGames[gameKey];
+    if (game && args.length > 0) {
       const chute = normalizar(args.join('').toLowerCase());
       
       if (chute.length > 1) {
@@ -105,7 +105,7 @@ export default {
       }
     }
 
-    if (global.forcaGames[gameKey]) {
+    if (game) {
       return reply(MESSAGES.member.forca.gameStatus(desenhoForca[game.erros], game.progresso.join(' '), prefix));
     }
 
