@@ -9,11 +9,11 @@ const __dirname = path.dirname(__filename);
 export default {
   name: "interacao",
   description: "Comandos de interação (brincadeiras) entre os membros",
-  commands: ["chute", "chutar", "tapa", "soco", "socar", "beijo", "beijar", "beijob", "beijarb", "abraco", "abracar", "mata", "matar", "tapar", "goza", "gozar", "mamar", "mamada", "cafune", "morder", "mordida", "lamber", "lambida", "explodir", "sexo", "tomate", "fonfon", "piupiu", "pegarpau", "apalpar"],
+  commands: ["chute", "chutar", "tapa", "soco", "socar", "beijo", "beijar", "beijob", "beijarb", "abraco", "abracar", "mata", "matar", "tapar", "goza", "gozar", "mamar", "mamada", "cafune", "morder", "mordida", "lamber", "lambida", "explodir", "sexo", "tomate", "fonfon", "piupiu", "pegarpau", "apalpar", "comer"],
   usage: `${global.prefix}chute @usuário`,
   handle: async ({  bot, reply, isGroup, command, menc_os2, prefix, info, getUserName, from, isModoLite, isModoBn , MESSAGES }) => {
     try {
-      const comandosImpróprios = ['sexo', 'surubao', 'goza', 'gozar', 'mamar', 'mamada', 'beijob', 'beijarb', 'tapar'];
+      const comandosImpróprios = ['sexo', 'surubao', 'goza', 'gozar', 'mamar', 'mamada', 'beijob', 'beijarb', 'tapar', 'comer'];
       
       if (isModoLite && comandosImpróprios.includes(command)) {
         return bot.react('❌', { key: info.key });
