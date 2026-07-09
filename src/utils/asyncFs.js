@@ -1,6 +1,6 @@
 import fsPromises from 'fs/promises';
 import pathz from 'path';
-import { isUnifiedPath, setUnifiedValueAsync } from './database/unifiedConfig.js';
+import { isUnifiedPath, setUnifiedValueAsync, getUnifiedValue } from './database/unifiedConfig.js';
 import { serialize } from './jsonSerializer.js';
 
 /**
@@ -59,6 +59,9 @@ export const writeJsonFileAsync = async (filePath, data) => {
  * @returns {Promise<object>}
  */
 export const readJsonFileAsync = async (filePath, defaultValue = {}) => {
+  if (isUnifiedPath(filePath)) {
+    return getUnifiedValue(filePath, defaultValue);
+  }
   try {
     const content = await fsPromises.readFile(filePath, 'utf-8');
     return JSON.parse(content);
