@@ -38,7 +38,7 @@ export default {
         antipvData.mode = 'off';
       } else if (arg0 === '') {
         const isCurrentlyActive = antipvData.mode && antipvData.mode !== 'off';
-        if (isCurrentlyActive && antipvData.mode === cmd) {
+        if (isCurrentlyActive) {
           antipvData.mode = 'off';
         } else {
           antipvData.mode = cmd;
