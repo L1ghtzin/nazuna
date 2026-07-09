@@ -25,7 +25,7 @@ export default {
     // --- ANTIPV ---
     if (['antipv', 'antipv2', 'antipv3', 'antipv4'].includes(cmd)) {
       const dbPath = pathz.join(DATABASE_DIR, 'antipv.json');
-      let antipvData = await readJsonFileAsync(dbPath, { mode: null, message: MESSAGES.permission.groupOnly });
+      let antipvData = await readJsonFileAsync(dbPath, { mode: 'off', message: MESSAGES.permission.groupOnly });
 
       const arg0 = args[0] ? args[0].toLowerCase() : '';
       let statusChanged = true;
@@ -34,20 +34,28 @@ export default {
         if (antipvData.mode === cmd) statusChanged = false;
         antipvData.mode = cmd;
       } else if (arg0 === '0' || arg0 === 'off') {
-        if (antipvData.mode === null) statusChanged = false;
-        antipvData.mode = null;
+        if (antipvData.mode === 'off' || antipvData.mode === null) statusChanged = false;
+        antipvData.mode = 'off';
+      } else if (arg0 === '') {
+        const isCurrentlyActive = antipvData.mode && antipvData.mode !== 'off';
+        if (isCurrentlyActive && antipvData.mode === cmd) {
+          antipvData.mode = 'off';
+        } else {
+          antipvData.mode = cmd;
+        }
       } else {
-        antipvData.mode = antipvData.mode === cmd ? null : cmd;
+        return reply(`⚠️ Argumento inválido. Use:\n- *${prefix}${cmd} on* para ativar\n- *${prefix}${cmd} off* para desativar\n- *${prefix}${cmd}* para alternar`);
       }
       
+      const isCurrentlyActive = antipvData.mode && antipvData.mode !== 'off';
       if (!statusChanged) {
-        const currentStatus = antipvData.mode ? 'ATIVADO' : 'DESATIVADO';
+        const currentStatus = isCurrentlyActive ? 'ATIVADO' : 'DESATIVADO';
         return reply(MESSAGES.owner.bot_config.antipv.statusUnchanged(cmd, currentStatus));
       }
 
       await writeJsonFileAsync(dbPath, antipvData);
 
-      const status = antipvData.mode ? 'ativado' : 'desativado';
+      const status = isCurrentlyActive ? 'ativado' : 'desativado';
       let infoMsg = 'O bot responde normalmente no privado.';
       if (antipvData.mode === 'antipv') infoMsg = 'O bot agora ignora mensagens no privado, bloqueia e envia o aviso.';
       if (antipvData.mode === 'antipv2') infoMsg = 'O bot responde apenas a comandos no privado.';
@@ -60,7 +68,7 @@ export default {
     if (cmd === 'antipvmessage' || cmd === 'antipvmsg') {
       if (!q) return reply(MESSAGES.owner.bot_config.antipv.missingMessage(prefix));
       const dbPath = pathz.join(DATABASE_DIR, 'antipv.json');
-      let antipvData = await readJsonFileAsync(dbPath, { mode: null, message: MESSAGES.permission.groupOnly });
+      let antipvData = await readJsonFileAsync(dbPath, { mode: 'off', message: MESSAGES.permission.groupOnly });
       
       antipvData.message = q.trim();
       await writeJsonFileAsync(dbPath, antipvData);

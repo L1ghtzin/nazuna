@@ -16,8 +16,8 @@ import { MESSAGES } from '../utils/messages.js';
 export async function handleAntiPV(bot, sender, command, isGroup, isCmd, isOwner, isPremium, antipvData, reply) {
   // Se for grupo, AntiPV não se aplica
   if (isGroup) return false;
-  // Se não houver configuração ou modo, não aplica
-  if (!antipvData || !antipvData.mode) return false;
+  // Se não houver configuração ou modo (ou se estiver desativado), não aplica
+  if (!antipvData || !antipvData.mode || antipvData.mode === 'off') return false;
 
   // Exceção para comandos de transmissão que devem funcionar no PV e botões/tickets
   const tm2Commands = ['inscrevertm', 'inscrevertm2', 'desinscrever', 'desinscrevertm', 'cancelartm'];
