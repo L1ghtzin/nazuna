@@ -35,19 +35,17 @@ export default {
       let apiUrl;
       let usedSystemZone = false;
 
-      // SystemZone é a primária para o brat estático (não suporta animação)
-      if (!isAnimated) {
-        try {
-          const response = await axios.get(`https://systemzone.store/api/brat?text=${encodeURIComponent(q)}`);
-          if (response.data && response.data.status && response.data.imagem) {
-            apiUrl = response.data.imagem;
-            usedSystemZone = true;
-          } else {
-            throw new Error('Resposta inválida do SystemZone');
-          }
-        } catch (e) {
-          console.error('Erro na API primária do SystemZone, usando fallback Siputzx:', e.message);
+      // Tenta a API primária (SystemZone)
+      try {
+        const response = await axios.get(`https://systemzone.store/api/brat?text=${encodeURIComponent(q)}${isAnimated ? '&animado=true' : ''}`);
+        if (response.data && response.data.status && response.data.imagem) {
+          apiUrl = response.data.imagem;
+          usedSystemZone = true;
+        } else {
+          throw new Error('Resposta inválida do SystemZone');
         }
+      } catch (e) {
+        console.error('Erro na API primária do SystemZone, usando fallback Siputzx:', e.message);
       }
 
       // Se falhou no SystemZone ou se for bratvid (animado)
