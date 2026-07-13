@@ -58,7 +58,7 @@ export default {
           sticker: { url: apiUrl }, 
           packname: nomebot, 
           author: pushname,
-          type: isAnimated ? 'video' : 'image'
+          type: (isAnimated && !usedSystemZone) ? 'video' : 'image'
         });
       } catch (e) {
         console.error('Erro no comando brat:', e);
