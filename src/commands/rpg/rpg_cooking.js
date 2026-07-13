@@ -15,7 +15,7 @@ import {
 export default {
     name: "rpg_cooking",
     description: "Sistema de culinária e alimentação do RPG",
-    commands: ["receitas", "cozinhar", "cook", "ingredientes", "comer", "eat", "vendercomida"],
+    commands: ["receitas", "cozinhar", "cook", "ingredientes", "comercomida", "eat", "vendercomida"],
     handle: async ({ 
     reply, isGroup, groupData, sender, prefix, command, args,
     MESSAGES
@@ -101,7 +101,7 @@ export default {
             return reply(text);
         }
 
-        if (sub === 'comer' || sub === 'eat') {
+        if (sub === 'comercomida' || sub === 'eat') {
             const foodKey = (args[0] || '').toLowerCase();
             me.cookedFood = me.cookedFood || {};
 
