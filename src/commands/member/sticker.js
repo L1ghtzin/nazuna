@@ -29,9 +29,32 @@ export default {
       if (!q) return reply(MESSAGES.error.missing('um texto'));
       const isAnimated = cmd === 'bratvid';
       const delay = 500;
-      const apiUrl = `https://api.siputzx.my.id/api/m/brat?text=${encodeURIComponent(q)}&isAnimated=${isAnimated}&delay=${delay}`;
       
       await reply(MESSAGES.general.wait);
+      
+      let apiUrl;
+      let usedSystemZone = false;
+
+      // SystemZone é a primária para o brat estático (não suporta animação)
+      if (!isAnimated) {
+        try {
+          const response = await axios.get(`https://systemzone.store/api/brat?text=${encodeURIComponent(q)}`);
+          if (response.data && response.data.status && response.data.imagem) {
+            apiUrl = response.data.imagem;
+            usedSystemZone = true;
+          } else {
+            throw new Error('Resposta inválida do SystemZone');
+          }
+        } catch (e) {
+          console.error('Erro na API primária do SystemZone, usando fallback Siputzx:', e.message);
+        }
+      }
+
+      // Se falhou no SystemZone ou se for bratvid (animado)
+      if (!apiUrl) {
+        apiUrl = `https://api.siputzx.my.id/api/m/brat?text=${encodeURIComponent(q)}&isAnimated=${isAnimated}&delay=${delay}`;
+      }
+
       try {
         return await sendSticker(bot, from, { 
           sticker: { url: apiUrl }, 
@@ -41,6 +64,22 @@ export default {
         });
       } catch (e) {
         console.error('Erro no comando brat:', e);
+        
+        // Se usamos SystemZone e deu erro ao enviar, tentamos a Siputzx como último recurso
+        if (usedSystemZone) {
+          try {
+            console.log('Tentando novamente com fallback Siputzx...');
+            const fallbackUrl = `https://api.siputzx.my.id/api/m/brat?text=${encodeURIComponent(q)}&isAnimated=${isAnimated}&delay=${delay}`;
+            return await sendSticker(bot, from, { 
+              sticker: { url: fallbackUrl }, 
+              packname: nomebot, 
+              author: pushname,
+              type: isAnimated ? 'video' : 'image'
+            });
+          } catch (fallbackErr) {
+            console.error('Erro no fallback Siputzx:', fallbackErr);
+          }
+        }
         return reply(MESSAGES.error.general);
       }
     }
