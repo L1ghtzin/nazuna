@@ -18,7 +18,9 @@ export default {
     reply, isGroup, groupData, sender, prefix, command, args,
     MESSAGES
   }) => {
-        if (!isGroup || !groupData.modorpg) return;
+        if (!isGroup || !groupData.modorpg) {
+            return reply(MESSAGES.rpg.disabled(prefix));
+        }
 
         const econ = loadEconomy();
         ensureEconomyDefaults(econ);

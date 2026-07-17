@@ -9,10 +9,12 @@ export default {
     description: "Rankings do RPG",
     commands: ["maiores", "toprich", "topriqueza", "toprpg"],
     handle: async ({ 
-    reply, isGroup, groupData, command,
+    reply, isGroup, groupData, command, prefix,
     MESSAGES
   }) => {
-        if (isGroup && !groupData.modorpg) return;
+        if (isGroup && !groupData.modorpg) {
+            return reply(MESSAGES.rpg.disabled(prefix));
+        }
 
         const econ = loadEconomy();
         ensureEconomyDefaults(econ);

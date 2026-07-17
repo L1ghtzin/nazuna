@@ -19,7 +19,9 @@ export default {
     reply, isGroup, groupData, sender, prefix, command, args, q, pushname, menc_jid2,
     MESSAGES, bot, getLidFromJidCached, isValidJid, parseAmount
   }) => {
-        if (!isGroup || !groupData.modorpg) return;
+        if (!isGroup || !groupData.modorpg) {
+            return reply(MESSAGES.rpg.disabled(prefix));
+        }
 
         let econ = loadEconomy();
         ensureEconomyDefaults(econ);
