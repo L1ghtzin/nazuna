@@ -31,6 +31,18 @@ export const adminMessages = {
     viewCurrent: (msg) => `📝 *Mensagem atual do BAM:*\n\n${msg}`,
     resetSuccess: "🔄 Mensagem do BAM resetada para o padrão."
   },
+  figuban: {
+    configured: "✅ *Figurinha de Ban Configurada!* 🚨\n\nEsta figurinha agora é a figurinha oficial de banimento do grupo. Sempre que um administrador enviá-la marcando alguém ou respondendo a uma mensagem de alguém, a pessoa será banida.",
+    noSticker: (prefix) => `❌ Nenhuma figurinha de ban configurada neste grupo ainda! Responda a uma figurinha com *${prefix}figuban* para configurar.`,
+    activated: "✅ *FiguBan Ativado!*",
+    deactivated: "❌ *FiguBan Desativado!*",
+    status: (status, hasSticker, prefix) => `🛡️ *SISTEMA FIGUBAN (Sticker Ban)* 🛡️\n\n│ 📊 Status: *${status}*\n│ 🖼️ Figurinha: *${hasSticker}*\n\n💡 *Como usar:*\n• Configure uma figurinha respondendo a ela com *${prefix}figuban*.\n• Ative/Desative com *${prefix}figuban on* ou *${prefix}figuban off*.\n• Para banir alguém, envie essa figurinha respondendo à mensagem da pessoa ou marcando ela.`,
+    cantBanOwner: "❌ Não posso banir o dono do bot!",
+    cantBanSelf: "❌ Não posso me banir!",
+    cantBanAdmin: "❌ Não posso banir um administrador do grupo!",
+    botNotAdmin: "❌ Não consigo banir porque não sou administrador do grupo!",
+    bannedMsg: (admin, target) => `🚨 *FIGUBAN ATIVADO!* 🚨\n\nO administrador @${admin} removeu o usuário @${target} do grupo usando a figurinha do ban!`
+  },
   autohorarios: {
     helpText: (prefix) => `┏━━━━━━━━━━━━━━━━━━━━━━━━┓\n┃   🤖 *AUTO HORÁRIOS*     ┃\n┗━━━━━━━━━━━━━━━━━━━━━━━━┛\n\n📋 *Comandos disponíveis:*\n\n🟢 \`${prefix}autohorarios on\`\n   ▸ Liga o envio automático\n\n🔴 \`${prefix}autohorarios off\`\n   ▸ Desliga o envio automático\n\n📊 \`${prefix}autohorarios status\`\n   ▸ Verifica status atual\n\n🔗 \`${prefix}autohorarios link [URL]\`\n   ▸ Define link de apostas\n   ▸ Sem URL remove o link\n\n⏰ *Funcionamento:*\n• Envia horários a cada hora\n• Apenas em grupos\n• Inclui link se configurado\n\n🔒 *Restrito a administradores*`,
     activated: '✅ *Auto horários ativado!*\n\n📤 Os horários pagantes serão enviados automaticamente a cada hora.\n\n⚡ O primeiro envio será na próxima hora cheia.',

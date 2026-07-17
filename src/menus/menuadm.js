@@ -27,6 +27,7 @@ ${middleBorder}${menuItemIcon}${prefix}ban
 ${middleBorder}${menuItemIcon}${prefix}ban2
 ${middleBorder}${menuItemIcon}${prefix}bam (ban fake)
 ${middleBorder}${menuItemIcon}${prefix}setbammsg
+${middleBorder}${menuItemIcon}${prefix}figuban (sticker ban)
 ${middleBorder}${menuItemIcon}${prefix}promover
 ${middleBorder}${menuItemIcon}${prefix}rebaixar
 ${middleBorder}${menuItemIcon}${prefix}mute

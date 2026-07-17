@@ -3,12 +3,13 @@ import { writeJsonFileAsync } from '../../utils/asyncFs.js';
 
 export default {
   name: "advanced_ban",
-  description: "Sistema de Banimento Fake (BAM)",
-  commands: ["ban2", "banir2", "bam", "banfake", "setbammsg", "editarbam", "verbammsg", "verbam", "resetbammsg", "resetarbam"],
+  description: "Sistema de Banimento Real, Fake (BAM) e Sticker Ban (FiguBan)",
+  commands: ["ban2", "banir2", "bam", "banfake", "setbammsg", "editarbam", "verbammsg", "verbam", "resetbammsg", "resetarbam", "figuban"],
   handle: async ({ 
     bot, from, info, command, reply, isGroup, menc_os2,
     groupData, DATABASE_DIR, nomedono, q, prefix, MESSAGES,
-    isBotAdmin, idsMatch, ownerJid, lidowner, botNumber, botNumberLid, idInArray, groupAdmins, AllgroupMembers
+    isBotAdmin, idsMatch, ownerJid, lidowner, botNumber, botNumberLid, idInArray, groupAdmins, AllgroupMembers,
+    isGroupAdmin, isOwner, quotedMessageContent
   }) => {
     const cmd = command.toLowerCase();
     const groupFilePath = pathz.join(DATABASE_DIR, `grupos/${from}.json`);
@@ -90,6 +91,45 @@ export default {
       delete groupData.bamMessage;
       await writeJsonFileAsync(groupFilePath, groupData);
       return reply(MESSAGES.admin.bam.resetSuccess);
+    }
+
+    // --- FIGUBAN ---
+    if (cmd === 'figuban') {
+      if (!isGroup) return reply(MESSAGES.permission.groupOnly);
+      if (!isGroupAdmin && !isOwner) return reply(MESSAGES.permission.userAdminOnly);
+
+      const sub = q?.trim().toLowerCase() || '';
+
+      if (quotedMessageContent && quotedMessageContent.stickerMessage) {
+        const sha = Buffer.from(quotedMessageContent.stickerMessage.fileSha256).toString('hex');
+        groupData.figuban = {
+          enabled: true,
+          stickerSha: sha
+        };
+        await writeJsonFileAsync(groupFilePath, groupData);
+        return reply(MESSAGES.admin.figuban.configured);
+      }
+
+      if (sub === 'on') {
+        if (!groupData.figuban || !groupData.figuban.stickerSha) {
+          return reply(MESSAGES.admin.figuban.noSticker(prefix));
+        }
+        groupData.figuban.enabled = true;
+        await writeJsonFileAsync(groupFilePath, groupData);
+        return reply(MESSAGES.admin.figuban.activated);
+      }
+
+      if (sub === 'off') {
+        if (!groupData.figuban) groupData.figuban = {};
+        groupData.figuban.enabled = false;
+        await writeJsonFileAsync(groupFilePath, groupData);
+        return reply(MESSAGES.admin.figuban.deactivated);
+      }
+
+      // Mostrar status
+      const status = groupData.figuban?.enabled ? '✅ Ativado' : '❌ Desativado';
+      const hasSticker = groupData.figuban?.stickerSha ? 'Configurada' : 'Não configurada';
+      return reply(MESSAGES.admin.figuban.status(status, hasSticker, prefix));
     }
   }
 };

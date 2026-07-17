@@ -12,12 +12,76 @@ export async function processSecurity({
   isGroup,
   isGroupAdmin,
   isBotAdmin,
+  isOwner,
+  type,
   antitoxic,
   antipalavra,
   groupData,
   groupFile,
-  MESSAGES
+  MESSAGES,
+  groupAdmins,
+  ownerJid,
+  lidowner,
+  botNumber,
+  botNumberLid
 }) {
+  // FiguBan (Sticker Ban)
+  if (isGroup && type === 'stickerMessage' && groupData?.figuban?.enabled && groupData?.figuban?.stickerSha) {
+    if (isGroupAdmin || isOwner) {
+      const stickerSha = info.message.stickerMessage?.fileSha256
+        ? Buffer.from(info.message.stickerMessage.fileSha256).toString('hex')
+        : null;
+
+      if (stickerSha === groupData.figuban.stickerSha) {
+        const contextInfo = info.message.stickerMessage.contextInfo;
+        let target = null;
+
+        if (contextInfo?.participant) {
+          target = contextInfo.participant;
+        } else if (contextInfo?.mentionedJid?.length > 0) {
+          target = contextInfo.mentionedJid[0];
+        }
+
+        if (target) {
+          const isTargetOwner = target === ownerJid || (lidowner && target === lidowner);
+          const isTargetBot = target === botNumber || (botNumberLid && target === botNumberLid);
+          const isTargetAdmin = groupAdmins?.includes(target);
+
+          if (isTargetOwner) {
+            await bot.sendMessage(from, { text: MESSAGES.admin.figuban.cantBanOwner }, { quoted: info });
+            return true;
+          }
+          if (isTargetBot) {
+            await bot.sendMessage(from, { text: MESSAGES.admin.figuban.cantBanSelf }, { quoted: info });
+            return true;
+          }
+          if (isTargetAdmin) {
+            await bot.sendMessage(from, { text: MESSAGES.admin.figuban.cantBanAdmin }, { quoted: info });
+            return true;
+          }
+
+          if (!isBotAdmin) {
+            await bot.sendMessage(from, { text: MESSAGES.admin.figuban.botNotAdmin }, { quoted: info });
+            return true;
+          }
+
+          // Realizar o ban
+          await bot.sendMessage(from, { delete: info.key }).catch(() => {});
+          
+          await bot.groupParticipantsUpdate(from, [target], 'remove').catch(err => {
+            console.error('[FIGUBAN] Erro ao remover usuário:', err.message);
+          });
+
+          await bot.sendMessage(from, {
+            text: MESSAGES.admin.figuban.bannedMsg(sender.split('@')[0], target.split('@')[0]),
+            mentions: [sender, target]
+          });
+
+          return true;
+        }
+      }
+    }
+  }
   // AntiToxic
   if (isGroup && !isGroupAdmin && antitoxic && antitoxic.isEnabled && antitoxic.isEnabled(from) && body) {
     antitoxic.processMessage(from, sender, body).then(toxicResult => {
