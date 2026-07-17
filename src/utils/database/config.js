@@ -5,7 +5,7 @@ import fs from 'fs';
 import pathz from 'path';
 import { PREFIX } from '../../config.js';
 import { ensureDirectoryExists, loadJsonFile, normalizar, getUserName, isUserId, isValidJid, isGroupId, buildUserId, getLidFromJidCached, idsMatch, debouncedSaveJson } from '../helpers.js';
-import { writeJsonFile } from './_core.js';
+import { writeJsonFile, writeJsonFileQueued } from './_core.js';
 import {
   DATABASE_DIR,
   DONO_DIR,
@@ -407,7 +407,7 @@ export const loadGlobalBlacklist = () => {
 export const saveGlobalBlacklist = async data => {
   try {
     ensureDirectoryExists(DONO_DIR);
-    writeJsonFile(GLOBAL_BLACKLIST_FILE, data);
+    await writeJsonFileQueued(GLOBAL_BLACKLIST_FILE, data);
     return true;
   } catch (error) {
     console.error('❌ Erro ao salvar blacklist global:', error);

@@ -5,7 +5,7 @@ import fs from 'fs';
 import pathz from 'path';
 import { ensureDirectoryExists, loadJsonFile } from '../helpers.js';
 import { ECONOMY_FILE, LEVELING_FILE, COMMAND_ALIASES_FILE, CUSTOM_AUTORESPONSES_FILE, CMD_NOT_FOUND_FILE } from '../paths.js';
-import { isUnifiedPath, setUnifiedValue } from './unifiedConfig.js';
+import { isUnifiedPath, setUnifiedValue, setUnifiedValueAsync } from './unifiedConfig.js';
 import { serialize } from '../jsonSerializer.js';
 
 export function writeJsonFile(filePath, data) {
@@ -33,6 +33,51 @@ export function writeJsonFile(filePath, data) {
     console.error(`❌ Erro ao escrever JSON em ${filePath}:`, error.message);
     return false;
   }
+}
+
+// ==================== WRITE QUEUE (Safe Wins) ====================
+// Fila sequencial por arquivo para evitar race conditions em escritas concorrentes.
+const _writeQueues = new Map();
+
+export function writeJsonFileQueued(filePath, data) {
+  if (isUnifiedPath(filePath)) {
+    return setUnifiedValueAsync(filePath, data);
+  }
+
+  const performWrite = async () => {
+    try {
+      if (data === undefined || data === null) {
+        console.error(`❌ writeJsonFileQueued: Tentativa de salvar dados nulos em ${filePath}`);
+        return false;
+      }
+      const result = serialize(data);
+      if (!result.ok) {
+        console.error(`❌ writeJsonFileQueued: Dados não serializáveis para ${filePath}:`, result.error);
+        return false;
+      }
+      ensureDirectoryExists(pathz.dirname(filePath));
+      const tempPath = filePath + '.tmp';
+      await fs.promises.writeFile(tempPath, result.json, 'utf-8');
+      await fs.promises.rename(tempPath, filePath);
+      return true;
+    } catch (error) {
+      console.error(`❌ Erro no writeJsonFileQueued em ${filePath}:`, error.message);
+      return false;
+    }
+  };
+
+  const currentQueue = _writeQueues.get(filePath) || Promise.resolve();
+  const nextQueue = currentQueue.then(performWrite, performWrite);
+  _writeQueues.set(filePath, nextQueue);
+
+  // Limpa referência quando a fila termina para não vazar memória
+  nextQueue.then(() => {
+    if (_writeQueues.get(filePath) === nextQueue) {
+      _writeQueues.delete(filePath);
+    }
+  });
+
+  return nextQueue;
 }
 
 const databaseSelfTests = [{

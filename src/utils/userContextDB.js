@@ -1,36 +1,26 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { writeJsonFileAsync, readJsonFileAsync } from './asyncFs.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Caminho do arquivo de banco de dados
 const DB_PATH = path.join(__dirname, '../../dados/database/userContext.json');
 
-// Função para obter data/hora no fuso horário do Brasil (GMT-3)
 function getBrazilDateTime() {
   const now = new Date();
-  // Converter para horário do Brasil (UTC-3)
   const brazilTime = new Date(now.toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }));
   return brazilTime.toISOString();
 }
 
-/**
- * Classe para gerenciar o contexto de usuários
- * Armazena informações importantes sobre cada usuário para personalizar conversas
- */
 class UserContextDB {
   constructor() {
-    this.data = this.loadDatabase();
-    this.saveQueue = [];
-    this.isSaving = false;
+    this.data = this._loadDatabaseSync();
+    this._saveQueue = Promise.resolve();
   }
 
-  /**
-   * Carrega o banco de dados do arquivo
-   */
-  loadDatabase() {
+  _loadDatabaseSync() {
     try {
       if (fs.existsSync(DB_PATH)) {
         const content = fs.readFileSync(DB_PATH, 'utf-8');
@@ -70,38 +60,21 @@ class UserContextDB {
     }
   }
 
-  /**
-   * Salva o banco de dados no arquivo (com debounce)
-   */
   async saveDatabase() {
-    this.saveQueue.push(Date.now());
-    
-    if (this.isSaving) return;
-    
-    this.isSaving = true;
-    
-    // Aguarda 2 segundos para acumular várias alterações
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    try {
-      const dir = path.dirname(DB_PATH);
-      if (!fs.existsSync(dir)) {
-        fs.mkdirSync(dir, { recursive: true });
+    const performSave = async () => {
+      try {
+        const diskData = await readJsonFileAsync(DB_PATH, {});
+        const merged = { ...diskData, ...this.data };
+        await writeJsonFileAsync(DB_PATH, merged);
+      } catch (error) {
+        console.error('❌ Erro ao salvar contexto de usuários:', error);
       }
-      
-      fs.writeFileSync(DB_PATH, JSON.stringify(this.data, null, 2), 'utf-8');
-      console.log('✅ Contexto de usuários salvo com sucesso');
-    } catch (error) {
-      console.error('❌ Erro ao salvar contexto de usuários:', error);
-    }
-    
-    this.isSaving = false;
-    this.saveQueue = [];
+    };
+
+    this._saveQueue = this._saveQueue.then(performSave, performSave);
+    return this._saveQueue;
   }
 
-  /**
-   * Obtém o contexto completo de um usuário
-   */
   getUserContext(userId) {
     if (!this.data[userId]) {
       this.data[userId] = this.createNewUserContext(userId);
@@ -110,9 +83,6 @@ class UserContextDB {
     return this.data[userId];
   }
 
-  /**
-   * Cria um novo contexto para um usuário
-   */
   createNewUserContext(userId) {
     return {
       userId,
@@ -164,59 +134,49 @@ class UserContextDB {
     };
   }
 
-  /**
-   * Atualiza informações básicas do usuário
-   */
   updateUserInfo(userId, nome = null, apelido = null) {
     const context = this.getUserContext(userId);
-    
+
     if (nome && nome !== context.nome) {
       context.nome = nome;
     }
-    
+
     if (apelido && !context.apelidos.includes(apelido)) {
       context.apelidos.push(apelido);
       if (context.apelidos.length > 5) {
         context.apelidos = context.apelidos.slice(-5);
       }
     }
-    
+
     context.ultima_atualizacao = getBrazilDateTime();
     this.saveDatabase();
   }
 
-  /**
-   * Adiciona uma preferência ou interesse do usuário
-   */
   addUserPreference(userId, tipo, valor) {
     const context = this.getUserContext(userId);
-    
+
     const tipos_validos = ['assuntos_favoritos', 'gostos', 'nao_gostos', 'hobbies'];
-    
+
     if (!tipos_validos.includes(tipo)) {
       console.warn(`Tipo de preferência inválido: ${tipo}`);
       return;
     }
-    
+
     if (!context.preferencias[tipo].includes(valor)) {
       context.preferencias[tipo].push(valor);
-      
-      // Manter apenas os 20 mais recentes
+
       if (context.preferencias[tipo].length > 20) {
         context.preferencias[tipo] = context.preferencias[tipo].slice(-20);
       }
     }
-    
+
     context.ultima_atualizacao = getBrazilDateTime();
     this.saveDatabase();
   }
 
-  /**
-   * Atualiza informações pessoais do usuário
-   */
   updatePersonalInfo(userId, campo, valor) {
     const context = this.getUserContext(userId);
-    
+
     if (context.informacoes_pessoais.hasOwnProperty(campo)) {
       context.informacoes_pessoais[campo] = valor;
       context.ultima_atualizacao = getBrazilDateTime();
@@ -224,59 +184,47 @@ class UserContextDB {
     }
   }
 
-  /**
-   * Adiciona uma nota importante sobre o usuário
-   */
   addImportantNote(userId, nota) {
     const context = this.getUserContext(userId);
-    
+
     const novaNota = {
       texto: nota,
       data: getBrazilDateTime(),
       relevancia: 'alta'
     };
-    
+
     context.notas_importantes.push(novaNota);
-    
-    // Manter apenas as 50 notas mais recentes
+
     if (context.notas_importantes.length > 50) {
       context.notas_importantes = context.notas_importantes.slice(-50);
     }
-    
+
     context.ultima_atualizacao = getBrazilDateTime();
     this.saveDatabase();
   }
 
-  /**
-   * Registra uma interação do usuário
-   */
   registerInteraction(userId, mensagem, tipo = 'afirmacao') {
     const context = this.getUserContext(userId);
-    
-    // Atualizar contadores
+
     context.historico_conversa.total_mensagens++;
     context.historico_conversa.ultima_conversa = getBrazilDateTime();
-    
-    // Atualizar tipo de mensagens
+
     if (context.padroes_comportamento.tipo_mensagens[tipo] !== undefined) {
       context.padroes_comportamento.tipo_mensagens[tipo]++;
     }
-    
-    // Atualizar horário de atividade
+
     const hora = new Date().getHours();
-    context.padroes_comportamento.horarios_ativos[hora] = 
+    context.padroes_comportamento.horarios_ativos[hora] =
       (context.padroes_comportamento.horarios_ativos[hora] || 0) + 1;
-    
-    // Atualizar dia da semana
+
     const dia = new Date().toLocaleDateString('pt-BR', { weekday: 'long' });
-    context.padroes_comportamento.dias_semana_ativos[dia] = 
+    context.padroes_comportamento.dias_semana_ativos[dia] =
       (context.padroes_comportamento.dias_semana_ativos[dia] || 0) + 1;
-    
-    // Calcular frequência de interação
+
     const primeiraConversa = new Date(context.historico_conversa.primeira_conversa);
     const diasDesde = Math.floor((Date.now() - primeiraConversa.getTime()) / (1000 * 60 * 60 * 24));
     const msgPorDia = context.historico_conversa.total_mensagens / Math.max(diasDesde, 1);
-    
+
     if (msgPorDia > 20) {
       context.historico_conversa.frequencia_interacao = 'muito_alta';
     } else if (msgPorDia > 10) {
@@ -288,36 +236,29 @@ class UserContextDB {
     } else {
       context.historico_conversa.frequencia_interacao = 'muito_baixa';
     }
-    
+
     context.ultima_atualizacao = getBrazilDateTime();
     this.saveDatabase();
   }
 
-  /**
-   * Adiciona um tópico recente de conversa
-   */
   addRecentTopic(userId, topico) {
     const context = this.getUserContext(userId);
-    
+
     if (!context.historico_conversa.topicos_recentes.includes(topico)) {
       context.historico_conversa.topicos_recentes.push(topico);
-      
-      // Manter apenas os 10 tópicos mais recentes
+
       if (context.historico_conversa.topicos_recentes.length > 10) {
         context.historico_conversa.topicos_recentes = context.historico_conversa.topicos_recentes.slice(-10);
       }
     }
-    
+
     context.ultima_atualizacao = getBrazilDateTime();
     this.saveDatabase();
   }
 
-  /**
-   * Atualiza o relacionamento com Chainy
-   */
   updateRelationship(userId, campo, valor) {
     const context = this.getUserContext(userId);
-    
+
     if (context.relacionamento_chainy.hasOwnProperty(campo)) {
       context.relacionamento_chainy[campo] = valor;
       context.ultima_atualizacao = getBrazilDateTime();
@@ -325,39 +266,32 @@ class UserContextDB {
     }
   }
 
-  /**
-   * Adiciona uma memória especial
-   */
   addSpecialMemory(userId, memoria) {
     const context = this.getUserContext(userId);
-    
+
     const novaMemoria = {
       texto: memoria,
       data: getBrazilDateTime(),
       importancia: 'alta'
     };
-    
+
     context.relacionamento_chainy.memorias_especiais.push(novaMemoria);
-    
-    // Manter apenas as 30 memórias mais especiais
+
     if (context.relacionamento_chainy.memorias_especiais.length > 30) {
-      context.relacionamento_chainy.memorias_especiais = 
+      context.relacionamento_chainy.memorias_especiais =
         context.relacionamento_chainy.memorias_especiais.slice(-30);
     }
-    
+
     context.ultima_atualizacao = getBrazilDateTime();
     this.saveDatabase();
   }
 
-  /**
-   * Atualiza/edita uma informação existente do usuário
-   */
   updateMemory(userId, tipo, valorAntigo, valorNovo) {
     const context = this.getUserContext(userId);
     let atualizado = false;
-    
+
     const tipoNormalizado = tipo.toLowerCase().trim();
-    
+
     switch (tipoNormalizado) {
       case 'gosto':
       case 'gostos':
@@ -367,7 +301,7 @@ class UserContextDB {
           atualizado = true;
         }
         break;
-        
+
       case 'nao_gosto':
       case 'não_gosto':
       case 'nao_gostos':
@@ -377,7 +311,7 @@ class UserContextDB {
           atualizado = true;
         }
         break;
-        
+
       case 'hobby':
       case 'hobbies':
         const indexHobby = context.preferencias.hobbies.indexOf(valorAntigo);
@@ -386,7 +320,7 @@ class UserContextDB {
           atualizado = true;
         }
         break;
-        
+
       case 'assunto_favorito':
       case 'assuntos_favoritos':
         const indexAssunto = context.preferencias.assuntos_favoritos.indexOf(valorAntigo);
@@ -395,14 +329,14 @@ class UserContextDB {
           atualizado = true;
         }
         break;
-        
+
       case 'nome':
         if (context.nome === valorAntigo) {
           context.nome = valorNovo;
           atualizado = true;
         }
         break;
-        
+
       case 'apelido':
       case 'apelidos':
         const indexApelido = context.apelidos.indexOf(valorAntigo);
@@ -411,22 +345,22 @@ class UserContextDB {
           atualizado = true;
         }
         break;
-        
+
       case 'idade':
       case 'localizacao':
       case 'localização':
       case 'profissao':
       case 'profissão':
       case 'relacionamento':
-        if (context.informacoes_pessoais[tipoNormalizado] === valorAntigo || 
+        if (context.informacoes_pessoais[tipoNormalizado] === valorAntigo ||
             context.informacoes_pessoais[tipo] === valorAntigo) {
-          const campo = context.informacoes_pessoais.hasOwnProperty(tipoNormalizado) ? 
+          const campo = context.informacoes_pessoais.hasOwnProperty(tipoNormalizado) ?
                        tipoNormalizado : tipo;
           context.informacoes_pessoais[campo] = valorNovo;
           atualizado = true;
         }
         break;
-        
+
       case 'nota_importante':
       case 'nota':
         const indexNota = context.notas_importantes.findIndex(n => n.texto === valorAntigo);
@@ -436,7 +370,7 @@ class UserContextDB {
           atualizado = true;
         }
         break;
-        
+
       case 'memoria_especial':
       case 'memória':
         const indexMemoria = context.relacionamento_chainy.memorias_especiais.findIndex(
@@ -448,34 +382,30 @@ class UserContextDB {
           atualizado = true;
         }
         break;
-        
+
       default:
-        // Tentar atualizar em outros campos personalizados
-        if (context.informacoes_pessoais.outros && 
+        if (context.informacoes_pessoais.outros &&
             context.informacoes_pessoais.outros[tipo] === valorAntigo) {
           context.informacoes_pessoais.outros[tipo] = valorNovo;
           atualizado = true;
         }
     }
-    
+
     if (atualizado) {
       context.ultima_atualizacao = getBrazilDateTime();
       this.saveDatabase();
       return true;
     }
-    
+
     return false;
   }
 
-  /**
-   * Remove/exclui uma informação do usuário
-   */
   deleteMemory(userId, tipo, valor) {
     const context = this.getUserContext(userId);
     let removido = false;
-    
+
     const tipoNormalizado = tipo.toLowerCase().trim();
-    
+
     switch (tipoNormalizado) {
       case 'gosto':
       case 'gostos':
@@ -485,7 +415,7 @@ class UserContextDB {
           removido = true;
         }
         break;
-        
+
       case 'nao_gosto':
       case 'não_gosto':
       case 'nao_gostos':
@@ -495,7 +425,7 @@ class UserContextDB {
           removido = true;
         }
         break;
-        
+
       case 'hobby':
       case 'hobbies':
         const indexHobby = context.preferencias.hobbies.indexOf(valor);
@@ -504,7 +434,7 @@ class UserContextDB {
           removido = true;
         }
         break;
-        
+
       case 'assunto_favorito':
       case 'assuntos_favoritos':
         const indexAssunto = context.preferencias.assuntos_favoritos.indexOf(valor);
@@ -513,7 +443,7 @@ class UserContextDB {
           removido = true;
         }
         break;
-        
+
       case 'apelido':
       case 'apelidos':
         const indexApelido = context.apelidos.indexOf(valor);
@@ -522,28 +452,28 @@ class UserContextDB {
           removido = true;
         }
         break;
-        
+
       case 'idade':
       case 'localizacao':
       case 'localização':
       case 'profissao':
       case 'profissão':
       case 'relacionamento':
-        const campo = context.informacoes_pessoais.hasOwnProperty(tipoNormalizado) ? 
+        const campo = context.informacoes_pessoais.hasOwnProperty(tipoNormalizado) ?
                      tipoNormalizado : tipo;
         if (context.informacoes_pessoais[campo]) {
           context.informacoes_pessoais[campo] = null;
           removido = true;
         }
         break;
-        
+
       case 'nome':
         if (context.nome) {
           context.nome = null;
           removido = true;
         }
         break;
-        
+
       case 'nota_importante':
       case 'nota':
         const indexNota = context.notas_importantes.findIndex(n => n.texto === valor);
@@ -552,7 +482,7 @@ class UserContextDB {
           removido = true;
         }
         break;
-        
+
       case 'memoria_especial':
       case 'memória':
         const indexMemoria = context.relacionamento_chainy.memorias_especiais.findIndex(
@@ -563,31 +493,27 @@ class UserContextDB {
           removido = true;
         }
         break;
-        
+
       default:
-        // Tentar remover de campos personalizados
-        if (context.informacoes_pessoais.outros && 
+        if (context.informacoes_pessoais.outros &&
             context.informacoes_pessoais.outros[tipo]) {
           delete context.informacoes_pessoais.outros[tipo];
           removido = true;
         }
     }
-    
+
     if (removido) {
       context.ultima_atualizacao = getBrazilDateTime();
       this.saveDatabase();
       return true;
     }
-    
+
     return false;
   }
 
-  /**
-   * Obtém um resumo formatado do contexto do usuário
-   */
   getUserContextSummary(userId) {
     const context = this.getUserContext(userId);
-    
+
     const summary = {
       nome: context.nome || 'Desconhecido',
       apelidos: context.apelidos.join(', ') || 'Nenhum',
@@ -602,38 +528,32 @@ class UserContextDB {
       notas_importantes: context.notas_importantes.slice(-10).map(n => n.texto).join('\n- ') || 'Nenhuma',
       memorias_especiais: context.relacionamento_chainy.memorias_especiais.slice(-5).map(m => m.texto).join('\n- ') || 'Nenhuma'
     };
-    
+
     return summary;
   }
 
-  /**
-   * Limpa dados antigos (usuários inativos por mais de 90 dias)
-   */
   cleanOldData(maxAge = 90 * 24 * 60 * 60 * 1000) {
     const now = Date.now();
     let cleaned = 0;
-    
+
     Object.keys(this.data).forEach(userId => {
       const context = this.data[userId];
       const lastUpdate = new Date(context.ultima_atualizacao).getTime();
-      
+
       if (now - lastUpdate > maxAge) {
         delete this.data[userId];
         cleaned++;
       }
     });
-    
+
     if (cleaned > 0) {
       console.log(`🧹 Limpou ${cleaned} contextos de usuários inativos`);
       this.saveDatabase();
     }
-    
+
     return cleaned;
   }
 
-  /**
-   * Obtém estatísticas gerais do banco
-   */
   getStats() {
     const totalUsers = Object.keys(this.data).length;
     const activeUsers = Object.values(this.data).filter(ctx => {
@@ -641,10 +561,10 @@ class UserContextDB {
       const dayAgo = Date.now() - (24 * 60 * 60 * 1000);
       return lastUpdate > dayAgo;
     }).length;
-    
-    const totalMessages = Object.values(this.data).reduce((sum, ctx) => 
+
+    const totalMessages = Object.values(this.data).reduce((sum, ctx) =>
       sum + ctx.historico_conversa.total_mensagens, 0);
-    
+
     return {
       total_usuarios: totalUsers,
       usuarios_ativos_24h: activeUsers,
@@ -654,7 +574,6 @@ class UserContextDB {
   }
 }
 
-// Instância única (singleton)
 const userContextDB = new UserContextDB();
 
 export default userContextDB;

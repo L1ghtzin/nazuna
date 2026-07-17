@@ -5,6 +5,7 @@ import { lidCache } from './lidCache.js';
 import { toLID } from './toLID.js';
 import { isUnifiedPath, getUnifiedValue, setUnifiedValue, loadUnifiedSettings } from './database/unifiedConfig.js';
 import { serialize } from './jsonSerializer.js';
+import { writeJsonFileAsync } from './asyncFs.js';
 
 // Inicializa o caminho do cache
 function initJidLidCache(cacheFilePath) {
@@ -987,13 +988,7 @@ function debouncedSaveJson(filePath, data, delayMs = 3000) {
     try {
       const dataToSave = pendingData.get(filePath);
       if (dataToSave) {
-        // Serializa apenas no momento do flush (lazy serialization)
-        const result = serialize(dataToSave);
-        if (result.ok) {
-          await fs.promises.writeFile(filePath, result.json, 'utf-8');
-        } else {
-          console.error(`❌ Erro ao serializar debounce de ${filePath}:`, result.error);
-        }
+        await writeJsonFileAsync(filePath, dataToSave);
       }
       pendingData.delete(filePath);
       saveTimers.delete(filePath);
@@ -1011,13 +1006,9 @@ function debouncedSaveJson(filePath, data, delayMs = 3000) {
 function flushAllDebouncedSaves() {
   for (const [filePath, dataObj] of pendingData.entries()) {
     try {
-      // pendingData agora armazena objetos — serializa no flush
-      const result = serialize(dataObj);
-      if (result.ok) {
-        fs.writeFileSync(filePath, result.json, 'utf-8');
-      } else {
-        console.error(`Erro ao serializar flush de ${filePath}:`, result.error);
-      }
+      writeJsonFileAsync(filePath, dataObj).catch(e => {
+        console.error(`Erro no flush final de ${filePath}`, e);
+      });
     } catch (e) {
       console.error(`Erro no flush final de ${filePath}`, e);
     }

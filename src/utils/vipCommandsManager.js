@@ -1,22 +1,24 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { readJsonFileAsync, writeJsonFileAsync } from './asyncFs.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const VIP_COMMANDS_FILE = path.join(__dirname, '../../dados/database/dono/vipCommands.json');
+let _saveQueue = Promise.resolve();
 
 /**
  * Garante que o arquivo de comandos VIP existe
  */
 function ensureVipCommandsFile() {
   const dir = path.dirname(VIP_COMMANDS_FILE);
-  
+
   if (!fs.existsSync(dir)) {
     fs.mkdirSync(dir, { recursive: true });
   }
-  
+
   if (!fs.existsSync(VIP_COMMANDS_FILE)) {
     const defaultData = {
       commands: [],
@@ -52,14 +54,23 @@ function loadVipCommands() {
  * Salva os comandos VIP no arquivo
  */
 function saveVipCommands(data) {
-  ensureVipCommandsFile();
-  try {
-    fs.writeFileSync(VIP_COMMANDS_FILE, JSON.stringify(data, null, 2));
-    return true;
-  } catch (error) {
-    console.error('Erro ao salvar comandos VIP:', error);
-    return false;
-  }
+  const performSave = async () => {
+    try {
+      ensureVipCommandsFile();
+      const diskData = await readJsonFileAsync(VIP_COMMANDS_FILE, { commands: [], categories: {} });
+      const merged = {
+        ...diskData,
+        ...data,
+        commands: data.commands // sobrescreve array inteiro para evitar merge errado
+      };
+      await writeJsonFileAsync(VIP_COMMANDS_FILE, merged);
+    } catch (error) {
+      console.error('Erro ao salvar comandos VIP:', error);
+    }
+  };
+
+  _saveQueue = _saveQueue.then(performSave, performSave);
+  return true;
 }
 
 /**
@@ -71,25 +82,25 @@ function saveVipCommands(data) {
  */
 function addVipCommand(command, description, category = 'outros', usage = '') {
   const data = loadVipCommands();
-  
+
   // Normaliza o comando
   const normalizedCommand = command.toLowerCase().trim();
-  
+
   // Verifica se o comando já existe
   const existingIndex = data.commands.findIndex(cmd => cmd.command === normalizedCommand);
-  
+
   if (existingIndex !== -1) {
     return {
       success: false,
       message: `❌ O comando "${normalizedCommand}" já existe na lista VIP!`
     };
   }
-  
+
   // Valida categoria
   if (!data.categories[category]) {
     category = 'outros';
   }
-  
+
   // Adiciona o novo comando
   const newCommand = {
     command: normalizedCommand,
@@ -99,9 +110,9 @@ function addVipCommand(command, description, category = 'outros', usage = '') {
     addedAt: new Date().toISOString(),
     enabled: true
   };
-  
+
   data.commands.push(newCommand);
-  
+
   if (saveVipCommands(data)) {
     return {
       success: true,
@@ -123,19 +134,19 @@ function addVipCommand(command, description, category = 'outros', usage = '') {
 function removeVipCommand(command) {
   const data = loadVipCommands();
   const normalizedCommand = command.toLowerCase().trim();
-  
+
   const index = data.commands.findIndex(cmd => cmd.command === normalizedCommand);
-  
+
   if (index === -1) {
     return {
       success: false,
       message: `❌ O comando "${normalizedCommand}" não foi encontrado na lista VIP.`
     };
   }
-  
+
   const removedCommand = data.commands[index];
   data.commands.splice(index, 1);
-  
+
   if (saveVipCommands(data)) {
     return {
       success: true,
@@ -168,11 +179,11 @@ function isVipCommand(command) {
  */
 function listVipCommands(category = null) {
   const data = loadVipCommands();
-  
+
   if (category) {
     return data.commands.filter(cmd => cmd.category === category && cmd.enabled);
   }
-  
+
   return data.commands.filter(cmd => cmd.enabled);
 }
 
@@ -193,7 +204,7 @@ function getVipCommand(command) {
 function groupVipCommandsByCategory() {
   const data = loadVipCommands();
   const grouped = {};
-  
+
   // Inicializa categorias
   for (const [key, label] of Object.entries(data.categories)) {
     grouped[key] = {
@@ -201,21 +212,21 @@ function groupVipCommandsByCategory() {
       commands: []
     };
   }
-  
+
   // Agrupa comandos ativos
   data.commands.forEach(cmd => {
     if (cmd.enabled && grouped[cmd.category]) {
       grouped[cmd.category].commands.push(cmd);
     }
   });
-  
+
   // Remove categorias vazias
   Object.keys(grouped).forEach(key => {
     if (grouped[key].commands.length === 0) {
       delete grouped[key];
     }
   });
-  
+
   return grouped;
 }
 
@@ -227,18 +238,18 @@ function groupVipCommandsByCategory() {
 function toggleVipCommand(command, enabled) {
   const data = loadVipCommands();
   const normalizedCommand = command.toLowerCase().trim();
-  
+
   const cmdIndex = data.commands.findIndex(cmd => cmd.command === normalizedCommand);
-  
+
   if (cmdIndex === -1) {
     return {
       success: false,
       message: `❌ Comando "${normalizedCommand}" não encontrado.`
     };
   }
-  
+
   data.commands[cmdIndex].enabled = enabled;
-  
+
   if (saveVipCommands(data)) {
     const status = enabled ? 'ativado' : 'desativado';
     return {
@@ -266,16 +277,16 @@ function getCategories() {
  */
 function addCategory(key, label) {
   const data = loadVipCommands();
-  
+
   if (data.categories[key]) {
     return {
       success: false,
       message: `❌ A categoria "${key}" já existe.`
     };
   }
-  
+
   data.categories[key] = label;
-  
+
   if (saveVipCommands(data)) {
     return {
       success: true,
@@ -295,7 +306,7 @@ function addCategory(key, label) {
 function getVipStats() {
   const data = loadVipCommands();
   const grouped = groupVipCommandsByCategory();
-  
+
   return {
     total: data.commands.length,
     active: data.commands.filter(cmd => cmd.enabled).length,

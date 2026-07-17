@@ -122,7 +122,7 @@ export const scheduleGroupJob = (groupId, type, timeStr, bot) => {
 
         recordScheduleRun(schedule, type, getTodayStr(), normalized);
         data.schedule = schedule;
-        try { writeJsonFile(filePath, data); } catch (e) { console.error('[Cron] Failed to write schedule run:', e); }
+        writeJsonFileQueued(filePath, data).catch(e => console.error('[Cron] Failed to write schedule run:', e));
       } catch (e) {
         console.error('[Cron] Unexpected error in scheduled job:', e);
       }
@@ -271,11 +271,7 @@ const startAutoHorariosWorker = (bot) => {
           }
         }
         
-        try {
-          writeJsonFile(autoSchedulesPath, autoSchedules);
-        } catch (e) {
-          console.error('Erro ao salvar auto schedules:', e);
-        }
+        writeJsonFileQueued(autoSchedulesPath, autoSchedules).catch(e => console.error('Erro ao salvar auto schedules:', e));
         
       } catch (err) {
         console.error('Erro no auto horários worker:', err);

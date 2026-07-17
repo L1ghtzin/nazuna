@@ -2,6 +2,7 @@ import fs from 'fs';
 import pathz from 'path';
 import { ensureDirectoryExists } from './helpers.js';
 import { MASS_MENTION_LIMIT_FILE, MASS_MENTION_CONFIG_FILE } from './paths.js';
+import { readJsonFileAsync, writeJsonFileAsync } from './asyncFs.js';
 
 // ==================== PROTEÇÃO ANTI-BAN: Rate Limit para Menções em Massa ====================
 // Sistema controlado pelo dono: pode ativar/desativar proteção por grupo
@@ -12,6 +13,8 @@ const MASS_MENTION_COOLDOWN = 5 * 60 * 60 * 1000; // 5 horas em milissegundos
 // Cache em memória para rate limit (persistido em arquivo)
 let massMentionLimitCache = null;
 let massMentionConfigCache = null;
+let _limitSaveQueue = Promise.resolve();
+let _configSaveQueue = Promise.resolve();
 
 export const loadMassMentionConfig = () => {
   if (massMentionConfigCache) return massMentionConfigCache;
@@ -30,12 +33,19 @@ export const loadMassMentionConfig = () => {
 
 export const saveMassMentionConfig = (data) => {
   massMentionConfigCache = data;
-  try {
-    ensureDirectoryExists(pathz.dirname(MASS_MENTION_CONFIG_FILE));
-    fs.writeFileSync(MASS_MENTION_CONFIG_FILE, JSON.stringify(data, null, 2), 'utf-8');
-  } catch (e) {
-    console.error('Erro ao salvar massMentionConfig:', e.message);
-  }
+
+  const performSave = async () => {
+    try {
+      ensureDirectoryExists(pathz.dirname(MASS_MENTION_CONFIG_FILE));
+      const diskData = await readJsonFileAsync(MASS_MENTION_CONFIG_FILE, {});
+      const merged = { ...diskData, ...data };
+      await writeJsonFileAsync(MASS_MENTION_CONFIG_FILE, merged);
+    } catch (e) {
+      console.error('Erro ao salvar massMentionConfig:', e.message);
+    }
+  };
+
+  _configSaveQueue = _configSaveQueue.then(performSave, performSave);
 };
 
 export const loadMassMentionLimit = () => {
@@ -55,12 +65,19 @@ export const loadMassMentionLimit = () => {
 
 const saveMassMentionLimit = (data) => {
   massMentionLimitCache = data;
-  try {
-    ensureDirectoryExists(pathz.dirname(MASS_MENTION_LIMIT_FILE));
-    fs.writeFileSync(MASS_MENTION_LIMIT_FILE, JSON.stringify(data, null, 2), 'utf-8');
-  } catch (e) {
-    console.error('Erro ao salvar massMentionLimit:', e.message);
-  }
+
+  const performSave = async () => {
+    try {
+      ensureDirectoryExists(pathz.dirname(MASS_MENTION_LIMIT_FILE));
+      const diskData = await readJsonFileAsync(MASS_MENTION_LIMIT_FILE, {});
+      const merged = { ...diskData, ...data };
+      await writeJsonFileAsync(MASS_MENTION_LIMIT_FILE, merged);
+    } catch (e) {
+      console.error('Erro ao salvar massMentionLimit:', e.message);
+    }
+  };
+
+  _limitSaveQueue = _limitSaveQueue.then(performSave, performSave);
 };
 
 /**
@@ -75,7 +92,7 @@ export const checkMassMentionLimit = (groupId, memberCount) => {
   if (!config[groupId] || !config[groupId].enabled) {
     return { allowed: true, remainingUses: -1, resetTime: null, message: null };
   }
-  
+
   // Se grupo tem menos de 150 membros, não aplica limite mesmo se ativo
   if (memberCount < MASS_MENTION_THRESHOLD) {
     return { allowed: true, remainingUses: -1, resetTime: null, message: null };
@@ -83,17 +100,17 @@ export const checkMassMentionLimit = (groupId, memberCount) => {
 
   const data = loadMassMentionLimit();
   const now = Date.now();
-  
+
   // Inicializa dados do grupo se não existir
   if (!data[groupId]) {
     data[groupId] = { uses: [], lastReset: now };
   }
-  
+
   const groupData = data[groupId];
-  
+
   // Remove usos antigos (mais de 5 horas)
   groupData.uses = groupData.uses.filter(timestamp => (now - timestamp) < MASS_MENTION_COOLDOWN);
-  
+
   // Verifica se atingiu o limite
   if (groupData.uses.length >= MASS_MENTION_MAX_USES) {
     const oldestUse = Math.min(...groupData.uses);
@@ -101,7 +118,7 @@ export const checkMassMentionLimit = (groupId, memberCount) => {
     const timeLeft = resetTime - now;
     const hours = Math.floor(timeLeft / (60 * 60 * 1000));
     const minutes = Math.floor((timeLeft % (60 * 60 * 1000)) / (60 * 1000));
-    
+
     return {
       allowed: false,
       remainingUses: 0,
@@ -112,9 +129,9 @@ export const checkMassMentionLimit = (groupId, memberCount) => {
      `⏰ Próximo uso disponível em: *${hours}h ${minutes}min*`
     };
   }
-  
+
   saveMassMentionLimit(data);
-  
+
   return {
     allowed: true,
     remainingUses: MASS_MENTION_MAX_USES - groupData.uses.length,
@@ -130,14 +147,14 @@ export const checkMassMentionLimit = (groupId, memberCount) => {
 export const registerMassMentionUse = (groupId) => {
   const data = loadMassMentionLimit();
   const now = Date.now();
-  
+
   if (!data[groupId]) {
     data[groupId] = { uses: [], lastReset: now };
   }
-  
+
   // Remove usos antigos antes de adicionar novo
   data[groupId].uses = data[groupId].uses.filter(timestamp => (now - timestamp) < MASS_MENTION_COOLDOWN);
   data[groupId].uses.push(now);
-  
+
   saveMassMentionLimit(data);
 };

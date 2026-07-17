@@ -1,7 +1,7 @@
 import fs from 'fs';
 import pathz from 'path';
 import { fileURLToPath } from 'url';
-import { writeJsonFile } from './_core.js';
+import { writeJsonFile, writeJsonFileQueued } from './_core.js';
 import { writeJsonFileAsync } from '../asyncFs.js';
 import { DATABASE_DIR } from '../paths.js';
 
@@ -61,7 +61,7 @@ export async function setUnifiedValueAsync(filePath, data) {
   const settings = loadUnifiedSettings();
   const key = pathz.basename(filePath).toLowerCase();
   settings[key] = data;
-  await writeJsonFileAsync(UNIFIED_SETTINGS_FILE, settings);
+  await writeJsonFileQueued(UNIFIED_SETTINGS_FILE, settings);
 }
 
 // Migra arquivos legados se eles existirem no disco
