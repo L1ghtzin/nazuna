@@ -5,20 +5,60 @@ import { exec } from 'child_process';
 import { promisify } from 'util';
 import { fileURLToPath } from 'url';
 import { readJsonFileAsync, writeJsonFileAsync } from '../../utils/asyncFs.js';
+import * as cheerio from 'cheerio';
+import FormData from 'form-data';
 
 const execAsync = promisify(exec);
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = pathz.dirname(__filename);
 
+async function webpToMp4(imageBuffer) {
+  const bodyForm = new FormData();
+  bodyForm.append('new-image-url', '');
+  bodyForm.append('new-image', imageBuffer, 'image.webp');
+
+  const response = await axios.post('https://ezgif.com/webp-to-mp4', bodyForm, {
+    headers: {
+      ...bodyForm.getHeaders(),
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36'
+    }
+  });
+
+  const $ = cheerio.load(response.data);
+  const file = $('form.ajax-form input[name="file"]').attr('value');
+  if (!file) {
+    throw new Error('Não foi possível obter o arquivo temporário do Ezgif.');
+  }
+
+  const bodyFormThen = new FormData();
+  bodyFormThen.append('file', file);
+  bodyFormThen.append('convert', 'Convert WebP to MP4!');
+
+  const response2 = await axios.post('https://ezgif.com/webp-to-mp4/' + file, bodyFormThen, {
+    headers: {
+      ...bodyFormThen.getHeaders(),
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36'
+    }
+  });
+
+  const $2 = cheerio.load(response2.data);
+  const src = $2('div#output > p.outfile > video > source').attr('src');
+  if (!src) {
+    throw new Error('Erro ao encontrar o vídeo convertido no Ezgif.');
+  }
+
+  return 'https:' + src;
+}
+
 export default {
   name: "sticker",
   description: "Comandos de figurinhas e stickers",
-  commands: ["attp", "brat", "bratvid", "emojimix", "figualeatoria", "figurinhas", "mudarpack", "packfig", "qc", "randomsticker", "rename", "renomear", "rgtake", "s", "s2", "st", "st2", "sticker", "sticker2", "stickerpack", "stk", "stk2", "take", "ttp"],
+  commands: ["attp", "brat", "bratvid", "emojimix", "figualeatoria", "figurinhas", "mudarpack", "packfig", "qc", "randomsticker", "rename", "renomear", "rgtake", "s", "s2", "st", "st2", "sticker", "sticker2", "stickerpack", "stk", "stk2", "take", "togif", "ttp"],
   handle: async ({ 
     bot, from, info, command, q, reply, prefix, pushname,
     sendSticker, getFileBuffer, isQuotedSticker, isQuotedImage, isQuotedVideo,
     isImage, isVideo, nomebot, sender, USERS_DIR, isGroup,
-    MESSAGES
+    MESSAGES, quotedMessageContent
   }) => {
     const cmd = command.toLowerCase();
 
@@ -196,6 +236,33 @@ export default {
     }
 
     // ═══════════════════════════════════════════════════════════════
+    // 🎞️ TO GIF
+    // ═══════════════════════════════════════════════════════════════
+    if (cmd === 'togif') {
+      try {
+        if (!isQuotedSticker) {
+          return reply(MESSAGES.error.missing('uma figurinha'));
+        }
+
+        await reply(MESSAGES.general.wait);
+
+        const stickerMsg = quotedMessageContent?.stickerMessage;
+        const stickerBuffer = await getFileBuffer(stickerMsg, 'sticker');
+
+        const videoUrl = await webpToMp4(stickerBuffer);
+
+        await bot.sendMessage(from, { 
+          video: { url: videoUrl }, 
+          gifPlayback: true 
+        }, { quoted: info });
+      } catch (e) {
+        console.error(e);
+        await reply(MESSAGES.error.general);
+      }
+      return;
+    }
+
+    // ═══════════════════════════════════════════════════════════════
     // ✏️ RENAME
     // ═══════════════════════════════════════════════════════════════
     if (['rename', 'renomear', 'mudarpack'].includes(cmd)) {
@@ -214,7 +281,7 @@ export default {
         }
         if (!packname) return reply(MESSAGES.member.sticker.invalidFormatRename(prefix, command));
         
-        const encmediats = await getFileBuffer(info.message.extendedTextMessage.contextInfo.quotedMessage.stickerMessage, 'sticker');
+        const encmediats = await getFileBuffer(quotedMessageContent?.stickerMessage, 'sticker');
         await sendSticker(bot, from, {
           sticker: `data:image/jpeg;base64,${encmediats.toString('base64')}`,
           author: author,
@@ -270,7 +337,7 @@ export default {
         if (!dataTake[sender]) return reply(MESSAGES.member.sticker.takeMissingSaved);
         
         const { author, pack } = dataTake[sender];
-        const encmediats = await getFileBuffer(info.message.extendedTextMessage.contextInfo.quotedMessage.stickerMessage, 'sticker');
+        const encmediats = await getFileBuffer(quotedMessageContent?.stickerMessage, 'sticker');
         
         await sendSticker(bot, from, {
           sticker: `data:image/jpeg;base64,${encmediats.toString('base64')}`,

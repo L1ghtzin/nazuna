@@ -38,6 +38,7 @@ ${middleBorder}${menuItemIcon}${prefix}rename
 ${middleBorder}${menuItemIcon}${prefix}rgtake
 ${middleBorder}${menuItemIcon}${prefix}take
 ${middleBorder}${menuItemIcon}${prefix}toimg
+${middleBorder}${menuItemIcon}${prefix}togif
 ${bottomBorder}
 `;
 }
