@@ -65,7 +65,10 @@ export const rpgMessages = {
     },
     exploring: {
       cooldown: (time) => `⏳ Você está cansado da última exploração. Aguarde ${time}.`,
-      success: (total, bonusText, matsText) => `🧭 *EXPLORAÇÃO* 🧭\n\n🪙 Gold ganho: *${total}* moedas\n${bonusText}${matsText}`
+      success: (total, bonusText, matsText) => `🧭 *EXPLORAÇÃO* 🧭\n\n🪙 Gold ganho: *${total}* moedas\n${bonusText}${matsText}`,
+      drunkBenign: (gold, matsText, sobriety) => `🥴 *EXPLORAÇÃO (EMBRIAGADO)* 🥴\n\nVocê tropeçou no meio da floresta e viu um gnomo gigante dançando samba! 🍄✨\nNa verdade, era apenas um baú de moedas antigo esquecido no arbusto.\n\n│ 💰 Ouro recolhido: *+${gold}* moedas${matsText}\n│ 🍺 Estado: *${sobriety}*`,
+      drunkMalign: (gold, sobriety) => `🥴 *EXPLORAÇÃO (EMBRIAGADO)* 🥴\n\nVocê encontrou um "cachorrinho muito fofo e felpudo" e tentou fazer carinho... 🐻\nDescobriu da pior forma que era um urso pardo selvagem irritado!\nVocê fugiu correndo desesperado e derrubou algumas moedas.\n\n│ 💸 Perda: *-${gold}* moedas\n│ 🍺 Estado: *${sobriety}*`,
+      drunkBlackout: () => `🥴 *EXPLORAÇÃO (EMBRIAGADO)* 🥴\n\nVocê bebeu demais e teve um apagão no meio da floresta! 💤\nAcordou horas depois deitado em uma vala, com uma baita dor de cabeça e sem saber onde estava.\n\n│ ❌ Ganhos: *Nenhum*\n│ ⏳ Cooldown penalizado: *25 minutos* de espera\n│ 🍺 Estado: *Sóbrio* (depois de dormir na vala) ☀️`
     },
     hunting: {
       cooldown: (time) => `⏳ A floresta está perigosa agora. Aguarde ${time} para caçar novamente.`,
@@ -726,6 +729,15 @@ export const rpgMessages = {
       successWashed: (count, limit) => `🧉 *CHIMARRÃO* 🧉\n\n*Bah, que decepção!* 🫖\nO mate estava lavado e sem gosto...\n⚡ Seu cooldown de trabalho atual foi reduzido em apenas *1* minuto.\n📊 Consumos hoje: *${count}/${limit}*`,
       successStandard: (reduction, count, limit) => `🧉 *CHIMARRÃO* 🧉\n\n*Hummm, no ponto!* 😋\nVocê tomou um chimarrão quentinho e amargo, como deve ser.\n⚡ Seu cooldown de trabalho atual foi reduzido em *${reduction}* minutos!\n📊 Consumos hoje: *${count}/${limit}*`,
       successSpecial: (reduction, count, limit) => `🧉 *CHIMARRÃO* 🧉\n\n*Mas bah, tchê! Cevado com capricho!* 🌿✨\nEste mate ficou espetacular! Disposição lá no topo!\n⚡ Seu cooldown de trabalho atual foi reduzido em *${reduction}* minutos!\n📊 Consumos hoje: *${count}/${limit}*`
+    },
+    cerveja: {
+      cooldown: (time) => `⏳ Você já bebeu uma cerveja recentemente. Aguarde ${time} para tomar outra.`,
+      notTired: "⚠️ Você não está cansado para explorar! Seu cooldown de explorar precisa estar ativo.",
+      notInInventory: (prefix) => `🍺 Você não tem Cerveja no inventário! Compre na loja usando *${prefix}comprar cerveja*.`,
+      dailyLimitReached: (limit) => `⚠️ Você já atingiu o limite diário de consumo de Cerveja (${limit} vezes).`,
+      successChoca: (drunkMsg, count, limit) => `🍺 *CERVEJA* 🍺\n\n*Ih, tá choca!* 🤢\nEssa breja estava morna e sem gás...\n⚡ Cooldown de explorar reduzido em apenas *1* minuto.\n\n${drunkMsg}\n📊 Consumos hoje: *${count}/${limit}*`,
+      successStandard: (reduction, drunkMsg, count, limit) => `🍺 *CERVEJA* 🍺\n\n*Cerveja no ponto!* 🍺✨\nUma bela loira gelada para relaxar as pernas.\n⚡ Cooldown de explorar reduzido em *${reduction}* minutos.\n\n${drunkMsg}\n📊 Consumos hoje: *${count}/${limit}*`,
+      successSpecial: (reduction, drunkMsg, count, limit) => `🍺 *CERVEJA* 🍺\n\n*Mas que delícia! Trincando de gelada!* ❄️🍻\nDesceu redondo! Disposição total para a próxima aventura!\n⚡ Cooldown de explorar reduzido em *${reduction}* minutos!\n\n${drunkMsg}\n📊 Consumos hoje: *${count}/${limit}*`
     }
   }
 };

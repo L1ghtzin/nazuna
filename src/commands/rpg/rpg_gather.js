@@ -101,6 +101,58 @@ export default {
         if (sub === 'explorar' || sub === 'explore') {
             const cd = me.cooldowns?.explore || 0;
             if (Date.now() < cd) return reply(MESSAGES.rpg.core.exploring.cooldown(timeLeft(cd)));
+            
+            // --- SISTEMA DE EMBRIAGUEZ ---
+            const drunk = me.drunkLevel || 0;
+            if (drunk > 0) {
+                // Diminui o nível de embriaguez conforme caminha
+                me.drunkLevel = Math.max(0, drunk - 1);
+                
+                const roll = Math.random();
+                me.cooldowns.explore = Date.now() + 15 * 60 * 1000;
+                addSkillXP(me, 'exploring', 1);
+                updateChallenge(me, 'explore', 1, true);
+                updatePeriodChallenge(me, 'explore', 1, true);
+                if (!me.stats) me.stats = {};
+                me.stats.totalExplore = (me.stats.totalExplore || 0) + 1;
+                me.stats.exploreCount = (me.stats.exploreCount || 0) + 1;
+                if (roll < 0.45) {
+                    // Delírio Benigno (Alucinação Lucrativa)
+                    const goldGain = 200 + Math.floor(Math.random() * 201); // ganha mais gold
+                    me.wallet += goldGain;
+                    
+                    const matsGain = {};
+                    if (Math.random() < 0.5) matsGain.cristal = 1;
+                    if (Math.random() < 0.5) matsGain.ouro = 1;
+                    for (const [mk, mq] of Object.entries(matsGain)) giveMaterial(me, mk, mq);
+                    
+                    saveEconomy(econ);
+                    
+                    const matsText = Object.keys(matsGain).length > 0 
+                        ? `\n│ 📦 Coisas que achou jogadas: ` + Object.entries(matsGain).map(([k, q]) => `${k} x${q}`).join(', ') 
+                        : '';
+                    const sobrietyText = me.drunkLevel === 0 ? 'Sóbrio ☀️' : `Ainda Bêbado (${me.drunkLevel}/3) 🥴`;
+
+                    return reply(MESSAGES.rpg.core.exploring.drunkBenign(fmt(goldGain), matsText, sobrietyText));
+                } else if (roll < 0.85) {
+                    // Delírio Maligno (Alucinação de Perigo)
+                    const goldLost = Math.min(me.wallet, 50 + Math.floor(Math.random() * 101));
+                    me.wallet -= goldLost;
+                    
+                    saveEconomy(econ);
+                    const sobrietyText = me.drunkLevel === 0 ? 'Sóbrio ☀️' : `Ainda Bêbado (${me.drunkLevel}/3) 🥴`;
+                    
+                    return reply(MESSAGES.rpg.core.exploring.drunkMalign(fmt(goldLost), sobrietyText));
+                } else {
+                    // Blackout (Apagão / Penalidade)
+                    me.cooldowns.explore = Date.now() + 25 * 60 * 1000; // 25 minutos de cooldown por causa da ressaca
+                    saveEconomy(econ);
+                    
+                    return reply(MESSAGES.rpg.core.exploring.drunkBlackout());
+                }
+            }
+
+            // --- EXPLORAÇÃO NORMAL ---
             const base = 100 + Math.floor(Math.random() * 151);
             const skillB = getSkillBonus(me, 'exploring');
             const bonus = Math.floor(base * ((exploreBonus || 0) + skillB));
