@@ -5,7 +5,7 @@ import { writeJsonFileAsync } from '../../utils/asyncFs.js';
 export default {
   name: "group_security",
   description: "Segurança e moderação avançada de grupos",
-  commands: ["aceitarticket", "addblacklist", "addparceria", "addpartnership", "adv", "advertir", "antifig", "antipalavra", "antisl", "antistatus", "antisticker+", "antistickerplus", "antistickerplusbot", "antitoxic", "antitóxico", "antiword", "banghost", "bemvindo", "blacklist", "boasvindas", "bv", "clean", "configsaida", "delblacklist", "delfotobv", "delfotosaiu", "delparceria", "delpartnership", "exit", "exitimg", "exitmsg", "fotobv", "fotosaida", "fotosaiu", "imgsaiu", "legendasaiu", "limpar", "listadv", "listblacklist", "modoparceria", "parcerias", "partnerships", "removeradv", "removerfotobv", "removerfotosaiu", "rmadv", "rmexitimg", "rmfotobv", "rmfotosaiu", "rmwelcomeimg", "saida", "suporte", "suporteaceitar", "suporteticket", "textsaiu", "ticket", "ticket.aceitar", "ticketaceitar", "ticketsuporte", "unblacklist", "unwarning", "warning", "warninglist", "welcome", "welcomeimg", "antiimagem", "antifoto", "antiphoto", "antivideo", "antiaudio", "antidoc", "antievento", "antiproduto"],
+  commands: ["aceitarticket", "addblacklist", "addparceria", "addpartnership", "adv", "advertir", "antifig", "antipalavra", "antisl", "antistatus", "antisticker+", "antistickerplus", "antistickerplusbot", "antitoxic", "antitóxico", "antiword", "banghost", "bemvindo", "blacklist", "boasvindas", "bv", "clean", "configsaida", "delblacklist", "delfotobv", "delfotosaiu", "delparceria", "delpartnership", "exit", "exitimg", "exitmsg", "fotobv", "fotosaida", "fotosaiu", "imgsaiu", "legendasaiu", "limpar", "listadv", "listblacklist", "listablacklist", "listblacklistgp", "listblacklistgrupal", "blacklistlista", "blacklista", "modoparceria", "parcerias", "partnerships", "removeradv", "removerfotobv", "removerfotosaiu", "rmadv", "rmexitimg", "rmfotobv", "rmfotosaiu", "rmwelcomeimg", "saida", "suporte", "suporteaceitar", "suporteticket", "textsaiu", "ticket", "ticket.aceitar", "ticketaceitar", "ticketsuporte", "unblacklist", "unwarning", "warning", "warninglist", "welcome", "welcomeimg", "antiimagem", "antifoto", "antiphoto", "antivideo", "antiaudio", "antidoc", "antievento", "antiproduto"],
   handle: async ({ 
     bot, from, info, command, args, reply, prefix, pushname, sender, q,
     isGroup, isGroupAdmin, isBotAdmin, AllgroupMembers, groupData, groupFile,
@@ -196,9 +196,15 @@ export default {
     // ═══════════════════════════════════════════════════════════════
     if (['blacklist', 'addblacklist', 'delblacklist', 'unblacklist', 'listblacklist', 'listablacklist', 'listblacklistgp', 'listblacklistgrupal', 'blacklistlista', 'blacklista'].includes(cmd)) {
       if (['listblacklist', 'listablacklist', 'listblacklistgp', 'listblacklistgrupal', 'blacklistlista', 'blacklista'].includes(cmd)) {
-        const blacklistArray = Array.isArray(groupData.blacklist) ? groupData.blacklist : [];
+        const blacklistArray = (Array.isArray(groupData.blacklist) ? groupData.blacklist : []).filter(Boolean);
         if (!blacklistArray.length) return reply(MESSAGES.admin.group_security.blacklist.empty);
-        const mentions = blacklistArray.map(u => u.lid || (u.number ? u.number + '@s.whatsapp.net' : null)).filter(Boolean);
+        const mentions = blacklistArray.map(u => u.lid || (u.number ? u.number + '@s.whatsapp.net' : null))
+          .filter(Boolean)
+          .filter(jid => {
+            if (jid.includes('@lid')) return true;
+            const num = jid.split('@')[0];
+            return num.length >= 7 && /^\d+$/.test(num);
+          });
         const formatted = blacklistArray.map((u, idx) => {
           const identifier = u.lid || (u.number ? u.number + '@s.whatsapp.net' : 'Desconhecido');
           return `${idx + 1}. @${getUserName(identifier)} (${u.reason || 'Sem motivo'})`;
@@ -210,9 +216,22 @@ export default {
       let reason = q ? q.trim() : "Sem motivo";
 
       if (!target && q) {
-        const parts = q.split(' ');
-        target = parts[0];
-        reason = parts.slice(1).join(' ').trim() || "Sem motivo";
+        // Tenta extrair um número de telefone no início do argumento (ex: +55 17 97604-2 ou 55 17 97604-2)
+        const numberMatch = q.match(/^(\+?[\d\s\-]+)/);
+        if (numberMatch) {
+          const possibleNumber = numberMatch[1].trim().replace(/\s/g, ''); // remove espaços para contagem
+          const digitsOnly = possibleNumber.replace(/\D/g, '');
+          if (digitsOnly.length >= 8) {
+            target = possibleNumber;
+            reason = q.substring(numberMatch[1].length).trim() || "Sem motivo";
+          }
+        }
+
+        if (!target) {
+          const parts = q.split(' ');
+          target = parts[0];
+          reason = parts.slice(1).join(' ').trim() || "Sem motivo";
+        }
       } else if (menc_os2 && q) {
         reason = q.trim() || "Sem motivo";
       }
@@ -233,7 +252,7 @@ export default {
       }
 
       if (['delblacklist', 'unblacklist'].includes(cmd)) {
-        const blacklistArray = Array.isArray(groupData.blacklist) ? groupData.blacklist : [];
+        const blacklistArray = (Array.isArray(groupData.blacklist) ? groupData.blacklist : []).filter(Boolean);
         const initialLength = blacklistArray.length;
         
         groupData.blacklist = blacklistArray.filter(entry => 
@@ -250,7 +269,7 @@ export default {
         }
       }
 
-      const blacklistArray = Array.isArray(groupData.blacklist) ? groupData.blacklist : [];
+      const blacklistArray = (Array.isArray(groupData.blacklist) ? groupData.blacklist : []).filter(Boolean);
       
       const exists = blacklistArray.find(entry => 
         (target && entry.lid === target) || 

@@ -63,7 +63,10 @@ export async function toLID(input, bot) {
       .withContext('interactive')
       .withUser(new USyncUser().withId(pn));
 
-    const result = await bot.executeUSyncQuery(query);
+    const result = await Promise.race([
+      bot.executeUSyncQuery(query),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout executeUSyncQuery')), 3000))
+    ]);
     const entry = result?.list.find((r) => r.id === pn);
     const lid = entry?.['lid'];
     const normalized = lid ? jidNormalizedUser(lid) : null;

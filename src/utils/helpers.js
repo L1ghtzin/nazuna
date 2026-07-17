@@ -47,7 +47,10 @@ async function getLidFromJidCached(bot, jid) {
   
   // 3. Fallback alternativo via onWhatsApp antigo se o toLID falhou ou não retornou nada
   try {
-    const result = await bot.onWhatsApp(jid);
+    const result = await Promise.race([
+      bot.onWhatsApp(jid),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout onWhatsApp')), 3000))
+    ]);
     if (result && result[0] && result[0].lid) {
       let lid = result[0].lid;
       
@@ -509,7 +512,10 @@ const getUserName = (userId) => {
 const getLidFromJid = async (bot, jid) => {
   if (!isValidJid(jid)) return jid; // Já é LID ou outro formato
   try {
-    const result = await bot.onWhatsApp(jid);
+    const result = await Promise.race([
+      bot.onWhatsApp(jid),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout onWhatsApp')), 3000))
+    ]);
     if (result && result[0] && result[0].lid) {
       return result[0].lid;
     }

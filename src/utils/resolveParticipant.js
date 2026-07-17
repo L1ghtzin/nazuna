@@ -61,7 +61,10 @@ export async function resolveParticipant(identifier, ChainySock, groupMetadata =
     // 4. Fallback: resolver via onWhatsApp
     if (!resolved && ChainySock) {
         try {
-            const results = await ChainySock.onWhatsApp(identifier);
+            const results = await Promise.race([
+                ChainySock.onWhatsApp(identifier),
+                new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout onWhatsApp')), 3000))
+            ]);
             if (results?.[0]) {
                 if (results[0].jid) {
                     jid = results[0].jid;

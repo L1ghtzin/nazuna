@@ -34,7 +34,14 @@ export async function processAccessControl({
   const globalBlacklist = loadGlobalBlacklist();
   const globalBlacklistEntry = findInBlacklistMap(globalBlacklist.users, sender);
   if (isCmd && sender && globalBlacklistEntry) {
-    const dateStr = new Date(globalBlacklistEntry.addedAt).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+    const rawDate = globalBlacklistEntry.addedAt || globalBlacklistEntry.date || globalBlacklistEntry.timestamp || globalBlacklistEntry.createdAt;
+    let dateStr = 'Desconhecida';
+    if (rawDate) {
+      const d = new Date(rawDate);
+      if (!isNaN(d.getTime())) {
+        dateStr = d.toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+      }
+    }
     await reply(MESSAGES.middleware.accessControl.globalBlacklist(globalBlacklistEntry.reason, globalBlacklistEntry.addedBy, dateStr));
     return true;
   }
@@ -42,7 +49,14 @@ export async function processAccessControl({
   // Blacklist do Grupo
   const groupBlacklistEntry = findInBlacklistMap(groupData.blacklist, sender);
   if (isGroup && isCmd && groupBlacklistEntry) {
-    const dateStr = new Date(groupBlacklistEntry.date || groupBlacklistEntry.timestamp).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+    const rawDate = groupBlacklistEntry.date || groupBlacklistEntry.timestamp || groupBlacklistEntry.createdAt;
+    let dateStr = 'Desconhecida';
+    if (rawDate) {
+      const d = new Date(rawDate);
+      if (!isNaN(d.getTime())) {
+        dateStr = d.toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+      }
+    }
     await reply(MESSAGES.middleware.accessControl.groupBlacklist(groupBlacklistEntry.reason, dateStr));
     return true;
   }

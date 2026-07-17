@@ -314,16 +314,29 @@ export default {
       if (cmd.startsWith('add')) {
         let target = menc_os2;
         let reason = q.trim();
-        
+
         const mentionIndex = args.findIndex(arg => arg.includes('@'));
-        
-        if (!target && args[0]) {
-          target = args[0];
-          reason = args.slice(1).join(' ').trim();
+
+        if (!target && q) {
+          // Tenta extrair um número de telefone no início do argumento (ex: +55 17 97604-2 ou 55 17 97604-2)
+          const numberMatch = q.match(/^(\+?[\d\s\-]+)/);
+          if (numberMatch) {
+            const possibleNumber = numberMatch[1].trim().replace(/\s/g, ''); // remove espaços para contagem
+            const digitsOnly = possibleNumber.replace(/\D/g, '');
+            if (digitsOnly.length >= 8) {
+              target = possibleNumber;
+              reason = q.substring(numberMatch[1].length).trim();
+            }
+          }
+
+          if (!target && args[0]) {
+            target = args[0];
+            reason = args.slice(1).join(' ').trim();
+          }
         } else if (menc_os2 && q) {
           reason = q.trim();
         }
-        
+
         if (!target) return reply(MESSAGES.owner.system_management.blacklist.missingTarget);
 
         if (target && !target.includes('@')) {
@@ -335,27 +348,47 @@ export default {
       }
       if (cmd.startsWith('rm')) {
         let target = menc_os2;
-        if (!target && q) target = q.split(' ')[0];
+        if (!target && q) {
+          const numberMatch = q.match(/^(\+?[\d\s\-]+)/);
+          if (numberMatch) {
+            const possibleNumber = numberMatch[1].trim().replace(/\s/g, '');
+            const digitsOnly = possibleNumber.replace(/\D/g, '');
+            if (digitsOnly.length >= 8) {
+              target = possibleNumber;
+            }
+          }
+          if (!target) {
+            target = q.split(' ')[0];
+          }
+        }
         if (!target) return reply(MESSAGES.owner.system_management.blacklist.missingTarget);
 
         if (target && !target.includes('@')) {
           target = buildUserId(target, config);
         }
-        
+
         const res = await removeGlobalBlacklist(target, bot);
         return reply(res.message, { mentions: [target] });
       }
       const list = getGlobalBlacklist();
-      const usersArray = Array.isArray(list.users) ? list.users : [];
+      const usersArray = (Array.isArray(list.users) ? list.users : []).filter(Boolean);
       if (!usersArray.length) {
         return reply(MESSAGES.owner.system_management.blacklist.listHeader + '📭 Nenhum usuário na blacklist global.');
       }
-      
+
+      const mentions = usersArray.map(u => u.lid || (u.number ? u.number + '@s.whatsapp.net' : null))
+        .filter(Boolean)
+        .filter(jid => {
+          if (jid.includes('@lid')) return true;
+          const num = jid.split('@')[0];
+          return num.length >= 7 && /^\d+$/.test(num);
+        });
+
       const formatted = usersArray.map((u, idx) => {
         const identifier = u.lid || (u.number ? u.number + '@s.whatsapp.net' : 'Desconhecido');
         return `${idx + 1}. @${getUserName(identifier)} (${u.reason || 'Sem motivo'})`;
       }).join('\n');
-      return reply(MESSAGES.owner.system_management.blacklist.listHeader + formatted, { mentions: usersArray.map(u => u.lid || (u.number ? u.number + '@s.whatsapp.net' : null)).filter(Boolean) });
+      return reply(MESSAGES.owner.system_management.blacklist.listHeader + formatted, { mentions });
     }
 
     // --- VIEWMSG (Marcar como lida) ---
