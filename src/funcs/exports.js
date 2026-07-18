@@ -254,32 +254,60 @@ export async function getModules() {
 }
 
 /**
- * Default export usa um Proxy para evitar bloqueio no startup (top-level await).
- * Os módulos são carregados em background e ficam disponíveis logo depois.
+ * Estado do carregamento dos módulos.
+ * - `null`    : ainda carregando
+ * - `Object`  : pronto e disponível
+ * - `Error`   : falha crítica no carregamento
  */
 let loadedModules = null;
-loadModules().then(m => {
+let loadError = null;
+
+const modulesReadyPromise = loadModules().then(m => {
     loadedModules = m;
 }).catch(e => {
-    console.error('[EXPORTS] Falha crítica ao carregar módulos em background:', e);
+    loadError = e;
+    console.error('[EXPORTS] Falha crítica ao carregar módulos:', e);
 });
 
-// Proxy para acesso seguro aos módulos
+/**
+ * Garante que os módulos estão carregados antes de prosseguir.
+ * Deve ser aguardado (await) durante o boot para evitar acesso prematuro.
+ * @returns {Promise<void>}
+ */
+export async function ensureModulesLoaded() {
+    await modulesReadyPromise;
+    if (loadError) throw loadError;
+}
+
+/**
+ * Verifica síncronamente se os módulos já estão disponíveis.
+ * @returns {boolean}
+ */
+export function areModulesLoaded() {
+    return loadedModules !== null && loadError === null;
+}
+
+/**
+ * Proxy de acesso que LANÇA ERRO explícito quando módulos ainda carregam,
+ * em vez de retornar `undefined` silenciosamente e mascarar bugs em runtime.
+ */
 const safeModules = new Proxy({}, {
-    get(target, prop) {
+    get(_target, prop) {
         if (typeof prop === 'symbol') return undefined;
-        
+
+        if (loadError) {
+            throw new Error(`[EXPORTS] Módulos não puderam ser carregados: ${loadError.message}`);
+        }
         if (!loadedModules) {
-            // Módulos ainda estão carregando (startup)
-            // Retorna um proxy encadeado ou undefined dependendo do uso
-            return undefined;
+            throw new Error(
+                `[EXPORTS] Módulo '${String(prop)}' acessado antes do boot terminar. ` +
+                `Chame await ensureModulesLoaded() no startup.`
+            );
         }
-        
         if (!(prop in loadedModules)) {
-            console.warn(`[EXPORTS] Module '${prop}' not found in exports`);
+            console.warn(`[EXPORTS] Module '${String(prop)}' not found in exports`);
             return undefined;
         }
-        
         return loadedModules[prop];
     }
 });

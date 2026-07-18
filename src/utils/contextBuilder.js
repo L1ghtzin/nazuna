@@ -3,7 +3,7 @@
 // Exporta buildMessageContext() que retorna o objeto ctx completo.
 
 import { downloadContentFromMessage, generateWAMessageFromContent, generateWAMessage, getContentType } from 'baileys';
-import menus from '../menus/index.js';
+import menus from '../views/index.js';
 import modulesExport from '../funcs/exports.js';
 
 let modoLiteFileChecked = false;

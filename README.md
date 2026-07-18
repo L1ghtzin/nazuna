@@ -68,7 +68,7 @@ chainy/
 │   │   ├── utils/               # Utilitários de serviço (jogos, search, media, sticker)
 │   │   ├── private/             # Segurança adicional (antitoxic, antipalavra, antistickerplus)
 │   │   └── json/                # Bancos de dados estáticos de jogos (quiz, forca, stop, etc)
-│   ├── menus/                   # Geradores de texto dos menus exibidos pelo comando /menu
+│   ├── views/                   # Geradores de texto dos menus exibidos pelo comando /menu
 │   ├── utils/                   # Núcleo de utilitários do framework
 │   │   ├── database/            # Submódulos do banco (economy, leveling, rental, config, support)
 │   │   ├── helpers/             # Helpers puros (formatting, jsonIo, jidLidResolver, dataValidators, paramParser)

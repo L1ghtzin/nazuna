@@ -22,6 +22,7 @@ import { handleConnectionUpdate } from './handlers/connectionEvents.js';
 import { handleMessagesUpdate, handleMessagesUpsert } from './handlers/messageEvents.js';
 import { loadGroupData } from './utils/groupManager.js';
 import { MESSAGES } from './utils/messages.js';
+import { ensureModulesLoaded } from './funcs/exports.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -444,6 +445,10 @@ async function startChainy() {
          quando connection === 'open', confirmando conexão real.
         */
         console.log('🚀 Iniciando Chainy...');
+
+        // Garante que todos os módulos assíncronos (downloads, utils, private)
+        // estão carregados antes de aceitar mensagens.
+        await ensureModulesLoaded();
 
         await createBotSocket(AUTH_DIR);
         // isReconnecting = false é feito no finally abaixo
