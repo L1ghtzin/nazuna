@@ -7,6 +7,43 @@ import { DisconnectReason } from 'baileys';
 import { updateOwnerLid, performMigration, migrateBlacklists } from '../utils/migration.js';
 import { loadMsgBotOn } from '../utils/database.js';
 import { buildUserId } from '../utils/helpers.js';
+import log from '../utils/logger.js';
+
+function trimQrMargin(qrOutput) {
+  const lines = qrOutput.split(/\r?\n/);
+  const top = lines.findIndex((line) => line.trim().length > 0);
+
+  if (top === -1) return qrOutput;
+
+  let bottom = lines.length - 1;
+  while (bottom > top && lines[bottom].trim().length === 0) {
+    bottom -= 1;
+  }
+
+  const content = lines.slice(top, bottom + 1);
+  const bounds = content.reduce(
+    (acc, line) => {
+      const first = line.search(/\S/);
+      if (first === -1) return acc;
+
+      return {
+        left: Math.min(acc.left, Math.max(0, first - 1)),
+        right: Math.max(acc.right, line.length),
+      };
+    },
+    { left: Number.POSITIVE_INFINITY, right: 0 },
+  );
+
+  if (!Number.isFinite(bounds.left)) return qrOutput;
+
+  return content.map((line) => line.slice(bounds.left, bounds.right)).join("\n");
+}
+
+function printCompactQr(qr) {
+  qrcode.generate(qr, { small: true }, (output) => {
+    console.log(trimQrMargin(output));
+  });
+}
 
 export async function handleConnectionUpdate(ChainySock, update, {
   AUTH_DIR,
@@ -32,19 +69,24 @@ export async function handleConnectionUpdate(ChainySock, update, {
 
   const hasSessionNow = ChainySock.authState.creds.me || ChainySock.authState.creds.registered || existsSync(path.join(AUTH_DIR, 'creds.json'));
   
+  if (connection === 'connecting') {
+    log.info('CONNECTION', 'Conectando ao WhatsApp...');
+  }
+
   if (qr && !hasSessionNow && !codeMode) {
-    console.log('🔗 QR Code gerado para autenticação:');
-    qrcode.generate(qr, { small: true }, (qrcodeText) => {
-      console.log(qrcodeText);
-    });
-    console.log('📱 Escaneie o QR code acima com o WhatsApp para autenticar o bot.');
+    log.box("QR", "Código QR Recebido", [
+      "Escaneie o código QR compacto abaixo com o WhatsApp do seu celular.",
+      "Mantenha a distância ideal se o leitor falhar."
+    ], "magenta");
+    printCompactQr(qr);
   }
 
   if (connection === 'open') {
     try {
       reconnectState.reconnectAttempts = 0;
       reconnectState.forbidden403Attempts = 0;
-      console.log(`🔄 Conexão aberta. Inicializando sistema de otimização...`);
+      log.success('CONNECTION', 'Conexão aberta com sucesso!');
+      log.info('CONNECTION', 'Inicializando caches e otimizações...');
       
       await initializeOptimizedCaches(ChainySock);
       
@@ -119,9 +161,13 @@ export async function handleConnectionUpdate(ChainySock, update, {
         console.error('❌ Erro ao processar mensagem de inicialização:', msgError.message);
       }
       
-      console.log(`✅ Bot ${config.nomebot || 'Chainy'} iniciado com sucesso! Prefixo: ${config.prefixo || '!'} | Dono: ${config.nomedono || ''}`);
+      log.box("SUCCESS", `${config.nomebot || 'Chainy'} Iniciado!`, [
+        `Prefixo: ${config.prefixo || '!'}`,
+        `Dono: ${config.nomedono || ''}`,
+        `Status: Conectado e operacional`
+      ], "green");
     } catch (initErr) {
-      console.error('❌ Erro crítico na inicialização pós-conexão:', initErr.message);
+      log.error('CONNECTION', 'Erro crítico na inicialização pós-conexão:', initErr.message);
       setTimeout(() => startChainy(), 5000);
     }
   }
@@ -129,20 +175,14 @@ export async function handleConnectionUpdate(ChainySock, update, {
   if (connection === 'close') {
     const isIntentional = !lastDisconnect?.error;
     const reason = isIntentional ? 200 : new Boom(lastDisconnect.error)?.output?.statusCode;
-    const reasonMessage = {
-      200: 'Fechamento intencional',
-      [DisconnectReason.loggedOut]: 'Deslogado do WhatsApp',
-      401: 'Sessão expirada',
-      403: 'Acesso proibido (Forbidden)',
-      [DisconnectReason.connectionClosed]: 'Conexão fechada',
-      [DisconnectReason.connectionLost]: 'Conexão perdida',
-      [DisconnectReason.connectionReplaced]: 'Conexão substituída',
-      [DisconnectReason.timedOut]: 'Tempo de conexão esgotado',
-      [DisconnectReason.badSession]: 'Sessão inválida',
-      [DisconnectReason.restartRequired]: 'Reinício necessário',
-    } [reason] || 'Motivo desconhecido';
-    
-    console.log(`❌ Conexão fechada. Código: ${reason} | Motivo: ${reasonMessage}`);
+    const info = getDisconnectInfo(reason);
+
+    log.box("CONNECTION", "Conexão Encerrada", [
+      `Código de Status: ${reason}`,
+      `Motivo: ${info.title}`,
+      `Descrição: ${info.description}`,
+      `Ação Requerida: ${info.action}`
+    ], info.color);
     
     // Limpa recursos antes de reconectar
     if (reconnectState.cacheCleanupInterval) {
@@ -158,16 +198,16 @@ export async function handleConnectionUpdate(ChainySock, update, {
     // Tratamento especial para erro 403 (Forbidden)
     if (reason === 403) {
       reconnectState.forbidden403Attempts++;
-      console.log(`⚠️ Erro 403 detectado. Tentativa ${reconnectState.forbidden403Attempts}/${reconnectState.MAX_403_ATTEMPTS}`);
+      log.warn('CONNECTION', `Erro 403 detectado. Tentativa ${reconnectState.forbidden403Attempts}/${reconnectState.MAX_403_ATTEMPTS}`);
       
       if (reconnectState.forbidden403Attempts >= reconnectState.MAX_403_ATTEMPTS) {
-        console.log('❌ Máximo de tentativas para erro 403 atingido. Apagando QR code e parando...');
+        log.error('CONNECTION', 'Máximo de tentativas para erro 403 atingido. Apagando QR code e parando...');
         await clearAuthDir(authDir);
-        console.log('🗑️ Autenticação removida. Reinicie o bot para gerar um novo QR code.');
+        log.info('CONNECTION', 'Autenticação removida. Reinicie o bot para gerar um novo QR code.');
         process.exit(1);
       }
       
-      console.log('🔄 Tentando reconectar em 5 segundos...');
+      log.info('CONNECTION', 'Tentando reconectar em 5 segundos...');
       if (reconnectState.reconnectTimer) {
         clearTimeout(reconnectState.reconnectTimer);
       }
@@ -181,11 +221,11 @@ export async function handleConnectionUpdate(ChainySock, update, {
     
     if (reason === DisconnectReason.badSession || reason === DisconnectReason.loggedOut) {
       await clearAuthDir(authDir);
-      console.log('🔄 Nova autenticação será necessária na próxima inicialização.');
+      log.warn('CONNECTION', 'Nova autenticação será necessária na próxima inicialização.');
     }
     
     if (reason === DisconnectReason.connectionReplaced) {
-      console.log('⚠️ Conexão substituída por outra instância. Não reconectando para evitar conflito.');
+      log.warn('CONNECTION', 'Conexão substituída por outra instância. Não reconectando para evitar conflito.');
       return;
     }
     
@@ -198,16 +238,104 @@ export async function handleConnectionUpdate(ChainySock, update, {
       reconnectDelay = 10000;
     }
     
-    console.log(`🔄 Aguardando ${reconnectDelay / 1000} segundos antes de reconectar...`);
-    
-    if (reconnectState.reconnectTimer) {
-      clearTimeout(reconnectState.reconnectTimer);
+    if (info.shouldReconnect) {
+      log.info('CONNECTION', `Aguardando ${reconnectDelay / 1000} segundos antes de reconectar...`);
+      
+      if (reconnectState.reconnectTimer) {
+        clearTimeout(reconnectState.reconnectTimer);
+      }
+      
+      reconnectState.reconnectTimer = setTimeout(() => {
+        reconnectState.reconnectAttempts = 0;
+        reconnectState.forbidden403Attempts = 0;
+        startChainy();
+      }, reconnectDelay);
     }
-    
-    reconnectState.reconnectTimer = setTimeout(() => {
-      reconnectState.reconnectAttempts = 0;
-      reconnectState.forbidden403Attempts = 0;
-      startChainy();
-    }, reconnectDelay);
+  }
+}
+
+function getDisconnectInfo(statusCode) {
+  switch (statusCode) {
+    case DisconnectReason.loggedOut:
+      return {
+        title: 'Desconectado pelo Celular',
+        description: 'A sessão foi desvinculada ou encerrada no aparelho.',
+        action: 'Gere um novo QR code para autenticar.',
+        shouldReconnect: false,
+        color: 'red'
+      };
+    case 403:
+    case DisconnectReason.forbidden:
+      return {
+        title: 'Acesso Proibido (Forbidden)',
+        description: 'Acesso rejeitado pelo servidor do WhatsApp.',
+        action: 'Verifique se o número foi banido ou limpe a pasta de login.',
+        shouldReconnect: false,
+        color: 'red'
+      };
+    case DisconnectReason.connectionLost:
+      return {
+        title: 'Conexão Perdida',
+        description: 'A conexão com os servidores do WhatsApp caiu.',
+        action: 'Tentando reconectar automaticamente...',
+        shouldReconnect: true,
+        color: 'yellow'
+      };
+    case DisconnectReason.multideviceMismatch:
+      return {
+        title: 'Conflito de Dispositivo',
+        description: 'Incompatibilidade de múltiplos dispositivos detectada.',
+        action: 'Limpe a sessão e tente autenticar novamente.',
+        shouldReconnect: false,
+        color: 'red'
+      };
+    case DisconnectReason.connectionClosed:
+      return {
+        title: 'Conexão Fechada',
+        description: 'A conexão de rede foi fechada de forma inesperada.',
+        action: 'Reconectando em instantes...',
+        shouldReconnect: true,
+        color: 'yellow'
+      };
+    case DisconnectReason.connectionReplaced:
+      return {
+        title: 'Conexão Substituída',
+        description: 'Outra instância do bot iniciou no mesmo número.',
+        action: 'Encerrando processo para evitar conflito de envio.',
+        shouldReconnect: false,
+        color: 'red'
+      };
+    case DisconnectReason.badSession:
+      return {
+        title: 'Sessão Corrompida',
+        description: 'Os arquivos de credenciais localizados estão corrompidos.',
+        action: 'Limpando sessão antiga... Reinicie o bot.',
+        shouldReconnect: false,
+        color: 'red'
+      };
+    case DisconnectReason.restartRequired:
+      return {
+        title: 'Reinicialização Requerida',
+        description: 'O servidor do WhatsApp solicitou atualização do socket.',
+        action: 'Reiniciando conexão imediatamente...',
+        shouldReconnect: true,
+        color: 'yellow'
+      };
+    case DisconnectReason.timedOut:
+      return {
+        title: 'Tempo Esgotado',
+        description: 'O servidor demorou muito para responder.',
+        action: 'Reconectando...',
+        shouldReconnect: true,
+        color: 'yellow'
+      };
+    default:
+      return {
+        title: 'Desconexão Desconhecida',
+        description: 'Conexão encerrada por motivo não catalogado.',
+        action: 'Tentando reconectar...',
+        shouldReconnect: true,
+        color: 'yellow'
+      };
   }
 }
