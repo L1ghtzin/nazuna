@@ -3,6 +3,40 @@ import { unwrapMessage } from '../../utils/messageHelpers.js';
 import { verifyQuotedAuthor } from '../../utils/messageEnvelopeRegistry.js';
 import { sendCleanChat } from '../../utils/cleanChat.js';
 
+/**
+ * Apaga uma mensagem de pagamento usando o trick do temp message + edit,
+ * necessário pois o delete direto não funciona para esse tipo de mensagem.
+ */
+async function deletePaymentMessage(bot, remoteJid, stanzaId, participant) {
+    try {
+        const msgTemp = await bot.sendMessage(remoteJid, { text: '' });
+        const idTemp = msgTemp.key.id;
+
+        await bot.sendMessage(remoteJid, {
+            text: '💦',
+            edit: { id: idTemp }
+        }, { messageId: stanzaId });
+
+        await new Promise(r => setTimeout(r, 400));
+
+        await bot.sendMessage(remoteJid, {
+            delete: { remoteJid, id: stanzaId, fromMe: false, participant }
+        });
+
+        await new Promise(r => setTimeout(r, 400));
+
+        try {
+            await bot.sendMessage(remoteJid, { delete: { remoteJid, id: idTemp, fromMe: true } });
+        } catch {
+            await bot.sendMessage(remoteJid, {
+                delete: { remoteJid, id: idTemp, fromMe: false, participant: bot.user.id }
+            }).catch(() => {});
+        }
+    } catch (err) {
+        console.error(`[ANTI-PAYMENT] Erro ao apagar msg de pagamento: ${err.message}`);
+    }
+}
+
 const BAN_COOLDOWN_MS = 10_000;
 const recentBans = new Map();
 const CACHE_CLEANUP_INTERVAL_MS = 60_000;
@@ -77,20 +111,30 @@ export async function handleAntiPayment(context) {
             console.log(`[ANTI-PAYMENT] 🔴 Marcação de pagamento corroborada! Autor original: @${targetUser.split('@')[0]}`);
             
             if (isBotAdmin) {
-                // Tenta apagar a mensagem original
-                await runAntiPaymentStep(() => bot.sendMessage(from, {
-                    delete: {
-                        remoteJid: from,
-                        fromMe: false,
-                        id: stanzaId,
-                        participant: targetUser,
-                    }
-                }), 'Erro ao apagar a mensagem original.');
+                // Apaga a mensagem de pagamento original usando o trick
+                await runAntiPaymentStep(
+                    () => deletePaymentMessage(bot, from, stanzaId, targetUser),
+                    'Erro ao apagar a mensagem original.'
+                );
             }
         }
     } else {
         // Se foi o próprio sender que enviou a trava
         if (isGroupAdmin || isOwner || (isUserWhitelisted && isUserWhitelisted(sender, 'antipayment'))) return false;
+
+        // Apaga a mensagem de pagamento direta usando o trick
+        if (isBotAdmin) {
+            const msgId = info.key?.id;
+            if (msgId) {
+                console.log(`[ANTI-PAYMENT] 🗑️ Tentando apagar msg de pagamento direta: ${msgId} de ${sender}`);
+                // Delay inicial: dá tempo ao servidor WA processar a msg antes do trick
+                await new Promise(r => setTimeout(r, 800));
+                await runAntiPaymentStep(
+                    () => deletePaymentMessage(bot, from, msgId, sender),
+                    'Erro ao apagar mensagem de pagamento direta.'
+                );
+            }
+        }
     }
 
     if (isOnCooldown(from, targetUser)) return false;
