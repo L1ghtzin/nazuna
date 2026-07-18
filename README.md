@@ -49,7 +49,10 @@ chainy/
 ├── dados/                       # Armazenamento e persistência de dados
 │   ├── database/                # Cache em memória e arquivos JSON do banco
 │   │   ├── grupos/              # Configurações de segurança e status de cada grupo
-│   │   └── dono/                # Credenciais, configurações globais e blacklist
+│   │   ├── dono/                # Credenciais, configurações globais e blacklist
+│   │   ├── backups/             # Backups automáticos gerados pelo saveJsonFileSafe()
+│   │   ├── qr-code/             # Credenciais de sessão do WhatsApp (Baileys)
+│   │   └── tmp/                 # Arquivos temporários (mídias, cache de processamento)
 │   └── config.json              # Configuração básica do bot (Dono, Prefixo, etc.)
 ├── src/                         # Código-fonte principal do bot
 │   ├── commands/                # Comandos dinâmicos (separados por permissão)
@@ -57,9 +60,21 @@ chainy/
 │   │   ├── member/              # Comandos livres para qualquer usuário
 │   │   ├── owner/               # Comandos restritos ao dono do bot
 │   │   └── rpg/                 # Comandos do sistema de RPG
-│   ├── handlers/                # Manipuladores de eventos do WhatsApp (Baileys)
-│   ├── middleware/              # Filtros de execução, limites e despacho de comandos
-│   └── utils/                   # Utilitários, mensagens globais e auxiliares
+│   ├── handlers/                # Manipuladores de eventos do Baileys (connection, messages, groupParticipants)
+│   ├── middleware/              # Filtros de execução, limites, despacho e segurança
+│   │   └── security/            # Submódulos de proteção (antiDel, antiSpam, mutedUsers, rentalMode, etc)
+│   ├── funcs/                   # Integrações, serviços e dados estáticos
+│   │   ├── downloads/           # Downloaders (YouTube, TikTok, Spotify, etc)
+│   │   ├── utils/               # Utilitários de serviço (jogos, search, media, sticker)
+│   │   ├── private/             # Segurança adicional (antitoxic, antipalavra, antistickerplus)
+│   │   └── json/                # Bancos de dados estáticos de jogos (quiz, forca, stop, etc)
+│   ├── menus/                   # Geradores de texto dos menus exibidos pelo comando /menu
+│   ├── utils/                   # Núcleo de utilitários do framework
+│   │   ├── database/            # Submódulos do banco (economy, leveling, rental, config, support)
+│   │   ├── helpers/             # Helpers puros (formatting, jsonIo, jidLidResolver, dataValidators, paramParser)
+│   │   └── messages/            # Mensagens centralizadas por domínio (admin, member, owner, rpg, etc)
+│   ├── workers/                 # Jobs agendados (cron) e workers em background
+│   └── .scripts/                # Scripts npm (start, config, update)
 └── package.json                 # Manifesto do projeto e scripts npm
 ```
 

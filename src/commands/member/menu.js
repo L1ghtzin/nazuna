@@ -1,9 +1,59 @@
 import { sendMenuWithMedia } from '../../utils/menuSender.js';
 
+const MENU_CATEGORIES = [
+  {
+    aliases: ['menu', 'help', 'comandos', 'commands'],
+    getMenu: (menus) => menus.menu
+  },
+  {
+    aliases: ['alteradores', 'menualterador', 'menualteradores', 'changersmenu', 'changers'],
+    getMenu: (menus) => menus.menuAlterador
+  },
+  {
+    aliases: ['menubn', 'menubrincadeira', 'menubrincadeiras', 'gamemenu'],
+    getMenu: (menus) => menus.menubn
+  },
+  {
+    aliases: ['menudown', 'menudownload', 'menudownloads', 'downmenu', 'downloadmenu'],
+    getMenu: (menus) => menus.menudown
+  },
+  {
+    aliases: ['ferramentas', 'menuferramentas', 'menuferramenta', 'toolsmenu', 'tools'],
+    getMenu: (menus) => menus.menuFerramentas
+  },
+  {
+    aliases: ['menuadm', 'menuadmin', 'menuadmins', 'admmenu'],
+    getMenu: (menus) => menus.menuadm
+  },
+  {
+    aliases: ['menumembros', 'menumemb', 'menugeral', 'membmenu', 'membermenu'],
+    getMenu: (menus) => menus.menuMembros
+  },
+  {
+    aliases: ['stickermenu', 'menusticker', 'menufig'],
+    getMenu: (menus) => menus.menuSticker
+  },
+  {
+    aliases: ['menurpg'],
+    getMenu: (menus) => menus.menuRPG
+  },
+  {
+    aliases: ['menuvip'],
+    getMenu: (menus) => menus.menuVIP
+  }
+];
+
+const MENU_COMMAND_LOOKUP = new Map();
+for (const category of MENU_CATEGORIES) {
+  for (const alias of category.aliases) {
+    MENU_COMMAND_LOOKUP.set(alias, category);
+  }
+}
+
 export default {
   name: "menu",
   description: "Menus e guias do bot",
-  commands: ["admmenu", "alteradores", "changers", "changersmenu", "comandos", "commands", "downloadmenu", "downmenu", "ferramentas", "gamemenu", "help", "membermenu", "membmenu", "menu", "menuadm", "menuadmin", "menuadmins", "menualterador", "menualteradores", "menubn", "menubrincadeira", "menubrincadeiras", "menudown", "menudownload", "menudownloads", "menuferramenta", "menuferramentas", "menufig", "menugeral", "menumemb", "menumembros", "menurpg", "menusticker", "menuvip", "stickermenu", "tools", "toolsmenu"],
+  commands: MENU_CATEGORIES.flatMap((category) => category.aliases),
   handle: async ({
     bot, from, info, command, reply, prefix, pushname, isGroup,
     nomebot, menus, getGroupCustomization, isGroupCustomizationEnabled,
@@ -30,26 +80,10 @@ export default {
     });
 
     try {
-      if (['menu', 'help', 'comandos', 'commands'].includes(cmd)) {
-        await send(menus.menu);
-      } else if (['alteradores', 'menualterador', 'menualteradores', 'changersmenu', 'changers'].includes(cmd)) {
-        await send(menus.menuAlterador);
-      } else if (['menubn', 'menubrincadeira', 'menubrincadeiras', 'gamemenu'].includes(cmd)) {
-        await send(menus.menubn);
-      } else if (['menudown', 'menudownload', 'menudownloads', 'downmenu', 'downloadmenu'].includes(cmd)) {
-        await send(menus.menudown);
-      } else if (['ferramentas', 'menuferramentas', 'menuferramenta', 'toolsmenu', 'tools'].includes(cmd)) {
-        await send(menus.menuFerramentas);
-      } else if (['menuadm', 'menuadmin', 'menuadmins', 'admmenu'].includes(cmd)) {
-        await send(menus.menuadm);
-      } else if (['menumembros', 'menumemb', 'menugeral', 'membmenu', 'membermenu'].includes(cmd)) {
-        await send(menus.menuMembros);
-      } else if (['stickermenu', 'menusticker', 'menufig'].includes(cmd)) {
-        await send(menus.menuSticker);
-      } else if (cmd === 'menurpg') {
-        await send(menus.menuRPG);
-      } else if (cmd === 'menuvip') {
-        await send(menus.menuVIP);
+      const category = MENU_COMMAND_LOOKUP.get(cmd);
+      if (category) {
+        const menuFunction = category.getMenu(menus);
+        await send(menuFunction);
       }
     } catch (error) {
       console.error('Erro ao enviar menu:', error);
