@@ -237,24 +237,13 @@ async function createBotSocket(authDir) {
     console.log(`📱 Usando versão do WhatsApp: ${version.join('.')}`);
     
     const ChainySock = makeWASocket({
-    version: version,
-    emitOwnEvents: true,
-    fireInitQueries: false,
-    generateHighQualityLinkPreview: false,
-    syncFullHistory: false,
-    markOnlineOnConnect: true,
-    connectTimeoutMs: 120000,
-    retryRequestDelayMs: 5000,
-    qrTimeout: 180000,
-    keepAliveIntervalMs: 30_000,
-    defaultQueryTimeoutMs: 60_000,
-    maxMsgRetryCount: 5,
-    shouldIgnoreJid: (jid) => isJidBroadcast(jid) || isJidStatusBroadcast(jid) || isJidNewsletter(jid),
-    shouldSyncHistoryMessage: () => false,
-    msgRetryCounterCache,
-    auth: state,
-    signalRepository,
-    logger
+        version: version,
+        auth: state,
+        signalRepository,
+        logger: logger,
+        syncFullHistory: false,
+        fireInitQueries: false,
+        generateHighQualityLinkPreview: false
     });
 
     // Envelopamento do sendMessage para converter LIDs em JIDs em menções
