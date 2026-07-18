@@ -1,17 +1,17 @@
-import { handleAntiSpam } from './security/antiSpam.js';
-import { handleAntiMedia } from './security/antiMedia.js';
-import { handleAntiPayment } from './security/antiPayment.js';
-import { handleAntiStatus } from './security/antiStatus.js';
-import { handleAntiDel } from './security/antiDel.js';
-import { handleAFK, handleAFKMention } from './security/afk.js';
-import { handleMutedUsers } from './security/mutedUsers.js';
-import { handleRentalMode, handleActivationCode } from './security/rentalMode.js';
+import { handleAntiSpam } from '../security/anti/antiSpam.js';
+import { handleAntiMedia } from '../security/anti/antiMedia.js';
+import { handleAntiPayment } from '../security/anti/antiPayment.js';
+import { handleAntiStatus } from '../security/anti/antiStatus.js';
+import { handleAntiDel } from '../security/anti/antiDel.js';
+import { handleAFK, handleAFKMention } from '../security/anti/afk.js';
+import { handleMutedUsers } from '../security/anti/mutedUsers.js';
+import { handleRentalMode, handleActivationCode } from '../security/anti/rentalMode.js';
 import { 
     handleMinMessage, 
     handleAntiBtn, 
     handleSoAdmBypass, 
     handleBlockedCommands 
-} from './security/miscSecurity.js';
+} from '../security/anti/miscSecurity.js';
 
 /**
  * Função principal que atua apenas como maestro.
