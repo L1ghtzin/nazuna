@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { readJsonFileAsync, writeJsonFileAsync } from './asyncFs.js';
+import { readAsync, writeAsync } from './database/io.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -57,13 +57,13 @@ function saveVipCommands(data) {
   const performSave = async () => {
     try {
       ensureVipCommandsFile();
-      const diskData = await readJsonFileAsync(VIP_COMMANDS_FILE, { commands: [], categories: {} });
+      const diskData = await readAsync(VIP_COMMANDS_FILE, { commands: [], categories: {} });
       const merged = {
         ...diskData,
         ...data,
         commands: data.commands // sobrescreve array inteiro para evitar merge errado
       };
-      await writeJsonFileAsync(VIP_COMMANDS_FILE, merged);
+      await writeAsync(VIP_COMMANDS_FILE, merged);
     } catch (error) {
       console.error('Erro ao salvar comandos VIP:', error);
     }

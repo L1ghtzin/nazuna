@@ -1,5 +1,5 @@
 import pathz from 'path';
-import { readJsonFileAsync, writeJsonFileAsync } from '../utils/asyncFs.js';
+import { readAsync, writeAsync } from '../utils/database/io.js';
 import CaptchaIndex, { getCaptcha, removeCaptcha } from '../utils/captchaIndex.js';
 import { MESSAGES } from '../utils/messages.js';
 
@@ -62,7 +62,7 @@ export async function handleCaptchaResponse(bot, sender, body, isGroup, info, re
     try {
       const groupMetadata = await bot.groupMetadata(isCapUser.groupId).catch(() => null);
       const groupPath = pathz.join(GRUPOS_DIR, isCapUser.groupFile || `${isCapUser.groupId.replace('@g.us', '')}.json`);
-      const groupSettings = await readJsonFileAsync(groupPath, {});
+      const groupSettings = await readAsync(groupPath, {});
 
       if (groupSettings && groupSettings.bemvindo && groupMetadata) {
         // Envia boas vindas usando o formato original do captcha

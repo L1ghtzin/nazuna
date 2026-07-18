@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { writeJsonFileAsync } from '../../utils/asyncFs.js';
+import { writeAsync } from '../../utils/database/io.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -30,7 +30,7 @@ export default {
       
       if (groupData.blockedCommands[cmdKey]) {
         delete groupData.blockedCommands[cmdKey];
-        await writeJsonFileAsync(groupFile, groupData);
+        await writeAsync(groupFile, groupData);
         reply(MESSAGES.admin.unblockcmd.success(q.trim()));
       } else {
         reply(MESSAGES.admin.unblockcmd.notBlocked);

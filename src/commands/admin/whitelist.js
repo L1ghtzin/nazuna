@@ -1,5 +1,5 @@
 import fs from 'fs';
-import { writeJsonFileAsync } from '../../utils/asyncFs.js';
+import { writeAsync } from '../../utils/database/io.js';
 
 export default {
   name: "whitelist",
@@ -25,14 +25,14 @@ export default {
       const antis = q.split('|')[1]?.split(',').map(a => a.trim().toLowerCase()) || [];
       if (!antis.length) return reply(MESSAGES.admin.whitelist.missingAntis);
       groupData.adminWhitelist[menc_os2] = { antis, addedBy: sender, addedAt: Date.now() };
-      await writeJsonFileAsync(groupFile, groupData);
+      await writeAsync(groupFile, groupData);
       return reply(MESSAGES.admin.whitelist.addSuccess(getUserName(menc_os2)), { mentions: [menc_os2] });
     }
 
     if (['wl.remove', 'wlremove', 'removewhitelist', 'unwhitelist'].includes(cmd)) {
       if (!menc_os2) return reply(MESSAGES.admin.whitelist.missingUser);
       delete groupData.adminWhitelist[menc_os2];
-      await writeJsonFileAsync(groupFile, groupData);
+      await writeAsync(groupFile, groupData);
       return reply(MESSAGES.admin.whitelist.removeSuccess);
     }
   }

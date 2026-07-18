@@ -1,4 +1,4 @@
-import { writeJsonFileAsync } from '../../utils/asyncFs.js';
+import { writeAsync } from '../../utils/database/io.js';
 
 export async function handleAFK(context) {
     const { isGroup, groupData, sender, groupFile, reply, MESSAGES, command } = context;
@@ -11,7 +11,7 @@ export async function handleAFK(context) {
         const afkSince = new Date(groupData.afkUsers[sender].since || Date.now()).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });
         delete groupData.afkUsers[sender];
         if (groupFile) {
-            await writeJsonFileAsync(groupFile, groupData);
+            await writeAsync(groupFile, groupData);
         }
         await reply(MESSAGES.security.afkWelcome(afkSince));
     } catch (error) {

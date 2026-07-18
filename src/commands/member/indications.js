@@ -1,5 +1,5 @@
 import pathz from 'path';
-import { readJsonFileAsync } from '../../utils/asyncFs.js';
+import { readAsync } from '../../utils/database/io.js';
 
 export default {
   name: "indication_rank",
@@ -7,7 +7,7 @@ export default {
   commands: ["topindica", "topindicacao", "rankindicacao", "rankindicacoes"],
   handle: async ({ reply, DATABASE_DIR, MESSAGES }) => {
     const filePath = pathz.join(DATABASE_DIR, 'indicacoes.json');
-    const data = await readJsonFileAsync(filePath, { users: {} });
+    const data = await readAsync(filePath, { users: {} });
     data.users = data.users || {};
 
     const users = Object.entries(data.users)

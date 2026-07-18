@@ -1,5 +1,5 @@
 import { CONFIG_FILE } from '../../utils/paths.js';
-import { readJsonFileAsync, writeJsonFileAsync } from '../../utils/asyncFs.js';
+import { readAsync, writeAsync } from '../../utils/database/io.js';
 
 export default {
   name: "prefix",
@@ -28,9 +28,9 @@ export default {
         await reply(MESSAGES.owner.prefix.success(newPrefix));
       }
       
-      const nextConfig = { ...(config || await readJsonFileAsync(CONFIG_FILE, {})), prefixo: newPrefix };
+      const nextConfig = { ...(config || await readAsync(CONFIG_FILE, {})), prefixo: newPrefix };
       
-      await writeJsonFileAsync(CONFIG_FILE, nextConfig);
+      await writeAsync(CONFIG_FILE, nextConfig);
       
     } catch (e) {
       console.error(e);

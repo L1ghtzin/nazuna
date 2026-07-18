@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { writeJsonFileAsync } from '../../utils/asyncFs.js';
+import { writeAsync } from '../../utils/database/io.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -23,7 +23,7 @@ export default {
   }) => {
     try {
       groupData.x9 = !groupData.x9;
-      await writeJsonFileAsync(groupFile, groupData);
+      await writeAsync(groupFile, groupData);
       
       const status = groupData.x9 ? 'ativado' : 'desativado';
       const emoji = groupData.x9 ? '✅' : '❌';

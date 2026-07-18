@@ -1,4 +1,4 @@
-import { readJsonFileAsync, writeJsonFileAsync } from '../../utils/asyncFs.js';
+import { readAsync, writeAsync } from '../../utils/database/io.js';
 export default {
   name: "transmissao_subs",
   description: "Comandos de transmissão do dono para inscritos do PV",
@@ -15,14 +15,14 @@ export default {
       if (isGroup) return reply(MESSAGES.owner.owner_broadcast.tm2.privateOnly);
       
       const subFile = pathz.join(DATABASE_DIR, 'transmissao_subs.json');
-      const subs = await readJsonFileAsync(subFile, { users: [] });
+      const subs = await readAsync(subFile, { users: [] });
       
       if (subs.users.includes(sender)) {
         return reply(MESSAGES.owner.owner_broadcast.tm2.alreadySubbed(subs.users.length));
       }
       
       subs.users.push(sender);
-      await writeJsonFileAsync(subFile, subs);
+      await writeAsync(subFile, subs);
       return reply(MESSAGES.owner.owner_broadcast.tm2.successSub(prefix));
     }
 
@@ -30,20 +30,20 @@ export default {
       if (isGroup) return reply(MESSAGES.owner.owner_broadcast.tm2.privateOnlyUnsub);
       
       const subFile = pathz.join(DATABASE_DIR, 'transmissao_subs.json');
-      const subs = await readJsonFileAsync(subFile, { users: [] });
+      const subs = await readAsync(subFile, { users: [] });
       
       if (!subs.users.includes(sender)) {
         return reply(MESSAGES.owner.owner_broadcast.tm2.notSubbed);
       }
       
       subs.users = subs.users.filter(u => u !== sender);
-      await writeJsonFileAsync(subFile, subs);
+      await writeAsync(subFile, subs);
       return reply(MESSAGES.owner.owner_broadcast.tm2.successUnsub(prefix));
     }
 
     if (cmd === 'statustm' || cmd === 'statustm2') {
       const subFile = pathz.join(DATABASE_DIR, 'transmissao_subs.json');
-      const subs = await readJsonFileAsync(subFile, { users: [] });
+      const subs = await readAsync(subFile, { users: [] });
       return reply(MESSAGES.owner.owner_broadcast.tm2.status(subs.users.length));
     }
 
@@ -53,7 +53,7 @@ export default {
       }
       
       const subFile = pathz.join(DATABASE_DIR, 'transmissao_subs.json');
-      const subs = await readJsonFileAsync(subFile, { users: [] });
+      const subs = await readAsync(subFile, { users: [] });
       
       if (subs.users.length === 0) {
         return reply(MESSAGES.owner.owner_broadcast.tm2.noSubs);

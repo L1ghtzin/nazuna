@@ -1,4 +1,4 @@
-import { writeJsonFileAsync } from '../../utils/asyncFs.js';
+import { writeAsync } from '../../utils/database/io.js';
 export default {
   name: "antispam_global",
   description: "Comandos de configuração do anti-spam global",
@@ -23,14 +23,14 @@ export default {
     }
     if (sub === 'off') {
       cfg.enabled = false;
-      await writeJsonFileAsync(filePath, cfg);
+      await writeAsync(filePath, cfg);
       return reply(MESSAGES.owner.owner_broadcast.antispamcmd.off);
     }
     if (sub === 'on') {
       const [l, i, b] = parts.slice(1).map(v => parseInt(v));
       if ([l, i, b].some(isNaN)) return reply(MESSAGES.owner.owner_broadcast.antispamcmd.usage(prefix));
       Object.assign(cfg, { enabled: true, limit: l, interval: i, blockTime: b });
-      await writeJsonFileAsync(filePath, cfg);
+      await writeAsync(filePath, cfg);
       return reply(MESSAGES.owner.owner_broadcast.antispamcmd.on);
     }
     return reply(MESSAGES.owner.owner_broadcast.antispamcmd.usage(prefix));

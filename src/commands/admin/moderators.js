@@ -1,5 +1,5 @@
 import fs from 'fs';
-import { writeJsonFileAsync } from '../../utils/asyncFs.js';
+import { writeAsync } from '../../utils/database/io.js';
 
 export default {
   name: "moderadores",
@@ -19,7 +19,7 @@ export default {
         return reply(MESSAGES.admin.moderators.alreadyMod(getUserName(modToAdd)), { mentions: [modToAdd] });
       }
       groupData.moderators.push(modToAdd);
-      await writeJsonFileAsync(groupFile, groupData);
+      await writeAsync(groupFile, groupData);
       return reply(MESSAGES.admin.moderators.addSuccess(getUserName(modToAdd)), { mentions: [modToAdd] });
     }
 
@@ -31,7 +31,7 @@ export default {
         return reply(MESSAGES.admin.moderators.notMod(getUserName(modToRemove)), { mentions: [modToRemove] });
       }
       groupData.moderators.splice(modIndex, 1);
-      await writeJsonFileAsync(groupFile, groupData);
+      await writeAsync(groupFile, groupData);
       return reply(MESSAGES.admin.moderators.delSuccess(getUserName(modToRemove)), { mentions: [modToRemove] });
     }
 
@@ -56,7 +56,7 @@ export default {
         return reply(MESSAGES.admin.moderators.alreadyGranted(cmdToAllow));
       }
       groupData.allowedModCommands.push(cmdToAllow);
-      await writeJsonFileAsync(groupFile, groupData);
+      await writeAsync(groupFile, groupData);
       return reply(MESSAGES.admin.moderators.grantSuccess(prefix, cmdToAllow));
     }
 
@@ -68,7 +68,7 @@ export default {
         return reply(MESSAGES.admin.moderators.notGranted(cmdToDeny));
       }
       groupData.allowedModCommands.splice(cmdIndex, 1);
-      await writeJsonFileAsync(groupFile, groupData);
+      await writeAsync(groupFile, groupData);
       return reply(MESSAGES.admin.moderators.revokeSuccess(prefix, cmdToDeny));
     }
 

@@ -1,5 +1,5 @@
 import pathz from 'path';
-import { writeJsonFileAsync } from '../../utils/asyncFs.js';
+import { writeAsync } from '../../utils/database/io.js';
 
 export default {
   name: "advanced_ban",
@@ -79,7 +79,7 @@ export default {
     if (['setbammsg', 'editarbam'].includes(cmd)) {
       if (!q) return reply(MESSAGES.admin.bam.setUsage(prefix, cmd));
       groupData.bamMessage = q;
-      await writeJsonFileAsync(groupFilePath, groupData);
+      await writeAsync(groupFilePath, groupData);
       return reply(MESSAGES.admin.bam.setSuccess);
     }
 
@@ -89,7 +89,7 @@ export default {
 
     if (['resetbammsg', 'resetarbam'].includes(cmd)) {
       delete groupData.bamMessage;
-      await writeJsonFileAsync(groupFilePath, groupData);
+      await writeAsync(groupFilePath, groupData);
       return reply(MESSAGES.admin.bam.resetSuccess);
     }
 
@@ -106,7 +106,7 @@ export default {
           enabled: true,
           stickerSha: sha
         };
-        await writeJsonFileAsync(groupFilePath, groupData);
+        await writeAsync(groupFilePath, groupData);
         return reply(MESSAGES.admin.figuban.configured);
       }
 
@@ -115,14 +115,14 @@ export default {
           return reply(MESSAGES.admin.figuban.noSticker(prefix));
         }
         groupData.figuban.enabled = true;
-        await writeJsonFileAsync(groupFilePath, groupData);
+        await writeAsync(groupFilePath, groupData);
         return reply(MESSAGES.admin.figuban.activated);
       }
 
       if (sub === 'off') {
         if (!groupData.figuban) groupData.figuban = {};
         groupData.figuban.enabled = false;
-        await writeJsonFileAsync(groupFilePath, groupData);
+        await writeAsync(groupFilePath, groupData);
         return reply(MESSAGES.admin.figuban.deactivated);
       }
 

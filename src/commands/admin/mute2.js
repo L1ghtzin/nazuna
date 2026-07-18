@@ -1,5 +1,5 @@
 import { normalizeUserId, getUserName } from '../../utils/helpers.js';
-import { readJsonFileAsync, writeJsonFileAsync } from '../../utils/asyncFs.js';
+import { readAsync, writeAsync } from '../../utils/database/io.js';
 
 export default {
   name: "mute2",
@@ -24,7 +24,7 @@ export default {
       if (!menc_os2) return reply(MESSAGES.error.missing('alguém'));
       
       const groupFilePath = buildGroupFilePath(from);
-      let groupData = await readJsonFileAsync(groupFilePath, { mutedUsers2: {} });
+      let groupData = await readAsync(groupFilePath, { mutedUsers2: {} });
       
       groupData.mutedUsers2 = groupData.mutedUsers2 || {};
       const targetId = await normalizeUserId(bot, menc_os2);
@@ -34,7 +34,7 @@ export default {
         groupData.mutedUsers2[menc_os2] = true;
       }
       
-      await writeJsonFileAsync(groupFilePath, groupData);
+      await writeAsync(groupFilePath, groupData);
       
       await bot.sendMessage(from, {
         text: MESSAGES.admin.mute2.success(getUserName(menc_os2)),

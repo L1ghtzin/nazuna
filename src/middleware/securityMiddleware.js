@@ -1,4 +1,4 @@
-import { writeJsonFileAsync } from '../utils/asyncFs.js';
+import { writeAsync } from '../utils/database/io.js';
 
 /**
  * Middleware para sistemas de proteção e moderação de conteúdo
@@ -98,7 +98,7 @@ export async function processSecurity({
             if (groupData && groupFile) {
               groupData.mutedUsers = groupData.mutedUsers || {};
               groupData.mutedUsers[sender] = true;
-              writeJsonFileAsync(groupFile, groupData).catch(() => {});
+              writeAsync(groupFile, groupData).catch(() => {});
             }
             bot.sendMessage(from, warningData).catch(() => {});
           }

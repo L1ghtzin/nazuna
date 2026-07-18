@@ -1,7 +1,7 @@
 
 
 import pathz from 'path';
-import { readJsonFileAsync, writeJsonFileAsync } from '../../utils/asyncFs.js';
+import { readAsync, writeAsync } from '../../utils/database/io.js';
 
 export default {
   name: "fun",
@@ -58,7 +58,7 @@ export default {
     // --- ANIVERSÁRIO ---
     if (['aniversario', 'niver', 'birthday'].includes(command)) {
       const aniversariosPath = pathz.join(GRUPOS_DIR, `${from}_aniversarios.json`);
-      const aniversarios = await readJsonFileAsync(aniversariosPath, {});
+      const aniversarios = await readAsync(aniversariosPath, {});
       if (!q) {
         return reply(MESSAGES.member.fun.niverMenu(prefix, command));
       }
@@ -79,7 +79,7 @@ export default {
       if (!dateMatch) return reply(MESSAGES.member.fun.niverInvalidFormat);
 
       aniversarios[sender] = q;
-      await writeJsonFileAsync(aniversariosPath, aniversarios);
+      await writeAsync(aniversariosPath, aniversarios);
       return reply(MESSAGES.member.fun.niverSuccess(sender.split('@')[0], q), { mentions: [sender] });
     }
 

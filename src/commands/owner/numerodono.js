@@ -1,5 +1,5 @@
 import { CONFIG_FILE } from '../../utils/paths.js';
-import { readJsonFileAsync, writeJsonFileAsync } from '../../utils/asyncFs.js';
+import { readAsync, writeAsync } from '../../utils/database/io.js';
 
 export default {
   name: "numerodono",
@@ -17,9 +17,9 @@ export default {
     try {
       if (!q) return reply(MESSAGES.owner.numerodono.missingParams(prefix, command));
       
-      const nextConfig = { ...(config || await readJsonFileAsync(CONFIG_FILE, {})), numerodono: q };
+      const nextConfig = { ...(config || await readAsync(CONFIG_FILE, {})), numerodono: q };
       
-      await writeJsonFileAsync(CONFIG_FILE, nextConfig);
+      await writeAsync(CONFIG_FILE, nextConfig);
       
       await reply(MESSAGES.owner.numerodono.success(q));
     } catch (e) {

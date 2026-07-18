@@ -6,14 +6,14 @@ import {
   isValidAction, 
   getStealthConfig 
 } from '../../middleware/antiStealth.js';
-import { writeJsonFileAsync } from '../../utils/asyncFs.js';
+import { writeAsync } from '../../utils/database/io.js';
 
 async function toggleAntiStealthStatus(sub, from, groupData, groupFilePath, reply, prefix, config, MESSAGES) {
     if (sub === 'on') groupData.antistealth = true;
     else if (sub === 'off') groupData.antistealth = false;
     else groupData.antistealth = !groupData.antistealth;
 
-    await writeJsonFileAsync(groupFilePath, groupData);
+    await writeAsync(groupFilePath, groupData);
     
     return reply(groupData.antistealth 
         ? MESSAGES.middleware.antiStealth.activated(describeAction(config.action), prefix)
@@ -46,7 +46,7 @@ async function configureAntiStealthAction(val, from, groupData, groupFilePath, r
     }
 
     config.action = val;
-    await writeJsonFileAsync(groupFilePath, groupData);
+    await writeAsync(groupFilePath, groupData);
     
     return reply(MESSAGES.middleware.antiStealth.actionConfigured(val, describeAction(val)));
 }
@@ -58,7 +58,7 @@ async function configureAntiStealthStrikes(val, from, groupData, groupFilePath, 
     }
 
     config.limit = num;
-    await writeJsonFileAsync(groupFilePath, groupData);
+    await writeAsync(groupFilePath, groupData);
 
     return reply(MESSAGES.middleware.antiStealth.strikesConfigured(num));
 }
@@ -119,7 +119,7 @@ async function handleAntipaymentCommand({
         return reply(MESSAGES.middleware.antiPaymentCmd.invalidOption(prefix));
     }
 
-    await writeJsonFileAsync(groupFilePath, groupData);
+    await writeAsync(groupFilePath, groupData);
     
     return reply(groupData.antipayment 
         ? MESSAGES.middleware.antiPaymentCmd.activated
@@ -142,7 +142,7 @@ export default {
     if (cmd === 'antiporn') {
       if (!isBotAdmin) return reply(MESSAGES.permission.botAdminOnly);
       groupData.antiporn = !groupData.antiporn;
-      await writeJsonFileAsync(groupFilePath, groupData);
+      await writeAsync(groupFilePath, groupData);
       return reply(groupData.antiporn 
         ? MESSAGES.admin.extra_protections.antipornOn 
         : MESSAGES.admin.extra_protections.antipornOff);
@@ -152,7 +152,7 @@ export default {
     if (cmd === 'antigore') {
       if (!isBotAdmin) return reply(MESSAGES.permission.botAdminOnly);
       groupData.antigore = !groupData.antigore;
-      await writeJsonFileAsync(groupFilePath, groupData);
+      await writeAsync(groupFilePath, groupData);
       return reply(groupData.antigore 
         ? MESSAGES.admin.extra_protections.antigoreOn 
         : MESSAGES.admin.extra_protections.antigoreOff);
@@ -182,7 +182,7 @@ export default {
       if (!isBotAdmin) return reply(MESSAGES.permission.botAdminOnly);
       
       groupData[key] = !groupData[key];
-      await writeJsonFileAsync(groupFilePath, groupData);
+      await writeAsync(groupFilePath, groupData);
       
       if (key === 'antilinkgp') {
         const message = groupData.antilinkgp 

@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { readJsonFileAsync } from '../../utils/asyncFs.js';
+import { readAsync } from '../../utils/database/io.js';
 
 
 const __filename = fileURLToPath(import.meta.url);
@@ -33,7 +33,7 @@ export default {
     };
     let palavrasCaca = ['amor', 'fogo', 'gato', 'hora', 'jogo', 'rosa', 'vida', 'água', 'amigo', 'barco'];
     try {
-      const cacaData = await readJsonFileAsync(cacaPath, 'utf-8');
+      const cacaData = await readAsync(cacaPath, 'utf-8');
       configCaca = { ...configCaca, ...cacaData.config };
       palavrasCaca = cacaData.palavras || palavrasCaca;
     } catch (e) {

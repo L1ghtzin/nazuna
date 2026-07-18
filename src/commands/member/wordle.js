@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { readJsonFileAsync } from '../../utils/asyncFs.js';
+import { readAsync } from '../../utils/database/io.js';
 
 
 const __filename = fileURLToPath(import.meta.url);
@@ -26,7 +26,7 @@ export default {
     const wordlePath = path.join(__dirname, '../../funcs/json/wordle.json');
     let palavrasPorTamanho = {};
     try {
-      const wordleData = await readJsonFileAsync(wordlePath, 'utf-8');
+      const wordleData = await readAsync(wordlePath, 'utf-8');
       palavrasPorTamanho = wordleData.palavras || {};
     } catch (e) {
       console.error('Erro ao carregar wordle.json:', e);

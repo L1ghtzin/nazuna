@@ -1,4 +1,4 @@
-import { writeJsonFileAsync } from '../../utils/asyncFs.js';
+import { writeAsync } from '../../utils/database/io.js';
 
 
 export default {
@@ -36,7 +36,7 @@ export default {
       if (!isGroup) return reply(MESSAGES.permission.groupOnly);
       banGpIds[from] = !banGpIds[from];
       const filePath = DATABASE_DIR + `/dono/bangp.json`;
-      await writeJsonFileAsync(filePath, banGpIds);
+      await writeAsync(filePath, banGpIds);
       return reply(banGpIds[from] ? MESSAGES.owner.owner_group_mgmt.bangp.banned : MESSAGES.owner.owner_group_mgmt.bangp.unbanned);
     }
   }

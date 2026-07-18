@@ -1,5 +1,5 @@
 import fs from 'fs';
-import { readJsonFileAsync } from '../../utils/asyncFs.js';
+import { readAsync } from '../../utils/database/io.js';
 
 export default {
   name: "suruba",
@@ -25,7 +25,7 @@ export default {
       const context = frasekk[Math.floor(Math.random() * frasekk.length)](q);
       
       let path = buildGroupFilePath(from);
-      let data = await readJsonFileAsync(path, { mark: {} });
+      let data = await readAsync(path, { mark: {} });
       let membros = AllgroupMembers.filter(m => !['0', 'marca'].includes(data.mark[m]));
       
       let ABC = `${emojis2} @${getUserName(sender)} ${context}\n\n`;

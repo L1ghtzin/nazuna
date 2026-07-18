@@ -1,5 +1,5 @@
 import { CONFIG_FILE } from '../../utils/paths.js';
-import { readJsonFileAsync, writeJsonFileAsync } from '../../utils/asyncFs.js';
+import { readAsync, writeAsync } from '../../utils/database/io.js';
 
 export default {
   name: "nomebot",
@@ -17,9 +17,9 @@ export default {
     try {
       if (!q) return reply(MESSAGES.owner.nomebot.missingName(prefix, command));
       
-      const nextConfig = { ...(config || await readJsonFileAsync(CONFIG_FILE, {})), nomebot: q };
+      const nextConfig = { ...(config || await readAsync(CONFIG_FILE, {})), nomebot: q };
       
-      await writeJsonFileAsync(CONFIG_FILE, nextConfig);
+      await writeAsync(CONFIG_FILE, nextConfig);
       
       await reply(MESSAGES.owner.nomebot.success(q));
       

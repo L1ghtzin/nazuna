@@ -1,4 +1,4 @@
-import { readJsonFileAsync, writeJsonFileAsync } from '../../utils/asyncFs.js';
+import { readAsync, writeAsync } from '../../utils/database/io.js';
 export default {
   name: "admintools",
   description: "Ferramentas administrativas adicionais",
@@ -39,10 +39,10 @@ export default {
       const opt = q.toLowerCase();
       if (options[opt] !== undefined) {
         const path = buildGroupFilePath(from);
-        let groupData = await readJsonFileAsync(path, { mark: {} });
+        let groupData = await readAsync(path, { mark: {} });
         groupData.mark = groupData.mark || {};
         groupData.mark[sender] = opt;
-        await writeJsonFileAsync(path, groupData);
+        await writeAsync(path, groupData);
         return reply(MESSAGES.admin.tools.mention.selected(options[opt]));
       }
       return reply(MESSAGES.admin.tools.mention.invalid(prefix));

@@ -1,5 +1,5 @@
 import pathz from 'path';
-import { readJsonFileAsync, writeJsonFileAsync } from '../utils/asyncFs.js';
+import { readAsync, writeAsync } from '../utils/database/io.js';
 import { addCaptcha, removeCaptcha } from '../utils/captchaIndex.js';
 import { addJidLidToCache, getJidFromLid, getUserName } from '../utils/helpers.js';
 import { MESSAGES } from '../utils/messages.js';
@@ -118,7 +118,7 @@ export async function handleJoinRequest(bot, info, from, isGroup, GRUPOS_DIR, de
     let groupSettings = {};
     
     // Carrega de forma assíncrona para não bloquear
-    groupSettings = await readJsonFileAsync(groupFile, {});
+    groupSettings = await readAsync(groupFile, {});
     
     // Extrai dados da solicitação dos parâmetros do stub
     const messageStubParameters = info.message.messageStubParameters || [];
@@ -183,7 +183,7 @@ export async function handleJoinRequest(bot, info, from, isGroup, GRUPOS_DIR, de
           addCaptcha(participantIds, from, correctAnswer, Date.now() + (5 * 60 * 1000), participantIds.lid || participantJid);
           
           // Salva arquivo de forma assíncrona para não bloquear
-          writeJsonFileAsync(groupFile, groupSettings).catch(err => 
+          writeAsync(groupFile, groupSettings).catch(err => 
             console.error('Erro ao salvar captcha no arquivo:', err)
           );
           
@@ -244,7 +244,7 @@ export async function handleJoinRequest(bot, info, from, isGroup, GRUPOS_DIR, de
         // Remove do índice de captcha
         removeCaptcha(participantJid);
         // Salva de forma assíncrona
-        writeJsonFileAsync(groupFile, groupSettings).catch(err => 
+        writeAsync(groupFile, groupSettings).catch(err => 
           console.error('Erro ao salvar após remover captcha:', err)
         );
       }

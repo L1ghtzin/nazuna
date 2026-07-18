@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { readJsonFileAsync } from '../../utils/asyncFs.js';
+import { readAsync } from '../../utils/database/io.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -31,8 +31,8 @@ export default {
         let targetName = `@${getUserName(target)}`;
         let level = Math.floor(Math.random() * 101); // 0 a 100
         
-        let gamesData = await readJsonFileAsync(funcsDir + '/json/games.json', { games: {} });
-        let gamestextData = await readJsonFileAsync(funcsDir + '/json/gamestext.json', {});
+        let gamesData = await readAsync(funcsDir + '/json/games.json', { games: {} });
+        let gamestextData = await readAsync(funcsDir + '/json/gamestext.json', {});
         
         const responseText = (gamestextData[command] ? gamestextData[command].replaceAll('#nome#', targetName).replaceAll('#level#', level) : (MESSAGES.member.rates?.resultIndividual ? MESSAGES.member.rates.resultIndividual(command, targetName, level) : `O nível de ${command} de ${targetName} é ${level}%!`));
         const media = gamesData.games ? gamesData.games[command] : null;
@@ -54,7 +54,7 @@ export default {
         if (!isGroup) return reply(MESSAGES.permission.groupOnly);
         if (!modoBn) return reply(MESSAGES.error.modoBnDisabled);
         
-        let gamesData = await readJsonFileAsync(funcsDir + '/json/games.json', { ranks: {} });
+        let gamesData = await readAsync(funcsDir + '/json/games.json', { ranks: {} });
         const markConfig = groupData.mark || {};
         
         let membros = AllgroupMembers.filter(m => !['0', 'marca'].includes(markConfig[m]));
@@ -63,7 +63,7 @@ export default {
         let top5 = membros.sort(() => Math.random() - 0.5).slice(0, 5);
         let cleanedCommand = command.endsWith('s') ? command.slice(0, -1) : command;
         
-        let ranksData = await readJsonFileAsync(funcsDir + '/json/ranks.json', { ranks: {} });
+        let ranksData = await readAsync(funcsDir + '/json/ranks.json', { ranks: {} });
         
         let responseText = ranksData[cleanedCommand] || (MESSAGES.member.rates?.rankHeader ? MESSAGES.member.rates.rankHeader(cleanedCommand.replace('rank', '')) : `Top 5 ${cleanedCommand.replace('rank', '')}`);
         // Ajuste para evitar bugs onde não concatena as linhas corretamente

@@ -1,4 +1,4 @@
-import { readJsonFileAsync } from '../../utils/asyncFs.js';
+import { readAsync } from '../../utils/database/io.js';
 export default {
   name: "casal",
   description: "Forma um casal aleatório no grupo",
@@ -12,7 +12,7 @@ export default {
       
       let path = buildGroupFilePath(from);
       // Otimização: Usar cache para leitura de arquivo
-      let data = await readJsonFileAsync(path, { mark: {} });
+      let data = await readAsync(path, { mark: {} });
       
       let membros = AllgroupMembers.filter(m => !['0', 'marca'].includes(data.mark[m]));
       

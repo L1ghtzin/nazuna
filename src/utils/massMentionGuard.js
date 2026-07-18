@@ -2,7 +2,7 @@ import fs from 'fs';
 import pathz from 'path';
 import { ensureDirectoryExists } from './helpers.js';
 import { MASS_MENTION_LIMIT_FILE, MASS_MENTION_CONFIG_FILE } from './paths.js';
-import { readJsonFileAsync, writeJsonFileAsync } from './asyncFs.js';
+import { readAsync, writeAsync } from './database/io.js';
 
 // ==================== PROTEÇÃO ANTI-BAN: Rate Limit para Menções em Massa ====================
 // Sistema controlado pelo dono: pode ativar/desativar proteção por grupo
@@ -37,9 +37,9 @@ export const saveMassMentionConfig = (data) => {
   const performSave = async () => {
     try {
       ensureDirectoryExists(pathz.dirname(MASS_MENTION_CONFIG_FILE));
-      const diskData = await readJsonFileAsync(MASS_MENTION_CONFIG_FILE, {});
+      const diskData = await readAsync(MASS_MENTION_CONFIG_FILE, {});
       const merged = { ...diskData, ...data };
-      await writeJsonFileAsync(MASS_MENTION_CONFIG_FILE, merged);
+      await writeAsync(MASS_MENTION_CONFIG_FILE, merged);
     } catch (e) {
       console.error('Erro ao salvar massMentionConfig:', e.message);
     }
@@ -69,9 +69,9 @@ const saveMassMentionLimit = (data) => {
   const performSave = async () => {
     try {
       ensureDirectoryExists(pathz.dirname(MASS_MENTION_LIMIT_FILE));
-      const diskData = await readJsonFileAsync(MASS_MENTION_LIMIT_FILE, {});
+      const diskData = await readAsync(MASS_MENTION_LIMIT_FILE, {});
       const merged = { ...diskData, ...data };
-      await writeJsonFileAsync(MASS_MENTION_LIMIT_FILE, merged);
+      await writeAsync(MASS_MENTION_LIMIT_FILE, merged);
     } catch (e) {
       console.error('Erro ao salvar massMentionLimit:', e.message);
     }

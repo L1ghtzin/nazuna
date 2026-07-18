@@ -1,4 +1,4 @@
-import { writeJsonFileAsync } from '../utils/asyncFs.js';
+import { writeAsync } from '../utils/database/io.js';
 
 /**
  * Middleware para sistemas de moderação visual e mídias
@@ -74,7 +74,7 @@ export async function processMediaSecurity({
           mentions: [sender]
         });
         
-        await writeJsonFileAsync(groupFile, groupData);
+        await writeAsync(groupFile, groupData);
         return true;
       } catch (error) {
         console.error("Erro no sistema antifig:", error);

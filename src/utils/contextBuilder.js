@@ -14,7 +14,7 @@ import { fileURLToPath } from 'url';
 
 import { groupCache } from './groupCache.js';
 import { MESSAGES } from './messages.js';
-import { writeJsonFileAsync, readJsonFileAsync, fileExistsAsync } from './asyncFs.js';
+import { writeAsync, readAsync, exists } from './database/io.js';
 import { Commands, getTotalCommands, getTopSimilarCommands, getCommandListCached } from './commandSearch.js';
 import { MASS_MENTION_THRESHOLD, checkMassMentionLimit, registerMassMentionUse, loadMassMentionConfig, saveMassMentionConfig, loadMassMentionLimit, MASS_MENTION_MAX_USES } from './massMentionGuard.js';
 

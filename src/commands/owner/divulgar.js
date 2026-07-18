@@ -1,4 +1,4 @@
-import { readJsonFileAsync, writeJsonFileAsync } from '../../utils/asyncFs.js';
+import { readAsync, writeAsync } from '../../utils/database/io.js';
 export default {
   name: "divulgar",
   description: "Comandos de divulgação do dono do bot",
@@ -19,7 +19,7 @@ export default {
       
       let text = args.join(' ').trim();
       if (!text) {
-        const divCfg = await readJsonFileAsync(DATABASE_DIR + '/divulgacao.json', {});
+        const divCfg = await readAsync(DATABASE_DIR + '/divulgacao.json', {});
         text = divCfg.savedMessage;
       }
       if (!text || isNaN(count)) return reply(MESSAGES.owner.owner_broadcast.div.usage(prefix, cmd));
@@ -44,7 +44,7 @@ export default {
 
     if (cmd === 'setdiv') {
       if (!q) return reply(MESSAGES.owner.owner_broadcast.setdiv.missingMsg);
-      await writeJsonFileAsync(DATABASE_DIR + '/divulgacao.json', { savedMessage: q });
+      await writeAsync(DATABASE_DIR + '/divulgacao.json', { savedMessage: q });
       return reply(MESSAGES.owner.owner_broadcast.setdiv.success);
     }
     
@@ -52,7 +52,7 @@ export default {
       const sub = (args[0] || '').toLowerCase();
       const rest = args.slice(1).join(' ').trim();
       const configPath = DATABASE_DIR + '/dono_divulgacao.json';
-      const config = await readJsonFileAsync(configPath, { groups: [], savedMessage: '', scheduleTime: null });
+      const config = await readAsync(configPath, { groups: [], savedMessage: '', scheduleTime: null });
       const groups = Array.isArray(config.groups) ? config.groups : [];
 
       if (!sub || sub === 'help') return reply(MESSAGES.owner.owner_broadcast.divdono.help(prefix));
@@ -65,7 +65,7 @@ export default {
         if (!groups.includes(targetGroupId)) {
           groups.push(targetGroupId);
           config.groups = groups;
-          await writeJsonFileAsync(configPath, config);
+          await writeAsync(configPath, config);
           return reply(MESSAGES.owner.owner_broadcast.divdono.add.success(groups.length));
         }
         return reply(MESSAGES.owner.owner_broadcast.divdono.add.exists);
@@ -80,7 +80,7 @@ export default {
         if (newGroups.length === groups.length) return reply(MESSAGES.owner.owner_broadcast.divdono.rem.notFound);
         
         config.groups = newGroups;
-        await writeJsonFileAsync(configPath, config);
+        await writeAsync(configPath, config);
         return reply(MESSAGES.owner.owner_broadcast.divdono.rem.success(newGroups.length));
       }
 
@@ -102,7 +102,7 @@ export default {
       if (sub === 'msg' || sub === 'mensagem') {
         if (!rest) return reply(MESSAGES.owner.owner_broadcast.divdono.msg.usage(prefix));
         config.savedMessage = rest;
-        await writeJsonFileAsync(configPath, config);
+        await writeAsync(configPath, config);
         return reply(MESSAGES.owner.owner_broadcast.divdono.msg.success(prefix));
       }
 
@@ -110,14 +110,14 @@ export default {
         if (!rest) return reply(MESSAGES.owner.owner_broadcast.divdono.time.usage(prefix));
         if (rest.toLowerCase() === 'off') {
           config.scheduleTime = null;
-          await writeJsonFileAsync(configPath, config);
+          await writeAsync(configPath, config);
           return reply(MESSAGES.owner.owner_broadcast.divdono.time.off);
         }
         if (!/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/.test(rest)) {
           return reply(MESSAGES.owner.owner_broadcast.divdono.time.invalid);
         }
         config.scheduleTime = rest;
-        await writeJsonFileAsync(configPath, config);
+        await writeAsync(configPath, config);
         return reply(MESSAGES.owner.owner_broadcast.divdono.time.success(rest));
       }
 

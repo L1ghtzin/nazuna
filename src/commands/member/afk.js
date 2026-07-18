@@ -1,5 +1,5 @@
 import fs from 'fs';
-import { writeJsonFileAsync } from '../../utils/asyncFs.js';
+import { writeAsync } from '../../utils/database/io.js';
 
 export default {
   name: "afk",
@@ -26,7 +26,7 @@ export default {
         reason: reason || 'Não especificado',
         since: Date.now()
       };
-      await writeJsonFileAsync(groupFile, groupData);
+      await writeAsync(groupFile, groupData);
       
       await reply(MESSAGES.member.afk.success(reason));
     } catch (e) {

@@ -1,4 +1,4 @@
-import { readJsonFileAsync } from '../../utils/asyncFs.js';
+import { readAsync } from '../../utils/database/io.js';
 export default {
   name: "shipo",
   description: "Forma um casal com a pessoa marcada",
@@ -13,7 +13,7 @@ export default {
       
       let path = buildGroupFilePath(from);
       // Otimização: Usar cache para leitura de arquivo
-      let data = await readJsonFileAsync(path, { mark: {} });
+      let data = await readAsync(path, { mark: {} });
       let membros = AllgroupMembers.filter(m => !['0', 'marca'].includes(data.mark[m]));
       
       if (membros.length < 2) membros = AllgroupMembers; // fallback

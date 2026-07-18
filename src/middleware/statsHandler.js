@@ -1,5 +1,5 @@
 import { loadLevelingSafe, getLevelingUser, checkLevelUp, saveLevelingSafe } from '../utils/database.js';
-import { writeJsonFileAsync } from '../utils/asyncFs.js';
+import { writeAsync } from '../utils/database/io.js';
 
 export async function processStats(context) {
     const { 
@@ -40,7 +40,7 @@ export async function processStats(context) {
         }
         
         if (groupFile) {
-          await writeJsonFileAsync(groupFile, groupData);
+          await writeAsync(groupFile, groupData);
         }
       } catch (error) {
         console.error("Erro no sistema de contagem de mensagens:", error);

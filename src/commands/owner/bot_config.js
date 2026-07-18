@@ -1,6 +1,6 @@
 import fs from 'fs/promises';
 import path from 'path';
-import { readJsonFileAsync, writeJsonFileAsync } from '../../utils/asyncFs.js';
+import { readAsync, writeAsync } from '../../utils/database/io.js';
 
 async function removeFileIfExists(filePath) {
   try {
@@ -25,7 +25,7 @@ export default {
     // --- ANTIPV ---
     if (['antipv', 'antipv2', 'antipv3', 'antipv4'].includes(cmd)) {
       const dbPath = pathz.join(DATABASE_DIR, 'antipv.json');
-      let antipvData = await readJsonFileAsync(dbPath, { mode: 'off', message: MESSAGES.permission.groupOnly });
+      let antipvData = await readAsync(dbPath, { mode: 'off', message: MESSAGES.permission.groupOnly });
 
       const arg0 = args[0] ? args[0].toLowerCase() : '';
       let statusChanged = true;
@@ -53,7 +53,7 @@ export default {
         return reply(MESSAGES.owner.bot_config.antipv.statusUnchanged(cmd, currentStatus));
       }
 
-      await writeJsonFileAsync(dbPath, antipvData);
+      await writeAsync(dbPath, antipvData);
 
       const status = isCurrentlyActive ? 'ativado' : 'desativado';
       let infoMsg = 'O bot responde normalmente no privado.';
@@ -68,10 +68,10 @@ export default {
     if (cmd === 'antipvmessage' || cmd === 'antipvmsg') {
       if (!q) return reply(MESSAGES.owner.bot_config.antipv.missingMessage(prefix));
       const dbPath = pathz.join(DATABASE_DIR, 'antipv.json');
-      let antipvData = await readJsonFileAsync(dbPath, { mode: 'off', message: MESSAGES.permission.groupOnly });
+      let antipvData = await readAsync(dbPath, { mode: 'off', message: MESSAGES.permission.groupOnly });
       
       antipvData.message = q.trim();
-      await writeJsonFileAsync(dbPath, antipvData);
+      await writeAsync(dbPath, antipvData);
       
       return reply(MESSAGES.owner.bot_config.antipv.messageUpdated(antipvData.message));
     }

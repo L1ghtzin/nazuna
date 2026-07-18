@@ -4,7 +4,7 @@ import pathz from 'path';
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import { fileURLToPath } from 'url';
-import { readJsonFileAsync, writeJsonFileAsync } from '../../utils/asyncFs.js';
+import { readAsync, writeAsync } from '../../utils/database/io.js';
 import * as cheerio from 'cheerio';
 import FormData from 'form-data';
 
@@ -314,9 +314,9 @@ export default {
         if (!pack) return reply(MESSAGES.member.sticker.invalidFormatTake(prefix, command));
         
         const filePath = pathz.join(USERS_DIR, 'take.json');
-        const dataTake = await readJsonFileAsync(filePath, {});
+        const dataTake = await readAsync(filePath, {});
         dataTake[sender] = { author, pack };
-        await writeJsonFileAsync(filePath, dataTake);
+        await writeAsync(filePath, dataTake);
         reply(MESSAGES.member.sticker.takeSaveSuccess(author, pack));
       } catch (e) {
         console.error(e);
@@ -332,7 +332,7 @@ export default {
       try {
         if (!isQuotedSticker) return reply(MESSAGES.member.sticker.missingQuotedStickerRename);
         const filePath = pathz.join(USERS_DIR, 'take.json');
-        const dataTake = await readJsonFileAsync(filePath, {});
+        const dataTake = await readAsync(filePath, {});
         if (!Object.keys(dataTake).length) return reply(MESSAGES.member.sticker.takeNoSaved);
         if (!dataTake[sender]) return reply(MESSAGES.member.sticker.takeMissingSaved);
         

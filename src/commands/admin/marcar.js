@@ -1,5 +1,5 @@
 import pathz from 'path';
-import { readJsonFileAsync } from '../../utils/asyncFs.js';
+import { readAsync } from '../../utils/database/io.js';
 
 
 export default {
@@ -30,7 +30,7 @@ export default {
 
       const path = buildGroupFilePath(from);
       
-      let data = await readJsonFileAsync(path, { mark: {} });
+      let data = await readAsync(path, { mark: {} });
       if (!data.mark) data.mark = {};
 
       let membros = AllgroupMembers.filter(m => !['0', 'games'].includes(data.mark[m]));

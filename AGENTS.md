@@ -99,13 +99,16 @@ export default {
 **Regras Vitais de Autoria:**
 1. **Sem verificações manuais de permissão:** Deixe o `commandDispatcher` fazer o trabalho. Não crie `if (!isGroupAdmin)` no início de um comando da pasta `admin/`.
 2. **Mensagens centralizadas:** NUNCA use strings literais para mensagens de resposta (ex: `reply("Erro!")`). Sempre puxe de `MESSAGES` (mapeado de `src/utils/messages.js`).
-3. **Persistência de Dados Segura:** NUNCA use `fs.readFileSync` ou `fs.writeFileSync` diretamente em arquivos JSON de banco de dados. Use as funções centralizadas em `src/utils/helpers/jsonIo.js` e `src/utils/database/_core.js`:
-   - `loadJsonFile(path, default, useCache)` — leitura síncrona com cache TTL de 30s (hot path).
-   - `saveJsonFileSafe(path, data)` — gravação síncrona atômica (write+rename) com backup automático. **Use para gravações dentro do `handle()` de comandos.**
-   - `writeJsonFile(path, data)` — gravação síncrona atômica sem backup. Variante mais leve quando o backup não for necessário.
-   - `writeJsonFileQueued(path, data)` — gravação assíncrona com fila sequencial por arquivo (evita race conditions). **Use em workers, jobs agendados e tarefas em background.**
-   - `debouncedSaveJson(path, data, delayMs=3000)` — debounce para gravações frequentes (economia, leveling). Evita flood de disco.
-   - `writeJsonFileAsync` (de `utils/asyncFs.js`) — apenas para tarefas em background isoladas que não dependam da ordem cronológica exata do event loop. **Cuidado com Race Conditions** — prefira `writeJsonFileQueued` quando houver concorrência.
+3. **Persistência de Dados Segura:** NUNCA use `fs.readFileSync`/`fs.writeFileSync` ou importe diretamente de `utils/asyncFs.js`. Use **exclusivamente** a fachada unificada em `src/utils/database/io.js`:
+   - `db.read(path, default)` — leitura síncrona com cache TTL de 30s (hot path).
+   - `db.readAsync(path, default)` — leitura assíncrona (não bloqueia event loop).
+   - `db.writeSafe(path, data)` — gravação síncrona atômica (write+rename) com backup automático. **Use para gravações dentro do `handle()` de comandos.**
+   - `db.writeSync(path, data)` — gravação síncrona atômica sem backup. Variante mais leve quando o backup não for necessário.
+   - `db.queue(path, data)` — gravação assíncrona com fila sequencial por arquivo (evita race conditions). **Use em workers, jobs agendados e tarefas em background.**
+   - `db.debounced(path, data, delayMs=3000)` — debounce para gravações frequentes (economia, leveling). Evita flood de disco.
+   - `db.exists(path)` / `db.existsSync(path)` — verificação de existência (async / sync).
+   - `db.flush()` — força flush de todos os debounces pendentes (use no shutdown).
+   - Importação: `import { read, writeSafe, queue } from '../../utils/database/io.js';` ou `import db from '../../utils/database/io.js';`
 
 ---
 

@@ -1,6 +1,6 @@
 import { JID_LID_CACHE_FILE } from "../../utils/paths.js";
 import { saveJidLidCache } from "../../utils/helpers.js";
-import { readJsonFileAsync } from '../../utils/asyncFs.js';
+import { readAsync } from '../../utils/database/io.js';
 
 export default {
   name: "cachedebug",
@@ -18,7 +18,7 @@ export default {
       saveJidLidCache();
       
       // Lê o arquivo de cache
-      const cacheData = await readJsonFileAsync(cacheFilePath, { mappings: {}, version: 'N/A', lastUpdate: 'N/A' });
+      const cacheData = await readAsync(cacheFilePath, { mappings: {}, version: 'N/A', lastUpdate: 'N/A' });
       
       const mappings = cacheData.mappings || {};
       const entries = Object.entries(mappings);

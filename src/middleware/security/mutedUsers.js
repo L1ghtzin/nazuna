@@ -1,4 +1,4 @@
-import { writeJsonFileAsync } from '../../utils/asyncFs.js';
+import { writeAsync } from '../../utils/database/io.js';
 
 export async function handleMutedUsers(context) {
     const { isGroup, isMuted, isMuted2, isGroupAdmin, isOwner, bot, from, sender, reply, info, groupData, groupFile, getUserName, isBotAdmin, MESSAGES } = context;
@@ -15,7 +15,7 @@ export async function handleMutedUsers(context) {
             }
             delete groupData.mutedUsers[sender];
             if (groupFile) {
-                await writeJsonFileAsync(groupFile, groupData);
+                await writeAsync(groupFile, groupData);
             }
             return true;
         } catch (error) {

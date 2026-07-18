@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { readJsonFileAsync } from '../../utils/asyncFs.js';
+import { readAsync } from '../../utils/database/io.js';
 
 
 const __filename = fileURLToPath(import.meta.url);
@@ -27,7 +27,7 @@ export default {
     const stopPath = path.join(__dirname, '../../funcs/json/stop.json');
     let categoriasStop = ['Nome', 'País', 'Cidade', 'Animal', 'Cor', 'Fruta', 'Objeto', 'Profissão'];
     try {
-      const stopData = await readJsonFileAsync(stopPath, 'utf-8');
+      const stopData = await readAsync(stopPath, 'utf-8');
       categoriasStop = stopData.categorias || categoriasStop;
     } catch (e) {
       console.error('Erro ao carregar stop.json:', e);

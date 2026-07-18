@@ -1,4 +1,4 @@
-import { writeJsonFileAsync } from '../../utils/asyncFs.js';
+import { writeAsync } from '../../utils/database/io.js';
 
 
 export default {
@@ -99,7 +99,7 @@ export default {
 
     if (['limparatividade', 'resetatividade'].includes(command)) {
       groupData.contador = [];
-      await writeJsonFileAsync(groupFile, groupData);
+      await writeAsync(groupFile, groupData);
       return reply(MESSAGES.admin.activity.resetSuccess);
     }
 
@@ -107,7 +107,7 @@ export default {
       const sub = args[0]?.toLowerCase();
       if (!sub) return reply(MESSAGES.admin.activity.preserveUsage(prefix));
       groupData.preservarContador = sub === 'on';
-      await writeJsonFileAsync(groupFile, groupData);
+      await writeAsync(groupFile, groupData);
       return reply(MESSAGES.admin.activity.preserveToggle(groupData.preservarContador));
     }
   },

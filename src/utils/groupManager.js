@@ -2,7 +2,7 @@ import fsPromises from 'fs/promises';
 import fs from 'fs';
 import pathz from 'path';
 import { idsMatch } from './helpers.js';
-import { writeJsonFileAsync, readJsonFileAsync } from './asyncFs.js';
+import { writeAsync, readAsync } from './database/io.js';
 import { GRUPOS_DIR } from './paths.js';
 
 export const buildGroupFilePath = (groupId) => pathz.join(GRUPOS_DIR, `${groupId}.json`);
@@ -14,7 +14,7 @@ export async function loadGroupDataById(groupId, {
   if (!groupId) return defaultValue;
 
   try {
-    return await readJsonFileAsync(groupFile, defaultValue);
+    return await readAsync(groupFile, defaultValue);
   } catch (error) {
     console.error(`Erro ao carregar dados do grupo ${groupId}:`, error.message);
     return defaultValue;
@@ -27,7 +27,7 @@ export async function saveGroupDataById(groupId, groupData, {
   if (!groupId || !groupData || typeof groupData !== 'object') return false;
 
   try {
-    return await writeJsonFileAsync(groupFile, groupData);
+    return await writeAsync(groupFile, groupData);
   } catch (error) {
     console.error(`Erro ao salvar dados do grupo ${groupId}:`, error.message);
     return false;
@@ -45,18 +45,18 @@ export async function loadGroupData(isGroup, from, groupFile, groupName) {
   try {
     const fileExists = fs.existsSync(groupFile);
     if (!fileExists) {
-      await writeJsonFileAsync(groupFile, {
+      await writeAsync(groupFile, {
         mark: {},
         createdAt: new Date().toISOString(),
         groupName: groupName
       });
     }
     
-    groupData = await readJsonFileAsync(groupFile, { mark: {}, createdAt: new Date().toISOString() });
+    groupData = await readAsync(groupFile, { mark: {}, createdAt: new Date().toISOString() });
   } catch (e) {
     console.error('Erro ao carregar groupData:', e);
     try {
-      groupData = await readJsonFileAsync(groupFile, {});
+      groupData = await readAsync(groupFile, {});
     } catch (e2) {
       groupData = { mark: {} };
     }
@@ -85,7 +85,7 @@ export async function loadGroupData(isGroup, from, groupFile, groupName) {
 
   if (groupName && groupData.groupName !== groupName) {
     groupData.groupName = groupName;
-    writeJsonFileAsync(groupFile, groupData).catch(err => console.error('Erro ao salvar groupData:', err));
+    writeAsync(groupFile, groupData).catch(err => console.error('Erro ao salvar groupData:', err));
   }
   
   return groupData;
@@ -96,7 +96,7 @@ export async function loadGroupData(isGroup, from, groupFile, groupName) {
  */
 export const persistGroupData = (isGroup, from, groupFile, groupData) => {
   if (isGroup) {
-    return writeJsonFileAsync(groupFile, groupData).then(() => {
+    return writeAsync(groupFile, groupData).then(() => {
       return true;
     }).catch(err => {
       console.error('Erro ao persistir groupData:', err);

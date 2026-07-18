@@ -1,6 +1,6 @@
 
 import { sendCleanChat } from '../../utils/cleanChat.js';
-import { writeJsonFileAsync } from '../../utils/asyncFs.js';
+import { writeAsync } from '../../utils/database/io.js';
 
 export default {
   name: "group_security",
@@ -33,7 +33,7 @@ export default {
         groupData.exit.enabled = !groupData.exit.enabled;
       }
       
-      await writeJsonFileAsync(groupFile, groupData);
+      await writeAsync(groupFile, groupData);
       
       if (isWelcome) {
         if (groupData.bemvindo) {
@@ -62,7 +62,7 @@ export default {
         if (feature === 'exit') {
           groupData[feature].enabled = true;
         }
-        await writeJsonFileAsync(groupFile, groupData);
+        await writeAsync(groupFile, groupData);
         return reply(MESSAGES.admin.group_security.welcome.imgSuccess);
       } catch (e) {
         return reply(MESSAGES.admin.group_security.welcome.imgError);
@@ -72,14 +72,14 @@ export default {
     if (['removerfotobv', 'rmfotobv', 'delfotobv', 'rmwelcomeimg'].includes(cmd)) {
       if (!groupData.welcome?.image) return reply(MESSAGES.admin.group_security.welcome.imgNone);
       delete groupData.welcome.image;
-      await writeJsonFileAsync(groupFile, groupData);
+      await writeAsync(groupFile, groupData);
       return reply(MESSAGES.admin.group_security.welcome.imgRmWelcome);
     }
 
     if (['removerfotosaiu', 'rmfotosaiu', 'delfotosaiu', 'rmexitimg'].includes(cmd)) {
       if (!groupData.exit?.image) return reply(MESSAGES.admin.group_security.welcome.imgNone);
       delete groupData.exit.image;
-      await writeJsonFileAsync(groupFile, groupData);
+      await writeAsync(groupFile, groupData);
       return reply(MESSAGES.admin.group_security.welcome.imgRmExit);
     }
 
@@ -88,7 +88,7 @@ export default {
       groupData.exit = groupData.exit || {};
       groupData.exit.text = q;
       groupData.exit.enabled = true;
-      await writeJsonFileAsync(groupFile, groupData);
+      await writeAsync(groupFile, groupData);
       return reply(MESSAGES.admin.group_security.welcome.msgSuccess);
     }
 
@@ -135,7 +135,7 @@ export default {
         if (!groupData.warnings[menc_os2]) return reply(MESSAGES.admin.group_security.warnings.empty);
         groupData.warnings[menc_os2].pop();
         if (!groupData.warnings[menc_os2].length) delete groupData.warnings[menc_os2];
-        await writeJsonFileAsync(groupFile, groupData);
+        await writeAsync(groupFile, groupData);
         return reply(MESSAGES.admin.group_security.warnings.removed);
       }
 
@@ -155,11 +155,11 @@ export default {
         }
         if (isBotAdmin) await bot.groupParticipantsUpdate(from, [targetId], 'remove');
         delete groupData.warnings[menc_os2];
-        await writeJsonFileAsync(groupFile, groupData);
+        await writeAsync(groupFile, groupData);
         return reply(MESSAGES.admin.group_security.warnings.banned(getUserName(menc_os2), reason), { mentions: [menc_os2] });
       }
 
-      await writeJsonFileAsync(groupFile, groupData);
+      await writeAsync(groupFile, groupData);
       return reply(MESSAGES.admin.group_security.warnings.warned(getUserName(menc_os2), groupData.warnings[menc_os2].length, reason), { mentions: [menc_os2] });
     }
 
@@ -262,7 +262,7 @@ export default {
         );
         
         if (groupData.blacklist.length !== initialLength) {
-           await writeJsonFileAsync(groupFile, groupData);
+           await writeAsync(groupFile, groupData);
            return reply(MESSAGES.admin.group_security.blacklist.removed);
         } else {
            return reply(MESSAGES.admin.group_security.blacklist.notIn);
@@ -283,7 +283,7 @@ export default {
         const cleanNumber = originalTarget.replace(/\D/g, '');
         if (cleanNumber && !exists.number) { exists.number = cleanNumber; modified = true; }
         if (modified) {
-          await writeJsonFileAsync(groupFile, groupData);
+          await writeAsync(groupFile, groupData);
           return reply(`✨ Mapeamento do usuário @${getUserName(originalTarget)} atualizado na blacklist!`);
         }
         return reply(MESSAGES.admin.group_security.blacklist.alreadyIn);
@@ -301,7 +301,7 @@ export default {
       groupData.blacklist = blacklistArray;
       groupData.blacklist.push(entry);
       
-      await writeJsonFileAsync(groupFile, groupData);
+      await writeAsync(groupFile, groupData);
       return reply(MESSAGES.admin.group_security.blacklist.added);
     }
 
@@ -329,7 +329,7 @@ export default {
         groupData.antifig = groupData.antifig || {};
         groupData.antifig.enabled = !groupData.antifig.enabled;
         
-        await writeJsonFileAsync(groupFile, groupData);
+        await writeAsync(groupFile, groupData);
         
         if (groupData.antifig.enabled) {
           return reply(MESSAGES.admin.group_security.protections.antifigOn);
@@ -349,12 +349,12 @@ export default {
       if (action === 'apagar' || action === 'banir') {
         groupData.antistatus = true;
         groupData.antistatus_action = action;
-        await writeJsonFileAsync(groupFile, groupData);
+        await writeAsync(groupFile, groupData);
         return reply(MESSAGES.admin.group_security.protections.genericAction('AntiStatus', action));
       }
 
       groupData.antistatus = !groupData.antistatus;
-      await writeJsonFileAsync(groupFile, groupData);
+      await writeAsync(groupFile, groupData);
 
       if (groupData.antistatus) {
         const currentAction = groupData.antistatus_action || 'banir';
@@ -386,19 +386,19 @@ export default {
 
       if (action === 'vizu') {
         groupData.antiimage_vizu = !groupData.antiimage_vizu;
-        await writeJsonFileAsync(groupFile, groupData);
+        await writeAsync(groupFile, groupData);
         return reply(MESSAGES.admin.group_security.protections.mediaVizuToggle('Anti-Imagem', groupData.antiimage_vizu));
       }
 
       if (action === 'apagar' || action === 'banir') {
         groupData.antiimage = true;
         groupData.antiimage_action = action;
-        await writeJsonFileAsync(groupFile, groupData);
+        await writeAsync(groupFile, groupData);
         return reply(MESSAGES.admin.group_security.protections.genericAction('Anti-Imagem', action));
       }
 
       groupData.antiimage = !groupData.antiimage;
-      await writeJsonFileAsync(groupFile, groupData);
+      await writeAsync(groupFile, groupData);
 
       if (groupData.antiimage) {
         const currentAction = groupData.antiimage_action || 'apagar';
@@ -413,19 +413,19 @@ export default {
 
       if (action === 'vizu') {
         groupData.antivideo_vizu = !groupData.antivideo_vizu;
-        await writeJsonFileAsync(groupFile, groupData);
+        await writeAsync(groupFile, groupData);
         return reply(MESSAGES.admin.group_security.protections.mediaVizuToggle('Anti-Vídeo', groupData.antivideo_vizu));
       }
 
       if (action === 'apagar' || action === 'banir') {
         groupData.antivideo = true;
         groupData.antivideo_action = action;
-        await writeJsonFileAsync(groupFile, groupData);
+        await writeAsync(groupFile, groupData);
         return reply(MESSAGES.admin.group_security.protections.genericAction('Anti-Vídeo', action));
       }
 
       groupData.antivideo = !groupData.antivideo;
-      await writeJsonFileAsync(groupFile, groupData);
+      await writeAsync(groupFile, groupData);
 
       if (groupData.antivideo) {
         const currentAction = groupData.antivideo_action || 'apagar';
@@ -440,19 +440,19 @@ export default {
 
       if (action === 'vizu') {
         groupData.antiaudio_vizu = !groupData.antiaudio_vizu;
-        await writeJsonFileAsync(groupFile, groupData);
+        await writeAsync(groupFile, groupData);
         return reply(MESSAGES.admin.group_security.protections.mediaVizuToggle('Anti-Áudio', groupData.antiaudio_vizu));
       }
 
       if (action === 'apagar' || action === 'banir') {
         groupData.antiaudio = true;
         groupData.antiaudio_action = action;
-        await writeJsonFileAsync(groupFile, groupData);
+        await writeAsync(groupFile, groupData);
         return reply(MESSAGES.admin.group_security.protections.genericAction('Anti-Áudio', action));
       }
 
       groupData.antiaudio = !groupData.antiaudio;
-      await writeJsonFileAsync(groupFile, groupData);
+      await writeAsync(groupFile, groupData);
 
       if (groupData.antiaudio) {
         const currentAction = groupData.antiaudio_action || 'apagar';
@@ -468,12 +468,12 @@ export default {
       if (action === 'apagar' || action === 'banir') {
         groupData.antidoc = true;
         groupData.antidoc_action = action;
-        await writeJsonFileAsync(groupFile, groupData);
+        await writeAsync(groupFile, groupData);
         return reply(MESSAGES.admin.group_security.protections.genericAction('Anti-Documento', action));
       }
 
       groupData.antidoc = !groupData.antidoc;
-      await writeJsonFileAsync(groupFile, groupData);
+      await writeAsync(groupFile, groupData);
 
       if (groupData.antidoc) {
         const currentAction = groupData.antidoc_action || 'apagar';
@@ -488,12 +488,12 @@ export default {
       if (action === 'apagar' || action === 'banir') {
         groupData.antievento = true;
         groupData.antievento_action = action;
-        await writeJsonFileAsync(groupFile, groupData);
+        await writeAsync(groupFile, groupData);
         return reply(MESSAGES.admin.group_security.protections.genericAction('Anti-Evento', action));
       }
 
       groupData.antievento = !groupData.antievento;
-      await writeJsonFileAsync(groupFile, groupData);
+      await writeAsync(groupFile, groupData);
 
       if (groupData.antievento) {
         const currentAction = groupData.antievento_action || 'apagar';
@@ -508,12 +508,12 @@ export default {
       if (action === 'apagar' || action === 'banir') {
         groupData.antiproduto = true;
         groupData.antiproduto_action = action;
-        await writeJsonFileAsync(groupFile, groupData);
+        await writeAsync(groupFile, groupData);
         return reply(MESSAGES.admin.group_security.protections.genericAction('Anti-Produto', action));
       }
 
       groupData.antiproduto = !groupData.antiproduto;
-      await writeJsonFileAsync(groupFile, groupData);
+      await writeAsync(groupFile, groupData);
 
       if (groupData.antiproduto) {
         const currentAction = groupData.antiproduto_action || 'apagar';

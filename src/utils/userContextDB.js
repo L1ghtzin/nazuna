@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { writeJsonFileAsync, readJsonFileAsync } from './asyncFs.js';
+import { writeAsync, readAsync } from './database/io.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -63,9 +63,9 @@ class UserContextDB {
   async saveDatabase() {
     const performSave = async () => {
       try {
-        const diskData = await readJsonFileAsync(DB_PATH, {});
+        const diskData = await readAsync(DB_PATH, {});
         const merged = { ...diskData, ...this.data };
-        await writeJsonFileAsync(DB_PATH, merged);
+        await writeAsync(DB_PATH, merged);
       } catch (error) {
         console.error('❌ Erro ao salvar contexto de usuários:', error);
       }

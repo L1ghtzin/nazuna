@@ -1,4 +1,4 @@
-import { writeJsonFileAsync } from '../../utils/asyncFs.js';
+import { writeAsync } from '../../utils/database/io.js';
 export default {
     name: "rpg_admin",
     description: "Configurações e menus do sistema RPG",
@@ -21,7 +21,7 @@ export default {
             const newState = !groupData.modorpg;
             groupData.modorpg = newState;
             
-            await writeJsonFileAsync(groupFile, groupData);
+            await writeAsync(groupFile, groupData);
             
             return reply(MESSAGES.rpg.admin.toggle(newState));
         }

@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { readJsonFileAsync } from '../../utils/asyncFs.js';
+import { readAsync } from '../../utils/database/io.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -27,9 +27,9 @@ export default {
       const gamesPath = path.join(__dirname, '../../funcs/json/games.json');
       const markgamePath = path.join(__dirname, '../../funcs/json/markgame.json');
 
-      let gamesData = await readJsonFileAsync(gamesPath, { games2: {} });
+      let gamesData = await readAsync(gamesPath, { games2: {} });
         
-      let GamezinData = await readJsonFileAsync(markgamePath, {});
+      let GamezinData = await readAsync(markgamePath, {});
         
       let gameResponse = GamezinData[command];
       if (Array.isArray(gameResponse)) {

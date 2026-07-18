@@ -4,7 +4,7 @@
  */
 
 import path from 'path';
-import { readJsonFileAsync, writeJsonFileAsync } from './asyncFs.js';
+import { readAsync, writeAsync } from './database/io.js';
 import { GRUPOS_DIR } from './paths.js';
 import { resolveParticipant } from './resolveParticipant.js';
 
@@ -43,14 +43,14 @@ export async function logAntifakeAction(groupId, entry) {
     const previousQueue = antifakeLogWriteQueues.get(logPath) || Promise.resolve();
 
     const nextQueue = previousQueue.then(async () => {
-        const currentLogs = await readJsonFileAsync(logPath, []);
+        const currentLogs = await readAsync(logPath, []);
         const logs = Array.isArray(currentLogs) ? currentLogs : [];
         const nextLogs = [
             ...logs,
             { timestamp: new Date().toISOString(), ...entry }
         ].slice(-100);
 
-        const saved = await writeJsonFileAsync(logPath, nextLogs);
+        const saved = await writeAsync(logPath, nextLogs);
         if (!saved) {
             throw new Error('writeJsonFileAsync retornou false');
         }
@@ -71,7 +71,7 @@ export async function logAntifakeAction(groupId, entry) {
 }
 
 export async function getAntifakeLogs(groupId, limit = 10) {
-    const logs = await readJsonFileAsync(getAntifakeLogPath(groupId), []);
+    const logs = await readAsync(getAntifakeLogPath(groupId), []);
     return Array.isArray(logs) ? logs.slice(-limit) : [];
 }
 
