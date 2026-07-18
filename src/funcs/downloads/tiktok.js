@@ -7,6 +7,8 @@ import axios from 'axios';
 import SimpleCache from '../../utils/simpleCache.js';
 
 const BASE_URL = 'https://www.tikwm.com/api';
+const SYSTEM_ZONE_URL = 'https://systemzone.store/api/v2/tiktok';
+const SYSTEM_ZONE_KEY = 'freekey';
 
 // Cache simples
 const CACHE_TTL = 60 * 60 * 1000; // 1 hora
@@ -32,12 +34,41 @@ const TIKWM_HEADERS = {
 };
 
 /**
+ * Formata resposta de download da System Zone
+ */
+function formatSystemZoneResponse(data) {
+  const response = {};
+
+  if (data.musica?.url) {
+    response.audio = data.musica.url;
+  }
+
+  if (data.imagens && Array.isArray(data.imagens) && data.imagens.length > 0) {
+    response.type = 'image';
+    response.mime = '';
+    response.urls = data.imagens;
+  } else if (data.download_url) {
+    response.type = 'video';
+    response.mime = 'video/mp4';
+    response.urls = [data.download_url];
+  } else {
+    response.type = 'video';
+    response.mime = 'video/mp4';
+    response.urls = [];
+  }
+
+  if (data.titulo) {
+    response.title = data.titulo;
+  }
+
+  return response;
+}
+
+/**
  * Formata resposta de download
  */
 function formatDownloadResponse(data) {
-  const response = {
-    criador: 'Hiudy'
-  };
+  const response = {};
 
   if (data.music_info?.play) {
     response.audio = data.music_info.play;
@@ -78,6 +109,29 @@ async function dl(url) {
     const cached = getCached(`download:${url}`);
     if (cached) return { ok: true, ...cached, cached: true };
 
+    // Tentar System Zone API primeiro
+    try {
+      const responseSz = await axios.get(SYSTEM_ZONE_URL, {
+        params: {
+          apikey: SYSTEM_ZONE_KEY,
+          url: url
+        },
+        timeout: 15000
+      });
+
+      if (responseSz.data && responseSz.data.status === true) {
+        const result = formatSystemZoneResponse(responseSz.data);
+        setCache(`download:${url}`, result);
+        return {
+          ok: true,
+          ...result
+        };
+      }
+    } catch (szError) {
+      console.warn('Erro ao baixar da System Zone, tentando tikwm:', szError.message);
+    }
+
+    // Fallback para tikwm
     const response = await axios.get(`${BASE_URL}/`, {
       params: { url },
       headers: TIKWM_HEADERS,
@@ -147,7 +201,6 @@ async function search(query) {
     const randomVideo = videos[Math.floor(Math.random() * videos.length)];
 
     const result = {
-      criador: 'Hiudy',
       title: randomVideo.title,
       urls: [randomVideo.play],
       type: 'video',
