@@ -102,6 +102,8 @@ ensureJsonFileExists(ECONOMY_FILE, {
     "repairkit": { name: "Kit de Reparos", price: 200, type: "consumable", effect: { repair: 40 } },
     "mate": { name: "🧉 Mate (Chimarrão)", price: 200, type: "consumable", consumable: true, description: "Reduz cooldown de trabalhar" },
     "cerveja": { name: "🍺 Cerveja Gelada", price: 220, type: "consumable", consumable: true, description: "Reduz cooldown de explorar. Aumenta embriaguez." },
+    "cigarro": { name: "🚬 Cigarro", price: 150, type: "consumable", consumable: true, description: "Reduz cooldown de pescar. Aumenta a calma." },
+    "banza": { name: "🍁 Banza (Maconha)", price: 280, type: "consumable", consumable: true, description: "Reduz muito o cooldown de pescar. Dá uma lombra forte." },
     "vault": { name: "Cofre", price: 1000, type: "upgrade", effect: { bankCapacity: 5000 } },
     "lucky": { name: "Amuleto da Sorte", price: 1500, type: "upgrade", effect: { workBonus: 0.2 } },
     "rod": { name: "Vara de Pesca", price: 400, type: "tool", effect: { fishBonus: 0.2 } },

@@ -738,6 +738,24 @@ export const rpgMessages = {
       successChoca: (drunkMsg, count, limit) => `🍺 *CERVEJA* 🍺\n\n*Ih, tá choca!* 🤢\nEssa breja estava morna e sem gás...\n⚡ Cooldown de explorar reduzido em apenas *1* minuto.\n\n${drunkMsg}\n📊 Consumos hoje: *${count}/${limit}*`,
       successStandard: (reduction, drunkMsg, count, limit) => `🍺 *CERVEJA* 🍺\n\n*Cerveja no ponto!* 🍺✨\nUma bela loira gelada para relaxar as pernas.\n⚡ Cooldown de explorar reduzido em *${reduction}* minutos.\n\n${drunkMsg}\n📊 Consumos hoje: *${count}/${limit}*`,
       successSpecial: (reduction, drunkMsg, count, limit) => `🍺 *CERVEJA* 🍺\n\n*Mas que delícia! Trincando de gelada!* ❄️🍻\nDesceu redondo! Disposição total para a próxima aventura!\n⚡ Cooldown de explorar reduzido em *${reduction}* minutos!\n\n${drunkMsg}\n📊 Consumos hoje: *${count}/${limit}*`
+    },
+    cigarro: {
+      cooldown: (time) => `⏳ Você já fumou um cigarro recentemente. Aguarde ${time} para acender outro.`,
+      notTired: "⚠️ Você não está cansado para pescar! Seu cooldown de pescar precisa estar ativo.",
+      notInInventory: (prefix) => `🚬 Você não tem Cigarro no inventário! Compre na loja usando *${prefix}comprar cigarro*.`,
+      dailyLimitReached: (limit) => `⚠️ Você já atingiu o limite diário de consumo de Cigarro (${limit} vezes).`,
+      successApagado: (lombraMsg, count, limit) => `🚬 *CIGARRO* 🚬\n\n*Putz, apagou!* 💨\nO vento apagou o cigarro na metade e a brasa sumiu...\n⚡ Cooldown de pescar reduzido em apenas *1* minuto.\n\n${lombraMsg}\n📊 Consumos hoje: *${count}/${limit}*`,
+      successStandard: (reduction, lombraMsg, count, limit) => `🚬 *CIGARRO* 🚬\n\n*No capricho!* 🚬✨\nUm cigarrinho clássico para ver o tempo passar devagar.\n⚡ Cooldown de pescar reduzido em *${reduction}* minutos.\n\n${lombraMsg}\n📊 Consumos hoje: *${count}/${limit}*`,
+      successSpecial: (reduction, lombraMsg, count, limit) => `🚬 *CIGARRO* 🚬\n\n*Saboroso e relaxante!* 🌟🚬\nEsse desceu perfeitamente! Uma calmaria profunda tomou conta.\n⚡ Cooldown de pescar reduzido em *${reduction}* minutos!\n\n${lombraMsg}\n📊 Consumos hoje: *${count}/${limit}*`
+    },
+    banza: {
+      cooldown: (time) => `⏳ Você já fumou um banza recentemente. Aguarde ${time} para acender outro.`,
+      notTired: "⚠️ Você não está cansado para pescar! Seu cooldown de pescar precisa estar ativo.",
+      notInInventory: (prefix) => `🍁 Você não tem Banza no inventário! Compre na loja usando *${prefix}comprar banza*.`,
+      dailyLimitReached: (limit) => `⚠️ Você já atingiu o limite diário de consumo de Banza (${limit} vezes).`,
+      successMofado: (lombraMsg, count, limit) => `🍁 *BANZA* 🍁\n\n*Ih, veio mofado!* 🤢\nEssa paranga tava no fundo da gaveta... Gosto horrível e brisa fraca.\n⚡ Cooldown de pescar reduzido em apenas *2* minutos.\n\n${lombraMsg}\n📊 Consumos hoje: *${count}/${limit}*`,
+      successStandard: (reduction, lombraMsg, count, limit) => `🍁 *BANZA* 🍁\n\n*Crema pura!* 🍁🔥\nUm fininho verde e cheiroso para abrir a mente.\n⚡ Cooldown de pescar reduzido em *${reduction}* minutos.\n\n${lombraMsg}\n📊 Consumos hoje: *${count}/${limit}*`,
+      successSpecial: (reduction, lombraMsg, count, limit) => `🍁 *BANZA* 🍁\n\n*Haxixe dos deuses!* 🍯🍁\nQue pancada! Uma onda gigante de tranquilidade te atingiu.\n⚡ Cooldown de pescar reduzido em *${reduction}* minutos!\n\n${lombraMsg}\n📊 Consumos hoje: *${count}/${limit}*`
     }
   }
 };

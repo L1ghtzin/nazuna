@@ -76,26 +76,99 @@ export default {
         if (sub === 'pescar' || sub === 'fish') {
             const cd = me.cooldowns?.fish || 0;
             if (Date.now() < cd) return reply(MESSAGES.rpg.core.fishing.cooldown(timeLeft(cd)));
+            
+            // --- SISTEMA DE LOMBRA / CALMA ---
+            const lombra = me.lombraLevel || 0;
+            const calma = me.calmaLevel || 0;
+            let lombraMult = 1.0;
+            let lombraMsg = "";
+            let fishQtyBonus = 0;
+            let moneyLost = 0;
+            let forceZeroGains = false;
+            let longCd = false;
+
+            if (lombra > 0) {
+                // Decrementa o nível de lombra a cada pescaria
+                me.lombraLevel = Math.max(0, lombra - 1);
+                const roll = Math.random();
+
+                if (roll < 0.60) {
+                    // Brisa da Paz: Pescaria super tranquila e lucrativa (+40% a +100% de bônus baseado no lombraLevel)
+                    lombraMult = 1.4 + (lombra * 0.2);
+                    fishQtyBonus = 1 + Math.floor(Math.random() * 2); // +1 ou +2 peixes
+                    lombraMsg = `\n\n🌿 *BRISA DA PAZ* 🧘‍♂️\nVocê pescou com extrema paciência e tranquilidade, observando as nuvens...\n🪙 Bônus de Calmante: *+${Math.round((lombraMult - 1) * 100)}%* em moedas!\n🐟 Peixes extras: *+${fishQtyBonus}* peixes capturados!`;
+                } else if (roll < 0.80) {
+                    // Larica: Bônus de +30%, mas come 1 ingrediente (peixe ou carne)
+                    lombraMult = 1.3;
+                    lombraMsg = `\n\n🥪 *LARICA* 🤤\nVocê ficou tão relaxado que bateu aquela larica monstra! Pescou bem (+30% de moedas), mas assou um lanchinho no meio da calmaria...\n`;
+                    me.ingredients = me.ingredients || {};
+                    if ((me.ingredients.peixe || 0) > 0) {
+                        me.ingredients.peixe -= 1;
+                        lombraMsg += `⚠️ Consumiu *1x Peixe* do seu estoque.`;
+                    } else if ((me.ingredients.carne || 0) > 0) {
+                        me.ingredients.carne -= 1;
+                        lombraMsg += `⚠️ Consumiu *1x Carne* do seu estoque.`;
+                    } else {
+                        lombraMsg += `🏜️ Como não tinha peixe nem carne no estoque, sua barriga ficou roncando de fome!`;
+                    }
+                } else if (roll < 0.90) {
+                    // Brisa Torta: Dormiu na beirada, peixe roubou isca (-20% coins, cooldown aumenta)
+                    lombraMult = 0.8;
+                    longCd = true;
+                    lombraMsg = `\n\n💀 *BRISA TORTA* 💤\nVocê viajou legal observando o reflexo da água e cochilou na beira do rio. O peixe roubou a isca e levou embora o lucro!\n⏳ Cooldown de pescar aumentado em 6 minutos (ressaca da lombra).`;
+                } else {
+                    // BADTRIP: Perda direta de dinheiro, ganho zero, cooldown aumentado
+                    forceZeroGains = true;
+                    longCd = true;
+                    moneyLost = 100 + Math.floor(Math.random() * 151); // 100 a 250
+                    me.wallet = Math.max(0, me.wallet - moneyLost);
+                    lombraMsg = `\n\n💀 *BADTRIP / PARANOIA* 🧠💥\nVocê ouviu um barulho de galho quebrando, achou que era a polícia vindo confiscar sua vara, jogou sua carteira no rio em pânico e saiu correndo!\n💸 Prejuízo: Perdeu *${moneyLost}* moedas.\n❌ Lucro da pesca: *R$ 0,00* e cooldown de pescar aumentado em 6 minutos.`;
+                }
+            } else if (calma > 0) {
+                // Cigarro clássico: 90% seguro! 10% de queimar a calça e perder dinheiro
+                me.calmaLevel = Math.max(0, calma - 1);
+                const roll = Math.random();
+
+                if (roll < 0.90) {
+                    lombraMult = 1.0 + (calma * 0.25);
+                    lombraMsg = `\n\n🚬 *PESCA TRANQUILA* 😌\nVocê fumou seu cigarro de palha na beira da água com toda a calma do mundo.\n🪙 Bônus de Calma: *+${Math.round((lombraMult - 1) * 100)}%* de moedas adicionais.`;
+                } else {
+                    // Cinza na calça: Queimou a calça e perdeu moedas
+                    moneyLost = 40 + Math.floor(Math.random() * 51); // 40 a 90
+                    me.wallet = Math.max(0, me.wallet - moneyLost);
+                    lombraMsg = `\n\n🚬 *CINZA NA CALÇA* 👖🔥\nVocê deu uma tragada forte, mas uma cinza acesa caiu no seu bolso e queimou sua calça! Algumas moedas caíram pelo buraco e sumiram na terra.\n💸 Prejuízo: Perdeu *${moneyLost}* moedas pelo buraco da calça.`;
+                }
+            }
+
             const base = 80 + Math.floor(Math.random() * 121);
             const skillB = getSkillBonus(me, 'fishing');
             const bonus = Math.floor(base * ((fishBonus || 0) + skillB));
-            const total = base + bonus;
+            const total = forceZeroGains ? 0 : Math.floor((base + bonus) * lombraMult);
             
             const { coinMultiplier } = getRewardMultipliers(me);
-            const finalTotal = Math.floor(total * coinMultiplier);
+            const finalTotal = forceZeroGains ? 0 : Math.floor(total * coinMultiplier);
             const boostBonus = finalTotal - total;
             me.wallet += finalTotal;
-            me.cooldowns.fish = Date.now() + 12 * 60 * 1000;
+            
+            // Cooldown padrão é 12 min. Se foi brisa torta ou badtrip, vira 18 min.
+            const fishCooldownDuration = longCd ? 18 * 60 * 1000 : 12 * 60 * 1000;
+            me.cooldowns.fish = Date.now() + fishCooldownDuration;
+            
             addSkillXP(me, 'fishing', 1); updateChallenge(me, 'fish', 1, true); updatePeriodChallenge(me, 'fish', 1, true);
             me.ingredients = me.ingredients || {};
-            const fishQty = 2 + Math.floor(Math.random() * 3);
+            const fishQty = 2 + Math.floor(Math.random() * 3) + fishQtyBonus;
             me.ingredients.peixe = (me.ingredients.peixe || 0) + fishQty;
             if (!me.stats) me.stats = {};
             me.stats.totalFish = (me.stats.totalFish || 0) + 1;
             me.stats.fishCount = (me.stats.fishCount || 0) + 1;
             saveEconomy(econ);
+            
             const bonusText = (bonus + boostBonus) > 0 ? `│ ✨ Bônus: *+${fmt(bonus + boostBonus)}*\n` : '';
-            return reply(MESSAGES.rpg.core.fishing.success(fmt(finalTotal), bonusText, fishQty));
+            let replyText = MESSAGES.rpg.core.fishing.success(fmt(finalTotal), bonusText, fishQty);
+            if (lombraMsg) {
+                replyText += lombraMsg;
+            }
+            return reply(replyText);
         }
 
         if (sub === 'explorar' || sub === 'explore') {

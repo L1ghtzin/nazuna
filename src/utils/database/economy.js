@@ -95,6 +95,8 @@ export function createDefaultEcoUser() {
     totalWork: 0, totalMine: 0, totalFish: 0, totalHunt: 0, totalExplore: 0, totalCrime: 0,
     battlesWon: 0, battlesLost: 0,
     lotteryTickets: 0,
+    lombraLevel: 0,
+    calmaLevel: 0,
     createdAt: Date.now(), lastDaily: 0, lastWeekly: 0, lastMonthly: 0
   };
 }
@@ -120,6 +122,8 @@ export function migrateAndValidateEcoUser(user) {
   user.materials = validateObject(user.materials);
   user.consumableUsage = validateObject(user.consumableUsage);
   user.consumableEffects = validateObject(user.consumableEffects);
+  user.lombraLevel = validateNumber(user.lombraLevel, 0, 0, 3);
+  user.calmaLevel = validateNumber(user.calmaLevel, 0, 0, 3);
   user.job = user.job || null;
   user.challenge = user.challenge || null;
   user.weeklyChallenge = user.weeklyChallenge || null;

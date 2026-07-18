@@ -16,6 +16,24 @@ const CONSUMABLES_CONFIG = {
     },
     dailyLimit: 5,
     description: 'Reduz o cooldown atual de explorar de forma aleatória proporcional e aumenta a embriaguez'
+  },
+  cigarro: {
+    name: 'Cigarro',
+    emoji: '🚬',
+    effects: {
+      fishCooldownReduction: 4 * 60 * 1000
+    },
+    dailyLimit: 5,
+    description: 'Reduz o cooldown atual de pescar de forma aleatória proporcional e aumenta a calma'
+  },
+  banza: {
+    name: 'Banza (Maconha)',
+    emoji: '🍁',
+    effects: {
+      fishCooldownReduction: 8 * 60 * 1000
+    },
+    dailyLimit: 3,
+    description: 'Reduz muito o cooldown atual de pescar de forma aleatória proporcional e dá uma lombra forte'
   }
 };
 
@@ -265,6 +283,110 @@ export function useConsumable(user, consumableId) {
       reductionMin,
       quality,
       drunkLevel: user.drunkLevel
+    };
+  }
+
+  if (consumableId === 'cigarro') {
+    const lastUsed = user.cooldowns?.use_cigarro || 0;
+    if (now < lastUsed) {
+      return { success: false, error: 'use_cooldown', timeLeft: lastUsed - now };
+    }
+
+    const cd = user.cooldowns?.fish || 0;
+    if (now >= cd) {
+      return { success: false, error: 'not_tired_fish' };
+    }
+
+    consumeFromInventory(user, consumableId);
+    incrementDailyUsage(user, consumableId);
+
+    const remainingMin = Math.ceil((cd - now) / 60000);
+    const roll = Math.random();
+    let quality = 'standard';
+    let reductionMin = 2;
+
+    if (roll < 0.20) {
+      quality = 'apagado';
+      reductionMin = 1;
+    } else if (roll < 0.90) {
+      quality = 'standard';
+      const maxReduction = Math.min(4, Math.max(2, Math.ceil(remainingMin * 0.4)));
+      reductionMin = Math.max(2, 1 + Math.floor(Math.random() * maxReduction));
+    } else {
+      quality = 'special';
+      const maxReduction = Math.min(6, Math.max(4, Math.ceil(remainingMin * 0.7)));
+      reductionMin = Math.max(4, 1 + Math.floor(Math.random() * maxReduction));
+    }
+
+    reductionMin = Math.min(remainingMin, reductionMin);
+    const reductionMs = reductionMin * 60000;
+
+    user.cooldowns.fish = Math.max(now, cd - reductionMs);
+    user.cooldowns.use_cigarro = now + 15 * 1000;
+    user.calmaLevel = Math.min(3, (user.calmaLevel || 0) + 1);
+
+    return {
+      success: true,
+      config,
+      usageCount: getDailyUsageCount(user, consumableId),
+      dailyLimit: config.dailyLimit,
+      appliedDirectly: true,
+      reductionMin,
+      quality,
+      calmaLevel: user.calmaLevel
+    };
+  }
+
+  if (consumableId === 'banza') {
+    const lastUsed = user.cooldowns?.use_banza || 0;
+    if (now < lastUsed) {
+      return { success: false, error: 'use_cooldown', timeLeft: lastUsed - now };
+    }
+
+    const cd = user.cooldowns?.fish || 0;
+    if (now >= cd) {
+      return { success: false, error: 'not_tired_fish' };
+    }
+
+    consumeFromInventory(user, consumableId);
+    incrementDailyUsage(user, consumableId);
+
+    const remainingMin = Math.ceil((cd - now) / 60000);
+    const roll = Math.random();
+    let quality = 'standard';
+    let reductionMin = 4;
+    let addedLombra = 2;
+
+    if (roll < 0.20) {
+      quality = 'mofado';
+      reductionMin = 2;
+      addedLombra = 1;
+    } else if (roll < 0.90) {
+      quality = 'standard';
+      const maxReduction = Math.min(8, Math.max(4, Math.ceil(remainingMin * 0.5)));
+      reductionMin = Math.max(4, 1 + Math.floor(Math.random() * maxReduction));
+    } else {
+      quality = 'special';
+      const maxReduction = Math.min(12, Math.max(8, Math.ceil(remainingMin * 0.8)));
+      reductionMin = Math.max(8, 1 + Math.floor(Math.random() * maxReduction));
+    }
+
+    reductionMin = Math.min(remainingMin, reductionMin);
+    const reductionMs = reductionMin * 60000;
+
+    user.cooldowns.fish = Math.max(now, cd - reductionMs);
+    user.cooldowns.use_banza = now + 15 * 1000;
+    user.lombraLevel = Math.min(3, (user.lombraLevel || 0) + addedLombra);
+
+    return {
+      success: true,
+      config,
+      usageCount: getDailyUsageCount(user, consumableId),
+      dailyLimit: config.dailyLimit,
+      appliedDirectly: true,
+      reductionMin,
+      quality,
+      lombraLevel: user.lombraLevel
     };
   }
 

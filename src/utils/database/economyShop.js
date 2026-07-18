@@ -45,7 +45,9 @@ export function ensureShopDefaults(econ, migrateAndValidateEcoUser) {
     "pickaxe_diamante": { name: "Picareta de Diamante", price: 5000, type: "tool", toolType: "pickaxe", tier: "diamante", durability: 150, effect: { mineBonus: 0.5 } },
     "repairkit": { name: "Kit de Reparos", price: 200, type: "consumable", effect: { repair: 40 } },
     "mate": { name: "🧉 Mate (Chimarrão)", price: 200, type: "consumable", consumable: true, description: "Reduz cooldown de trabalhar" },
-    "cerveja": { name: "🍺 Cerveja Gelada", price: 220, type: "consumable", consumable: true, description: "Reduz cooldown de explorar. Aumenta embriaguez." }
+    "cerveja": { name: "🍺 Cerveja Gelada", price: 220, type: "consumable", consumable: true, description: "Reduz cooldown de explorar. Aumenta embriaguez." },
+    "cigarro": { name: "🚬 Cigarro", price: 150, type: "consumable", consumable: true, description: "Reduz cooldown de pescar. Aumenta a calma." },
+    "banza": { name: "🍁 Banza (Maconha)", price: 280, type: "consumable", consumable: true, description: "Reduz muito o cooldown de pescar. Dá uma lombra forte." }
   };
   for (const [k,v] of Object.entries(defs)) {
     if (!econ.shop[k] || econ.shop[k].name !== v.name || econ.shop[k].price !== v.price || econ.shop[k].description !== v.description) {

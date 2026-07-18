@@ -13,7 +13,9 @@ import {
 
 const CONSUMABLE_COMMAND_ALIASES = {
     mate: ['mate', 'chimarrao', 'chimarrão', 'tomarmate'],
-    cerveja: ['cerveja', 'tomarcerveja', 'bebercerveja', 'breja']
+    cerveja: ['cerveja', 'tomarcerveja', 'bebercerveja', 'breja'],
+    cigarro: ['cigarro', 'palheiro', 'pito', 'fumarcigarro'],
+    banza: ['banza', 'baseado', 'beck', 'makonha', 'maconha', 'fumarbanza', 'fumar']
 };
 
 export default {
@@ -73,14 +75,40 @@ export default {
             }
         }
 
+        if (consumableId === 'cigarro') {
+            const lastUsed = me.cooldowns?.use_cigarro || 0;
+            if (now < lastUsed) {
+                return reply(MESSAGES.rpg.consumables.cigarro.cooldown(timeLeft(lastUsed)));
+            }
+
+            const cd = me.cooldowns?.fish || 0;
+            if (now >= cd) {
+                return reply(MESSAGES.rpg.consumables.cigarro.notTired);
+            }
+        }
+
+        if (consumableId === 'banza') {
+            const lastUsed = me.cooldowns?.use_banza || 0;
+            if (now < lastUsed) {
+                return reply(MESSAGES.rpg.consumables.banza.cooldown(timeLeft(lastUsed)));
+            }
+
+            const cd = me.cooldowns?.fish || 0;
+            if (now >= cd) {
+                return reply(MESSAGES.rpg.consumables.banza.notTired);
+            }
+        }
+
         const result = useConsumable(me, consumableId);
 
         if (!result.success) {
             if (result.error === 'use_cooldown') {
-                const cdKey = consumableId === 'mate' ? me.cooldowns?.use_mate : me.cooldowns?.use_cerveja;
+                const cdKey = consumableId === 'mate' ? me.cooldowns?.use_mate :
+                              consumableId === 'cerveja' ? me.cooldowns?.use_cerveja :
+                              consumableId === 'cigarro' ? me.cooldowns?.use_cigarro : me.cooldowns?.use_banza;
                 return reply(MESSAGES.rpg.consumables[consumableId].cooldown(timeLeft(cdKey)));
             }
-            if (result.error === 'not_tired' || result.error === 'not_tired_explore') {
+            if (result.error === 'not_tired' || result.error === 'not_tired_explore' || result.error === 'not_tired_fish') {
                 return reply(MESSAGES.rpg.consumables[consumableId].notTired);
             }
             if (result.error === 'not_in_inventory') {
@@ -143,6 +171,68 @@ export default {
                 return reply(MESSAGES.rpg.consumables.cerveja.successStandard(
                     reductionMin,
                     drunkMsg,
+                    result.usageCount,
+                    result.dailyLimit
+                ));
+            }
+        }
+
+        if (consumableId === 'cigarro') {
+            const quality = result.quality || 'standard';
+            const calma = result.calmaLevel || 0;
+            let lombraMsg = '';
+            if (calma === 1) lombraMsg = '🚬 *Nível de Calma:* Relaxado (1/3)';
+            else if (calma === 2) lombraMsg = '🚬 *Nível de Calma:* Calmaria Pura (2/3)';
+            else if (calma >= 3) lombraMsg = '🚬 *Nível de Calma:* Monge da Pesca (3/3)\n😌 _Suas próximas pescarias serão seguras e mais lucrativas (+25% coins/nível)!_';
+
+            if (quality === 'apagado') {
+                return reply(MESSAGES.rpg.consumables.cigarro.successApagado(
+                    lombraMsg,
+                    result.usageCount,
+                    result.dailyLimit
+                ));
+            } else if (quality === 'special') {
+                return reply(MESSAGES.rpg.consumables.cigarro.successSpecial(
+                    reductionMin,
+                    lombraMsg,
+                    result.usageCount,
+                    result.dailyLimit
+                ));
+            } else {
+                return reply(MESSAGES.rpg.consumables.cigarro.successStandard(
+                    reductionMin,
+                    lombraMsg,
+                    result.usageCount,
+                    result.dailyLimit
+                ));
+            }
+        }
+
+        if (consumableId === 'banza') {
+            const quality = result.quality || 'standard';
+            const lombra = result.lombraLevel || 0;
+            let lombraMsg = '';
+            if (lombra === 1) lombraMsg = '😌 *Nível de Calma:* Relaxado (1/3)';
+            else if (lombra === 2) lombraMsg = '😌 *Nível de Calma:* Zen (2/3)';
+            else if (lombra >= 3) lombraMsg = '😌 *Nível de Calma:* Iluminado (3/3)\n🌿 _Suas próximas pescarias serão extremamente calmas e lucrativas!_';
+
+            if (quality === 'mofado') {
+                return reply(MESSAGES.rpg.consumables.banza.successMofado(
+                    lombraMsg,
+                    result.usageCount,
+                    result.dailyLimit
+                ));
+            } else if (quality === 'special') {
+                return reply(MESSAGES.rpg.consumables.banza.successSpecial(
+                    reductionMin,
+                    lombraMsg,
+                    result.usageCount,
+                    result.dailyLimit
+                ));
+            } else {
+                return reply(MESSAGES.rpg.consumables.banza.successStandard(
+                    reductionMin,
+                    lombraMsg,
                     result.usageCount,
                     result.dailyLimit
                 ));
