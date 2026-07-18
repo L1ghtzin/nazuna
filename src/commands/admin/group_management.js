@@ -141,19 +141,17 @@ export default {
 
       if (cmd === 'antiflood') {
         if (!q) return reply(MESSAGES.admin.group_management.protections.floodUsage(prefix));
-        const antifloodFile = pathz.join(DATABASE_DIR, 'antiflood.json');
-        let floodData = await readAsync(antifloodFile, {});
-        floodData[from] = floodData[from] || {};
+        groupData.antiflood = groupData.antiflood || {};
         if (q.toLowerCase() === 'off') {
-          floodData[from].enabled = false;
+          groupData.antiflood.enabled = false;
         } else {
           const interval = parseInt(q);
           if (isNaN(interval) || interval < 1) return reply(MESSAGES.admin.group_management.protections.floodInvalid);
-          floodData[from].enabled = true;
-          floodData[from].interval = interval;
+          groupData.antiflood.enabled = true;
+          groupData.antiflood.interval = interval;
         }
-        await writeAsync(antifloodFile, floodData);
-        return reply(MESSAGES.admin.group_management.protections.floodToggle(floodData[from].enabled));
+        await writeAsync(groupFile, groupData);
+        return reply(MESSAGES.admin.group_management.protections.floodToggle(groupData.antiflood.enabled));
       }
 
       groupData[feature] = !groupData[feature];

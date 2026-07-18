@@ -1,22 +1,22 @@
 import fs from 'fs';
 import pathz from 'path';
-import { fileURLToPath } from 'url';
 import { writeJsonFile, writeJsonFileQueued } from './_core.js';
-import { writeJsonFileAsync } from '../asyncFs.js';
-import { DATABASE_DIR } from '../paths.js';
+import { OWNER_CONFIG_FILE } from '../paths.js';
 
-const UNIFIED_SETTINGS_FILE = pathz.join(DATABASE_DIR, 'systemConfig.json');
+const FILE_TO_KEY = {
+  'antipv.json': 'antiPV',
+  'premium.json': 'premium',
+  'antispam.json': 'antiSpam',
+  'globalblocks.json': 'globalBlocks',
+  'botstate.json': 'botState',
+  'msgprefix.json': 'msgPrefix',
+  'msgboton.json': 'msgBotOn',
+  'cmdnotfound.json': 'cmdNotFound',
+  'subdonos.json': 'subdonos',
+  'menudesign.json': 'menuDesign'
+};
 
-const UNIFIED_FILES = [
-  'antipv.json',
-  'premium.json',
-  'bangp.json',
-  'antiflood.json',
-  'antispam.json',
-  'globalblocks.json',
-  'botstate.json',
-  'modolite.json'
-];
+const UNIFIED_FILES = Object.keys(FILE_TO_KEY);
 
 let unifiedSettings = null;
 
@@ -29,13 +29,13 @@ export function isUnifiedPath(filePath) {
 export function loadUnifiedSettings() {
   if (unifiedSettings) return unifiedSettings;
   try {
-    if (fs.existsSync(UNIFIED_SETTINGS_FILE)) {
-      unifiedSettings = JSON.parse(fs.readFileSync(UNIFIED_SETTINGS_FILE, 'utf-8'));
+    if (fs.existsSync(OWNER_CONFIG_FILE)) {
+      unifiedSettings = JSON.parse(fs.readFileSync(OWNER_CONFIG_FILE, 'utf-8'));
     } else {
       unifiedSettings = {};
     }
   } catch (error) {
-    console.error('❌ Erro ao carregar systemConfig.json, inicializando objeto vazio:', error.message);
+    console.error('❌ Erro ao carregar ownerConfig.json, inicializando objeto vazio:', error.message);
     unifiedSettings = {};
   }
   return unifiedSettings;
@@ -43,7 +43,9 @@ export function loadUnifiedSettings() {
 
 export function getUnifiedValue(filePath, defaultValue = {}) {
   const settings = loadUnifiedSettings();
-  const key = pathz.basename(filePath).toLowerCase();
+  const filename = pathz.basename(filePath).toLowerCase();
+  const key = FILE_TO_KEY[filename];
+  if (!key) return defaultValue;
   if (settings[key] === undefined) {
     settings[key] = defaultValue;
   }
@@ -52,53 +54,20 @@ export function getUnifiedValue(filePath, defaultValue = {}) {
 
 export function setUnifiedValue(filePath, data) {
   const settings = loadUnifiedSettings();
-  const key = pathz.basename(filePath).toLowerCase();
+  const filename = pathz.basename(filePath).toLowerCase();
+  const key = FILE_TO_KEY[filename];
+  if (!key) return;
   settings[key] = data;
-  writeJsonFile(UNIFIED_SETTINGS_FILE, settings);
+  writeJsonFile(OWNER_CONFIG_FILE, settings);
 }
 
 export async function setUnifiedValueAsync(filePath, data) {
   const settings = loadUnifiedSettings();
-  const key = pathz.basename(filePath).toLowerCase();
+  const filename = pathz.basename(filePath).toLowerCase();
+  const key = FILE_TO_KEY[filename];
+  if (!key) return;
   settings[key] = data;
-  await writeJsonFileQueued(UNIFIED_SETTINGS_FILE, settings);
+  await writeJsonFileQueued(OWNER_CONFIG_FILE, settings);
 }
 
-// Migra arquivos legados se eles existirem no disco
-export function migrateLegacyFiles() {
-  const settings = loadUnifiedSettings();
-  let modified = false;
 
-  const legacyPaths = [
-    { name: 'antipv.json', path: pathz.join(DATABASE_DIR, 'antipv.json') },
-    { name: 'premium.json', path: pathz.join(DATABASE_DIR, 'dono', 'premium.json') },
-    { name: 'bangp.json', path: pathz.join(DATABASE_DIR, 'dono', 'bangp.json') },
-    { name: 'antiflood.json', path: pathz.join(DATABASE_DIR, 'antiflood.json') },
-    { name: 'antispam.json', path: pathz.join(DATABASE_DIR, 'antispam.json') },
-    { name: 'globalblocks.json', path: pathz.join(DATABASE_DIR, 'globalBlocks.json') },
-    { name: 'botstate.json', path: pathz.join(DATABASE_DIR, 'botState.json') },
-    { name: 'modolite.json', path: pathz.join(DATABASE_DIR, 'modolite.json') }
-  ];
-
-  for (const item of legacyPaths) {
-    if (fs.existsSync(item.path)) {
-      try {
-        const raw = fs.readFileSync(item.path, 'utf-8');
-        const parsed = JSON.parse(raw);
-        if (settings[item.name] === undefined) {
-          settings[item.name] = parsed;
-          modified = true;
-          console.log(`📦 [MIGRAÇÃO] Importado ${item.name} para o systemConfig.json.`);
-        }
-        fs.unlinkSync(item.path);
-        console.log(`🗑️ [MIGRAÇÃO] Arquivo físico antigo removido: ${item.name}`);
-      } catch (err) {
-        console.error(`❌ [MIGRAÇÃO] Erro ao migrar arquivo legado ${item.name}:`, err.message);
-      }
-    }
-  }
-
-  if (modified) {
-    writeJsonFile(UNIFIED_SETTINGS_FILE, settings);
-  }
-}

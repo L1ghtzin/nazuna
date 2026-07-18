@@ -76,6 +76,14 @@ export async function loadGroupData(isGroup, from, groupFile, groupName) {
   groupData.mutedUsers2 = groupData.mutedUsers2 || {};
   groupData.levelingEnabled = groupData.levelingEnabled || false;
   groupData.adminWhitelist = groupData.adminWhitelist || {};
+  
+  // novas chaves consolidadas (estilo Misa)
+  groupData.antiflood = groupData.antiflood || { enabled: false, interval: 5, users: {} };
+  groupData.modolite = typeof groupData.modolite === 'boolean' ? groupData.modolite : false;
+  groupData.botBan = groupData.botBan || { ativo: false, motivo: null, createdAt: null, createdBy: null };
+  groupData.aluguel = groupData.aluguel || { ativo: false, expiresAt: null, codigoUsado: null };
+  groupData.menuAudio = groupData.menuAudio || null;
+  groupData.menuLerMais = typeof groupData.menuLerMais === 'boolean' ? groupData.menuLerMais : false;
   if (!groupData.roles || typeof groupData.roles !== 'object') {
     groupData.roles = {};
   }

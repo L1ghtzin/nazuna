@@ -54,6 +54,7 @@ const GROUP_CUSTOMIZATION_FILE = path.join(DONO_DIR, 'groupCustomization.json');
 const MENU_AUDIO_FILE = path.join(DONO_DIR, 'menuAudio.json');
 const MENU_LERMAIS_FILE = path.join(DONO_DIR, 'menuLerMais.json');
 const SUPPORT_TICKETS_FILE = path.join(DATABASE_DIR, 'supportTickets.json');
+const OWNER_CONFIG_FILE = path.join(DONO_DIR, 'ownerConfig.json');
 
 // Detecta se é sub-bot e ajusta o caminho do config
 const CONFIG_FILE = process.env.CONFIG_PATH || path.join(ROOT_DIR, 'dados', 'config.json');
@@ -61,6 +62,7 @@ const CONFIG_FILE = process.env.CONFIG_PATH || path.join(ROOT_DIR, 'dados', 'con
 const PACKAGE_JSON_PATH = path.join(ROOT_DIR, 'package.json');
 
 export {
+  OWNER_CONFIG_FILE,
   ROOT_DIR, 
   SRC_DIR,
   DATABASE_DIR,

@@ -415,7 +415,6 @@ export async function buildMessageContext(bot, info, store, messagesCache, renta
 
   const antipvData = loadJsonFile(DATABASE_DIR + '/antipv.json', {});
   const premiumListaZinha = loadJsonFile(DONO_DIR + '/premium.json', {});
-  const banGpIds = loadJsonFile(DONO_DIR + '/bangp.json', {});
   const antifloodData = loadJsonFile(DATABASE_DIR + '/antiflood.json', {});
   const antiSpamGlobal = loadJsonFile(DATABASE_DIR + '/antispam.json', { enabled: false, limit: 5, interval: 10, blockTime: 600, users: {}, blocks: {} });
   const globalBlocks = loadJsonFile(DATABASE_DIR + '/globalBlocks.json', { commands: {}, users: {} });
@@ -688,7 +687,7 @@ export async function buildMessageContext(bot, info, store, messagesCache, renta
     if (pvBlocked) {
       return;
     }
-    if (isGroup && banGpIds[from] && !isOwner && !isPremium) {
+    if (isGroup && groupData.botBan?.ativo && !isOwner && !isPremium) {
       return;
     };
 
@@ -849,7 +848,7 @@ export async function buildMessageContext(bot, info, store, messagesCache, renta
       connect4, uno, memoria, achievements, gifts, reputation, qrcode, notes,
       calculator, audioEdit, antitoxic, antipalavra, antistickerplus, transmissao,
       // Dados de cache
-      antipvData, premiumListaZinha, banGpIds, antifloodData, antiSpamGlobal,
+      antipvData, premiumListaZinha, antifloodData, antiSpamGlobal,
       globalBlocks, botState, modoLiteGlobal,
       // Variáveis de mensagem
       isCmd, command, menc_prt, menc_jid2, menc_os2, mentioned: menc_os2, sender_ou_n, msgString,

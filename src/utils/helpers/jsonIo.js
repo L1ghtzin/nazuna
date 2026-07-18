@@ -5,11 +5,11 @@ import { isUnifiedPath, getUnifiedValue, setUnifiedValue, loadUnifiedSettings } 
 import { serialize } from '../jsonSerializer.js';
 import { writeJsonFileAsync } from '../asyncFs.js';
 import { validateAndRepairData } from './dataValidators.js';
-
+import { DATABASE_DIR } from '../paths.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = pathz.dirname(__filename);
-const BACKUP_DIR = pathz.join(pathz.dirname(pathz.dirname(pathz.dirname(__filename))), 'dados', 'database', 'backups');
+const BACKUP_DIR = pathz.join(DATABASE_DIR, 'backups');
 
 export function ensureDirectoryExists(dirPath) {
   try {

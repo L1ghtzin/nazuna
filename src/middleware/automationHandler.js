@@ -52,8 +52,8 @@ export async function processAutomation(context) {
                 return { stopProcessing: true };
               }
             }
-          } catch (error) {
-            console.error("Erro na verificação anti-porn:", error);
+          } catch (e) {
+            console.error("Erro no anti-porn:", e);
           }
         }
       }
@@ -74,16 +74,19 @@ export async function processAutomation(context) {
     }
 
     // 3. Anti-Flood (Command Interval)
-    if (isGroup && antifloodData[from]?.enabled && isCmd && !isGroupAdmin) {
-      antifloodData[from].users = antifloodData[from].users || {};
+    if (isGroup && groupData.antiflood?.enabled && isCmd && !isGroupAdmin) {
+      groupData.antiflood.users = groupData.antiflood.users || {};
       const now = Date.now();
-      const lastCmd = antifloodData[from].users[sender]?.lastCmd || 0;
-      const interval = antifloodData[from].interval * 1000;
+      const lastCmd = groupData.antiflood.users[sender]?.lastCmd || 0;
+      const interval = groupData.antiflood.interval * 1000;
       if (now - lastCmd < interval) {
         await reply(MESSAGES.middleware.automation.floodCooldown(Math.ceil((interval - (now - lastCmd)) / 1000)));
         return { stopProcessing: true };
       }
-      antifloodData[from].users[sender] = { lastCmd: now };
+      groupData.antiflood.users[sender] = { lastCmd: now };
+      if (persistGroupData) {
+        await persistGroupData();
+      }
     }
 
     // 4. Anti-Document

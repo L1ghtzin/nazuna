@@ -4,8 +4,10 @@ package-lock.json
 # Bot Database / Temp files
 dados/database/*.json
 dados/database/**/*.json
+dados/database/**/*.bak
 dados/database/tmp/
 dados/database/qr-code/
+dados/database/backups/
 
 # Configurations
 dados/config.json

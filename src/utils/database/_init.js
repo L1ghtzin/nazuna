@@ -3,7 +3,6 @@
 // Este módulo é importado uma vez pelo aggregator (database.js).
 
 import { ensureDirectoryExists, ensureJsonFileExists } from '../helpers.js';
-import { migrateLegacyFiles } from './unifiedConfig.js';
 import {
   DATABASE_DIR,
   GRUPOS_DIR,
@@ -18,27 +17,17 @@ import {
   NO_PREFIX_COMMANDS_FILE,
   COMMAND_ALIASES_FILE,
   GLOBAL_BLACKLIST_FILE,
-  MENU_DESIGN_FILE,
   ECONOMY_FILE,
-  MSGPREFIX_FILE,
-  MSGBOTON_FILE,
   CUSTOM_REACTS_FILE,
   REMINDERS_FILE,
-  CMD_NOT_FOUND_FILE,
-  ANTIFLOOD_FILE,
-  ANTIPV_FILE,
   GLOBAL_BLOCKS_FILE,
   CMD_LIMIT_FILE,
   CMD_USER_LIMITS_FILE,
-  ANTISPAM_FILE,
-  BOT_STATE_FILE,
-  MODO_LITE_FILE,
-  SUBDONOS_FILE,
-  ALUGUEIS_FILE,
   CODIGOS_ALUGUEL_FILE,
   RELATIONSHIPS_FILE,
   CUSTOM_COMMANDS_FILE,
-  SUPPORT_TICKETS_FILE
+  SUPPORT_TICKETS_FILE,
+  OWNER_CONFIG_FILE
 } from '../paths.js';
 
 // === DIRETÓRIOS ===
@@ -48,11 +37,18 @@ ensureDirectoryExists(DONO_DIR);
 ensureDirectoryExists(PARCERIAS_DIR);
 ensureDirectoryExists(TMP_DIR);
 
-// === MIGRAÇÃO ===
-migrateLegacyFiles();
-
 // === ARQUIVOS JSON ===
-ensureJsonFileExists(ANTIFLOOD_FILE);
+ensureJsonFileExists(OWNER_CONFIG_FILE, {
+  botState: { status: 'on', viewMessages: false },
+  antiPV: { mode: 'off', message: '🚫 Este comando só funciona em grupos!' },
+  antiSpam: { enabled: false, limit: 5, interval: 10, blockTime: 600 },
+  cmdNotFound: { enabled: true, message: '❌ Comando não encontrado! Tente {prefix}menu para ver todos os comandos disponíveis.' },
+  msgPrefix: { enabled: false, message: '' },
+  msgBotOn: { enabled: true, message: '' },
+  subdonos: [],
+  premium: [],
+  globalBlocks: { commands: {}, users: {} }
+});
 ensureJsonFileExists(CMD_LIMIT_FILE, {
   commands: {},
   users: {}
@@ -61,29 +57,9 @@ ensureJsonFileExists(CMD_USER_LIMITS_FILE, {
   commands: {},
   users: {}
 });
-ensureJsonFileExists(ANTISPAM_FILE, {
-  enabled: false,
-  limit: 5,
-  interval: 10,
-  blockTime: 600,
-  users: {},
-  blocks: {}
-});
-ensureJsonFileExists(ANTIPV_FILE, {
-  mode: 'off',
-  message: '🚫 Este comando só funciona em grupos!'
-});
-ensureJsonFileExists(DONO_DIR + '/premium.json');
-ensureJsonFileExists(DONO_DIR + '/bangp.json');
 ensureJsonFileExists(GLOBAL_BLOCKS_FILE, {
   commands: {},
   users: {}
-});
-ensureJsonFileExists(BOT_STATE_FILE, {
-  status: 'on'
-});
-ensureJsonFileExists(MODO_LITE_FILE, {
-  status: false
 });
 ensureJsonFileExists(CUSTOM_AUTORESPONSES_FILE, {
   responses: []
@@ -116,15 +92,7 @@ ensureJsonFileExists(DONO_DIVULGACAO_FILE, {
   },
   createdAt: new Date().toISOString()
 });
-ensureJsonFileExists(MENU_DESIGN_FILE, {
-  header: `╭┈⊰ 🫟 『 *{botName}* 』\n┊💭 *Usuário:* {userName}\n┊👑 *Prefixo:* {prefix}\n╰─┈┈┈┈┈┈┈┈┈┈◜❁◞┈┈┈┈┈┈┈┈┈┈─╯`,
-  menuTopBorder: "╭┈",
-  bottomBorder: "╰─┈┈┈┈┈┈┈┈┈┈◜❁◞┈┈┈┈┈┈┈┈┈┈─╯",
-  menuTitleIcon: "🍧ฺꕸ▸",
-  menuItemIcon: "•.̇𖥨֗🫟⭟",
-  separatorIcon: "❁",
-  middleBorder: "┊"
-});
+
 ensureJsonFileExists(ECONOMY_FILE, {
   users: {},
   shop: {
@@ -240,38 +208,8 @@ ensureJsonFileExists(LEVELING_FILE, {
     { name: "Infinito", minLevel: 300 }
   ]
 });
-ensureJsonFileExists(MSGPREFIX_FILE, { message: false });
-ensureJsonFileExists(MSGBOTON_FILE, { enabled: true,
-message: `╭───⊱ 🍥 『 *{botName}* 』 ⊱───╮
-┊
-┊ ✨ *Oiiiii! Estou online!* ✨
-┊
-┊ 🚀 *Status:* Pronta para uso!
-┊ 🌀 *Evolução:* Ativa
-┊
-┊ Aproveite a experiência! 🌟
-┊
-┊ _Para gerenciar este aviso, use:_
-┊ ⌨️ *{prefix}msgboton*
-┊
-╰────⊱ 🍥 ✨ 🍥 ⊱────╯`
-});
 ensureJsonFileExists(CUSTOM_REACTS_FILE, { reacts: [] });
 ensureJsonFileExists(REMINDERS_FILE, { reminders: [] });
-ensureJsonFileExists(CMD_NOT_FOUND_FILE, {
-  enabled: true,
-  message: '❌ Comando não encontrado! Tente {prefix}menu para ver todos os comandos disponíveis.',
-  style: 'friendly',
-  variables: {
-    command: '{command}',
-    prefix: '{prefix}',
-    user: '{user}',
-    botName: '{botName}',
-    userName: '{userName}'
-  }
-});
-ensureJsonFileExists(SUBDONOS_FILE, { subdonos: [] });
-ensureJsonFileExists(ALUGUEIS_FILE, { globalMode: false, groups: {} });
 ensureJsonFileExists(CODIGOS_ALUGUEL_FILE, { codes: {} });
 ensureJsonFileExists(RELATIONSHIPS_FILE, { pairs: {}, archived: [] });
 ensureJsonFileExists(SUPPORT_TICKETS_FILE, { groups: {} });
