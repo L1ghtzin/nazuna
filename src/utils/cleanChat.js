@@ -1,6 +1,6 @@
-import baileys from 'baileys';
 import { MESSAGES } from './messages.js';
-const { delay } = baileys;
+
+const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export function clearChat() {
   // Retorna uma sequência de quebras de linha para "limpar" visualmente o chat no celular
