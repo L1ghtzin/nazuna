@@ -171,11 +171,6 @@ export const memberMessages = {
     sendingLikes: 'Enviando likes no Free Fire...',
     likesSuccess: (player, uid, initialLikes, finalLikes, likesAdded) => `Likes enviados com sucesso!\n\nJogador: ${player || 'N/A'}\nUID: ${uid}\nLikes antes: ${initialLikes ?? 'N/A'}\nLikes depois: ${finalLikes ?? 'N/A'}\nAdicionados: ${likesAdded ?? 'N/A'}`
   },
-  freetemu: {
-    missingLink: `💔 Por favor, digite um link da Temu.`,
-    invalidLink: `💔 Link inválido.`,
-    success: (link) => `🎉 Aqui está o link do produto no evento como GRATUITO:\n\n⚠️ Atenção: Nem todos os anúncios funcionam com esse método. Se não funcionar com este link, tente outro.\n\n💡 Esse sistema foi criado por mim (Hiudy) e, até hoje, não vi ninguém oferecendo algo assim. Aproveite!\n\n${link}`
-  },
   fun: {
     chaveamentoMissingNames: (prefix, command) => `💔 Forneça exatamente 16 nomes! Exemplo: ${prefix}${command} nome1,nome2,...,nome16`,
     chaveamentoInvalidCount: (count) => `💔 Forneça exatamente 16 nomes! Você forneceu ${count}.`,

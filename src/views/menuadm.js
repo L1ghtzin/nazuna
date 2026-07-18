@@ -128,7 +128,6 @@ ${middleBorder}${menuItemIcon}${prefix}antilinkgp
 ${middleBorder}${menuItemIcon}${prefix}antilinkcanal
 ${middleBorder}${menuItemIcon}${prefix}antilinkhard
 ${middleBorder}${menuItemIcon}${prefix}antilinksoft
-${middleBorder}${menuItemIcon}${prefix}antiporn
 ${middleBorder}${menuItemIcon}${prefix}antistatus
 ${middleBorder}${menuItemIcon}${prefix}x9
 ${middleBorder}${menuItemIcon}${prefix}captcha

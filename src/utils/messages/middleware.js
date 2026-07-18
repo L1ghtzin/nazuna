@@ -18,10 +18,6 @@ export const middlewareMessages = {
     linkWarned: (user) => `🔗 Atenção, @${user}! Links não são permitidos. Não consigo remover você, mas evite enviar links.`
   },
   automation: {
-    pornDetected: (reason) => `🚨 Conteúdo impróprio detectado! (${reason})`,
-    pornRemoved: (user) => `🔞 @${user}, conteúdo impróprio detectado. Você foi removido do grupo.`,
-    pornRemoveError: (user) => `⚠️ Não consegui remover @${user} automaticamente. Admins, por favor, verifiquem!`,
-    pornAdminNeeded: (user, reason) => `@${user} enviou conteúdo impróprio (${reason}), mas não posso removê-lo sem ser admin.`,
     locationRemoved: (user) => `🗺️ @${user}, localização não permitida. Você foi removido do grupo.`,
     floodCooldown: (seconds) => `⏳ Aguarde ${seconds} segundos antes de usar outro comando.`,
     documentRemoved: (user) => `📄 @${user}, documentos não são permitidos. Você foi removido do grupo.`

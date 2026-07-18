@@ -113,10 +113,6 @@ export const adminMessages = {
     cmdDelSuccess: "✅ Removido."
   },
   extra_protections: {
-    antipornOn: "🔞 *ANTI-PORN ATIVADO*\n\nQualquer imagem ou vídeo adulto enviado neste grupo será detectado e o usuário será banido automaticamente.",
-    antipornOff: "✅ *ANTI-PORN DESATIVADO*\n\nA detecção de conteúdo adulto foi desligada.",
-    antigoreOn: "🩸 *ANTI-GORE ATIVADO*\n\nQualquer conteúdo de violência extrema ou gore enviado neste grupo causará o banimento automático do membro.",
-    antigoreOff: "✅ *ANTI-GORE DESATIVADO*\n\nA detecção de violência/gore foi desligada.",
     antilinkgpOn: "✅ *Antilinkgp foi ativado com sucesso!*\n\nAgora, se alguém enviar links de outros grupos, será banido automaticamente. Mantenha o grupo seguro! 🛡️",
     antilinkgpOff: "⚠️ *Antilinkgp foi desativado.*\n\nLinks de outros grupos não serão mais bloqueados. Use com cuidado! 🔓",
     antilinkcanalOn: "✅ *Antilinkcanal foi ativado!*\n\nNão serão tolerados links de canais neste grupo. Quem desrespeitar, levará ban! 🛡️",

@@ -220,15 +220,13 @@ async function loadModules() {
         }
 
         // --- private (ESM via dynamic import) ---
-        const [temuScammerMod, antitoxicMod, antipalavraMod, antistickerplusMod] = await Promise.all([
-            import('../security/guards/temuScammer.js'),
+        const [antitoxicMod, antipalavraMod, antistickerplusMod] = await Promise.all([
             import('../security/guards/antitoxic.js'),
             import('../security/guards/antipalavra.js'),
             import('../security/guards/antistickerplus.js'),
         ]);
 
         // Private modules with null checking
-        modules.temuScammer = temuScammerMod.default ?? temuScammerMod;
         modules.antitoxic = antitoxicMod.default ?? antitoxicMod;
         modules.antipalavra = antipalavraMod.default ?? antipalavraMod;
         modules.antistickerplus = antistickerplusMod.default ?? antistickerplusMod;

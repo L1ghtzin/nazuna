@@ -1,4 +1,4 @@
-import axios from 'axios';
+
 
 export async function processAutomation(context) {
     const { 
@@ -8,56 +8,6 @@ export async function processAutomation(context) {
         sendSticker, pushname, nomebot, nomedono, antifloodData, MESSAGES
     } = context;
 
-    // 1. Anti-Porn (Image Only)
-    const isAntiPorn = groupData.antiporn;
-    if (isGroup && isAntiPorn && !info.key.fromMe) {
-      if (!isGroupAdmin && !isUserWhitelisted(sender, 'antiporn')) {
-        const mediaInfo = getMediaInfo(info.message);
-        if (mediaInfo && mediaInfo.type === 'image') {
-          try {
-            const imageBuffer = await getFileBuffer(mediaInfo.media, 'image');
-            const mediaURL = await upload(imageBuffer, true);
-            if (mediaURL) {
-              const apiResponse = await axios.get(`https://nsfw-demo.sashido.io/api/image/classify?url=${encodeURIComponent(mediaURL)}`);
-              let scores = { Porn: 0, Hentai: 0 };
-              if (Array.isArray(apiResponse.data)) {
-                scores = apiResponse.data.reduce((acc, item) => {
-                  if (item && typeof item.className === 'string' && typeof item.probability === 'number') {
-                    if (item.className === 'Porn' || item.className === 'Hentai') {
-                      acc[item.className] = Math.max(acc[item.className] || 0, item.probability);
-                    }
-                  }
-                  return acc;
-                }, { Porn: 0, Hentai: 0 });
-              }
-              const pornThreshold = 0.7;
-              const hentaiThreshold = 0.7;
-              const isPorn = scores.Porn >= pornThreshold;
-              const isHentai = scores.Hentai >= hentaiThreshold;
-              if (isPorn || isHentai) {
-                const reason = isPorn ? 'Pornografia' : 'Hentai';
-                await reply(MESSAGES.middleware.automation.pornDetected(reason));
-                if (isBotAdmin) {
-                  try {
-                    await bot.sendMessage(from, { delete: info.key });
-                    await bot.groupParticipantsUpdate(from, [sender], 'remove');
-                    await reply(MESSAGES.middleware.automation.pornRemoved(getUserName(sender)), { mentions: [sender] });
-                  } catch (adminError) {
-                    console.error(`Erro ao remover usuário por anti-porn: ${adminError}`);
-                    await reply(MESSAGES.middleware.automation.pornRemoveError(getUserName(sender)), { mentions: [sender] });
-                  }
-                } else {
-                  await reply(MESSAGES.middleware.automation.pornAdminNeeded(getUserName(sender), reason), { mentions: [sender] });
-                }
-                return { stopProcessing: true };
-              }
-            }
-          } catch (e) {
-            console.error("Erro no anti-porn:", e);
-          }
-        }
-      }
-    }
 
     // 2. Anti-Location
     if (isGroup && groupData.antiloc && !isGroupAdmin && type === 'locationMessage') {

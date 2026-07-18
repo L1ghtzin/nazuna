@@ -403,7 +403,7 @@ export async function buildMessageContext(bot, info, store, messagesCache, renta
   const {
     youtube, tiktok, pinterest, igdl, kwai, sendSticker, Dicionary, styleText,
     emojiMix, upload, mcPlugin, tictactoe, toolsJson, vabJson,
-    Lyrics, commandStats, VerifyUpdate, temuScammer, relationshipManager,
+    Lyrics, commandStats, VerifyUpdate, relationshipManager,
     spotify, soundcloud, facebook, twitter, gdrive, mediafire, search, imagetools, freefire,
     // Novos módulos
     connect4, uno, memoria, achievements, gifts, reputation, qrcode, notes,
@@ -750,7 +750,7 @@ export async function buildMessageContext(bot, info, store, messagesCache, renta
       return; // Ignora silenciosamente o alias para não-admins
     }
 
-    const isAntiPorn = groupData.antiporn;
+
     const isMuted = isUserInMap(groupData.mutedUsers, sender);
     const isMuted2 = isUserInMap(groupData.mutedUsers2, sender);
     const isAntiLinkGp = groupData.antilinkgp;
@@ -833,7 +833,7 @@ export async function buildMessageContext(bot, info, store, messagesCache, renta
       isQuotedVideo, isQuotedDocument, isQuotedDocW, isQuotedAudio, isQuotedSticker,
       isQuotedContact, isQuotedLocation, isQuotedProduct, quotedMessageContent,
       // Flags de proteção
-      isAntiPorn, isAntiLinkGp, isAntiLinkCanal, isAntiLinkSoft,
+      isAntiLinkGp, isAntiLinkCanal, isAntiLinkSoft,
       isAntiDel, isAntiBtn, isAntiStatus, isAutoRepo, isAssistente,
       isMuted, isMuted2,
       // Funções
@@ -843,7 +843,7 @@ export async function buildMessageContext(bot, info, store, messagesCache, renta
       menus, modules: modulesExport,
       youtube, tiktok, pinterest, igdl, kwai, sendSticker, Dicionary, styleText,
       emojiMix, upload, mcPlugin, tictactoe, toolsJson, vabJson,
-      Lyrics, commandStats, VerifyUpdate, temuScammer, relationshipManager,
+      Lyrics, commandStats, VerifyUpdate, relationshipManager,
       spotify, soundcloud, facebook, twitter, gdrive, mediafire, freefire,
       connect4, uno, memoria, achievements, gifts, reputation, qrcode, notes,
       calculator, audioEdit, antitoxic, antipalavra, antistickerplus, transmissao,

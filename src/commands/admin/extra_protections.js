@@ -128,8 +128,8 @@ async function handleAntipaymentCommand({
 
 export default {
   name: "extra_protections",
-  description: "Proteções adicionais (Anti-Link, Anti-Porn, Anti-Gore, Anti-Stealth, Anti-Pagamento)",
-  commands: ["antilinkgp", "antilinkcanal", "antilinkch", "antilinksoft", "antiporn", "antigore", "antistealth", "antipagamento", "antipayment"],
+  description: "Proteções adicionais (Anti-Link, Anti-Stealth, Anti-Pagamento)",
+  commands: ["antilinkgp", "antilinkcanal", "antilinkch", "antilinksoft", "antistealth", "antipagamento", "antipayment"],
   handle: async ({ 
     reply, command, isGroup, isGroupAdmin, isBotAdmin, from, 
     groupData, DATABASE_DIR, MESSAGES, args, prefix, bot
@@ -138,25 +138,7 @@ export default {
     const cmd = command.toLowerCase();
     const groupFilePath = pathz.join(DATABASE_DIR, `grupos/${from}.json`);
 
-    // --- ANTIPORN ---
-    if (cmd === 'antiporn') {
-      if (!isBotAdmin) return reply(MESSAGES.permission.botAdminOnly);
-      groupData.antiporn = !groupData.antiporn;
-      await writeAsync(groupFilePath, groupData);
-      return reply(groupData.antiporn 
-        ? MESSAGES.admin.extra_protections.antipornOn 
-        : MESSAGES.admin.extra_protections.antipornOff);
-    }
 
-    // --- ANTIGORE ---
-    if (cmd === 'antigore') {
-      if (!isBotAdmin) return reply(MESSAGES.permission.botAdminOnly);
-      groupData.antigore = !groupData.antigore;
-      await writeAsync(groupFilePath, groupData);
-      return reply(groupData.antigore 
-        ? MESSAGES.admin.extra_protections.antigoreOn 
-        : MESSAGES.admin.extra_protections.antigoreOff);
-    }
 
     // --- ANTI-STEALTH (configurável) ---
     if (cmd === 'antistealth') {
