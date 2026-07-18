@@ -4,6 +4,9 @@ import pathz from 'path';
 import { GRUPOS_DIR } from '../utils/paths.js';
 import { ensureDirectoryExists } from '../utils/helpers.js';
 import { normalizeScheduleTime } from '../utils/timeHelpers.js';
+import config from '../config.js';
+
+const isDebug = config.debug === true || process.env.CHAINY_DEBUG === '1' || process.env.NAZUNA_DEBUG === '1';
 
 const autoMsgCronJobs = {};
 
@@ -99,7 +102,9 @@ export const scheduleAutoMessage = (groupId, msgConfig, bot) => {
 
     task.start();
     autoMsgCronJobs[key] = task;
-    console.log(`[AutoMsg] 🔔 Agendamento criado para ${key} em ${cronExpr} (timezone: America/Sao_Paulo)`);
+    if (isDebug) {
+      console.log(`[AutoMsg] 🔔 Agendamento criado para ${key} em ${cronExpr} (timezone: America/Sao_Paulo)`);
+    }
   } catch (e) {
     console.error('[AutoMsg] Failed to schedule message', cronExpr, e);
   }
@@ -128,13 +133,15 @@ export const loadAllAutoMessages = async (bot) => {
       for (const msgConfig of autoMessages) {
         if (msgConfig.enabled && msgConfig.time) {
           scheduleAutoMessage(groupId, msgConfig, bot);
-          console.log(`[AutoMsg] ✅ Mensagem agendada: Grupo ${groupId.substring(0, 15)}... ID ${msgConfig.id} às ${msgConfig.time}`);
+          if (isDebug) {
+            console.log(`[AutoMsg] ✅ Mensagem agendada: Grupo ${groupId.substring(0, 15)}... ID ${msgConfig.id} às ${msgConfig.time}`);
+          }
           loadedCount++;
         }
       }
     }));
     
-    if (loadedCount > 0) {
+    if (loadedCount > 0 && isDebug) {
       console.log(`[AutoMsg] 📨 Total de ${loadedCount} mensagem(ns) automática(s) carregada(s) com sucesso`);
     }
   } catch (e) {

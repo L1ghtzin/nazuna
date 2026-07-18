@@ -6,6 +6,9 @@ import { GRUPOS_DIR } from '../utils/paths.js';
 import { normalizeScheduleTime, getTodayStr, recordScheduleRun, hasRunForScheduleToday } from '../utils/timeHelpers.js';
 import { ensureDirectoryExists, isGroupId } from '../utils/helpers.js';
 import { MESSAGES } from '../utils/messages.js';
+import config from '../config.js';
+
+const isDebug = config.debug === true || process.env.CHAINY_DEBUG === '1' || process.env.NAZUNA_DEBUG === '1';
 
 const gpCronJobs = {};
 
@@ -97,16 +100,20 @@ const loadAllGroupSchedules = async (bot) => {
       const schedule = data.schedule && typeof data.schedule === 'object' ? data.schedule : {};
       if (schedule.openTime) {
         scheduleGroupJob(groupId, 'open', schedule.openTime, bot);
-        console.log(`[Cron] ✅ Agendamento ABRIR carregado: Grupo ${groupId.substring(0, 15)}... às ${schedule.openTime}`);
+        if (isDebug) {
+          console.log(`[Cron] ✅ Agendamento ABRIR carregado: Grupo ${groupId.substring(0, 15)}... às ${schedule.openTime}`);
+        }
         loadedCount++;
       }
       if (schedule.closeTime) {
         scheduleGroupJob(groupId, 'close', schedule.closeTime, bot);
-        console.log(`[Cron] ✅ Agendamento FECHAR carregado: Grupo ${groupId.substring(0, 15)}... às ${schedule.closeTime}`);
+        if (isDebug) {
+          console.log(`[Cron] ✅ Agendamento FECHAR carregado: Grupo ${groupId.substring(0, 15)}... às ${schedule.closeTime}`);
+        }
         loadedCount++;
       }
     }));
-    if (loadedCount > 0) {
+    if (loadedCount > 0 && isDebug) {
       console.log(`[Cron] 📅 Total de ${loadedCount} agendamento(s) carregado(s) com sucesso`);
     }
   } catch (e) {
