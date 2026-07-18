@@ -62,11 +62,12 @@ chainy/
 │   │   └── rpg/                 # Comandos do sistema de RPG
 │   ├── handlers/                # Manipuladores de eventos do Baileys (connection, messages, groupParticipants)
 │   ├── middleware/              # Filtros de execução, limites, despacho e segurança
-│   │   └── security/            # Submódulos de proteção (antiDel, antiSpam, mutedUsers, rentalMode, etc)
+│   ├── security/                # Submódulos de proteção consolidados
+│   │   ├── anti/                # Proteções anti (antiDel, antiSpam, mutedUsers, rentalMode, afk, etc)
+│   │   └── guards/              # Guardas de segurança (antipalavra, antitoxic, antistickerplus, temuScammer)
 │   ├── funcs/                   # Integrações, serviços e dados estáticos
 │   │   ├── downloads/           # Downloaders (YouTube, TikTok, Spotify, etc)
 │   │   ├── utils/               # Utilitários de serviço (jogos, search, media, sticker)
-│   │   ├── private/             # Segurança adicional (antitoxic, antipalavra, antistickerplus)
 │   │   └── json/                # Bancos de dados estáticos de jogos (quiz, forca, stop, etc)
 │   ├── views/                   # Geradores de texto dos menus exibidos pelo comando /menu
 │   ├── utils/                   # Núcleo de utilitários do framework

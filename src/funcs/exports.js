@@ -221,10 +221,10 @@ async function loadModules() {
 
         // --- private (ESM via dynamic import) ---
         const [temuScammerMod, antitoxicMod, antipalavraMod, antistickerplusMod] = await Promise.all([
-            import('./private/temuScammer.js'),
-            import('./private/antitoxic.js'),
-            import('./private/antipalavra.js'),
-            import('./private/antistickerplus.js'),
+            import('../security/guards/temuScammer.js'),
+            import('../security/guards/antitoxic.js'),
+            import('../security/guards/antipalavra.js'),
+            import('../security/guards/antistickerplus.js'),
         ]);
 
         // Private modules with null checking
