@@ -1,4 +1,4 @@
-import { processAntiStealth, processAntiStealthUpdate } from '../middleware/antiStealth.js';
+import { processAntiStealth, processAntiStealthUpdate, isNoSessionDecryptMessage } from '../middleware/antiStealth.js';
 import { recordMessageEnvelope } from '../utils/messageEnvelopeRegistry.js';
 import { hasPaymentMessage } from '../utils/paymentMessage.js';
 
@@ -35,9 +35,16 @@ export async function handleMessagesUpsert(ChainySock, m, { messageQueue, proces
   
   // Processa 'notify' (mensagens normais) e 'append' (apenas solicitações de entrada)
   if (m.type !== 'notify' && m.type !== 'append') return;
-      
+
+  // Filtra mensagens stealth (stubType 2 / falha de decriptação) do pipeline normal.
+  // Elas já foram tratadas pelo processAntiStealth acima. Sem este filtro, cada stealth
+  // entra no messageQueue e dispara buildMessageContext -> convertIdsToLid para TODOS
+  // os membros/admins do grupo, saturando o socket durante rajadas de stealth.
+  const messagesToProcess = m.messages.filter(info => !isNoSessionDecryptMessage(info));
+  if (messagesToProcess.length === 0) return;
+
   try {
-    const messageProcessingPromises = m.messages.map(info =>
+    const messageProcessingPromises = messagesToProcess.map(info =>
       messageQueue.add(info, processMessage).catch(err => {
         console.error(`❌ Failed to queue message ${info.key?.id}: ${err.message}`);
       })
