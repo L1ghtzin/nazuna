@@ -23,6 +23,28 @@ import { loadGroupDataById, saveGroupDataById } from '../groupManager.js';
 const SYSTEM_CONFIG_FILE = pathz.join(DATABASE_DIR, 'systemConfig.json');
 
 export async function runDatabaseConsolidation() {
+  const legacyFiles = [
+    SYSTEM_CONFIG_FILE,
+    MSGPREFIX_FILE,
+    MSGBOTON_FILE,
+    CMD_NOT_FOUND_FILE,
+    SUBDONOS_FILE,
+    MENU_DESIGN_FILE,
+    pathz.join(DATABASE_DIR, 'antiflood.json'),
+    pathz.join(DATABASE_DIR, 'modolite.json'),
+    pathz.join(DONO_DIR, 'bangp.json'),
+    ALUGUEIS_FILE,
+    MENU_AUDIO_FILE,
+    MENU_LERMAIS_FILE
+  ];
+
+  const hasLegacyFiles = legacyFiles.some(file => existsSync(file));
+  const ownerConfigExists = existsSync(OWNER_CONFIG_FILE);
+
+  if (ownerConfigExists && !hasLegacyFiles) {
+    return;
+  }
+
   console.log('🔄 [CONSOLIDAÇÃO] Iniciando migração e consolidação do banco de dados...');
 
   // 1. Carregar Configurações Globais / Dono do systemConfig.json e arquivos individuais
@@ -253,8 +275,8 @@ export async function runDatabaseConsolidation() {
     pathz.join(DATABASE_DIR, 'antiflood.json'),
     pathz.join(DATABASE_DIR, 'modolite.json'),
     pathz.join(DONO_DIR, 'bangp.json'),
-    pathz.join(DATABASE_DIR, 'menuAudio.json'),
-    pathz.join(DATABASE_DIR, 'menuLerMais.json')
+    MENU_AUDIO_FILE,
+    MENU_LERMAIS_FILE
   ];
 
   for (const file of legacyGroupFiles) {
@@ -266,6 +288,21 @@ export async function runDatabaseConsolidation() {
   // Se systemConfig.json existir, podemos deletá-lo ou limpá-lo
   if (existsSync(SYSTEM_CONFIG_FILE)) {
     try { fs.unlinkSync(SYSTEM_CONFIG_FILE); } catch (e) {}
+  }
+
+  // Limpeza dos demais arquivos legados individuais
+  const remainingLegacyFiles = [
+    MSGPREFIX_FILE,
+    MSGBOTON_FILE,
+    CMD_NOT_FOUND_FILE,
+    SUBDONOS_FILE,
+    MENU_DESIGN_FILE,
+    ALUGUEIS_FILE
+  ];
+  for (const file of remainingLegacyFiles) {
+    if (existsSync(file)) {
+      try { fs.unlinkSync(file); } catch (e) {}
+    }
   }
 
   console.log('✅ [CONSOLIDAÇÃO] Banco de dados consolidado com sucesso!');
