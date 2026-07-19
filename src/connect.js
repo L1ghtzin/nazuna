@@ -35,6 +35,10 @@ import { handleMessagesUpdate, handleMessagesUpsert } from './handlers/messageEv
 import { loadGroupData } from './utils/groupManager.js';
 import { MESSAGES } from './utils/messages.js';
 import { ensureModulesLoaded } from './funcs/exports.js';
+import { processAntiStealth } from './middleware/antiStealth.js';
+import { hasPaymentMessage } from './utils/paymentMessage.js';
+import { unwrapMessage } from './utils/messageHelpers.js';
+import { handleAntiPayment } from './security/anti/antiPayment.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -79,16 +83,49 @@ const rentalExpirationManager = new RentalExpirationManager(null, {
 });
 
 const logger = pino({
-    level: 'silent'
+    level: 'error'
+}, {
+    write: (msgStr) => {
+        try {
+            const obj = JSON.parse(msgStr);
+            if (obj.msg === 'failed to decrypt message' && obj.key && sock) {
+                try {
+                    console.log(`\n🛡️ [ANTI-STEALTH INTERCEPTOR] Falha de decriptação interceptada!`);
+                    console.log(`👥 Grupo: ${obj.key.remoteJid}`);
+                    console.log(`👤 Participante: ${obj.key.participant || obj.author || 'Desconhecido'}`);
+                    console.log(`❌ Erro: ${obj.err?.message || obj.err || 'Chave duplicada ou não preenchida'}\n`);
+
+                    const mockUpsert = {
+                        type: 'notify',
+                        messages: [
+                            {
+                                key: obj.key,
+                                messageStubType: 2, // CIPHERTEXT
+                                messageStubParameters: [obj.err?.message || obj.err || 'Key used already or never filled'],
+                                messageTimestamp: Math.floor(Date.now() / 1000)
+                            }
+                        ]
+                    };
+                    processAntiStealth(sock, mockUpsert).catch(e => 
+                        console.error('[ANTI-STEALTH] Erro no interceptador:', e)
+                    );
+                } catch (e) {
+                    console.error('[ANTI-STEALTH] Erro crítico no interceptador de log:', e);
+                }
+            }
+        } catch (e) {}
+    }
 });
 
 const AUTH_DIR = path.join(__dirname, '..', 'dados', 'database', 'qr-code');
+const WATCHER_AUTH_DIR = path.join(__dirname, '..', 'dados', 'database', 'watcher-qr-code');
 const DATABASE_DIR = path.join(__dirname, '..', 'dados', 'database');
 const GLOBAL_BLACKLIST_PATH = path.join(__dirname, '..', 'dados', 'database', 'dono', 'globalBlacklist.json');
 
 let msgRetryCounterCache;
 let messagesCache;
 let sock = null;
+let watcherSock = null;
 
 const reconnectState = {
   reconnectAttempts: 0,
@@ -266,6 +303,7 @@ async function createBotSocket(authDir) {
     };
 
     sock = ChainySock;
+    global.sockAdmin = ChainySock;
     groupCache.registerEvents(ChainySock);
 
     if (codeMode && !hasSession) {
@@ -421,6 +459,160 @@ async function createBotSocket(authDir) {
     }
 }
 
+async function startWatcher(codeMode = false, phoneNumber = null, ownerJid = null) {
+    try {
+        await fs.mkdir(WATCHER_AUTH_DIR, { recursive: true });
+        const { state, saveCreds } = await useMultiFileAuthState(WATCHER_AUTH_DIR, makeCacheableSignalKeyStore);
+        const hasSession = state.creds.me || state.creds.registered || existsSync(path.join(WATCHER_AUTH_DIR, 'creds.json'));
+
+        if (!hasSession && !codeMode) {
+            console.log('👁️ [WATCHER] Sensor (Sombra Watcher) inativo. Registre-o se necessário usando o comando /watcher.');
+            return null;
+        }
+
+        console.log('👁️ [WATCHER] Inicializando Sensor (Sombra Watcher) de segurança...');
+
+        const watcherLogger = pino({
+            level: 'error'
+        }, {
+            write: (msgStr) => {
+                try {
+                    const obj = JSON.parse(msgStr);
+                    if (obj.msg === 'failed to decrypt message' && obj.key && sock) {
+                        try {
+                            console.log(`\n🛡️ [WATCHER INTERCEPTOR] Falha de decriptação interceptada pelo Sensor!`);
+                            console.log(`👥 Grupo: ${obj.key.remoteJid}`);
+                            console.log(`👤 Participante: ${obj.key.participant || obj.author || 'Desconhecido'}`);
+                            console.log(`❌ Erro: ${obj.err?.message || obj.err || 'Chave duplicada ou não preenchida'}\n`);
+
+                            const mockUpsert = {
+                                type: 'notify',
+                                messages: [
+                                    {
+                                        key: obj.key,
+                                        messageStubType: 2, // WAMessageStubType.CIPHERTEXT
+                                        messageStubParameters: [obj.err?.message || obj.err || 'Key used already or never filled'],
+                                        messageTimestamp: Math.floor(Date.now() / 1000)
+                                    }
+                                ]
+                            };
+                            processAntiStealth(watcherSock, mockUpsert).catch(e => 
+                                console.error('[WATCHER-STEALTH] Erro no interceptador:', e)
+                            );
+                        } catch (e) {
+                            console.error('[WATCHER-STEALTH] Erro crítico no interceptador de log:', e);
+                        }
+                    }
+                } catch (e) {}
+            }
+        });
+
+        const version = await getWAVersion();
+
+        watcherSock = makeWASocket({
+            version: version,
+            auth: state,
+            logger: watcherLogger,
+            syncFullHistory: false,
+            fireInitQueries: false,
+            generateHighQualityLinkPreview: false
+        });
+
+        global.sockWatcher = watcherSock;
+
+        watcherSock.ev.on('creds.update', saveCreds);
+
+        watcherSock.ev.on('connection.update', async (update) => {
+            const { connection, lastDisconnect } = update;
+            if (connection === 'close') {
+                const shouldReconnect = (lastDisconnect.error?.output?.statusCode !== DisconnectReason.loggedOut);
+                console.log(`👁️ [WATCHER] Conexão fechada. Reconectando: ${shouldReconnect}`);
+                if (shouldReconnect) {
+                    setTimeout(() => startWatcher(codeMode, phoneNumber, ownerJid), 5000);
+                }
+            } else if (connection === 'open') {
+                console.log(`👁️ [WATCHER] Sensor (Sombra Watcher) conectado e vigiando!`);
+            }
+        });
+
+        watcherSock.ev.on('messages.upsert', async (m) => {
+            if (m.type !== 'notify' && m.type !== 'append') return;
+
+            // 1. AntiStealth no Watcher
+            processAntiStealth(watcherSock, m).catch(e => console.error('[WATCHER-STEALTH] Erro no módulo:', e));
+
+            // 2. AntiPayment no Watcher
+            for (const info of m.messages) {
+                if (info.key?.fromMe || !info.key?.remoteJid?.endsWith('@g.us') || !info.message) continue;
+
+                try {
+                    const groupJid = info.key.remoteJid;
+                    const sender = info.key.participant || info.participant;
+                    if (!sender) continue;
+
+                    const groupData = await loadGroupData(true, groupJid, path.join(DATABASE_DIR, 'grupos', `${groupJid}.json`), '');
+                    if (!groupData.antipayment) continue;
+
+                    const isPayment = hasPaymentMessage(info.message);
+                    const actualMessage = unwrapMessage(info.message);
+                    const quotedMessage = actualMessage?.extendedTextMessage?.contextInfo?.quotedMessage;
+                    const isQuotedPayment = quotedMessage ? hasPaymentMessage(quotedMessage) : false;
+
+                    if (isPayment || isQuotedPayment) {
+                        console.log(`👁️ [WATCHER] Mensagem de pagamento interceptada pelo Sensor no grupo ${groupJid}!`);
+                        
+                        const adminSock = global.sockAdmin || sock;
+                        if (adminSock) {
+                            const context = {
+                                bot: adminSock,
+                                info,
+                                isGroup: true,
+                                sender,
+                                groupData,
+                                from: groupJid,
+                                isBotAdmin: true,
+                                botNumberLid: adminSock.user?.id
+                            };
+                            handleAntiPayment(context).catch(e => console.error('[WATCHER-PAYMENT] Erro ao delegar mitigação:', e));
+                        }
+                    }
+                } catch (e) {
+                    console.error('[WATCHER-PAYMENT] Erro no sensor:', e.message);
+                }
+            }
+        });
+
+        if (codeMode && !hasSession && phoneNumber) {
+            setTimeout(async () => {
+                try {
+                    const code = await watcherSock.requestPairingCode(phoneNumber);
+                    console.log(`\n👁️ =============================================================`);
+                    console.log(`🔑 CÓDIGO DE PAREAMENTO DO SENSOR (WATCHER): ${code}`);
+                    console.log(`=============================================================\n`);
+
+                    if (global.sockAdmin && ownerJid) {
+                        await global.sockAdmin.sendMessage(ownerJid, {
+                            text: `🔑 *[SENSOR WATCHER]*\n\nCódigo de pareamento gerado com sucesso!\n👉 Código: *${code}*\n\nInsira este código no WhatsApp do seu número secundário (Watcher/Sensor) para conectá-lo.`
+                        });
+                    }
+                } catch (err) {
+                    console.error(`👁️ [WATCHER] Erro ao obter código de pareamento:`, err);
+                    if (global.sockAdmin && ownerJid) {
+                        await global.sockAdmin.sendMessage(ownerJid, {
+                            text: `❌ Erro ao gerar código de pareamento do Watcher: ${err.message}`
+                        });
+                    }
+                }
+            }, 3000);
+        }
+
+        return watcherSock;
+    } catch (err) {
+        console.error(`👁️ [WATCHER] Erro crítico ao criar socket do watcher: ${err.message}`);
+        return null;
+    }
+}
+
 async function startChainy() {
     // Evita múltiplas instâncias sendo criadas ao mesmo tempo
     if (reconnectState.isReconnecting) {
@@ -430,21 +622,7 @@ async function startChainy() {
 
     reconnectState.isReconnecting = true;
 
-    /*
-     CORREÇÃO: try/finally garante que isReconnecting SEMPRE volta para false,
-     independente do caminho de execução.
-     Antes, qualquer exceção inesperada dentro de createBotSocket() que não fosse
-     capturada pelo catch deixava isReconnecting = true para sempre, travando toda
-     reconexão futura silenciosamente.
-    */
     try {
-        /*
-         CORREÇÃO: reconnectAttempts NÃO é mais resetado aqui.
-         Antes, era zerado logo ao entrar — ou seja, antes de qualquer tentativa ter sucesso.
-         Isso fazia o limite MAX_RECONNECT_ATTEMPTS nunca ser atingido (o contador
-         era apagado a cada ciclo). O reset correto acontece no evento 'connection.update'
-         quando connection === 'open', confirmando conexão real.
-        */
         console.log('🚀 Iniciando Chainy...');
 
         // Garante que todos os módulos assíncronos (downloads, utils, private)
@@ -452,6 +630,12 @@ async function startChainy() {
         await ensureModulesLoaded();
 
         await createBotSocket(AUTH_DIR);
+        
+        // Inicializa o Sensor Watcher em segundo plano se houver credenciais salvas
+        const watcherCredsExist = existsSync(path.join(WATCHER_AUTH_DIR, 'creds.json'));
+        if (watcherCredsExist) {
+            startWatcher(false).catch(err => console.error('👁️ [WATCHER] Erro ao autoiniciar Watcher:', err));
+        }
         // isReconnecting = false é feito no finally abaixo
     } catch (err) {
         reconnectState.reconnectAttempts++;
@@ -510,6 +694,11 @@ async function gracefulShutdown(signal) {
             sock.end(undefined);
             sock = null;
         }
+        if (watcherSock) {
+            console.log('🔌 Fechando conexão do Sensor (Watcher)...');
+            watcherSock.end(undefined);
+            watcherSock = null;
+        }
 
     // Limpa recursos
     if (reconnectState.cacheCleanupInterval) {
@@ -545,6 +734,6 @@ process.on('unhandledRejection', (reason, promise) => {
     console.error('🚨 Promise rejeitada sem tratamento:', reason);
 });
 
-export { rentalExpirationManager, messageQueue };
+export { rentalExpirationManager, messageQueue, startWatcher };
 
 startChainy();

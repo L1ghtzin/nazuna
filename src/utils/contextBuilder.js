@@ -442,6 +442,13 @@ export async function buildMessageContext(bot, info, store, messagesCache, renta
 
 
     if (!info.key.participant && !info.key.remoteJid) return;
+    let senderJid = isGroup 
+      ? (info.key.participant || info.message?.participant || '')
+      : (info.key.remoteJid || '');
+    if (senderJid && isValidJid(senderJid)) {
+      senderJid = senderJid.split(':')[0] + '@s.whatsapp.net';
+    }
+
     let sender;
     if (isGroup) {
       // Prioriza participant, depois busca por LID, com fallback para JID
@@ -473,7 +480,7 @@ export async function buildMessageContext(bot, info, store, messagesCache, renta
     }
 
     // Debug: log do sender identificado
-    debugLog('Sender identificado:', { sender, isGroup, from: from?.substring(0, 20) });
+    debugLog('Sender identificado:', { sender, senderJid, isGroup, from: from?.substring(0, 20) });
 
     // Se sender ainda for undefined, ignora a mensagem (ex: mensagens de sistema, stubs, etc)
     if (!sender) {
@@ -497,6 +504,8 @@ export async function buildMessageContext(bot, info, store, messagesCache, renta
     const isRealOwner = senderBase === ownerBase ||
       sender === nmrdn ||
       sender === ownerJid ||
+      senderJid === ownerJid ||
+      senderJid === nmrdn ||
       (lidowner && sender === lidowner) ||
       (lidOwnerBase && senderBase === lidOwnerBase);
 

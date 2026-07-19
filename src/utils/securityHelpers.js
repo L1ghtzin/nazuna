@@ -79,7 +79,11 @@ function hasPaymentMessageKey(value, depth = 0, seenObjects = new WeakSet()) {
  * Desconsidera citações (quotedMessage) para evitar bans indevidos por citações.
  */
 export function hasPaymentMessage(message) {
-  return hasPaymentMessageKey(message);
+  let msg = message;
+  if (msg?.protocolMessage?.editedMessage) {
+    msg = msg.protocolMessage.editedMessage;
+  }
+  return hasPaymentMessageKey(msg);
 }
 
 function hasGroupStatusAttribution(statusAttributions) {

@@ -8,7 +8,6 @@ import { GRUPOS_DIR } from '../utils/paths.js';
 import db from '../utils/database/io.js';
 import groupCache from '../utils/groupCache.js';
 
-const DEBUG_MODE = process.env.DEBUG_MODE === 'true';
 const STEALTH_WINDOW_MS = 4_000;
 const DEFAULT_ACTION = 'banir';
 const STATS_PERSIST_DEBOUNCE_MS = 5_000;
@@ -28,10 +27,17 @@ function getState(groupId, sender) {
 }
 
 export function isNoSessionDecryptMessage(info) {
-    if (info.messageStubType !== 2) return false;
-    const params = info.messageStubParameters || [];
-    if (params.length === 0) return true;
-    return params.some(p => typeof p === 'string' && /decrypt|session|cipher|no session/i.test(p));
+    // 2 = CIPHERTEXT (Stealth padrão)
+    if (info.messageStubType === 2) {
+        const params = info.messageStubParameters || [];
+        if (params.length === 0) return true;
+        return params.some(p => typeof p === 'string' && /decrypt|session|cipher|no session/i.test(p));
+    }
+    // 34 = BROADCAST_CREATE, 35 = BROADCAST_ADD, 36 = BROADCAST_REMOVE (Injeções suspeitas em grupos)
+    if (info.messageStubType === 34 || info.messageStubType === 35 || info.messageStubType === 36) {
+        return true;
+    }
+    return false;
 }
 
 function getGroupDataSync(groupJid) {
@@ -45,15 +51,6 @@ function persistGroupDataDebounced(groupJid, groupData) {
 function getGroupOwner(groupJid) {
     const meta = groupCache.get(groupJid);
     return meta?.owner || meta?.participants?.find(p => p.admin === 'superadmin')?.id || null;
-}
-
-function isWhitelistedForAntiStealth(groupData, identityLid) {
-    const whitelistEntry = groupData?.adminWhitelist?.[identityLid];
-    if (!whitelistEntry) return false;
-    if (!Array.isArray(whitelistEntry.antis)) return true;
-    return whitelistEntry.antis.some(anti =>
-        ['antistealth', 'anti-stealth', '*', 'all', 'todos'].includes(String(anti).toLowerCase().trim())
-    );
 }
 
 function isImmune(groupJid, participantLid) {
@@ -102,6 +99,7 @@ async function executeAction(ChainySock, groupJid, participantLid, cfg) {
     const flags = parseAction(cfg.action, cfg.limit);
     const userName = participantLid.split('@')[0].split(':')[0];
     const groupName = groupCache.get(groupJid)?.subject || groupJid;
+    const adminSock = global.sockAdmin || ChainySock;
 
     const mentions = [participantLid];
     let actionText = 'uma ação de segurança foi tomada';
@@ -124,25 +122,25 @@ async function executeAction(ChainySock, groupJid, participantLid, cfg) {
     }
     groupMsg += MESSAGES.middleware.antiStealth.alertFooter;
 
-    await ChainySock.sendMessage(groupJid, { text: groupMsg, mentions }).catch(() => {});
+    await adminSock.sendMessage(groupJid, { text: groupMsg, mentions }).catch(() => {});
 
     if (flags.fechar) {
         cfg.stats.closed++;
-        await ChainySock.groupSettingUpdate(groupJid, 'announcement').catch(() => {});
+        await adminSock.groupSettingUpdate(groupJid, 'announcement').catch(() => {});
         setTimeout(async () => {
-            await ChainySock.groupSettingUpdate(groupJid, 'not_announcement').catch(() => {});
-            await ChainySock.sendMessage(groupJid, { text: MESSAGES.middleware.antiStealth.periodEnded(flags.tempo) }).catch(() => {});
+            await adminSock.groupSettingUpdate(groupJid, 'not_announcement').catch(() => {});
+            await adminSock.sendMessage(groupJid, { text: MESSAGES.middleware.antiStealth.periodEnded(flags.tempo) }).catch(() => {});
         }, flags.tempo * 60 * 1000).unref?.();
     }
 
     if (flags.banir) {
         cfg.stats.banned++;
         try {
-            await ChainySock.groupParticipantsUpdate(groupJid, [participantLid], 'remove');
+            await adminSock.groupParticipantsUpdate(groupJid, [participantLid], 'remove');
         } catch (e) {
-            if (DEBUG_MODE) console.log(`[ANTI-STEALTH] Falha ao remover ${participantLid}: ${e.message}`);
+            // Silenciar erro ao remover
         }
-        sendCleanChat({ socket: ChainySock, remoteJid: groupJid }).catch(() => {});
+        sendCleanChat({ socket: adminSock, remoteJid: groupJid }).catch(() => {});
     }
 
     if (flags.avisar && NUMERODONO) {
@@ -151,7 +149,7 @@ async function executeAction(ChainySock, groupJid, participantLid, cfg) {
         if (flags.banir) acoesFeitas.push('🚫 Banido');
         if (flags.fechar) acoesFeitas.push(`🔒 Grupo fechado por ${flags.tempo}m`);
 
-        ChainySock.sendMessage(donoJid, {
+        adminSock.sendMessage(donoJid, {
             text: MESSAGES.middleware.antiStealth.ownerNotification(groupName, userName, acoesFeitas.join(' | ') || 'Nenhuma'),
             mentions: [participantLid]
         }).catch(() => {});
@@ -165,7 +163,9 @@ export function countNormalGroupMessage(groupId, sender) {
 }
 
 export async function processAntiStealth(ChainySock, m) {
-    if (m.type !== 'notify' && m.type !== 'append') return;
+    if (m.type !== 'notify' && m.type !== 'append') {
+        return;
+    }
 
     const botId = ChainySock.user?.id?.split(':')[0];
     const ownerLid = config.lidowner;
@@ -174,7 +174,6 @@ export async function processAntiStealth(ChainySock, m) {
     const punishedParticipants = new Set();
     const now = Date.now();
 
-    // Limpa chaves antigas periodicamente para evitar crescimento do cache
     if (recentlyPunished.size > 500) {
         const limitTime = now - PUNISHMENT_COOLDOWN_MS;
         for (const [key, val] of recentlyPunished.entries()) {
@@ -183,30 +182,51 @@ export async function processAntiStealth(ChainySock, m) {
     }
 
     for (const info of m.messages) {
-        if (info.key?.fromMe || !info.key?.remoteJid?.endsWith('@g.us')) continue;
+        const groupJid = info.key?.remoteJid;
+        const participant = info.key?.participant || info.participant;
+        const fromMe = info.key?.fromMe ?? false;
+        const isGroup = groupJid?.endsWith('@g.us') ?? false;
 
-        const participant = info.key.participant || info.participant;
-        const groupJid = info.key.remoteJid;
-        if (!participant) continue;
+        if (fromMe || !isGroup) {
+            continue;
+        }
+
+        if (!participant) {
+            continue;
+        }
 
         const punishKey = `${groupJid}:${participant}`;
-        if (punishedParticipants.has(punishKey)) continue;
+        if (punishedParticipants.has(punishKey)) {
+            continue;
+        }
 
         const lastPunishTime = recentlyPunished.get(punishKey);
         if (lastPunishTime && (now - lastPunishTime) < PUNISHMENT_COOLDOWN_MS) {
             continue;
         }
 
-        if (!isNoSessionDecryptMessage(info)) {
-            if (info.message) countNormalGroupMessage(groupJid, participant);
+        const isNoSession = isNoSessionDecryptMessage(info);
+
+        if (!isNoSession) {
+            if (info.message) {
+                countNormalGroupMessage(groupJid, participant);
+            }
             continue;
         }
 
+        // ── É noSession ──────────────────────────────────────────────────────
         const groupData = getGroupDataSync(groupJid);
-        if (!groupData?.antistealth) continue;
 
-        if (botId && idsMatch(participant, botId)) continue;
-        if ((ownerLid && idsMatch(participant, ownerLid)) || (ownerJid && idsMatch(participant, ownerJid))) continue;
+        if (!groupData?.antistealth) {
+            continue;
+        }
+
+        if (botId && idsMatch(participant, botId)) {
+            continue;
+        }
+        if ((ownerLid && idsMatch(participant, ownerLid)) || (ownerJid && idsMatch(participant, ownerJid))) {
+            continue;
+        }
 
         const cfg = getStealthConfig(groupData);
         const flags = parseAction(cfg.action, cfg.limit);
@@ -216,10 +236,17 @@ export async function processAntiStealth(ChainySock, m) {
         state.stealthTimestamps.push(now);
 
         const threshold = state.normalMessages === 0 ? 2 : Math.max(2, flags.limite);
-        if (state.stealthTimestamps.length < threshold) continue;
 
-        if (isImmune(groupJid, participant)) continue;
+        if (state.stealthTimestamps.length < threshold) {
+            continue;
+        }
 
+        const immune = isImmune(groupJid, participant);
+        if (immune) {
+            continue;
+        }
+
+        // ── Punição ──────────────────────────────────────────────────────────
         punishedParticipants.add(punishKey);
         recentlyPunished.set(punishKey, now);
 
@@ -227,7 +254,8 @@ export async function processAntiStealth(ChainySock, m) {
         state.stealthTimestamps = [];
 
         if (info.key) {
-            await ChainySock.sendMessage(groupJid, { delete: info.key }).catch(() => {});
+            const adminSock = global.sockAdmin || ChainySock;
+            await adminSock.sendMessage(groupJid, { delete: info.key }).catch(() => {});
         }
 
         await executeAction(ChainySock, groupJid, participant, cfg);

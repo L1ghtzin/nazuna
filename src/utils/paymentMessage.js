@@ -42,8 +42,32 @@ function hasPaymentMessageKey(value, depth = 0, seenObjects = new WeakSet()) {
   return false;
 }
 
+const SIMPLE_MESSAGE_TYPES = new Set([
+  "conversation",
+  "extendedTextMessage",
+  "stickerMessage",
+  "audioMessage",
+  "imageMessage",
+  "videoMessage",
+  "reactionMessage",
+  "protocolMessage",
+  "senderKeyDistributionMessage",
+]);
+
 export function hasPaymentMessage(webMessage) {
-  return hasPaymentMessageKey(webMessage?.message);
+  let msg = webMessage?.message;
+  if (!msg) return false;
+
+  if (msg.protocolMessage?.editedMessage) {
+    msg = msg.protocolMessage.editedMessage;
+  }
+
+  const topKeys = Object.keys(msg);
+  if (topKeys.length === 1 && SIMPLE_MESSAGE_TYPES.has(topKeys[0])) {
+    return false;
+  }
+
+  return hasPaymentMessageKey(msg);
 }
 
 function findQuotedPaymentContext(value, depth = 0, seenObjects = new WeakSet()) {
@@ -90,5 +114,9 @@ function findQuotedPaymentContext(value, depth = 0, seenObjects = new WeakSet())
 }
 
 export function getQuotedPaymentContext(webMessage) {
-  return findQuotedPaymentContext(webMessage?.message);
+  let msg = webMessage?.message;
+  if (msg?.protocolMessage?.editedMessage) {
+    msg = msg.protocolMessage.editedMessage;
+  }
+  return findQuotedPaymentContext(msg);
 }
