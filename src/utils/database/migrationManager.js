@@ -4,6 +4,7 @@ import {
   DATABASE_DIR,
   DONO_DIR,
   GRUPOS_DIR,
+  ATIVIDADE_DIR,
   OWNER_CONFIG_FILE,
   MSGPREFIX_FILE,
   MSGBOTON_FILE,
@@ -17,8 +18,8 @@ import {
   GROUP_CUSTOMIZATION_FILE,
   MENU_DESIGN_FILE
 } from '../paths.js';
-import { read, writeSafe, existsSync } from './io.js';
-import { loadGroupDataById, saveGroupDataById } from '../groupManager.js';
+import { read, writeSafe, existsSync, readAsync, writeAsync, queue as writeQueued } from './io.js';
+import { loadGroupDataById, saveGroupDataById, buildActivityFilePath } from '../groupManager.js';
 
 const SYSTEM_CONFIG_FILE = pathz.join(DATABASE_DIR, 'systemConfig.json');
 
@@ -306,4 +307,63 @@ export async function runDatabaseConsolidation() {
   }
 
   console.log('✅ [CONSOLIDAÇÃO] Banco de dados consolidado com sucesso!');
+}
+
+export async function migrateGroupActivities() {
+  try {
+    if (!fs.existsSync(GRUPOS_DIR)) return;
+    const files = await fs.promises.readdir(GRUPOS_DIR);
+    const jsonFiles = files.filter(f => f.endsWith('.json'));
+
+    if (jsonFiles.length === 0) return;
+
+    // Garantir que a pasta de atividade exista
+    if (!fs.existsSync(ATIVIDADE_DIR)) {
+      await fs.promises.mkdir(ATIVIDADE_DIR, { recursive: true });
+    }
+
+    let migratedCount = 0;
+
+    for (const file of jsonFiles) {
+      const groupFilePath = pathz.join(GRUPOS_DIR, file);
+      const groupId = file.replace('.json', '');
+      
+      try {
+        const groupData = await readAsync(groupFilePath, null);
+        if (groupData && Array.isArray(groupData.contador) && groupData.contador.length > 0) {
+          const activityFile = buildActivityFilePath(groupId);
+          const existingActivity = await readAsync(activityFile, null);
+          
+          if (!existingActivity) {
+            // Converte array -> objeto keyed by userId
+            const asObject = {};
+            for (const u of groupData.contador) {
+              if (!u?.id) continue;
+              asObject[u.id] = {
+                msg:          u.msg          || 0,
+                cmd:          u.cmd          || 0,
+                figu:         u.figu         || 0,
+                pushname:     u.pushname     || null,
+                firstSeen:    u.firstSeen    || null,
+                lastActivity: u.lastActivity || null,
+              };
+            }
+            await writeQueued(activityFile, asObject);
+          }
+          
+          delete groupData.contador;
+          await writeAsync(groupFilePath, groupData);
+          migratedCount++;
+        }
+      } catch (err) {
+        console.error(`❌ Erro ao migrar atividade do grupo ${groupId}:`, err.message);
+      }
+    }
+
+    if (migratedCount > 0) {
+      console.log(`✅ [MIGRAÇÃO] Atividade de ${migratedCount} grupos migrada para arquivos dedicados.`);
+    }
+  } catch (error) {
+    console.error('❌ Erro na migração de atividades de grupos:', error.message);
+  }
 }

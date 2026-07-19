@@ -84,32 +84,7 @@ export async function loadGroupData(isGroup, from, groupFile, groupName) {
     }
   }
 
-  // Migração automática: move contador para arquivo dedicado de atividade
-  // Converte formato antigo (array) para novo (objeto { userId: stats })
-  if (Array.isArray(groupData.contador) && groupData.contador.length > 0) {
-    const activityFile = buildActivityFilePath(from);
-    try {
-      const existingActivity = await readAsync(activityFile, null);
-      if (!existingActivity) {
-        // Converte array -> objeto keyed by userId
-        const asObject = {};
-        for (const u of groupData.contador) {
-          if (!u?.id) continue;
-          asObject[u.id] = {
-            msg:          u.msg          || 0,
-            cmd:          u.cmd          || 0,
-            figu:         u.figu         || 0,
-            pushname:     u.pushname     || null,
-            firstSeen:    u.firstSeen    || null,
-            lastActivity: u.lastActivity || null,
-          };
-        }
-        await writeQueued(activityFile, asObject);
-      }
-    } catch {}
-    delete groupData.contador;
-    writeAsync(groupFile, groupData).catch(err => console.error('Erro ao salvar groupData pós-migração:', err));
-  }
+
 
   // Validação básica
   if (!groupData || typeof groupData !== 'object') {
