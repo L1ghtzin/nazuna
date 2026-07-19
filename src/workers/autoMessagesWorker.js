@@ -10,7 +10,7 @@ const isDebug = config.debug === true || process.env.CHAINY_DEBUG === '1' || pro
 
 const autoMsgCronJobs = {};
 
-const unscheduleAutoMessage = (groupId, msgId) => {
+export const unscheduleAutoMessage = (groupId, msgId) => {
   const key = `${groupId}:${msgId}`;
   const j = autoMsgCronJobs[key];
   if (j && typeof j.stop === 'function') {
