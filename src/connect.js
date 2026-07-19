@@ -7,6 +7,18 @@ import path, { dirname, join } from 'path';
 import { readFileSync, existsSync } from 'fs';
 import { fileURLToPath } from 'url';
 
+// Filtro de ruído de console para silenciar avisos do libsignal/baileys (como fechamento de sessões)
+const originalConsoleInfo = console.info.bind(console);
+console.info = (...args) => {
+    if (args[0] && typeof args[0] === 'string' && (
+        args[0].includes('Closing session:') ||
+        args[0].includes('Removing old closed session') ||
+        args[0].includes('Closing stale open session')
+    )) {
+        return;
+    }
+    originalConsoleInfo(...args);
+};
 
 import RentalExpirationManager from './utils/rentalExpirationManager.js';
 import { groupCache } from './utils/groupCache.js';
