@@ -1,5 +1,5 @@
 import { writeAsync } from '../../utils/database/io.js';
-
+import { loadActivityData, saveActivityData } from '../../utils/groupManager.js';
 
 export default {
   name: "activity",
@@ -24,20 +24,20 @@ export default {
     menc_os2,
     sender
   }) => {
-    // command já vem desestruturado dos parâmetros do handle
 
     const groupFile = buildGroupFilePath(from);
-    const preservarContador = groupData.preservarContador === true;
-    const currentMembers = AllgroupMembers;
 
-    // Função auxiliar para filtrar e ordenar usuários
+    // Carrega atividade do arquivo dedicado (objeto { userId: stats })
+    const contador = await loadActivityData(from);
+
+    const getTotal = (u) => (u.msg || 0) + (u.cmd || 0) + (u.figu || 0);
+
+    // Converte objeto para array filtrado pelos membros atuais e ordena
     const getSortedUsers = (order = 'desc') => {
-      let users = (groupData.contador || []).filter(u => u && u.id && currentMembers.includes(u.id));
-      return users.sort((a, b) => {
-        const totalA = (a.msg || 0) + (a.cmd || 0) + (a.figu || 0);
-        const totalB = (b.msg || 0) + (b.cmd || 0) + (b.figu || 0);
-        return order === 'desc' ? totalB - totalA : totalA - totalB;
-      });
+      return Object.entries(contador)
+        .filter(([id]) => AllgroupMembers.includes(id))
+        .map(([id, u]) => ({ id, ...u, total: getTotal(u) }))
+        .sort((a, b) => order === 'desc' ? b.total - a.total : a.total - b.total);
     };
 
     // --- RANK ATIVOS / INATIVOS ---
@@ -50,15 +50,11 @@ export default {
       let msg = MESSAGES.admin.activity.rankHeader(limit, order === 'desc');
       const mentions = [];
 
-      // Respeitar preferência de mention (igual ao Tokyo)
       if (!groupData.mark) groupData.mark = {};
-
       for (let i = 0; i < limit; i++) {
         const u = sorted[i];
         msg += MESSAGES.admin.activity.rankItem(i + 1, getUserName(u.id), u.msg || 0, u.cmd || 0, u.figu || 0);
-        if (!['0', 'marca'].includes(groupData.mark[u.id])) {
-          mentions.push(u.id);
-        }
+        if (!['0', 'marca'].includes(groupData.mark[u.id])) mentions.push(u.id);
       }
 
       return bot.sendMessage(from, { text: msg, mentions }, { quoted: info });
@@ -67,13 +63,14 @@ export default {
     // --- CHECK ATIVO ---
     if (command === 'checkativo') {
       const target = menc_os2 || sender;
-      if (!currentMembers.includes(target)) return reply(MESSAGES.admin.activity.notInGroup);
+      if (!AllgroupMembers.includes(target)) return reply(MESSAGES.admin.activity.notInGroup);
 
-      const u = (groupData.contador || []).find(it => it.id === target);
+      const u = contador[target];
       if (!u) return reply(MESSAGES.admin.activity.userNoData(getUserName(target)), { mentions: [target] });
 
       const lastActivity = u.lastActivity ? new Date(u.lastActivity).toLocaleString('pt-BR') : 'N/A';
-      const msg = MESSAGES.admin.activity.userActivity(getUserName(target), u.msg || 0, u.cmd || 0, u.figu || 0, (u.msg || 0) + (u.cmd || 0) + (u.figu || 0), lastActivity);
+      const total = getTotal(u);
+      const msg = MESSAGES.admin.activity.userActivity(getUserName(target), u.msg || 0, u.cmd || 0, u.figu || 0, total, lastActivity);
       return reply(msg, { mentions: [target] });
     }
 
@@ -85,21 +82,19 @@ export default {
       let msg = MESSAGES.admin.activity.groupActivityHeader(sorted.length);
       const mentions = [];
       if (!groupData.mark) groupData.mark = {};
-      sorted.slice(0, 30).forEach((u, i) => { // Limitado a 30 para evitar mensagem gigante
-        msg += MESSAGES.admin.activity.groupActivityItem(i + 1, getUserName(u.id), u.msg || 0, u.cmd || 0, (u.msg || 0) + (u.cmd || 0) + (u.figu || 0));
-        if (!['0', 'marca'].includes(groupData.mark[u.id])) {
-          mentions.push(u.id);
-        }
+
+      sorted.slice(0, 30).forEach((u, i) => {
+        msg += MESSAGES.admin.activity.groupActivityItem(i + 1, getUserName(u.id), u.msg || 0, u.cmd || 0, u.total);
+        if (!['0', 'marca'].includes(groupData.mark[u.id])) mentions.push(u.id);
       });
 
       return bot.sendMessage(from, { text: msg, mentions }, { quoted: info });
     }
 
-    // --- CONFIGS (Admin) ---
+    // --- CONFIGS ---
 
     if (['limparatividade', 'resetatividade'].includes(command)) {
-      groupData.contador = [];
-      await writeAsync(groupFile, groupData);
+      await saveActivityData(from, {});
       return reply(MESSAGES.admin.activity.resetSuccess);
     }
 

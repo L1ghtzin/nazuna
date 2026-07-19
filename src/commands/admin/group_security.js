@@ -1,6 +1,7 @@
 
 import { sendCleanChat } from '../../utils/cleanChat.js';
 import { writeAsync } from '../../utils/database/io.js';
+import { loadActivityData } from '../../utils/groupManager.js';
 
 export default {
   name: "group_security",
@@ -100,9 +101,10 @@ export default {
       const limit = parseInt(q);
       if (isNaN(limit)) return reply(MESSAGES.admin.group_security.ghost.usage(prefix));
       
-      const countMap = new Map(groupData.contador?.map(u => [u.id, u.msg || 0]) || []);
+      const contador = await loadActivityData(from);
+      // O(1) acesso direto ao objeto { userId: { msg, ... } }
       const ghosts = AllgroupMembers.filter(m => {
-        const msgCount = countMap.get(m) || 0;
+        const msgCount = contador[m]?.msg || 0;
         return msgCount <= limit && !idInArray(m, groupAdmins) && m !== botNumber && (!botNumberLid || m !== botNumberLid);
       });
 

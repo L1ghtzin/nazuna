@@ -1,5 +1,6 @@
 import { loadLevelingSafe, getLevelingUser, checkLevelUp, saveLevelingSafe } from '../utils/database.js';
-import { writeAsync } from '../utils/database/io.js';
+import { queue as writeQueued } from '../utils/database/io.js';
+import { loadActivityData, buildActivityFilePath } from '../utils/groupManager.js';
 
 export async function processStats(context) {
     const { 
@@ -7,41 +8,35 @@ export async function processStats(context) {
         groupFile, from
     } = context;
 
-    // 1. Message Counter (Group Only)
+    // 1. Message Counter (Group Only) — persists in separate activity file
     if (isGroup) {
       try {
-        groupData.contador = groupData.contador || [];
-        const userIndex = groupData.contador.findIndex(user => user.id === sender);
-        
-        if (userIndex !== -1) {
-          const userData = groupData.contador[userIndex];
-          if (isCmd) {
-            userData.cmd = (userData.cmd || 0) + 1;
-          } else if (type === "stickerMessage") {
-            userData.figu = (userData.figu || 0) + 1;
-          } else {
-            userData.msg = (userData.msg || 0) + 1;
-          }
-          
-          if (pushname && userData.pushname !== pushname) {
-            userData.pushname = pushname;
-          }
-          userData.lastActivity = new Date().toISOString();
+        const activityFile = buildActivityFilePath(from);
+        const contador = await loadActivityData(from);
+
+        // O(1) lookup por userId (formato objeto, igual ao Misa)
+        const entry = contador[sender] || {
+          msg:          0,
+          cmd:          0,
+          figu:         0,
+          pushname:     pushname || null,
+          firstSeen:    new Date().toISOString(),
+          lastActivity: null,
+        };
+
+        if (isCmd) {
+          entry.cmd = (entry.cmd || 0) + 1;
+        } else if (type === "stickerMessage") {
+          entry.figu = (entry.figu || 0) + 1;
         } else {
-          groupData.contador.push({
-            id: sender,
-            msg: isCmd ? 0 : 1,
-            cmd: isCmd ? 1 : 0,
-            figu: type === "stickerMessage" ? 1 : 0,
-            pushname: pushname || 'Usuário Desconhecido',
-            firstSeen: new Date().toISOString(),
-            lastActivity: new Date().toISOString()
-          });
+          entry.msg = (entry.msg || 0) + 1;
         }
-        
-        if (groupFile) {
-          await writeAsync(groupFile, groupData);
-        }
+
+        if (pushname && entry.pushname !== pushname) entry.pushname = pushname;
+        entry.lastActivity = new Date().toISOString();
+
+        contador[sender] = entry;
+        await writeQueued(activityFile, contador);
       } catch (error) {
         console.error("Erro no sistema de contagem de mensagens:", error);
       }
@@ -53,7 +48,6 @@ export async function processStats(context) {
         const levelingData = loadLevelingSafe();
         const userData = getLevelingUser(levelingData, sender);
         
-        // Atualiza contadores e XP
         userData.messages = (userData.messages || 0) + 1;
         if (isCmd) {
           userData.commands = (userData.commands || 0) + 1;
@@ -63,7 +57,6 @@ export async function processStats(context) {
         }
         userData.lastMessage = Date.now();
         
-        // Verifica level up e salva
         checkLevelUp(sender, userData, levelingData, bot, from);
         saveLevelingSafe(levelingData);
       } catch (levelingError) {

@@ -2,10 +2,32 @@ import fsPromises from 'fs/promises';
 import fs from 'fs';
 import pathz from 'path';
 import { idsMatch } from './helpers.js';
-import { writeAsync, readAsync } from './database/io.js';
-import { GRUPOS_DIR } from './paths.js';
+import { writeAsync, readAsync, queue as writeQueued } from './database/io.js';
+import { GRUPOS_DIR, ATIVIDADE_DIR } from './paths.js';
 
-export const buildGroupFilePath = (groupId) => pathz.join(GRUPOS_DIR, `${groupId}.json`);
+export const buildGroupFilePath   = (groupId) => pathz.join(GRUPOS_DIR,    `${groupId}.json`);
+export const buildActivityFilePath = (groupId) => pathz.join(ATIVIDADE_DIR, `${groupId}.json`);
+
+// ─── Helpers de Atividade ───────────────────────────────────────────────────
+
+export async function loadActivityData(groupId, defaultValue = {}) {
+  if (!groupId) return defaultValue;
+  try {
+    return await readAsync(buildActivityFilePath(groupId), defaultValue);
+  } catch {
+    return defaultValue;
+  }
+}
+
+export async function saveActivityData(groupId, data) {
+  if (!groupId) return false;
+  try {
+    return await writeQueued(buildActivityFilePath(groupId), data);
+  } catch (err) {
+    console.error(`Erro ao salvar atividade do grupo ${groupId}:`, err.message);
+    return false;
+  }
+}
 
 export async function loadGroupDataById(groupId, {
   defaultValue = {},
@@ -60,6 +82,33 @@ export async function loadGroupData(isGroup, from, groupFile, groupName) {
     } catch (e2) {
       groupData = { mark: {} };
     }
+  }
+
+  // Migração automática: move contador para arquivo dedicado de atividade
+  // Converte formato antigo (array) para novo (objeto { userId: stats })
+  if (Array.isArray(groupData.contador) && groupData.contador.length > 0) {
+    const activityFile = buildActivityFilePath(from);
+    try {
+      const existingActivity = await readAsync(activityFile, null);
+      if (!existingActivity) {
+        // Converte array -> objeto keyed by userId
+        const asObject = {};
+        for (const u of groupData.contador) {
+          if (!u?.id) continue;
+          asObject[u.id] = {
+            msg:          u.msg          || 0,
+            cmd:          u.cmd          || 0,
+            figu:         u.figu         || 0,
+            pushname:     u.pushname     || null,
+            firstSeen:    u.firstSeen    || null,
+            lastActivity: u.lastActivity || null,
+          };
+        }
+        await writeQueued(activityFile, asObject);
+      }
+    } catch {}
+    delete groupData.contador;
+    writeAsync(groupFile, groupData).catch(err => console.error('Erro ao salvar groupData pós-migração:', err));
   }
 
   // Validação básica

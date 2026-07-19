@@ -16,6 +16,7 @@ const USERS_DIR = path.join(DATABASE_DIR, 'users');
 const DONO_DIR = path.join(DATABASE_DIR, 'dono');
 const PARCERIAS_DIR = path.join(DATABASE_DIR, 'parcerias');
 const TMP_DIR = path.join(DATABASE_DIR, 'tmp');
+const ATIVIDADE_DIR = path.join(DATABASE_DIR, 'atividade');
 
 const LEVELING_FILE = path.join(DATABASE_DIR, 'leveling.json');
 const CUSTOM_AUTORESPONSES_FILE = path.join(DATABASE_DIR, 'customAutoResponses.json');
@@ -71,6 +72,7 @@ export {
   DONO_DIR,
   PARCERIAS_DIR,
   TMP_DIR,
+  ATIVIDADE_DIR,
   LEVELING_FILE,
   CUSTOM_AUTORESPONSES_FILE,
   DIVULGACAO_FILE,
