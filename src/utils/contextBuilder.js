@@ -413,19 +413,25 @@ export async function buildMessageContext(bot, info, store, messagesCache, renta
 
   const modoLiteFile = DATABASE_DIR + '/modolite.json';
 
-  const antipvData = loadJsonFile(DATABASE_DIR + '/antipv.json', {});
-  const premiumListaZinha = loadJsonFile(DONO_DIR + '/premium.json', {});
-  const antifloodData = loadJsonFile(DATABASE_DIR + '/antiflood.json', {});
-  const antiSpamGlobal = loadJsonFile(DATABASE_DIR + '/antispam.json', { enabled: false, limit: 5, interval: 10, blockTime: 600, users: {}, blocks: {} });
-  const globalBlocks = loadJsonFile(DATABASE_DIR + '/globalBlocks.json', { commands: {}, users: {} });
-  const botState = loadJsonFile(DATABASE_DIR + '/botState.json', { status: 'on' });
-  const modoLiteGlobal = loadJsonFile(modoLiteFile, { status: false });
-  if (!modoLiteFileChecked) {
-    if (!fs.existsSync(modoLiteFile)) {
-      writeJsonFile(modoLiteFile, modoLiteGlobal);
+  let _antipvData, _premiumListaZinha, _antifloodData, _antiSpamGlobal, _globalBlocks, _botState, _modoLiteGlobal;
+
+  const getAntiPvData = () => _antipvData ?? (_antipvData = loadJsonFile(DATABASE_DIR + '/antipv.json', {}));
+  const getPremiumListaZinha = () => _premiumListaZinha ?? (_premiumListaZinha = loadJsonFile(DONO_DIR + '/premium.json', {}));
+  const getAntifloodData = () => _antifloodData ?? (_antifloodData = loadJsonFile(DATABASE_DIR + '/antiflood.json', {}));
+  const getAntiSpamGlobal = () => _antiSpamGlobal ?? (_antiSpamGlobal = loadJsonFile(DATABASE_DIR + '/antispam.json', { enabled: false, limit: 5, interval: 10, blockTime: 600, users: {}, blocks: {} }));
+  const getGlobalBlocks = () => _globalBlocks ?? (_globalBlocks = loadJsonFile(DATABASE_DIR + '/globalBlocks.json', { commands: {}, users: {} }));
+  const getBotState = () => _botState ?? (_botState = loadJsonFile(DATABASE_DIR + '/botState.json', { status: 'on' }));
+  const getModoLiteGlobal = () => {
+    if (_modoLiteGlobal !== undefined) return _modoLiteGlobal;
+    _modoLiteGlobal = loadJsonFile(modoLiteFile, { status: false });
+    if (!modoLiteFileChecked) {
+      if (!fs.existsSync(modoLiteFile)) {
+        writeJsonFile(modoLiteFile, _modoLiteGlobal);
+      }
+      modoLiteFileChecked = true;
     }
-    modoLiteFileChecked = true;
-  }
+    return _modoLiteGlobal;
+  };
 
   if (typeof global.autoStickerMode === 'undefined') {
     global.autoStickerMode = 'default';
@@ -582,7 +588,7 @@ export async function buildMessageContext(bot, info, store, messagesCache, renta
       q = newArgs.join(' ');
     }
 
-    const isPremium = premiumListaZinha[sender] || premiumListaZinha[from] || isOwner;
+    const isPremium = getPremiumListaZinha()[sender] || getPremiumListaZinha()[from] || isOwner;
 
     async function reply(text, options = {}) {
       try {
@@ -683,7 +689,7 @@ export async function buildMessageContext(bot, info, store, messagesCache, renta
     if (captchaHandled) return;
 
     // Proteo Anti-PV
-    const pvBlocked = await handleAntiPV(bot, sender, command, isGroup, isCmd, isOwner, isPremium, antipvData, reply);
+    const pvBlocked = await handleAntiPV(bot, sender, command, isGroup, isCmd, isOwner, isPremium, getAntiPvData(), reply);
     if (pvBlocked) {
       return;
     }
@@ -761,7 +767,7 @@ export async function buildMessageContext(bot, info, store, messagesCache, renta
     const isAntiStatus = groupData.antistatus;
     const isAutoRepo = groupData.autorepo;
     const isAssistente = groupData.assistente;
-    const isModoLite = isGroup && isModoLiteActive(groupData, modoLiteGlobal);
+    const isModoLite = isGroup && isModoLiteActive(groupData, getModoLiteGlobal());
 
     if (type === 'reactionMessage') {
       await processReactionMessage(bot, info, isGroup, sender, groupData, groupPrefix, from, persistGroupDataLocal);
@@ -771,7 +777,7 @@ export async function buildMessageContext(bot, info, store, messagesCache, renta
     const securityResult = await processGroupSecurity({
       bot, info, isGroup, sender, groupData, command, isCmd, isImage, isVideo,
       isVisuU, isVisuU2, isBotAdmin, isGroupAdmin, isOwner, isStatusMention, isButtonMessage,
-      from, pushname, reply, messagesCache, type, body, isOwnerOrSub, antiSpamGlobal, writeJsonFile,
+      from, pushname, reply, messagesCache, type, body, isOwnerOrSub, antiSpamGlobal: getAntiSpamGlobal(), writeJsonFile,
       DATABASE_DIR, groupFile, getUserName, isUserWhitelisted, getGroupRentalStatus,
       isRentalModeActive, validateActivationCode, useActivationCode, isMuted, isMuted2, MESSAGES,
       idInArray, groupAdmins, botNumberLid
@@ -793,7 +799,7 @@ export async function buildMessageContext(bot, info, store, messagesCache, renta
       bot, info, isGroup, sender, groupData, type, budy2, body, isCmd, isGroupAdmin, isBotAdmin,
       from, getUserName, isUserWhitelisted, reply, getMediaInfo, getFileBuffer, upload,
       handleAutoDownload, youtube, tiktok, igdl, kwai, facebook, pinterest, spotify, soundcloud,
-      sendSticker, pushname, nomebot, nomedono, antifloodData
+      sendSticker, pushname, nomebot, nomedono, antifloodData: getAntifloodData()
     });
     if (automationResult?.stopProcessing) return;
     let quotedMessageContent = null;
@@ -847,9 +853,14 @@ export async function buildMessageContext(bot, info, store, messagesCache, renta
       spotify, soundcloud, facebook, twitter, gdrive, mediafire, freefire,
       connect4, uno, memoria, achievements, gifts, reputation, qrcode, notes,
       calculator, audioEdit, antitoxic, antipalavra, antistickerplus, transmissao,
-      // Dados de cache
-      antipvData, premiumListaZinha, antifloodData, antiSpamGlobal,
-      globalBlocks, botState, modoLiteGlobal,
+      // Dados de cache (lazy getters)
+      get antipvData() { return getAntiPvData(); },
+      get premiumListaZinha() { return getPremiumListaZinha(); },
+      get antifloodData() { return getAntifloodData(); },
+      get antiSpamGlobal() { return getAntiSpamGlobal(); },
+      get globalBlocks() { return getGlobalBlocks(); },
+      get botState() { return getBotState(); },
+      get modoLiteGlobal() { return getModoLiteGlobal(); },
       // Variáveis de mensagem
       isCmd, command, menc_prt, menc_jid2, menc_os2, mentioned: menc_os2, sender_ou_n, msgString,
       matchedAlias,
