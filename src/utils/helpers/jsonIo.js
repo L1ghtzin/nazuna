@@ -28,9 +28,8 @@ export function ensureDirectoryExists(dirPath) {
 export function ensureJsonFileExists(filePath, defaultContent = {}) {
   try {
     if (isUnifiedPath(filePath)) {
-      const settings = loadUnifiedSettings();
-      const key = pathz.basename(filePath).toLowerCase();
-      if (settings[key] === undefined) {
+      const existing = getUnifiedValue(filePath, undefined);
+      if (existing === undefined) {
         setUnifiedValue(filePath, defaultContent);
       }
       return true;

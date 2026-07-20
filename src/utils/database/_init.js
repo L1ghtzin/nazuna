@@ -23,6 +23,7 @@ import {
   GLOBAL_BLOCKS_FILE,
   CMD_LIMIT_FILE,
   CMD_USER_LIMITS_FILE,
+  ALUGUEIS_FILE,
   CODIGOS_ALUGUEL_FILE,
   RELATIONSHIPS_FILE,
   CUSTOM_COMMANDS_FILE,
@@ -47,7 +48,8 @@ ensureJsonFileExists(OWNER_CONFIG_FILE, {
   msgBotOn: { enabled: true, message: '' },
   subdonos: [],
   premium: [],
-  globalBlocks: { commands: {}, users: {} }
+  globalBlocks: { commands: {}, users: {} },
+  alugueis: { globalMode: false, groups: {} }
 });
 ensureJsonFileExists(CMD_LIMIT_FILE, {
   commands: {},
@@ -212,6 +214,7 @@ ensureJsonFileExists(LEVELING_FILE, {
 });
 ensureJsonFileExists(CUSTOM_REACTS_FILE, { reacts: [] });
 ensureJsonFileExists(REMINDERS_FILE, { reminders: [] });
+ensureJsonFileExists(ALUGUEIS_FILE, { globalMode: false, groups: {} });
 ensureJsonFileExists(CODIGOS_ALUGUEL_FILE, { codes: {} });
 ensureJsonFileExists(RELATIONSHIPS_FILE, { pairs: {}, archived: [] });
 ensureJsonFileExists(SUPPORT_TICKETS_FILE, { groups: {} });

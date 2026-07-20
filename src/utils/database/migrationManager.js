@@ -10,18 +10,30 @@ import {
   MSGBOTON_FILE,
   CMD_NOT_FOUND_FILE,
   SUBDONOS_FILE,
-  ALUGUEIS_FILE,
   CODIGOS_ALUGUEL_FILE,
   SUPPORT_TICKETS_FILE,
   MENU_AUDIO_FILE,
   MENU_LERMAIS_FILE,
   GROUP_CUSTOMIZATION_FILE,
-  MENU_DESIGN_FILE
+  MENU_DESIGN_FILE,
+  ALUGUEIS_FILE
 } from '../paths.js';
 import { read, writeSafe, existsSync, readAsync, writeAsync, queue as writeQueued } from './io.js';
 import { loadGroupDataById, saveGroupDataById, buildActivityFilePath } from '../groupManager.js';
 
 const SYSTEM_CONFIG_FILE = pathz.join(DATABASE_DIR, 'systemConfig.json');
+
+function readRawJson(filePath, defaultValue = {}) {
+  try {
+    if (!fs.existsSync(filePath)) return defaultValue;
+    const content = fs.readFileSync(filePath, 'utf-8');
+    if (!content || content.trim() === '') return defaultValue;
+    return JSON.parse(content);
+  } catch (e) {
+    console.error(`❌ Erro ao ler arquivo físico ${filePath}:`, e.message);
+    return defaultValue;
+  }
+}
 
 export async function runDatabaseConsolidation() {
   const legacyFiles = [
@@ -34,9 +46,9 @@ export async function runDatabaseConsolidation() {
     pathz.join(DATABASE_DIR, 'antiflood.json'),
     pathz.join(DATABASE_DIR, 'modolite.json'),
     pathz.join(DONO_DIR, 'bangp.json'),
-    ALUGUEIS_FILE,
     MENU_AUDIO_FILE,
-    MENU_LERMAIS_FILE
+    MENU_LERMAIS_FILE,
+    ALUGUEIS_FILE
   ];
 
   const hasLegacyFiles = legacyFiles.some(file => existsSync(file));
@@ -59,6 +71,7 @@ export async function runDatabaseConsolidation() {
     subdonos: [],
     premium: [],
     globalBlocks: { commands: {}, users: {} },
+    alugueis: { globalMode: false, groups: {} },
     menuDesign: {
       header: `╭┈⊰ 🫟 『 *{botName}* 』\n┊💭 *Usuário:* {userName}\n┊👑 *Prefixo:* {prefix}\n╰─┈┈┈┈┈┈┈┈┈┈◜❁◞┈┈┈┈┈┈┈┈┈┈─╯`,
       menuTopBorder: "╭┈",
@@ -106,35 +119,35 @@ export async function runDatabaseConsolidation() {
   // Migrar de arquivos individuais antigos de configurações do dono se existirem
   if (existsSync(MSGPREFIX_FILE)) {
     try {
-      const msgPrefixConfig = read(MSGPREFIX_FILE, {});
+      const msgPrefixConfig = readRawJson(MSGPREFIX_FILE, {});
       ownerConfig.msgPrefix = { enabled: msgPrefixConfig.message !== false, message: msgPrefixConfig.message || '' };
       fs.unlinkSync(MSGPREFIX_FILE);
     } catch (e) {}
   }
   if (existsSync(MSGBOTON_FILE)) {
     try {
-      const msgBotOnConfig = read(MSGBOTON_FILE, {});
+      const msgBotOnConfig = readRawJson(MSGBOTON_FILE, {});
       ownerConfig.msgBotOn = { enabled: msgBotOnConfig.enabled !== false, message: msgBotOnConfig.message || '' };
       fs.unlinkSync(MSGBOTON_FILE);
     } catch (e) {}
   }
   if (existsSync(CMD_NOT_FOUND_FILE)) {
     try {
-      const cmdNotFoundConfig = read(CMD_NOT_FOUND_FILE, {});
+      const cmdNotFoundConfig = readRawJson(CMD_NOT_FOUND_FILE, {});
       ownerConfig.cmdNotFound = { enabled: cmdNotFoundConfig.enabled !== false, message: cmdNotFoundConfig.message || '' };
       fs.unlinkSync(CMD_NOT_FOUND_FILE);
     } catch (e) {}
   }
   if (existsSync(SUBDONOS_FILE)) {
     try {
-      const subdonosConfig = read(SUBDONOS_FILE, {});
+      const subdonosConfig = readRawJson(SUBDONOS_FILE, {});
       ownerConfig.subdonos = subdonosConfig.subdonos || [];
       fs.unlinkSync(SUBDONOS_FILE);
     } catch (e) {}
   }
   if (existsSync(MENU_DESIGN_FILE)) {
     try {
-      const menuDesignConfig = read(MENU_DESIGN_FILE, {});
+      const menuDesignConfig = readRawJson(MENU_DESIGN_FILE, {});
       ownerConfig.menuDesign = menuDesignConfig;
       fs.unlinkSync(MENU_DESIGN_FILE);
     } catch (e) {}
@@ -199,23 +212,22 @@ export async function runDatabaseConsolidation() {
     }
   }
 
-  // Migração: Alugueis (alugueis.json)
+  // Migração: Alugueis (alugueis.json legado)
   if (existsSync(ALUGUEIS_FILE)) {
     try {
-      const rentalConfig = read(ALUGUEIS_FILE, {});
-      const groups = rentalConfig.groups || {};
-      for (const [groupId, rentalStatus] of Object.entries(groups)) {
-        if (groupId.endsWith('@g.us')) {
-          const update = getGroupUpdateObject(groupId);
-          update.aluguel = {
-            ativo: rentalStatus.active || false,
-            expiresAt: rentalStatus.expiresAt || null,
-            codigoUsado: rentalStatus.codeUsed || null
-          };
-        }
+      const alugueisData = readRawJson(ALUGUEIS_FILE, null);
+      if (alugueisData && alugueisData.groups && Object.keys(alugueisData.groups).length > 0) {
+        ownerConfig.alugueis = {
+          globalMode: alugueisData.globalMode ?? ownerConfig.alugueis?.globalMode ?? false,
+          notificationTarget: alugueisData.notificationTarget || ownerConfig.alugueis?.notificationTarget || 'ambos',
+          groups: { ...(ownerConfig.alugueis?.groups || {}), ...(alugueisData.groups || {}) }
+        };
+        console.log('✅ [CONSOLIDAÇÃO] alugueis.json migrado para ownerConfig.json com sucesso.');
       }
       fs.unlinkSync(ALUGUEIS_FILE);
-    } catch (e) {}
+    } catch (e) {
+      console.error('❌ Erro ao migrar alugueis.json:', e.message);
+    }
   }
 
   // Migração: Menu Audio (menuAudio.json)
@@ -277,7 +289,8 @@ export async function runDatabaseConsolidation() {
     pathz.join(DATABASE_DIR, 'modolite.json'),
     pathz.join(DONO_DIR, 'bangp.json'),
     MENU_AUDIO_FILE,
-    MENU_LERMAIS_FILE
+    MENU_LERMAIS_FILE,
+    ALUGUEIS_FILE
   ];
 
   for (const file of legacyGroupFiles) {
@@ -297,8 +310,7 @@ export async function runDatabaseConsolidation() {
     MSGBOTON_FILE,
     CMD_NOT_FOUND_FILE,
     SUBDONOS_FILE,
-    MENU_DESIGN_FILE,
-    ALUGUEIS_FILE
+    MENU_DESIGN_FILE
   ];
   for (const file of remainingLegacyFiles) {
     if (existsSync(file)) {

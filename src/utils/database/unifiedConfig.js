@@ -13,7 +13,8 @@ const FILE_TO_KEY = {
   'msgboton.json': 'msgBotOn',
   'cmdnotfound.json': 'cmdNotFound',
   'subdonos.json': 'subdonos',
-  'menudesign.json': 'menuDesign'
+  'menudesign.json': 'menuDesign',
+  'alugueis.json': 'alugueis'
 };
 
 const UNIFIED_FILES = Object.keys(FILE_TO_KEY);

@@ -2,6 +2,7 @@ import fs from 'fs/promises';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import cron from 'node-cron';
+import { loadRentalData, saveRentalData } from './database.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -379,24 +380,7 @@ O aluguel deste grupo expirou e o bot está saindo agora. Para voltar a usar o b
 
   async loadRentalData() {
     try {
-      const DONO_DIR = path.join(__dirname, '../../dados/database/dono');
-      const ALUGUEIS_FILE = path.join(DONO_DIR, 'alugueis.json');
-      
-      // Check if file exists
-      try {
-        await fs.access(ALUGUEIS_FILE);
-      } catch {
-        // Create default structure if file doesn't exist
-        const defaultData = {
-          globalMode: false,
-          groups: {}
-        };
-        await fs.writeFile(ALUGUEIS_FILE, JSON.stringify(defaultData, null, 2));
-        return defaultData;
-      }
-
-      const data = await fs.readFile(ALUGUEIS_FILE, 'utf8');
-      return JSON.parse(data);
+      return loadRentalData();
     } catch (error) {
       console.error('❌ Error loading rental data:', error);
       return { globalMode: false, groups: {} };
@@ -405,11 +389,7 @@ O aluguel deste grupo expirou e o bot está saindo agora. Para voltar a usar o b
 
   async saveRentalData(data) {
     try {
-      const DONO_DIR = path.join(__dirname, '../../dados/database/dono');
-      const ALUGUEIS_FILE = path.join(DONO_DIR, 'alugueis.json');
-      
-      await fs.writeFile(ALUGUEIS_FILE, JSON.stringify(data, null, 2));
-      return true;
+      return saveRentalData(data);
     } catch (error) {
       console.error('❌ Error saving rental data:', error);
       return false;
