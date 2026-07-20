@@ -43,13 +43,16 @@ function pruneGroup(groupMap) {
   }
 }
 
+import { removeDeviceId } from './helpers.js';
+
 /**
  * Registra o envelope de uma mensagem de grupo.
  */
 export function recordMessageEnvelope(webMessage, isPayment) {
   const remoteJid = webMessage?.key?.remoteJid;
   const id = webMessage?.key?.id;
-  const participant = webMessage?.key?.participant;
+  const rawParticipant = webMessage?.key?.participant || webMessage?.participant;
+  const participant = rawParticipant ? removeDeviceId(rawParticipant) : null;
 
   if (!remoteJid?.endsWith("@g.us") || !id || !participant) {
     return;
@@ -62,16 +65,20 @@ export function recordMessageEnvelope(webMessage, isPayment) {
     registry.set(remoteJid, groupMap);
   }
 
+  const isStealth = Boolean(webMessage?.stealthMeta || webMessage?.messageStubType === 2);
+
   const contentState = isPayment
     ? "payment"
-    : hasReadableContent(webMessage?.message)
-      ? "other"
-      : "unreadable";
+    : isStealth
+      ? "stealth"
+      : hasReadableContent(webMessage?.message)
+        ? "other"
+        : "unreadable";
 
   groupMap.set(id, {
     participant,
     contentState,
-    stealth: Boolean(webMessage?.stealthMeta || webMessage?.messageStubType === 2),
+    stealth: isStealth,
     ts: Date.now(),
   });
 
@@ -92,7 +99,10 @@ export function verifyQuotedAuthor({ groupJid, stanzaId, participant }) {
     return { corroborated: false, contradicted: false };
   }
 
-  if (entry.participant !== participant) {
+  const normTarget = removeDeviceId(participant);
+  const normEntry = removeDeviceId(entry.participant);
+
+  if (normEntry !== normTarget) {
     return { corroborated: false, contradicted: true };
   }
 

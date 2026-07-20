@@ -36,6 +36,7 @@ import { loadGroupData } from './utils/groupManager.js';
 import { MESSAGES } from './utils/messages.js';
 import { ensureModulesLoaded } from './funcs/exports.js';
 import { processAntiStealth } from './middleware/antiStealth.js';
+import { recordMessageEnvelope } from './utils/messageEnvelopeRegistry.js';
 import { hasPaymentMessage } from './utils/paymentMessage.js';
 import { unwrapMessage } from './utils/messageHelpers.js';
 import { handleAntiPayment } from './security/anti/antiPayment.js';
@@ -94,6 +95,12 @@ const logger = pino({
                     console.log(`👥 Grupo: ${obj.key.remoteJid}`);
                     console.log(`👤 Participante: ${obj.key.participant || obj.author || 'Desconhecido'}`);
                     console.log(`❌ Erro: ${obj.err?.message || obj.err || 'Chave duplicada ou não preenchida'}\n`);
+
+                    recordMessageEnvelope({
+                        key: obj.key,
+                        messageStubType: 2,
+                        stealthMeta: true
+                    }, false);
 
                     const mockUpsert = {
                         type: 'notify',
@@ -484,6 +491,12 @@ async function startWatcher(codeMode = false, phoneNumber = null, ownerJid = nul
                             console.log(`👥 Grupo: ${obj.key.remoteJid}`);
                             console.log(`👤 Participante: ${obj.key.participant || obj.author || 'Desconhecido'}`);
                             console.log(`❌ Erro: ${obj.err?.message || obj.err || 'Chave duplicada ou não preenchida'}\n`);
+
+                            recordMessageEnvelope({
+                                key: obj.key,
+                                messageStubType: 2,
+                                stealthMeta: true
+                            }, false);
 
                             const mockUpsert = {
                                 type: 'notify',

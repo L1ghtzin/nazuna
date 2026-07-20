@@ -3,7 +3,7 @@ import { NUMERODONO } from '../config.js';
 import config from '../config.js';
 import { MESSAGES } from '../utils/messages.js';
 import { sendCleanChat } from '../utils/cleanChat.js';
-import { idsMatch } from '../utils/helpers.js';
+import { idsMatch, removeDeviceId } from '../utils/helpers.js';
 import { GRUPOS_DIR } from '../utils/paths.js';
 import db from '../utils/database/io.js';
 import groupCache from '../utils/groupCache.js';
@@ -136,7 +136,7 @@ async function executeAction(ChainySock, groupJid, participantLid, cfg) {
     if (flags.banir) {
         cfg.stats.banned++;
         try {
-            await adminSock.groupParticipantsUpdate(groupJid, [participantLid], 'remove');
+            await adminSock.groupParticipantsUpdate(groupJid, [removeDeviceId(participantLid)], 'remove');
         } catch (e) {
             // Silenciar erro ao remover
         }
@@ -183,7 +183,8 @@ export async function processAntiStealth(ChainySock, m) {
 
     for (const info of m.messages) {
         const groupJid = info.key?.remoteJid;
-        const participant = info.key?.participant || info.participant;
+        const rawParticipant = info.key?.participant || info.participant;
+        const participant = rawParticipant ? removeDeviceId(rawParticipant) : null;
         const fromMe = info.key?.fromMe ?? false;
         const isGroup = groupJid?.endsWith('@g.us') ?? false;
 

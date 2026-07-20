@@ -2,6 +2,7 @@ import { hasPaymentMessage } from '../../utils/securityHelpers.js';
 import { unwrapMessage } from '../../utils/messageHelpers.js';
 import { verifyQuotedAuthor } from '../../utils/messageEnvelopeRegistry.js';
 import { sendCleanChat } from '../../utils/cleanChat.js';
+import { removeDeviceId } from '../../utils/helpers.js';
 
 /**
  * Apaga uma mensagem de pagamento usando o trick do temp message + edit,
@@ -142,7 +143,7 @@ export async function handleAntiPayment(context) {
 
     if (isBotAdmin) {
         await runAntiPaymentStep(() => bot.groupSettingUpdate(from, 'announcement'), 'Erro ao fechar o grupo.');
-        await runAntiPaymentStep(() => bot.groupParticipantsUpdate(from, [targetUser], 'remove'), 'Erro ao banir membro.');
+        await runAntiPaymentStep(() => bot.groupParticipantsUpdate(from, [removeDeviceId(targetUser)], 'remove'), 'Erro ao banir membro.');
     }
     await runAntiPaymentStep(() => sendCleanChat({ socket: bot, remoteJid: from }), 'Erro ao limpar o chat.');
     await runAntiPaymentStep(() => bot.sendMessage(from, { text: MESSAGES.security.antiPayment(getUserName(targetUser)), mentions: [targetUser] }), 'Erro ao enviar notificação.');
