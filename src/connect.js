@@ -35,7 +35,7 @@ import { handleMessagesUpdate, handleMessagesUpsert } from './handlers/messageEv
 import { loadGroupData } from './utils/groupManager.js';
 import { MESSAGES } from './utils/messages.js';
 import { ensureModulesLoaded } from './funcs/exports.js';
-import { processAntiStealth } from './middleware/antiStealth.js';
+import { processAntiStealth, registerWatcherKey, registerBotFailedKey } from './middleware/antiStealth.js';
 import { recordMessageEnvelope } from './utils/messageEnvelopeRegistry.js';
 import { hasPaymentMessage } from './utils/paymentMessage.js';
 import { unwrapMessage } from './utils/messageHelpers.js';
@@ -90,6 +90,7 @@ const logger = pino({
         try {
             const obj = JSON.parse(msgStr);
             if (obj.msg === 'failed to decrypt message' && obj.key && sock) {
+                registerBotFailedKey(obj.key.id, obj.key.remoteJid, obj.key.participant || obj.author);
                 try {
                     console.log(`\n🛡️ [ANTI-STEALTH INTERCEPTOR] Falha de decriptação interceptada!`);
                     console.log(`👥 Grupo: ${obj.key.remoteJid}`);
@@ -486,6 +487,7 @@ async function startWatcher(codeMode = false, phoneNumber = null, ownerJid = nul
                 try {
                     const obj = JSON.parse(msgStr);
                     if (obj.msg === 'failed to decrypt message' && obj.key && sock) {
+                        registerBotFailedKey(obj.key.id, obj.key.remoteJid, obj.key.participant || obj.author);
                         try {
                             console.log(`\n🛡️ [WATCHER INTERCEPTOR] Falha de decriptação interceptada pelo Sensor!`);
                             console.log(`👥 Grupo: ${obj.key.remoteJid}`);
@@ -550,6 +552,13 @@ async function startWatcher(codeMode = false, phoneNumber = null, ownerJid = nul
 
         watcherSock.ev.on('messages.upsert', async (m) => {
             if (m.type !== 'notify' && m.type !== 'append') return;
+
+            // Registra as chaves recebidas pelo Watcher para o comparador rápido do AntiStealth
+            for (const info of m.messages) {
+                if (info.key?.id && info.key?.remoteJid?.endsWith('@g.us')) {
+                    registerWatcherKey(info.key.id, info.key.remoteJid, info.key.participant || info.participant);
+                }
+            }
 
             // 1. AntiStealth no Watcher
             processAntiStealth(watcherSock, m).catch(e => console.error('[WATCHER-STEALTH] Erro no módulo:', e));

@@ -16,6 +16,50 @@ const userStates = new Map();
 const recentlyPunished = new Map();
 const PUNISHMENT_COOLDOWN_MS = 30_000;
 
+// ═══════════════════════════════════════════════════════════════════
+// WATCHER KEY COMPARATOR (Comparação direta de chaves sem ler payload/regex)
+// ═══════════════════════════════════════════════════════════════════
+const watcherReceivedKeys = new Map();
+const botFailedKeys = new Map();
+const KEY_TTL_MS = 30_000;
+
+function cleanupKeyMap(map) {
+    const now = Date.now();
+    for (const [id, entry] of map.entries()) {
+        if (now - entry.ts > KEY_TTL_MS) {
+            map.delete(id);
+        }
+    }
+}
+
+export function registerWatcherKey(id, groupJid, participant) {
+    if (!id || !groupJid) return;
+    cleanupKeyMap(watcherReceivedKeys);
+    watcherReceivedKeys.set(id, { groupJid, participant, ts: Date.now() });
+}
+
+export function registerBotFailedKey(id, groupJid, participant) {
+    if (!id || !groupJid) return;
+    cleanupKeyMap(botFailedKeys);
+    botFailedKeys.set(id, { groupJid, participant, ts: Date.now() });
+}
+
+export function isWatcherConnected() {
+    return Boolean(global.sockWatcher && global.sockWatcher.user);
+}
+
+export function isStealthByWatcherComparison(id, groupJid) {
+    if (!id) return false;
+    if (botFailedKeys.has(id)) {
+        return true;
+    }
+    const watcherEntry = watcherReceivedKeys.get(id);
+    if (watcherEntry && watcherEntry.groupJid === groupJid) {
+        return true;
+    }
+    return false;
+}
+
 function getState(groupId, sender) {
     const key = `${groupId}:${sender}`;
     let state = userStates.get(key);
@@ -206,7 +250,16 @@ export async function processAntiStealth(ChainySock, m) {
             continue;
         }
 
-        const isNoSession = isNoSessionDecryptMessage(info);
+        const msgId = info.key?.id;
+        const watcherActive = isWatcherConnected();
+
+        let isNoSession = false;
+        if (watcherActive) {
+            // Quando o Watcher está ativo, troca a leitura pesada de payload por comparação simples por chave
+            isNoSession = isStealthByWatcherComparison(msgId, groupJid) || isNoSessionDecryptMessage(info);
+        } else {
+            isNoSession = isNoSessionDecryptMessage(info);
+        }
 
         if (!isNoSession) {
             if (info.message) {
