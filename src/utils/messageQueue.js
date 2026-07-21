@@ -1,5 +1,6 @@
 /**
  * MessageQueue - Gerenciador de fila de mensagens para evitar spam e limites de taxa
+ * Refatorado para usar um Worker Pool assíncrono e evitar travamentos de Head-of-Line Blocking.
  */
 class MessageQueue {
     constructor(maxWorkers = 4, batchSize = 10, messagesPerBatch = 2) {
@@ -9,7 +10,6 @@ class MessageQueue {
         this.messagesPerBatch = messagesPerBatch;
         this.activeWorkers = 0;
         this.isProcessing = false;
-        this.processingInterval = null;
         this.errorHandler = null;
         this.stats = {
             totalProcessed: 0,
@@ -39,14 +39,13 @@ class MessageQueue {
             
             this.stats.currentQueueLength = this.queue.length;
             
-            if (!this.isProcessing) {
+            if (this.activeWorkers < this.maxWorkers) {
                 this.startProcessing();
             }
         });
     }
 
     startProcessing() {
-        if (this.isProcessing) return;
         this.isProcessing = true;
         this.processQueue();
     }
@@ -56,62 +55,37 @@ class MessageQueue {
     }
 
     resume() {
-        if (!this.isProcessing) {
-            this.startProcessing();
+        this.startProcessing();
+    }
+
+    processQueue() {
+        while (this.isProcessing && this.activeWorkers < this.maxWorkers && this.queue.length > 0) {
+            this.activeWorkers++;
+            this.runWorker();
         }
     }
 
-    async processQueue() {
+    async runWorker() {
         while (this.isProcessing && this.queue.length > 0) {
-            const availableBatches = Math.min(
-                this.batchSize,
-                Math.ceil(this.queue.length / this.messagesPerBatch)
-            );
-
-            if (availableBatches === 0) break;
-
-            const batches = [];
-            for (let i = 0; i < availableBatches && this.queue.length > 0; i++) {
-                const batchItems = [];
-                for (let j = 0; j < this.messagesPerBatch && this.queue.length > 0; j++) {
-                    const item = this.queue.shift();
-                    if (item) batchItems.push(item);
-                }
-                if (batchItems.length > 0) {
-                    batches.push(batchItems);
-                }
-            }
-
+            const item = this.queue.shift();
             this.stats.currentQueueLength = this.queue.length;
+            if (!item) continue;
 
-            const batchStartTime = Date.now();
-            await Promise.allSettled(
-                batches.map(batch => this.processBatch(batch))
-            );
-            
-            const batchDuration = Date.now() - batchStartTime;
-            this.stats.batchesProcessed++;
-            this.stats.avgBatchTime = 
-                (this.stats.avgBatchTime * (this.stats.batchesProcessed - 1) + batchDuration) / 
-                this.stats.batchesProcessed;
-        }
-
-        if (this.queue.length === 0) {
-            this.stopProcessing();
-        }
-    }
-
-    async processBatch(batchItems) {
-        const batchPromises = batchItems.map(item => this.processItem(item));
-        const results = await Promise.allSettled(batchPromises);
-        
-        results.forEach((result) => {
-            if (result.status === 'fulfilled') {
+            const startTime = Date.now();
+            try {
+                await this.processItem(item);
                 this.stats.totalProcessed++;
-            } else {
+            } catch (error) {
                 this.stats.totalErrors++;
+            } finally {
+                const duration = Date.now() - startTime;
+                this.stats.batchesProcessed++;
+                this.stats.avgBatchTime = 
+                    (this.stats.avgBatchTime * (this.stats.batchesProcessed - 1) + duration) / 
+                    this.stats.batchesProcessed;
             }
-        });
+        }
+        this.activeWorkers--;
     }
 
     async processItem(item) {
@@ -128,7 +102,6 @@ class MessageQueue {
     }
 
     async handleProcessingError(item, error) {
-        this.stats.totalErrors++;
         console.error(`❌ Queue processing error for message ${item.id}:`, error.message);
         
         if (this.errorHandler) {
@@ -142,7 +115,6 @@ class MessageQueue {
 
     async shutdown() {
         this.stopProcessing();
-        // Espera as operações atuais (lotes) terminarem
         await new Promise(resolve => setTimeout(resolve, 500));
         return true;
     }
@@ -154,6 +126,8 @@ class MessageQueue {
             batchSize: this.batchSize,
             messagesPerBatch: this.messagesPerBatch,
             isProcessing: this.isProcessing,
+            activeWorkers: this.activeWorkers,
+            maxWorkers: this.maxWorkers,
             totalProcessed: this.stats.totalProcessed,
             totalErrors: this.stats.totalErrors,
             avgBatchTime: Math.round(this.stats.avgBatchTime),
