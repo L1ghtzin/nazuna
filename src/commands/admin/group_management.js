@@ -444,7 +444,7 @@ export default {
 
     if (cmd === 'soadm' || cmd === 'adminonly' || cmd === 'soadmin' || cmd === 'onlyadm') {
       groupData.soadm = !groupData.soadm;
-      writeSafe(groupFile, groupData);
+      await writeAsync(groupFile, groupData);
       
       return reply(MESSAGES.admin.group_management.media.onlyAdmToggle(groupData.soadm));
     }

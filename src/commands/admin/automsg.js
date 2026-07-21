@@ -143,7 +143,7 @@ export default {
       }
 
       groupFileData.autoMessages.push(newMsgConfig);
-      db.writeSafe(groupFilePath, groupFileData);
+      await db.writeAsync(groupFilePath, groupFileData);
 
       // Agenda imediatamente — sem precisar aguardar o próximo refresh do worker
       scheduleAutoMessage(from, newMsgConfig, bot);
@@ -191,7 +191,7 @@ export default {
           try { fs.unlinkSync(removedMsg.mediaPath); } catch (_) { /* falha silenciosa */ }
         }
         unscheduleAutoMessage(from, removedMsg.id);
-        db.writeSafe(groupFilePath, groupFileData);
+        await db.writeAsync(groupFilePath, groupFileData);
         return reply(MESSAGES.admin.automsg.delSuccess);
       }
 
@@ -207,7 +207,7 @@ export default {
       if (!targetMsg) return reply('❌ Mensagem não encontrada. Use automsg list para ver os IDs.');
 
       targetMsg.enabled = true;
-      db.writeSafe(groupFilePath, groupFileData);
+      await db.writeAsync(groupFilePath, groupFileData);
       scheduleAutoMessage(from, targetMsg, bot);
 
       return reply(`✅ Mensagem automática ativada!\n\n🆔 ID: ${targetId}`);
