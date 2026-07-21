@@ -29,7 +29,7 @@ import { getInfo as gdriveGetInfo } from '../funcs/utils/gdrive.js';
 import { getInfo as mediafireGetInfo } from '../funcs/utils/mediafire.js';
 import { getInfo as twitterGetInfo } from '../funcs/utils/twitter.js';
 import { search, searchNews } from '../funcs/utils/search.js';
-import { removeBg, upscale } from '../funcs/utils/imagetools.js';
+import { removeBg } from '../funcs/utils/imagetools.js';
 import spotifyModule from '../funcs/downloads/spotify.js';
 import captchaIndex, { initCaptchaIndex, addCaptcha, removeCaptcha, getCaptcha, hasPendingCaptcha } from './captchaIndex.js';
 import fsPromises from 'fs/promises';
@@ -902,7 +902,7 @@ export async function buildMessageContext(bot, info, store, messagesCache, renta
       getMenuLerMaisText, isMenuAudioEnabled, getMenuAudioPath, formatAIResponse,
       saveParceriasData, isRentalModeActive, getGroupRentalStatus, validateActivationCode, useActivationCode,
       vipCommandsManager, spotifyModule, gdriveGetInfo, mediafireGetInfo, twitterGetInfo,
-      removeBg, upscale, search, searchNews,
+      removeBg, search, searchNews,
       setMenuAudio, removeMenuAudio,
       isParceiro: parceriasData?.parceiros?.[sender] || false,
       // Middleware results (pre-computed)

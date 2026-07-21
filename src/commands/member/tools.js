@@ -4,11 +4,11 @@ import axios from 'axios';
 export default {
   name: "tools",
   description: "Ferramentas úteis",
-  commands: ["checklink", "checkurl", "estatisticas", "fusohorario", "groupstats", "horamundial", "horoscopo", "linkseguro", "ping", "rmbg", "sbg", "scanlink", "sfundo", "signo", "signos", "statsgrupo", "toimg", "totalcmd", "totalcomando", "upscale", "urlsafe", "urlscan", "verificar", "verificarurl", "worldtime"],
+  commands: ["checklink", "checkurl", "estatisticas", "fusohorario", "groupstats", "horamundial", "horoscopo", "linkseguro", "ping", "rmbg", "sbg", "scanlink", "sfundo", "signo", "signos", "statsgrupo", "toimg", "totalcmd", "totalcomando", "urlsafe", "urlscan", "verificar", "verificarurl", "worldtime"],
   usage: "{prefix}verificarurl <link>",
   handle: async ({
     bot, from, info, reply, args, q, normalizarTexto, prefix, command, isGroup, getCachedGroupMetadata,
-    formatUptime, getFileBuffer, upload, removeBg, upscale, sendSticker, pushname, nomebot,
+    formatUptime, getFileBuffer, upload, removeBg, sendSticker, pushname, nomebot,
     isQuotedSticker, isQuotedImage, quotedMessageContent,
     MESSAGES
   }) => {
@@ -58,27 +58,20 @@ export default {
         return reply(MESSAGES.error.general);      }
     }
 
-    // --- RMBG / UPSCALE ---
-    if (['rmbg', 'sbg', 'sfundo', 'upscale'].includes(cmd)) {
+    // --- RMBG ---
+    if (['rmbg', 'sbg', 'sfundo'].includes(cmd)) {
       const imgMsg = quotedMessageContent?.imageMessage || info.message?.imageMessage;
       if (!imgMsg) return reply(MESSAGES.error.missing('uma mídia'));
 
       reply(MESSAGES.general.wait);
       try {
         const buffer = await getFileBuffer(imgMsg, 'image');
-        const url = await upload(buffer, true);
-        if (!url) throw new Error();
-
-        if (cmd === 'upscale') {
-          const res = await upscale(url);
-          return bot.sendMessage(from, { image: { url: res.result } }, { quoted: info });
-        } else {
-          const res = await removeBg(url);
-          if (['sbg', 'sfundo'].includes(cmd)) {
-            return sendSticker(bot, from, { sticker: { url: res.result.download }, author: pushname, packname: nomebot, type: 'image' }, { quoted: info });
-          }
-          return bot.sendMessage(from, { image: { url: res.result.download } }, { quoted: info });
+        const res = await removeBg(buffer);
+        if (!res?.ok) return reply(res?.msg || MESSAGES.error.general);
+        if (['sbg', 'sfundo'].includes(cmd)) {
+          return sendSticker(bot, from, { sticker: { url: res.result.download }, author: pushname, packname: nomebot, type: 'image' }, { quoted: info });
         }
+        return bot.sendMessage(from, { image: { url: res.result.download } }, { quoted: info });
       } catch (e) { return reply(MESSAGES.error.general); }
     }
 
