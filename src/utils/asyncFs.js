@@ -2,6 +2,7 @@ import fsPromises from 'fs/promises';
 import pathz from 'path';
 import { isUnifiedPath, setUnifiedValueAsync, getUnifiedValue } from './database/unifiedConfig.js';
 import { serialize } from './jsonSerializer.js';
+import { clearJsonFileCache } from './helpers/jsonIo.js';
 
 /**
  * Versão assíncrona do writeJsonFile - não bloqueia o event loop
@@ -10,6 +11,7 @@ import { serialize } from './jsonSerializer.js';
  * @returns {Promise<boolean>}
  */
 export const writeJsonFileAsync = async (filePath, data) => {
+  clearJsonFileCache(filePath);
   if (isUnifiedPath(filePath)) {
     await setUnifiedValueAsync(filePath, data);
     return true;

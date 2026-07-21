@@ -23,7 +23,7 @@
 //   - Boot/Init:       db.readAsync()
 // ===================================================================
 
-import { loadJsonFile, loadJsonFileSafe, saveJsonFileSafe, debouncedSaveJson, flushAllDebouncedSaves } from '../helpers/jsonIo.js';
+import { loadJsonFile, loadJsonFileAsync, loadJsonFileSafe, saveJsonFileSafe, debouncedSaveJson, flushAllDebouncedSaves } from '../helpers/jsonIo.js';
 import { writeJsonFile, writeJsonFileQueued } from './_core.js';
 import { readJsonFileAsync, writeJsonFileAsync, fileExistsAsync } from '../asyncFs.js';
 import { existsSync as fsExistsSync } from 'fs';
@@ -31,7 +31,7 @@ import { existsSync as fsExistsSync } from 'fs';
 const db = {
   read: loadJsonFile,
   readSafe: loadJsonFileSafe,
-  readAsync: readJsonFileAsync,
+  readAsync: loadJsonFileAsync,
   writeSync: writeJsonFile,
   writeSafe: saveJsonFileSafe,
   writeAsync: writeJsonFileAsync,
@@ -45,7 +45,7 @@ const db = {
 export {
   loadJsonFile as read,
   loadJsonFileSafe as readSafe,
-  readJsonFileAsync as readAsync,
+  loadJsonFileAsync as readAsync,
   writeJsonFile as writeSync,
   saveJsonFileSafe as writeSafe,
   writeJsonFileAsync as writeAsync,

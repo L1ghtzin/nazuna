@@ -95,6 +95,47 @@ export const loadJsonFile = (path, defaultValue = {}, useCache = true) => {
   }
 };
 
+export async function loadJsonFileAsync(path, defaultValue = {}, useCache = true) {
+  try {
+    if (isUnifiedPath(path)) {
+      return getUnifiedValue(path, defaultValue);
+    }
+
+    if (pendingData.has(path)) {
+      const pendingObj = pendingData.get(path);
+      if (pendingObj !== undefined && pendingObj !== null) {
+        const clonedResult = structuredClone(pendingObj);
+        if (useCache) {
+          jsonFileCache.set(path, { data: clonedResult, timestamp: Date.now() });
+        }
+        return clonedResult;
+      }
+    }
+
+    if (useCache && jsonFileCache.has(path)) {
+      const cached = jsonFileCache.get(path);
+      if (Date.now() - cached.timestamp < JSON_CACHE_TTL) {
+        return structuredClone(cached.data);
+      }
+      jsonFileCache.delete(path);
+    }
+
+    if (!fs.existsSync(path)) return defaultValue;
+
+    const content = await fs.promises.readFile(path, 'utf-8');
+    const data = JSON.parse(content);
+
+    if (useCache) {
+      jsonFileCache.set(path, { data: structuredClone(data), timestamp: Date.now() });
+    }
+
+    return data;
+  } catch (error) {
+    console.error(`Erro ao carregar arquivo async ${path}:`, error);
+    return defaultValue;
+  }
+}
+
 // Limpa cache de JSON
 export function clearJsonFileCache(path = null) {
   if (path) {

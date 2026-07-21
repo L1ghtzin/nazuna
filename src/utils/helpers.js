@@ -31,6 +31,7 @@ export {
   ensureDirectoryExists,
   ensureJsonFileExists,
   loadJsonFile,
+  loadJsonFileAsync,
   clearJsonFileCache,
   createBackup,
   recoverFromBackup,
