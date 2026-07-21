@@ -42,7 +42,6 @@ ${bottomBorder}
 ${menuTopBorder}${separatorIcon} *${imageMenuTitle}*
 ${middleBorder}
 ${middleBorder}${menuItemIcon}${prefix}rmbg
-${middleBorder}${menuItemIcon}${prefix}upscale
 ${bottomBorder}
 
 ${menuTopBorder}${separatorIcon} *${audioMenuTitle}*
