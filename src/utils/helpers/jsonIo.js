@@ -74,7 +74,7 @@ export const loadJsonFile = (path, defaultValue = {}, useCache = true) => {
     if (useCache && jsonFileCache.has(path)) {
       const cached = jsonFileCache.get(path);
       if (Date.now() - cached.timestamp < JSON_CACHE_TTL) {
-        return cached.data;
+        return structuredClone(cached.data);
       }
       jsonFileCache.delete(path);
     }
@@ -85,7 +85,7 @@ export const loadJsonFile = (path, defaultValue = {}, useCache = true) => {
     
     // Salva no cache se ativado
     if (useCache) {
-      jsonFileCache.set(path, { data, timestamp: Date.now() });
+      jsonFileCache.set(path, { data: structuredClone(data), timestamp: Date.now() });
     }
     
     return data;
