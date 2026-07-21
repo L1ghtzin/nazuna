@@ -3,12 +3,13 @@
 
 import fs from 'fs';
 import pathz from 'path';
-import { ensureDirectoryExists, loadJsonFile } from '../helpers.js';
+import { ensureDirectoryExists, loadJsonFile, clearJsonFileCache } from '../helpers.js';
 import { ECONOMY_FILE, LEVELING_FILE, COMMAND_ALIASES_FILE, CUSTOM_AUTORESPONSES_FILE, CMD_NOT_FOUND_FILE } from '../paths.js';
 import { isUnifiedPath, setUnifiedValue, setUnifiedValueAsync } from './unifiedConfig.js';
 import { serialize } from '../jsonSerializer.js';
 
 export function writeJsonFile(filePath, data) {
+  clearJsonFileCache(filePath);
   if (isUnifiedPath(filePath)) {
     setUnifiedValue(filePath, data);
     return true;
@@ -40,6 +41,7 @@ export function writeJsonFile(filePath, data) {
 const _writeQueues = new Map();
 
 export function writeJsonFileQueued(filePath, data) {
+  clearJsonFileCache(filePath);
   if (isUnifiedPath(filePath)) {
     return setUnifiedValueAsync(filePath, data);
   }

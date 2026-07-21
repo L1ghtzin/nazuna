@@ -51,7 +51,7 @@ export function ensureJsonFileExists(filePath, defaultContent = {}) {
 export const jsonFileCache = new Map();
 export const JSON_CACHE_TTL = 30000; // 30 segundos
 
-export const loadJsonFile = (path, defaultValue = {}, useCache = false) => {
+export const loadJsonFile = (path, defaultValue = {}, useCache = true) => {
   try {
     if (isUnifiedPath(path)) {
       return getUnifiedValue(path, defaultValue);
@@ -308,6 +308,7 @@ export function loadJsonFileSafe(filePath, defaultValue = {}, expectedStructure 
  * Salva arquivo JSON com proteção contra corrupção
  */
 export function saveJsonFileSafe(filePath, data, createBackupFile = true) {
+  clearJsonFileCache(filePath);
   try {
     // Valida dados antes de salvar
     if (data === undefined) {
@@ -359,6 +360,7 @@ export function saveJsonFileSafe(filePath, data, createBackupFile = true) {
  * Salva arquivo JSON de forma assíncrona para não bloquear a thread principal (Safe Win Performance)
  */
 export async function saveJsonFileAsync(filePath, data, createBackupFile = true) {
+  clearJsonFileCache(filePath);
   try {
     if (data === undefined) return false;
     
@@ -405,6 +407,7 @@ export function debouncedSaveJson(filePath, data, delayMs = 3000) {
         await writeJsonFileAsync(filePath, dataToSave);
       }
       pendingData.delete(filePath);
+      clearJsonFileCache(filePath);
       saveTimers.delete(filePath);
     } catch (error) {
       console.error(`❌ Erro no debounce save de ${filePath}:`, error);
