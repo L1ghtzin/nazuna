@@ -1,6 +1,6 @@
 import { normalizeScheduleTime, validateTimeFormat } from "../../utils/timeHelpers.js";
 import { scheduleGroupJob, unscheduleGroupJob } from "../../workers/index.js";
-import { readAsync, writeAsync } from '../../utils/database/io.js';
+import { readAsync, writeAsync, writeSafe } from '../../utils/database/io.js';
 
 export default {
   name: "group_management",
@@ -442,9 +442,9 @@ export default {
       return reply(MESSAGES.admin.group_management.media.descSuccess);
     }
 
-    if (cmd === 'soadm' || cmd === 'adminonly' || cmd === 'soadmin') {
+    if (cmd === 'soadm' || cmd === 'adminonly' || cmd === 'soadmin' || cmd === 'onlyadm') {
       groupData.soadm = !groupData.soadm;
-      await writeAsync(groupFile, groupData);
+      writeSafe(groupFile, groupData);
       
       return reply(MESSAGES.admin.group_management.media.onlyAdmToggle(groupData.soadm));
     }

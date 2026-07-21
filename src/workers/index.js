@@ -3,6 +3,7 @@ import { startGpScheduleWorker } from './groupScheduleWorker.js';
 import { startAutoHorariosWorker } from './autoHorariosWorker.js';
 import { startAutoMensagensWorker } from './autoMessagesWorker.js';
 import { startDonoDivulgacaoWorker } from './donoDivulgacaoWorker.js';
+import { startBirthdayWorker } from './birthdayWorker.js';
 
 let workersStarted = false;
 
@@ -15,6 +16,7 @@ export function startAllWorkers(bot) {
   startAutoHorariosWorker(bot);
   startAutoMensagensWorker(bot);
   startDonoDivulgacaoWorker(bot);
+  startBirthdayWorker(bot);
 }
 
 export { scheduleGroupJob, unscheduleGroupJob } from './groupScheduleWorker.js';
