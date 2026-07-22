@@ -59,7 +59,7 @@ export function hasMainBotReceivedMsg(msgId) {
  * Verifica se o Sensor Watcher está conectado e operacional.
  */
 export function isWatcherConnected() {
-    return Boolean(global.sockWatcher && global.sockWatcher.user);
+    return Boolean(global.sockWatcher && (global.sockWatcher.ws?.isOpen || global.sockWatcher.user));
 }
 
 /**
@@ -312,6 +312,7 @@ export function countNormalGroupMessage(groupId, sender) {
 // ── PROCESSAMENTO ANTI-STEALTH ────────────────────────────────────
 
 export async function processAntiStealth(ChainySock, m) {
+    if (isWatcherConnected()) return;
     if (m.type !== 'notify' && m.type !== 'append') return;
 
     const botId = ChainySock?.user?.id?.split(':')[0];

@@ -15,7 +15,7 @@ export async function handleMessagesUpsert(ChainySock, m, { messageQueue, proces
 
   // Registra o envelope e o ID de toda mensagem recebida pelo bot principal
   for (const msg of m.messages) {
-    if (msg.key?.id) {
+    if (msg.key?.id && !isNoSessionDecryptMessage(msg)) {
       registerMainBotReceivedMsg(msg.key.id);
     }
     try {

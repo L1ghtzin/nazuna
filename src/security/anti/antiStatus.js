@@ -2,9 +2,38 @@ import { hasGroupStatusMessage } from '../../utils/securityHelpers.js';
 import { unwrapMessage } from '../../utils/messageHelpers.js';
 import { loadLevelingSafe, getLevelingUser } from '../../utils/database/leveling.js';
 
+const processedStatusMsgs = new Set();
+const MAX_PROCESSED_STATUS = 1000;
+const BAN_COOLDOWN_MS = 10_000;
+const recentStatusBans = new Map();
+
+function isStatusMsgProcessed(msgId) {
+    if (!msgId) return false;
+    if (processedStatusMsgs.has(msgId)) return true;
+    processedStatusMsgs.add(msgId);
+    if (processedStatusMsgs.size > MAX_PROCESSED_STATUS) {
+        const firstKey = processedStatusMsgs.values().next().value;
+        processedStatusMsgs.delete(firstKey);
+    }
+    return false;
+}
+
+function isOnStatusCooldown(groupJid, participant) {
+    const banKey = `${groupJid}:${participant}`;
+    const lastBan = recentStatusBans.get(banKey);
+    return lastBan && Date.now() - lastBan < BAN_COOLDOWN_MS;
+}
+
+function registerStatusCooldown(groupJid, participant) {
+    recentStatusBans.set(`${groupJid}:${participant}`, Date.now());
+}
+
 export async function handleAntiStatus(context) {
     const { bot, info, isGroup, sender, groupData, isStatusMention, isGroupAdmin, isOwner, from, reply, getUserName, isUserWhitelisted, isBotAdmin, MESSAGES, idInArray, groupAdmins, botNumberLid } = context;
     if (!isGroup || !groupData.antistatus || !info.message) return false;
+
+    const msgId = info.key?.id;
+    if (msgId && isStatusMsgProcessed(msgId)) return false;
 
     const actualMessage = unwrapMessage(info.message);
     const quotedMessage = actualMessage?.extendedTextMessage?.contextInfo?.quotedMessage;
@@ -46,6 +75,9 @@ export async function handleAntiStatus(context) {
     } else {
         if (isGroupAdmin || isOwner || (isUserWhitelisted && isUserWhitelisted(sender, 'antistatus'))) return false;
     }
+
+    if (isOnStatusCooldown(from, targetUser)) return false;
+    registerStatusCooldown(from, targetUser);
 
     try {
         await bot.sendMessage(from, { delete: info.key });

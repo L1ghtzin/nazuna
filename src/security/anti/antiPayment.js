@@ -50,6 +50,20 @@ const cleanupInterval = setInterval(() => {
 }, CACHE_CLEANUP_INTERVAL_MS);
 if (cleanupInterval.unref) cleanupInterval.unref();
 
+const processedPaymentMsgs = new Set();
+const MAX_PROCESSED_PAYMENTS = 1000;
+
+function isPaymentMsgProcessed(msgId) {
+    if (!msgId) return false;
+    if (processedPaymentMsgs.has(msgId)) return true;
+    processedPaymentMsgs.add(msgId);
+    if (processedPaymentMsgs.size > MAX_PROCESSED_PAYMENTS) {
+        const firstKey = processedPaymentMsgs.values().next().value;
+        processedPaymentMsgs.delete(firstKey);
+    }
+    return false;
+}
+
 function isOnCooldown(groupJid, participant) {
     const banKey = `${groupJid}:${participant}`;
     const lastBan = recentBans.get(banKey);
@@ -75,6 +89,9 @@ async function runAntiPaymentStep(step, errorMessage) {
 export async function handleAntiPayment(context) {
     const { bot, info, isGroup, sender, groupData, isGroupAdmin, isOwner, from, getUserName, isUserWhitelisted, isBotAdmin, MESSAGES, idInArray, groupAdmins, botNumberLid } = context;
     if (!isGroup || !info.message || !groupData.antipayment) return false;
+
+    const msgId = info.key?.id;
+    if (msgId && isPaymentMsgProcessed(msgId)) return false;
 
     const isPayment = hasPaymentMessage(info.message);
     const actualMessage = unwrapMessage(info.message);
