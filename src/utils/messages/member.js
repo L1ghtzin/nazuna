@@ -130,14 +130,8 @@ export const memberMessages = {
     lyricsUnavailable: '💔 Sistema de letras indisponível no momento.',
     lyricsSearching: (q) => `🔍 Procurando letra de *${q}*...`,
     lyricsNotFound: `💔 Letra não encontrada.`,
-    mcpluginMenu: (prefix, cmd) => '🔍 Cadê o nome do plugin para eu pesquisar? 🤔\n\nExemplo: ' + prefix + cmd + ' WorldEdit',
-    mcpluginUnavailable: '💔 Sistema de plugins indisponível no momento.',
-    mcpluginSearching: '🔍 Buscando plugin...',
-    mcpluginCaption: (name, creator, desc, url) => `🔍 Encontrei esse plugin aqui:\n\n*Nome*: _${name}_\n*Publicado por*: _${creator}_\n*Descrição*: _${desc}_\n*Link para download*: _${url}_\n\n> 💖 `,
     kwaiMenu: `📱 Envie o link do Kwai!`,
-    kwaiCaption: (title) => `✨ Kwai Video: ${title || ''}`,
-    sourceCodeDownloading: '📦 Baixando código-fonte...',
-    sourceCodeCaption: `📂 *Código-fonte*`
+    kwaiCaption: (title) => `✨ Kwai Video: ${title || ''}`
   },
   encurtalink: {
     missingLink: (prefix, command) => `❌️ *Forma incorreta, use está como exemplo:* ${prefix + command} https://instagram.com/hiudyyy_`,
