@@ -1,4 +1,4 @@
-import { processAntiStealth, processAntiStealthUpdate, isNoSessionDecryptMessage } from '../middleware/antiStealth.js';
+import { processAntiStealth, processAntiStealthUpdate, isNoSessionDecryptMessage, registerMainBotReceivedMsg } from '../middleware/antiStealth.js';
 import { recordMessageEnvelope } from '../utils/messageEnvelopeRegistry.js';
 import { hasPaymentMessage } from '../utils/paymentMessage.js';
 
@@ -13,8 +13,11 @@ export async function handleMessagesUpdate(ChainySock, updates) {
 export async function handleMessagesUpsert(ChainySock, m, { messageQueue, processMessage }) {
   if (!m.messages || !Array.isArray(m.messages)) return;
 
-  // Registra o envelope de toda mensagem de grupo recebida para corroborar marcações de pagamento
+  // Registra o envelope e o ID de toda mensagem recebida pelo bot principal
   for (const msg of m.messages) {
+    if (msg.key?.id) {
+      registerMainBotReceivedMsg(msg.key.id);
+    }
     try {
       recordMessageEnvelope(msg, hasPaymentMessage(msg));
     } catch (e) {

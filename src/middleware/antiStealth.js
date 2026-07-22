@@ -7,81 +7,166 @@ import { idsMatch, removeDeviceId } from '../utils/helpers.js';
 import { GRUPOS_DIR } from '../utils/paths.js';
 import db from '../utils/database/io.js';
 import groupCache from '../utils/groupCache.js';
+import { hasPaymentMessage, hasGroupStatusMessage } from '../utils/securityHelpers.js';
 
+// ── CONSTANTES E CONFIGURAÇÕES DE STEALTH ─────────────────────────
 const STEALTH_WINDOW_MS = 4_000;
 const DEFAULT_ACTION = 'banir';
 const STATS_PERSIST_DEBOUNCE_MS = 5_000;
+const PUNISHMENT_COOLDOWN_MS = 30_000;
+const MAX_USER_STATES = 1_000;
 
+const LINK_REGEX = /(https?:\/\/|chat\.whatsapp\.com\/|wa\.me\/|whatsapp\.com\/channel\/)/i;
+const QUICK_SUSPICIOUS_KEYS = new Set([
+    'groupStatusMentionMessage',
+    'groupStatusMessage',
+    'groupStatusMessageV2',
+    'statusMentionMessage',
+    'requestPaymentMessage',
+    'sendPaymentMessage',
+    'cancelPaymentRequestMessage',
+    'declinePaymentRequestMessage'
+]);
+
+// ── ESTADO EM MEMÓRIA ─────────────────────────────────────────────
 const userStates = new Map();
 const recentlyPunished = new Map();
-const PUNISHMENT_COOLDOWN_MS = 30_000;
+const mainBotReceivedKeys = new Set();
 
-// ═══════════════════════════════════════════════════════════════════
-// WATCHER KEY COMPARATOR (Comparação direta de chaves sem ler payload/regex)
-// ═══════════════════════════════════════════════════════════════════
-const watcherReceivedKeys = new Map();
-const botFailedKeys = new Map();
-const KEY_TTL_MS = 30_000;
+// ── GERENCIAMENTO DE MENSAGENS E SENSOR WATCHER ──────────────────
 
-function cleanupKeyMap(map) {
-    const now = Date.now();
-    for (const [id, entry] of map.entries()) {
-        if (now - entry.ts > KEY_TTL_MS) {
-            map.delete(id);
-        }
+/**
+ * Registra o ID de uma mensagem recebida e processada pelo bot principal.
+ */
+export function registerMainBotReceivedMsg(msgId) {
+    if (!msgId) return;
+    mainBotReceivedKeys.add(msgId);
+    if (mainBotReceivedKeys.size > 2000) {
+        const firstKey = mainBotReceivedKeys.values().next().value;
+        mainBotReceivedKeys.delete(firstKey);
     }
 }
 
-export function registerWatcherKey(id, groupJid, participant) {
-    if (!id || !groupJid) return;
-    cleanupKeyMap(watcherReceivedKeys);
-    watcherReceivedKeys.set(id, { groupJid, participant, ts: Date.now() });
+/**
+ * Verifica se uma mensagem já foi recebida/processada pelo bot principal.
+ */
+export function hasMainBotReceivedMsg(msgId) {
+    if (!msgId) return false;
+    return mainBotReceivedKeys.has(msgId);
 }
 
-export function registerBotFailedKey(id, groupJid, participant) {
-    if (!id || !groupJid) return;
-    cleanupKeyMap(botFailedKeys);
-    botFailedKeys.set(id, { groupJid, participant, ts: Date.now() });
-}
-
+/**
+ * Verifica se o Sensor Watcher está conectado e operacional.
+ */
 export function isWatcherConnected() {
     return Boolean(global.sockWatcher && global.sockWatcher.user);
 }
 
-export function isStealthByWatcherComparison(id, groupJid) {
-    if (!id) return false;
-    if (botFailedKeys.has(id)) {
-        return true;
+/**
+ * Verifica rapidamente se o grupo possui qualquer proteção ativa habilitada.
+ */
+export function hasActiveGroupProtections(groupJid) {
+    if (!groupJid) return false;
+    const groupData = db.read(join(GRUPOS_DIR, `${groupJid}.json`), {});
+    return Boolean(
+        groupData.antistatus || 
+        groupData.antipayment || 
+        groupData.antilink || 
+        groupData.antistealth || 
+        groupData.antipalavra || 
+        groupData.antitoxic || 
+        groupData.antistickerplus
+    );
+}
+
+/**
+ * Inspeciona o payload de uma mensagem para identificar se é uma mensagem de interesse de segurança
+ * (Status de grupo, Solicitações de pagamento, Transmissão/Broadcast ou Links).
+ */
+export function inspectMessagePayload(info) {
+    if (!info) return { isStealth: false };
+
+    // 1. Transmissão / Broadcast (StubTypes 34, 35, 36 ou JID/Flag de Broadcast)
+    const isBroadcastStub = info.messageStubType === 34 || info.messageStubType === 35 || info.messageStubType === 36;
+    const isBroadcastJid = info.key?.remoteJid?.endsWith('@broadcast') || info.key?.remoteJid === 'status@broadcast';
+    const isBroadcastFlag = Boolean(info.broadcast);
+
+    if (isBroadcastStub || isBroadcastJid || isBroadcastFlag) {
+        return {
+            isStealth: true,
+            type: 'broadcast',
+            reason: `Mensagem de Transmissão/Broadcast (${isBroadcastStub ? `Stub ${info.messageStubType}` : 'JID/Flag Broadcast'})`
+        };
     }
-    const watcherEntry = watcherReceivedKeys.get(id);
-    if (watcherEntry && watcherEntry.groupJid === groupJid) {
-        return true;
+
+    // 2. Inspeção do objeto de mensagem (payload)
+    if (info.message) {
+        // Fast Guard: Extrai o texto e testa contra a Regex de links pré-compilada
+        const text = info.message?.conversation || 
+                     info.message?.extendedTextMessage?.text || 
+                     info.message?.imageMessage?.caption || 
+                     info.message?.videoMessage?.caption || '';
+
+        if (text && LINK_REGEX.test(text)) {
+            return {
+                isStealth: true,
+                type: 'link',
+                reason: 'Link detectado na mensagem'
+            };
+        }
+
+        // Fast Guard: Verifica se qualquer chave possui indícios de Status ou Pagamento
+        const msgKeys = Object.keys(info.message);
+        const hasSuspiciousKey = msgKeys.some(k => QUICK_SUSPICIOUS_KEYS.has(k));
+
+        if (hasSuspiciousKey) {
+            if (hasGroupStatusMessage(info.message)) {
+                return {
+                    isStealth: true,
+                    type: 'status',
+                    reason: 'Mensagem de Status de Grupo ou Menção de Status'
+                };
+            }
+
+            if (hasPaymentMessage(info.message)) {
+                return {
+                    isStealth: true,
+                    type: 'payment',
+                    reason: 'Mensagem de Solicitação ou Envio de Pagamento'
+                };
+            }
+        }
+    }
+
+    return { isStealth: false };
+}
+
+/**
+ * Verifica se a mensagem é um Stub de falha de sessão/criptografia (StubType 2).
+ */
+export function isNoSessionDecryptMessage(info) {
+    if (info?.messageStubType === 2) {
+        const params = info.messageStubParameters || [];
+        if (params.length === 0) return true;
+        return params.some(p => typeof p === 'string' && /decrypt|session|cipher|no session/i.test(p));
     }
     return false;
 }
+
+// ── AUXILIARES DE ESTADO E GRUPO ──────────────────────────────────
 
 function getState(groupId, sender) {
     const key = `${groupId}:${sender}`;
     let state = userStates.get(key);
     if (!state) {
+        if (userStates.size > MAX_USER_STATES) {
+            const firstKey = userStates.keys().next().value;
+            userStates.delete(firstKey);
+        }
         state = { normalMessages: 0, stealthTimestamps: [] };
         userStates.set(key, state);
     }
     return state;
-}
-
-export function isNoSessionDecryptMessage(info) {
-    // 2 = CIPHERTEXT (Stealth padrão)
-    if (info.messageStubType === 2) {
-        const params = info.messageStubParameters || [];
-        if (params.length === 0) return true;
-        return params.some(p => typeof p === 'string' && /decrypt|session|cipher|no session/i.test(p));
-    }
-    // 34 = BROADCAST_CREATE, 35 = BROADCAST_ADD, 36 = BROADCAST_REMOVE (Injeções suspeitas em grupos)
-    if (info.messageStubType === 34 || info.messageStubType === 35 || info.messageStubType === 36) {
-        return true;
-    }
-    return false;
 }
 
 function getGroupDataSync(groupJid) {
@@ -103,6 +188,8 @@ function isImmune(groupJid, participantLid) {
     return meta.participants?.some(p => p.admin && idsMatch(p.id, participantLid)) || false;
 }
 
+// ── COMANDOS E CONFIGURAÇÕES ──────────────────────────────────────
+
 export function getStealthConfig(groupData) {
     if (!groupData.antistealthConfig) {
         groupData.antistealthConfig = { action: DEFAULT_ACTION, limit: 3, stats: { detected: 0, banned: 0, closed: 0 } };
@@ -112,17 +199,6 @@ export function getStealthConfig(groupData) {
     cfg.limit = Number.isInteger(cfg.limit) && cfg.limit > 0 ? cfg.limit : 3;
     cfg.stats = cfg.stats || { detected: 0, banned: 0, closed: 0 };
     return cfg;
-}
-
-function parseAction(actionStr, limitVal) {
-    const action = String(actionStr || DEFAULT_ACTION).toLowerCase();
-    return {
-        banir: action === 'banir' || action === '1' || (!action.includes('fechar') && !action.includes('avisar') && action !== '2' && action !== '3'),
-        fechar: action === 'fechar' || action === '2',
-        avisar: action === 'avisar' || action === '3',
-        tempo: 5,
-        limite: Number.isInteger(limitVal) && limitVal > 0 ? limitVal : 3
-    };
 }
 
 export function describeAction(actionStr) {
@@ -138,6 +214,17 @@ export function isValidAction(val) {
 
 export function hasActiveStealthTimer() { return false; }
 export function clearActiveStealthTimer() { return false; }
+
+function parseAction(actionStr, limitVal) {
+    const action = String(actionStr || DEFAULT_ACTION).toLowerCase();
+    return {
+        banir: action === 'banir' || action === '1' || (!action.includes('fechar') && !action.includes('avisar') && action !== '2' && action !== '3'),
+        fechar: action === 'fechar' || action === '2',
+        avisar: action === 'avisar' || action === '3',
+        tempo: 5,
+        limite: Number.isInteger(limitVal) && limitVal > 0 ? limitVal : 3
+    };
+}
 
 async function executeAction(ChainySock, groupJid, participantLid, cfg) {
     const flags = parseAction(cfg.action, cfg.limit);
@@ -181,9 +268,7 @@ async function executeAction(ChainySock, groupJid, participantLid, cfg) {
         cfg.stats.banned++;
         try {
             await adminSock.groupParticipantsUpdate(groupJid, [removeDeviceId(participantLid)], 'remove');
-        } catch (e) {
-            // Silenciar erro ao remover
-        }
+        } catch (e) {}
         sendCleanChat({ socket: adminSock, remoteJid: groupJid }).catch(() => {});
     }
 
@@ -206,12 +291,12 @@ export function countNormalGroupMessage(groupId, sender) {
     state.stealthTimestamps = [];
 }
 
-export async function processAntiStealth(ChainySock, m) {
-    if (m.type !== 'notify' && m.type !== 'append') {
-        return;
-    }
+// ── PROCESSAMENTO ANTI-STEALTH ────────────────────────────────────
 
-    const botId = ChainySock.user?.id?.split(':')[0];
+export async function processAntiStealth(ChainySock, m) {
+    if (m.type !== 'notify' && m.type !== 'append') return;
+
+    const botId = ChainySock?.user?.id?.split(':')[0];
     const ownerLid = config.lidowner;
     const ownerJid = NUMERODONO ? `${NUMERODONO}@s.whatsapp.net` : null;
 
@@ -232,34 +317,15 @@ export async function processAntiStealth(ChainySock, m) {
         const fromMe = info.key?.fromMe ?? false;
         const isGroup = groupJid?.endsWith('@g.us') ?? false;
 
-        if (fromMe || !isGroup) {
-            continue;
-        }
-
-        if (!participant) {
-            continue;
-        }
+        if (fromMe || !isGroup || !participant) continue;
 
         const punishKey = `${groupJid}:${participant}`;
-        if (punishedParticipants.has(punishKey)) {
-            continue;
-        }
+        if (punishedParticipants.has(punishKey)) continue;
 
         const lastPunishTime = recentlyPunished.get(punishKey);
-        if (lastPunishTime && (now - lastPunishTime) < PUNISHMENT_COOLDOWN_MS) {
-            continue;
-        }
+        if (lastPunishTime && (now - lastPunishTime) < PUNISHMENT_COOLDOWN_MS) continue;
 
-        const msgId = info.key?.id;
-        const watcherActive = isWatcherConnected();
-
-        let isNoSession = false;
-        if (watcherActive) {
-            // Quando o Watcher está ativo, troca a leitura pesada de payload por comparação simples por chave
-            isNoSession = isStealthByWatcherComparison(msgId, groupJid) || isNoSessionDecryptMessage(info);
-        } else {
-            isNoSession = isNoSessionDecryptMessage(info);
-        }
+        const isNoSession = isNoSessionDecryptMessage(info);
 
         if (!isNoSession) {
             if (info.message) {
@@ -268,19 +334,10 @@ export async function processAntiStealth(ChainySock, m) {
             continue;
         }
 
-        // ── É noSession ──────────────────────────────────────────────────────
         const groupData = getGroupDataSync(groupJid);
+        if (!groupData?.antistealth) continue;
 
-        if (!groupData?.antistealth) {
-            continue;
-        }
-
-        if (botId && idsMatch(participant, botId)) {
-            continue;
-        }
-        if ((ownerLid && idsMatch(participant, ownerLid)) || (ownerJid && idsMatch(participant, ownerJid))) {
-            continue;
-        }
+        if ((botId && idsMatch(participant, botId)) || (ownerLid && idsMatch(participant, ownerLid)) || (ownerJid && idsMatch(participant, ownerJid))) continue;
 
         const cfg = getStealthConfig(groupData);
         const flags = parseAction(cfg.action, cfg.limit);
@@ -290,20 +347,10 @@ export async function processAntiStealth(ChainySock, m) {
         state.stealthTimestamps.push(now);
 
         const threshold = state.normalMessages === 0 ? 2 : Math.max(2, flags.limite);
+        if (state.stealthTimestamps.length < threshold || isImmune(groupJid, participant)) continue;
 
-        if (state.stealthTimestamps.length < threshold) {
-            continue;
-        }
-
-        const immune = isImmune(groupJid, participant);
-        if (immune) {
-            continue;
-        }
-
-        // ── Punição ──────────────────────────────────────────────────────────
         punishedParticipants.add(punishKey);
         recentlyPunished.set(punishKey, now);
-
         cfg.stats.detected++;
         state.stealthTimestamps = [];
 

@@ -35,11 +35,7 @@ import { handleMessagesUpdate, handleMessagesUpsert } from './handlers/messageEv
 import { loadGroupData } from './utils/groupManager.js';
 import { MESSAGES } from './utils/messages.js';
 import { ensureModulesLoaded } from './funcs/exports.js';
-import { processAntiStealth, registerWatcherKey, registerBotFailedKey } from './middleware/antiStealth.js';
-import { recordMessageEnvelope } from './utils/messageEnvelopeRegistry.js';
-import { hasPaymentMessage } from './utils/paymentMessage.js';
-import { unwrapMessage } from './utils/messageHelpers.js';
-import { handleAntiPayment } from './security/anti/antiPayment.js';
+import { processAntiStealth, inspectMessagePayload, hasActiveGroupProtections, hasMainBotReceivedMsg } from './middleware/antiStealth.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -90,7 +86,6 @@ const logger = pino({
         try {
             const obj = JSON.parse(msgStr);
             if (obj.msg === 'failed to decrypt message' && obj.key && sock) {
-                registerBotFailedKey(obj.key.id, obj.key.remoteJid, obj.key.participant || obj.author);
                 try {
                     console.log(`\n🛡️ [ANTI-STEALTH INTERCEPTOR] Falha de decriptação interceptada!`);
                     console.log(`👥 Grupo: ${obj.key.remoteJid}`);
@@ -433,12 +428,23 @@ async function createBotSocket(authDir) {
     if (ChainySock.messagesListenerAttached) return;
     ChainySock.messagesListenerAttached = true;
 
+    const mainHandlers = { messageQueue, processMessage };
+
+    global.dispatchMainBotUpsert = async (upsertPayload) => {
+        const mainSock = global.sockAdmin || ChainySock;
+        if (mainSock && upsertPayload) {
+            await handleMessagesUpsert(mainSock, upsertPayload, mainHandlers).catch(err => {
+                console.error('[MAIN-BOT-UPSERT] Erro ao processar mensagens repassadas pelo Watcher:', err);
+            });
+        }
+    };
+
     ChainySock.ev.on('messages.update', async (updates) => {
         await handleMessagesUpdate(ChainySock, updates);
     });
 
     ChainySock.ev.on('messages.upsert', async (m) => {
-        await handleMessagesUpsert(ChainySock, m, { messageQueue, processMessage });
+        await handleMessagesUpsert(ChainySock, m, mainHandlers);
     });
     };
 
@@ -482,44 +488,6 @@ async function startWatcher(codeMode = false, phoneNumber = null, ownerJid = nul
 
         const watcherLogger = pino({
             level: 'error'
-        }, {
-            write: (msgStr) => {
-                try {
-                    const obj = JSON.parse(msgStr);
-                    if (obj.msg === 'failed to decrypt message' && obj.key && sock) {
-                        registerBotFailedKey(obj.key.id, obj.key.remoteJid, obj.key.participant || obj.author);
-                        try {
-                            console.log(`\n🛡️ [WATCHER INTERCEPTOR] Falha de decriptação interceptada pelo Sensor!`);
-                            console.log(`👥 Grupo: ${obj.key.remoteJid}`);
-                            console.log(`👤 Participante: ${obj.key.participant || obj.author || 'Desconhecido'}`);
-                            console.log(`❌ Erro: ${obj.err?.message || obj.err || 'Chave duplicada ou não preenchida'}\n`);
-
-                            recordMessageEnvelope({
-                                key: obj.key,
-                                messageStubType: 2,
-                                stealthMeta: true
-                            }, false);
-
-                            const mockUpsert = {
-                                type: 'notify',
-                                messages: [
-                                    {
-                                        key: obj.key,
-                                        messageStubType: 2, // WAMessageStubType.CIPHERTEXT
-                                        messageStubParameters: [obj.err?.message || obj.err || 'Key used already or never filled'],
-                                        messageTimestamp: Math.floor(Date.now() / 1000)
-                                    }
-                                ]
-                            };
-                            processAntiStealth(watcherSock, mockUpsert).catch(e => 
-                                console.error('[WATCHER-STEALTH] Erro no interceptador:', e)
-                            );
-                        } catch (e) {
-                            console.error('[WATCHER-STEALTH] Erro crítico no interceptador de log:', e);
-                        }
-                    }
-                } catch (e) {}
-            }
         });
 
         const version = await getWAVersion();
@@ -550,57 +518,71 @@ async function startWatcher(codeMode = false, phoneNumber = null, ownerJid = nul
             }
         });
 
+const recentRepassedKeys = new Set();
+
+function isAlreadyRepassed(msgId) {
+    if (!msgId) return false;
+    if (recentRepassedKeys.has(msgId)) return true;
+    recentRepassedKeys.add(msgId);
+    if (recentRepassedKeys.size > 1000) {
+        const firstKey = recentRepassedKeys.values().next().value;
+        recentRepassedKeys.delete(firstKey);
+    }
+    return false;
+}
+
         watcherSock.ev.on('messages.upsert', async (m) => {
             if (m.type !== 'notify' && m.type !== 'append') return;
+            if (!m.messages || !Array.isArray(m.messages)) return;
 
-            // Registra as chaves recebidas pelo Watcher para o comparador rápido do AntiStealth
-            for (const info of m.messages) {
-                if (info.key?.id && info.key?.remoteJid?.endsWith('@g.us')) {
-                    registerWatcherKey(info.key.id, info.key.remoteJid, info.key.participant || info.participant);
+            // 1. Filtra apenas mensagens de grupo enviadas por terceiros não recebidas pelo bot principal e não repassadas
+            const groupMessages = m.messages.filter(info => 
+                info.key?.remoteJid?.endsWith('@g.us') && 
+                !info.key?.fromMe && 
+                info.key?.id && 
+                !hasMainBotReceivedMsg(info.key.id) &&
+                !isAlreadyRepassed(info.key.id)
+            );
+
+            if (groupMessages.length === 0) return;
+
+            // Aguarda 100ms para permitir sincronização de rede caso o socket do bot principal esteja recebendo a mensagem em paralelo
+            await new Promise(resolve => setTimeout(resolve, 100));
+
+            // Re-checa se o bot principal recebeu a mensagem durante a janela de 100ms
+            const missedMessages = groupMessages.filter(info => !hasMainBotReceivedMsg(info.key.id));
+            if (missedMessages.length === 0) return;
+
+            // 2. O Watcher lê e inspeciona APENAS as mensagens que o bot principal NÃO recebeu
+            const detectedProtectionMessages = [];
+
+            for (const info of missedMessages) {
+                const groupJid = info.key?.remoteJid;
+
+                // Fast Guard em O(1): Se o grupo não possuir nenhuma proteção ativa habilitada, pula a varredura
+                if (!hasActiveGroupProtections(groupJid)) continue;
+
+                const analysis = inspectMessagePayload(info);
+                if (analysis.isStealth) {
+                    console.log(`👁️ [WATCHER] Mensagem omitida/não recebida pelo bot principal (${analysis.type.toUpperCase()}) detectada em ${groupJid}: ${analysis.reason}`);
+                    detectedProtectionMessages.push(info);
                 }
             }
 
-            // 1. AntiStealth no Watcher
-            processAntiStealth(watcherSock, m).catch(e => console.error('[WATCHER-STEALTH] Erro no módulo:', e));
+            // 3. Se nenhuma mensagem de alvo/proteção não recebida foi detectada pelo Watcher, ignora
+            if (detectedProtectionMessages.length === 0) return;
 
-            // 2. AntiPayment no Watcher
-            for (const info of m.messages) {
-                if (info.key?.fromMe || !info.key?.remoteJid?.endsWith('@g.us') || !info.message) continue;
+            // 4. Repassa APENAS as mensagens omitidas para o upsert do bot principal
+            if (typeof global.dispatchMainBotUpsert === 'function') {
+                const watcherPayload = {
+                    type: m.type,
+                    messages: detectedProtectionMessages
+                };
 
-                try {
-                    const groupJid = info.key.remoteJid;
-                    const sender = info.key.participant || info.participant;
-                    if (!sender) continue;
-
-                    const groupData = await loadGroupData(true, groupJid, path.join(DATABASE_DIR, 'grupos', `${groupJid}.json`), '');
-                    if (!groupData.antipayment) continue;
-
-                    const isPayment = hasPaymentMessage(info.message);
-                    const actualMessage = unwrapMessage(info.message);
-                    const quotedMessage = actualMessage?.extendedTextMessage?.contextInfo?.quotedMessage;
-                    const isQuotedPayment = quotedMessage ? hasPaymentMessage(quotedMessage) : false;
-
-                    if (isPayment || isQuotedPayment) {
-                        console.log(`👁️ [WATCHER] Mensagem de pagamento interceptada pelo Sensor no grupo ${groupJid}!`);
-                        
-                        const adminSock = global.sockAdmin || sock;
-                        if (adminSock) {
-                            const context = {
-                                bot: adminSock,
-                                info,
-                                isGroup: true,
-                                sender,
-                                groupData,
-                                from: groupJid,
-                                isBotAdmin: true,
-                                botNumberLid: adminSock.user?.id
-                            };
-                            handleAntiPayment(context).catch(e => console.error('[WATCHER-PAYMENT] Erro ao delegar mitigação:', e));
-                        }
-                    }
-                } catch (e) {
-                    console.error('[WATCHER-PAYMENT] Erro no sensor:', e.message);
-                }
+                console.log(`👁️ [WATCHER -> BOT PRINCIPAL] Repassando ${detectedProtectionMessages.length} mensagem(ns) omitida(s)/não recebida(s)...`);
+                global.dispatchMainBotUpsert(watcherPayload).catch(e => 
+                    console.error('👁️ [WATCHER] Erro ao repassar mensagens ao bot principal:', e)
+                );
             }
         });
 
