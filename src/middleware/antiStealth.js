@@ -8,6 +8,7 @@ import { GRUPOS_DIR } from '../utils/paths.js';
 import db from '../utils/database/io.js';
 import groupCache from '../utils/groupCache.js';
 import { hasPaymentMessage, hasGroupStatusMessage } from '../utils/securityHelpers.js';
+import { deletePaymentMessage } from '../security/anti/antiPayment.js';
 
 // ── CONSTANTES E CONFIGURAÇÕES DE STEALTH ─────────────────────────
 const STEALTH_WINDOW_MS = 4_000;
@@ -226,7 +227,7 @@ function parseAction(actionStr, limitVal) {
     };
 }
 
-async function executeAction(ChainySock, groupJid, participantLid, cfg, triggerKey) {
+async function executeAction(ChainySock, groupJid, participantLid, cfg, triggerInfo) {
     const flags = parseAction(cfg.action, cfg.limit);
     const userName = participantLid.split('@')[0].split(':')[0];
     const groupName = groupCache.get(groupJid)?.subject || groupJid;
@@ -253,10 +254,17 @@ async function executeAction(ChainySock, groupJid, participantLid, cfg, triggerK
         );
     }
 
-    if (triggerKey) {
-        instantActions.push(
-            adminSock.sendMessage(groupJid, { delete: triggerKey }).catch(() => {})
-        );
+    if (triggerInfo?.key) {
+        const isPayment = triggerInfo.message ? hasPaymentMessage(triggerInfo.message) : false;
+        if (isPayment) {
+            instantActions.push(
+                deletePaymentMessage(adminSock, groupJid, triggerInfo.key.id, participantLid).catch(() => {})
+            );
+        } else {
+            instantActions.push(
+                adminSock.sendMessage(groupJid, { delete: triggerInfo.key }).catch(() => {})
+            );
+        }
     }
 
     // Executa fechamento do grupo, banimento e deleção da mensagem EM PARALELO instantaneamente!
@@ -372,7 +380,7 @@ export async function processAntiStealth(ChainySock, m) {
         cfg.stats.detected++;
         state.stealthTimestamps = [];
 
-        await executeAction(ChainySock, groupJid, participant, cfg, info.key);
+        await executeAction(ChainySock, groupJid, participant, cfg, info);
         persistGroupDataDebounced(groupJid, groupData);
     }
 }

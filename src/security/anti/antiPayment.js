@@ -8,7 +8,7 @@ import { removeDeviceId } from '../../utils/helpers.js';
  * Apaga uma mensagem de pagamento usando o trick do temp message + edit,
  * necessário pois o delete direto não funciona para esse tipo de mensagem.
  */
-async function deletePaymentMessage(bot, remoteJid, stanzaId, participant) {
+export async function deletePaymentMessage(bot, remoteJid, stanzaId, participant) {
     try {
         const msgTemp = await bot.sendMessage(remoteJid, { text: '' });
         const idTemp = msgTemp.key.id;
