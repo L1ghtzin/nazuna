@@ -94,7 +94,7 @@ export const memberMessages = {
     youtubeSearch: (q) => `🔍 *Pesquisando no YouTube...*\n\n🎵 Música: *${q}*\n\n⏳ Aguarde um momento...`,
     youtubeVideoTooLong: (timestamp) => `⚠️ Este vídeo é muito longo (${timestamp}).\nPor favor, escolha um vídeo com menos de 30 minutos.`,
     youtubeFound: (title, author, timestamp, seconds, views, url) => `🎵 *Música Encontrada* 🎵\n\n📌 *Título:* ${title}\n👤 *Artista/Canal:* ${author}\n⏱ *Duração:* ${timestamp} (${seconds} segundos)\n👀 *Visualizações:* ${views}\n🔗 *Link:* ${url}\n\n🎧 *Baixando e processando sua música, aguarde...*`,
-    youtubeVideoMenu: (prefix, cmd) => `🎥 Envie o nome ou link do vídeo do YouTube!\n\nExemplo: ${prefix}${cmd} Linkin Park Numb`,
+    youtubeVideoMenu: (prefix, cmd) => `🎥 Envie o nome ou link do vídeo do YouTube!\n\n💡 *Dica:* Você pode definir a qualidade (144p até 1080p).\n\n📌 *Exemplos:*\n• ${prefix}${cmd} Linkin Park Numb\n• ${prefix}${cmd} Linkin Park Numb 720p`,
     youtubeVideoSearch: (q) => `🔍 Pesquisando vídeo: *${q}*...`,
     youtubeVideoNotFound: `💔 Vídeo não encontrado.`,
     youtubeVideoWait: '⏳ Baixando vídeo... Isso pode levar um momento.',

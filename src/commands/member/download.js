@@ -76,10 +76,25 @@ export default {
       if (!q) return reply(MESSAGES.member.download.youtubeVideoMenu(prefix, cmd));
 
       try {
-        let videoUrl = q;
-        if (!q.includes('youtube.com') && !q.includes('youtu.be')) {
-          await reply(MESSAGES.member.download.youtubeVideoSearch(q));
-          const result = await youtube.search(q);
+        let quality = '360p';
+        let searchQuery = q;
+
+        const qualityMatch = searchQuery.match(/(?:--|-)?\b(144p?|240p?|360p?|480p?|720p?|1080p?|1440p?|4k)\b/i);
+        if (qualityMatch) {
+          const matchedStr = qualityMatch[0];
+          const raw = qualityMatch[1].toLowerCase();
+          let num = raw === '4k' ? 1080 : parseInt(raw, 10);
+          if (isNaN(num) || num > 1080) num = 1080;
+          quality = `${num}p`;
+          searchQuery = searchQuery.replace(matchedStr, '').replace(/\s+/g, ' ').trim();
+        }
+
+        if (!searchQuery) return reply(MESSAGES.member.download.youtubeVideoMenu(prefix, cmd));
+
+        let videoUrl = searchQuery;
+        if (!searchQuery.includes('youtube.com') && !searchQuery.includes('youtu.be')) {
+          await reply(MESSAGES.member.download.youtubeVideoSearch(searchQuery));
+          const result = await youtube.search(searchQuery);
           if (!result.ok) return reply(MESSAGES.member.download.youtubeVideoNotFound);
           videoUrl = result.data.url;
         }
@@ -87,7 +102,7 @@ export default {
         await reply(MESSAGES.member.download.youtubeVideoWait);
 
         // Download em background para não travar o bot
-        youtube.mp4(videoUrl, '360p').then(async (dlRes) => {
+        youtube.mp4(videoUrl, quality).then(async (dlRes) => {
           if (!dlRes || !dlRes.ok || !dlRes.buffer) {
             console.error('Download MP4 falhou:', dlRes?.msg);
             return reply(MESSAGES.member.download.youtubeVideoFail);
