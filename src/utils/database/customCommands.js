@@ -105,16 +105,19 @@ export const listNoPrefix = () => {
   return loadNoPrefixCommands();
 };
 
-// ==================== APELIDOS (ALIASES) ====================
+let cachedAliases = null;
 
 export const loadCommandAliases = () => {
-  return loadJsonFile(COMMAND_ALIASES_FILE, {
+  if (cachedAliases !== null) return cachedAliases;
+  cachedAliases = loadJsonFile(COMMAND_ALIASES_FILE, {
     aliases: []
   }, true).aliases || [];
+  return cachedAliases;
 };
 
 export const saveCommandAliases = aliases => {
   try {
+    cachedAliases = Array.isArray(aliases) ? [...aliases] : aliases;
     ensureDirectoryExists(DATABASE_DIR);
     debouncedSaveJson(COMMAND_ALIASES_FILE, {
       aliases

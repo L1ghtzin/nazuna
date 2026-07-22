@@ -264,6 +264,7 @@ const __ctxFilename = fileURLToPath(import.meta.url);
 const __dirname = pathz.dirname(__ctxFilename);
 const OWNER_ONLY_MESSAGE = '🚫 Este comando é apenas para o dono do bot!';
 const buildGroupFilePath = (groupId) => pathz.join(GRUPOS_DIR, `${groupId}.json`);
+const indexedJidLidGroups = new Set();
 
 /**
  * Constrói o contexto completo para processamento de uma mensagem.
@@ -528,7 +529,6 @@ export async function buildMessageContext(bot, info, store, messagesCache, renta
     const isVisuU2 = type === 'viewOnceMessageV2';
     const isVisuU = type === 'viewOnceMessage';
     const isButtonMessage = info.message.interactiveMessage || info.message.templateButtonReplyMessage || info.message.buttonsMessage || info.message.interactiveResponseMessage || info.message.listResponseMessage || info.message.buttonsResponseMessage ? true : false;
-    const msgString = info.message ? JSON.stringify(info.message) : '';
     const isStatusMention = info.message ? hasGroupStatusMessage(info.message) : false;
     const body = getMessageText(info.message) || info?.text || '';
 
@@ -546,8 +546,13 @@ export async function buildMessageContext(bot, info, store, messagesCache, renta
     const groupFile = buildGroupFilePath(from);
     const groupMetadata = isGroup ? await getCachedGroupMetadata(from) : {};
     
-    // Popula o cache JID-LID com todos os membros do grupo para otimização de menções
-    if (isGroup && groupMetadata.participants) {
+    // Popula o cache JID-LID apenas se o grupo ainda não tiver sido indexado nesta sessão
+    if (isGroup && groupMetadata.participants && !indexedJidLidGroups.has(from)) {
+      indexedJidLidGroups.add(from);
+      if (indexedJidLidGroups.size > 500) {
+        const firstKey = indexedJidLidGroups.values().next().value;
+        indexedJidLidGroups.delete(firstKey);
+      }
       for (const participant of groupMetadata.participants) {
         if (participant.id && participant.lid) {
           addJidLidToCache(participant.id, participant.lid);
@@ -558,9 +563,9 @@ export async function buildMessageContext(bot, info, store, messagesCache, renta
     const groupName = groupMetadata?.subject || '';
     const groupData = await loadGroupData(isGroup, from, groupFile, groupName);
 
-    // Otimização: Cache de parcerias
+    // Otimização: Carregamento lazy de parcerias apenas se o recurso estiver habilitado
     let parceriasData = {};
-    if (isGroup) {
+    if (isGroup && (groupData.modoparceria || groupData.parceria)) {
       parceriasData = loadParceriasData(from);
     }
 
