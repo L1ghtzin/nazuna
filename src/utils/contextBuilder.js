@@ -876,7 +876,7 @@ export async function buildMessageContext(bot, info, store, messagesCache, renta
       get botState() { return getBotState(); },
       get modoLiteGlobal() { return getModoLiteGlobal(); },
       // Variáveis de mensagem
-      isCmd, command, menc_prt, menc_jid2, menc_os2, mentioned: menc_os2, sender_ou_n, msgString,
+      isCmd, command, menc_prt, menc_jid2, menc_os2, mentioned: menc_os2, sender_ou_n, get msgString() { return JSON.stringify(info.message || {}); },
       matchedAlias,
       // Handlers
       handleAutoDownload, getFileBuffer, getMediaInfo, processImageForProfile,
