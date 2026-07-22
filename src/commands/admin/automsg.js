@@ -209,7 +209,7 @@ export default {
           try { fs.unlinkSync(removedMsg.mediaPath); } catch (_) { /* falha silenciosa */ }
         }
         unscheduleAutoMessage(from, removedMsg.id);
-        await db.writeAsync(groupFilePath, groupFileData);
+        await db.writeSafe(groupFilePath, groupFileData);
         return reply(MESSAGES.admin.automsg.delSuccess);
       }
 
@@ -225,7 +225,7 @@ export default {
       if (!targetMsg) return reply('❌ Mensagem não encontrada. Use automsg list para ver os IDs.');
 
       targetMsg.enabled = true;
-      await db.writeAsync(groupFilePath, groupFileData);
+      await db.writeSafe(groupFilePath, groupFileData);
       scheduleAutoMessage(from, targetMsg, bot);
 
       return reply(`✅ Mensagem automática ativada!\n\n🆔 ID: ${targetId}`);
@@ -240,7 +240,7 @@ export default {
       if (!targetMsg) return reply('❌ Mensagem não encontrada. Use automsg list para ver os IDs.');
 
       targetMsg.enabled = false;
-      db.writeSafe(groupFilePath, groupFileData);
+      await db.writeSafe(groupFilePath, groupFileData);
       unscheduleAutoMessage(from, targetId);
 
       return reply(`✅ Mensagem automática desativada!\n\n🆔 ID: ${targetId}`);
