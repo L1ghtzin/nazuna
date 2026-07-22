@@ -70,73 +70,92 @@ export default {
         createdBy: sender
       };
 
-      if (quotedMessageContent) {
+      const targetContent = quotedMessageContent || info?.message;
+      const isQuoted = !!quotedMessageContent;
+
+      const imageMsg = targetContent?.imageMessage || 
+        targetContent?.viewOnceMessage?.message?.imageMessage ||
+        targetContent?.viewOnceMessageV2?.message?.imageMessage;
+
+      const videoMsg = targetContent?.videoMessage || 
+        targetContent?.viewOnceMessage?.message?.videoMessage ||
+        targetContent?.viewOnceMessageV2?.message?.videoMessage;
+
+      const docMsg = targetContent?.documentMessage || 
+        targetContent?.documentWithCaptionMessage?.message?.documentMessage;
+
+      const stickerMsg = targetContent?.stickerMessage;
+
+      const audioMsg = targetContent?.audioMessage;
+
+      if (imageMsg || videoMsg || docMsg || stickerMsg || audioMsg) {
         const autoMsgGroupDir = pathz.join(AUTOMSG_MEDIA_DIR, from);
         ensureDirectoryExists(autoMsgGroupDir);
 
-        if (isQuotedImage || isQuotedVisuU || isQuotedVisuU2) {
-          const imageMsg = quotedMessageContent.imageMessage || 
-            quotedMessageContent.viewOnceMessage?.message?.imageMessage ||
-            quotedMessageContent.viewOnceMessageV2?.message?.imageMessage;
-
+        if (imageMsg) {
           const imageBuffer = await getFileBuffer(imageMsg, 'image');
           const imagePath = pathz.join(autoMsgGroupDir, `${newMsgConfig.id}.jpg`);
           fs.writeFileSync(imagePath, imageBuffer);
 
+          const captionToUse = (description && description !== 'Sem descrição')
+            ? description
+            : (imageMsg?.caption && !imageMsg.caption.startsWith(prefix) ? imageMsg.caption : description);
+
           newMsgConfig.type = 'image';
           newMsgConfig.mediaPath = imagePath;
-          newMsgConfig.caption = imageMsg?.caption || description;
+          newMsgConfig.caption = captionToUse;
 
-        } else if (isQuotedVideo) {
-          const videoBuffer = await getFileBuffer(quotedMessageContent.videoMessage, 'video');
+        } else if (videoMsg) {
+          const videoBuffer = await getFileBuffer(videoMsg, 'video');
           const videoPath = pathz.join(autoMsgGroupDir, `${newMsgConfig.id}.mp4`);
           fs.writeFileSync(videoPath, videoBuffer);
 
+          const captionToUse = (description && description !== 'Sem descrição')
+            ? description
+            : (videoMsg?.caption && !videoMsg.caption.startsWith(prefix) ? videoMsg.caption : description);
+
           newMsgConfig.type = 'video';
           newMsgConfig.mediaPath = videoPath;
-          newMsgConfig.caption = quotedMessageContent.videoMessage?.caption || description;
+          newMsgConfig.caption = captionToUse;
 
-        } else if (isQuotedDocument || isQuotedDocW) {
-          const docMsg = quotedMessageContent.documentMessage || 
-            quotedMessageContent.documentWithCaptionMessage?.message?.documentMessage;
+        } else if (docMsg) {
           const docBuffer = await getFileBuffer(docMsg, 'document');
           const docExt = docMsg?.fileName?.split('.').pop() || 'pdf';
           const docPath = pathz.join(autoMsgGroupDir, `${newMsgConfig.id}.${docExt}`);
           fs.writeFileSync(docPath, docBuffer);
 
+          const captionToUse = (description && description !== 'Sem descrição')
+            ? description
+            : (docMsg?.caption && !docMsg.caption.startsWith(prefix) ? docMsg.caption : description);
+
           newMsgConfig.type = 'document';
           newMsgConfig.mediaPath = docPath;
           newMsgConfig.fileName = docMsg?.fileName || 'documento.pdf';
-          newMsgConfig.caption = docMsg?.caption || description;
+          newMsgConfig.caption = captionToUse;
 
-        } else if (isQuotedSticker) {
-          const stickerBuffer = await getFileBuffer(quotedMessageContent.stickerMessage, 'sticker');
+        } else if (stickerMsg) {
+          const stickerBuffer = await getFileBuffer(stickerMsg, 'sticker');
           const stickerPath = pathz.join(autoMsgGroupDir, `${newMsgConfig.id}.webp`);
           fs.writeFileSync(stickerPath, stickerBuffer);
 
           newMsgConfig.type = 'sticker';
           newMsgConfig.mediaPath = stickerPath;
 
-        } else if (isQuotedAudio) {
-          const audioBuffer = await getFileBuffer(quotedMessageContent.audioMessage, 'audio');
+        } else if (audioMsg) {
+          const audioBuffer = await getFileBuffer(audioMsg, 'audio');
           const audioPath = pathz.join(autoMsgGroupDir, `${newMsgConfig.id}.mp3`);
           fs.writeFileSync(audioPath, audioBuffer);
 
           newMsgConfig.type = 'audio';
           newMsgConfig.mediaPath = audioPath;
-
-        } else if (isQuotedMsg || isQuotedMsg2) {
-          const quotedText = quotedMessageContent.conversation || 
-            quotedMessageContent.extendedTextMessage?.text;
-          newMsgConfig.type = 'text';
-          newMsgConfig.content = quotedText;
-
-        } else {
-          return reply(MESSAGES.admin.automsg.addUnsupportedFormat);
         }
+      } else if (isQuoted && (quotedMessageContent.conversation || quotedMessageContent.extendedTextMessage?.text)) {
+        const quotedText = quotedMessageContent.conversation || quotedMessageContent.extendedTextMessage?.text;
+        newMsgConfig.type = 'text';
+        newMsgConfig.content = (description && description !== 'Sem descrição') ? description : quotedText;
       } else {
         if (!description || description === 'Sem descrição') {
-          return reply('❌ Você precisa responder a uma mensagem ou fornecer um texto após o horário.');
+          return reply('❌ Você precisa enviar/responder a uma mídia ou fornecer um texto após o horário.');
         }
         newMsgConfig.type = 'text';
         newMsgConfig.content = description;

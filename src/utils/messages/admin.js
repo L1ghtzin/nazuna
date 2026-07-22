@@ -59,7 +59,7 @@ export const adminMessages = {
     error: '❌ Ocorreu um erro ao configurar os horários automáticos.'
   },
   automsg: {
-    helpText: (prefix) => `📨 *Auto Mensagens*\n      \nUse os subcomandos:\n• ${prefix}automsg add HH:MM | descrição - Adicionar (responda à mídia/texto)\n• ${prefix}automsg list - Listar mensagens\n• ${prefix}automsg del [id] - Remover mensagem\n• ${prefix}automsg on/off [id] - Ativar/Desativar mensagem\n\n💡 *Exemplo:* ${prefix}automsg add 08:00 | Bom dia!`,
+    helpText: (prefix) => `📨 *Auto Mensagens*\n      \nUse os subcomandos:\n• ${prefix}automsg add HH:MM | descrição - Adicionar (envie ou responda à mídia/texto)\n• ${prefix}automsg list - Listar mensagens\n• ${prefix}automsg del [id] - Remover mensagem\n• ${prefix}automsg on/off [id] - Ativar/Desativar mensagem\n\n💡 *Exemplo:* ${prefix}automsg add 08:00 | Bom dia!`,
     addInvalidFormat: (prefix) => `❌ Formato inválido! Use: ${prefix}automsg add HH:MM | descrição`,
     addInvalidTime: "❌ Horário inválido! Use o formato 24h (ex: 08:30, 22:00).",
     addMediaWarning: "⚠️ Salvamento de mídia para automsg modularizado requer integração com o sistema de arquivos local. Migrando apenas metadados por enquanto.",
