@@ -226,12 +226,43 @@ function parseAction(actionStr, limitVal) {
     };
 }
 
-async function executeAction(ChainySock, groupJid, participantLid, cfg) {
+async function executeAction(ChainySock, groupJid, participantLid, cfg, triggerKey) {
     const flags = parseAction(cfg.action, cfg.limit);
     const userName = participantLid.split('@')[0].split(':')[0];
     const groupName = groupCache.get(groupJid)?.subject || groupJid;
     const adminSock = global.sockAdmin || ChainySock;
 
+    // 1. PUNIÇÃO E CONTENÇÃO IMEDIATA E EM PARALELO (Fechar Grupo, Banir, Deletar Mensagem)
+    const instantActions = [];
+
+    if (flags.fechar) {
+        cfg.stats.closed++;
+        instantActions.push(
+            adminSock.groupSettingUpdate(groupJid, 'announcement').catch(() => {})
+        );
+        setTimeout(async () => {
+            await adminSock.groupSettingUpdate(groupJid, 'not_announcement').catch(() => {});
+            await adminSock.sendMessage(groupJid, { text: MESSAGES.middleware.antiStealth.periodEnded(flags.tempo) }).catch(() => {});
+        }, flags.tempo * 60 * 1000).unref?.();
+    }
+
+    if (flags.banir) {
+        cfg.stats.banned++;
+        instantActions.push(
+            adminSock.groupParticipantsUpdate(groupJid, [removeDeviceId(participantLid)], 'remove').catch(() => {})
+        );
+    }
+
+    if (triggerKey) {
+        instantActions.push(
+            adminSock.sendMessage(groupJid, { delete: triggerKey }).catch(() => {})
+        );
+    }
+
+    // Executa fechamento do grupo, banimento e deleção da mensagem EM PARALELO instantaneamente!
+    await Promise.allSettled(instantActions);
+
+    // 2. ALERTAS E NOTIFICAÇÕES (Assíncronos em segundo plano)
     const mentions = [participantLid];
     let actionText = 'uma ação de segurança foi tomada';
     if (flags.banir && flags.fechar) {
@@ -253,22 +284,9 @@ async function executeAction(ChainySock, groupJid, participantLid, cfg) {
     }
     groupMsg += MESSAGES.middleware.antiStealth.alertFooter;
 
-    await adminSock.sendMessage(groupJid, { text: groupMsg, mentions }).catch(() => {});
-
-    if (flags.fechar) {
-        cfg.stats.closed++;
-        await adminSock.groupSettingUpdate(groupJid, 'announcement').catch(() => {});
-        setTimeout(async () => {
-            await adminSock.groupSettingUpdate(groupJid, 'not_announcement').catch(() => {});
-            await adminSock.sendMessage(groupJid, { text: MESSAGES.middleware.antiStealth.periodEnded(flags.tempo) }).catch(() => {});
-        }, flags.tempo * 60 * 1000).unref?.();
-    }
+    adminSock.sendMessage(groupJid, { text: groupMsg, mentions }).catch(() => {});
 
     if (flags.banir) {
-        cfg.stats.banned++;
-        try {
-            await adminSock.groupParticipantsUpdate(groupJid, [removeDeviceId(participantLid)], 'remove');
-        } catch (e) {}
         sendCleanChat({ socket: adminSock, remoteJid: groupJid }).catch(() => {});
     }
 
@@ -354,12 +372,7 @@ export async function processAntiStealth(ChainySock, m) {
         cfg.stats.detected++;
         state.stealthTimestamps = [];
 
-        if (info.key) {
-            const adminSock = global.sockAdmin || ChainySock;
-            await adminSock.sendMessage(groupJid, { delete: info.key }).catch(() => {});
-        }
-
-        await executeAction(ChainySock, groupJid, participant, cfg);
+        await executeAction(ChainySock, groupJid, participant, cfg, info.key);
         persistGroupDataDebounced(groupJid, groupData);
     }
 }
