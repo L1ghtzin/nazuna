@@ -6,18 +6,20 @@
   
   [![Node.js Version](https://img.shields.io/badge/node-%3E%3D20.0.0-green.svg?style=for-the-badge&logo=node.js)](https://nodejs.org)
   [![License](https://img.shields.io/badge/license-ISC-blue.svg?style=for-the-badge)](LICENSE)
-  [![Base](https://img.shields.io/badge/base-Nazuna-purple.svg?style=for-the-badge)](https://github.com/DevTokyoVx/nazuna)
+  [![Base Nazuna](https://img.shields.io/badge/base-Nazuna-purple.svg?style=for-the-badge)](https://github.com/DevTokyoVx/nazuna)
   [![Status](https://img.shields.io/badge/status-active-success.svg?style=for-the-badge)]()
 </div>
 
 ---
 
-## 📌 Índice
+## 📌 ÍNDICE
+
 - [🌟 Sobre a Chainy](#-sobre-a-chainy)
 - [📂 Estrutura do Projeto](#-estrutura-do-projeto)
 - [🛠️ Recursos & Módulos Principais](#️-recursos--módulos-principais)
+  - [📥 Downloaders de Mídia](#-downloaders-de-mídia)
   - [⚔️ RPG Integrado](#️-rpg-integrado)
-  - [🛡️ Administração](#️-administração)
+  - [🛡️ Administração & Moderação](#️-administração--moderação)
   - [👤 Membros & Utilitários](#-membros--utilitários)
   - [⚙️ Painel do Dono](#️-painel-do-dono)
 - [📋 Pré-requisitos](#-pré-requisitos)
@@ -29,18 +31,18 @@
 
 ---
 
-## 🌟 Sobre a Chainy
+## 🌟 SOBRE A CHAINY
 
 A **Chainy** é um framework modular de bot para WhatsApp desenvolvido em **Node.js** com suporte nativo à sintaxe ESM. Baseado no ecossistema da [Nazuna](https://github.com/DevTokyoVx/nazuna), a Chainy introduz melhorias significativas em performance, segurança, tratamento de concorrência na persistência de dados JSON e gerenciamento automatizado de comandos dinâmicos.
 
-É a escolha ideal tanto para entretenimento (através de um sistema completo de RPG) quanto para moderação profissional de grupos.
+É a escolha ideal tanto para entretenimento (através de um sistema completo de RPG) quanto para moderação profissional e downloads de mídias em grupos.
 
 > [!WARNING]
 > Ao migrar de bases antigas da Nazuna para a Chainy, é **altamente recomendada** uma instalação limpa para evitar conflitos nas estruturas de dados salvas.
 
 ---
 
-## 📂 Estrutura do Projeto
+## 📂 ESTRUTURA DO PROJETO
 
 A arquitetura do bot é estruturada de forma altamente modular para simplificar a adição de novas funcionalidades e manter a separação de responsabilidades (Clean Code / MVC):
 
@@ -50,7 +52,7 @@ chainy/
 │   ├── database/                # Cache em memória e arquivos JSON do banco
 │   │   ├── grupos/              # Configurações de segurança e status de cada grupo
 │   │   ├── dono/                # Credenciais, configurações globais e blacklist
-│   │   ├── backups/             # Backups automáticos gerados pelo saveJsonFileSafe()
+│   │   ├── backups/             # Backups automáticos gerados pelo banco
 │   │   ├── qr-code/             # Credenciais de sessão do WhatsApp (Baileys)
 │   │   └── tmp/                 # Arquivos temporários (mídias, cache de processamento)
 │   └── config.json              # Configuração básica do bot (Dono, Prefixo, etc.)
@@ -66,22 +68,29 @@ chainy/
 │   │   ├── anti/                # Proteções anti (antiDel, antiSpam, mutedUsers, rentalMode, afk, etc)
 │   │   └── guards/              # Guardas de segurança (antipalavra, antitoxic, antistickerplus, temuScammer)
 │   ├── funcs/                   # Integrações, serviços e dados estáticos
-│   │   ├── downloads/           # Downloaders (YouTube, TikTok, Spotify, etc)
+│   │   ├── downloads/           # Downloaders (YouTube, TikTok, Spotify, Instagram, Facebook, etc)
 │   │   ├── utils/               # Utilitários de serviço (jogos, search, media, sticker)
 │   │   └── json/                # Bancos de dados estáticos de jogos (quiz, forca, stop, etc)
 │   ├── views/                   # Geradores de texto dos menus exibidos pelo comando /menu
 │   ├── utils/                   # Núcleo de utilitários do framework
-│   │   ├── database/            # Submódulos do banco (economy, leveling, rental, config, support)
+│   │   ├── database/            # Submódulos do banco (economy, leveling, rental, config, support, io)
 │   │   ├── helpers/             # Helpers puros (formatting, jsonIo, jidLidResolver, dataValidators, paramParser)
 │   │   └── messages/            # Mensagens centralizadas por domínio (admin, member, owner, rpg, etc)
 │   ├── workers/                 # Jobs agendados (cron) e workers em background
 │   └── .scripts/                # Scripts npm (start, config, update)
+├── AGENTS.md                    # Guia para agentes de IA e contribuidores
 └── package.json                 # Manifesto do projeto e scripts npm
 ```
 
 ---
 
-## 🛠️ Recursos & Módulos Principais
+## 🛠️ RECURSOS & MÓDULOS PRINCIPAIS
+
+### 📥 Downloaders de Mídia (`src/funcs/downloads/` & `src/commands/member/download.js`)
+Download de mídias multiplataforma com fallback inteligente e seleção de qualidade:
+- **YouTube Audio (`/play`, `/ytmp3`)**: Pesquisa e download de áudios em MP3 com fallback automático via YouTube Music (`WEB_REMIX`) para termos censurados.
+- **YouTube Video (`/playvid`, `/ytmp4`)**: Download de vídeos em MP4 com suporte à seleção de qualidade (`144p` até `1080p`).
+- **Outras Plataformas**: Suporte a downloads do TikTok, Spotify, Instagram (reels/posts/stories), Facebook, Twitter/X, SoundCloud, Kwai, Google Drive e MediaFire.
 
 ### ⚔️ RPG Integrado (`src/commands/rpg/`)
 Um ecossistema de RPG interativo e completo diretamente no WhatsApp:
@@ -89,9 +98,9 @@ Um ecossistema de RPG interativo e completo diretamente no WhatsApp:
 - **Pets & Duelos:** Capture e treine pets, dispute duelos em turnos PVP e faça apostas nas batalhas.
 - **Economia Dinâmica:** Sistema de inventário, mercado livre entre jogadores, leilões em tempo real e jogos de cassino.
 - **Dungeons & Quests:** Explore masmorras, derrote bosses, complete missões diárias e evolua suas habilidades.
-- **Social & Vida Virtual:** Compre propriedades, case-se com outros usuários, adote filhos virtuais e acúmule prestígio.
+- **Social & Vida Virtual:** Compre propriedades, case-se com outros usuários, adote filhos virtuais e acumule prestígio.
 
-### 🛡️ Administração (`src/commands/admin/`)
+### 🛡️ Administração & Moderação (`src/commands/admin/`)
 Controle total do grupo com segurança automática robusta:
 - **Segurança Antinvasão:** Whitelist de usuários, detecção de spam e proteção contra links externos/nocivos.
 - **Moderação Inteligente:** Aplicação de advertências (warnings), banimentos temporários/permanentes e mutar membros.
@@ -99,9 +108,9 @@ Controle total do grupo com segurança automática robusta:
 
 ### 👤 Membros & Utilitários (`src/commands/member/`)
 Ferramentas úteis para engajamento e facilidade no dia a dia:
-- **Ferramentas Práticas:** Tradutor, calculadora, previsão do clima, encurtador de links e pesquisas rápidas.
-- **Minijogos Coletivos:** Desafios de Stop, Forca, Caça-Palavras, Anagramas e Quizzes com pontuação.
-- **Manipulação de Mídias:** Conversor avançado de figurinhas (stickers normais e animados), aplicação de filtros em imagens, áudios e vídeos.
+- **Ferramentas Práticas:** Tradutor, calculadora científica, previsão do clima, encurtador de links e pesquisas rápidas via DuckDuckGo.
+- **Minijogos Coletivos:** Desafios de Stop, Forca, Caça-Palavras, Anagramas, Jogo da Memória, Tic-Tac-Toe, Uno e Quizzes com pontuação.
+- **Manipulação de Mídias:** Conversor avançado de figurinhas (stickers normais e animados), aplicação de efeitos em imagens, áudios e vídeos.
 
 ### ⚙️ Painel do Dono (`src/commands/owner/`)
 Gestão central do ecossistema e manutenção do bot:
@@ -111,7 +120,7 @@ Gestão central do ecossistema e manutenção do bot:
 
 ---
 
-## 📋 Pré-requisitos
+## 📋 PRÉ-REQUISITOS
 
 | Requisito | Mínimo | Recomendado |
 | :--- | :--- | :--- |
@@ -123,7 +132,7 @@ Gestão central do ecossistema e manutenção do bot:
 
 ---
 
-## 🚀 Instalação e Inicialização
+## 🚀 INSTALAÇÃO E INICIALIZAÇÃO
 
 A Chainy acompanha um assistente interativo no terminal para simplificar a configuração de credenciais iniciais.
 
@@ -153,19 +162,19 @@ npm start
 
 ---
 
-## 🔌 Métodos de Conexão
+## 🔌 MÉTODOS DE CONEXÃO
 
 Após iniciar o bot no terminal, você poderá conectá-lo ao WhatsApp usando dois métodos:
 
-* **Opção 1: QR Code (Padrão)**
-  Abra o WhatsApp no celular > toque em **Aparelhos conectados** > **Conectar um aparelho** e aponte a câmera para escanear o código QR gerado no terminal.
+* **Opção 1: QR Code (Padrão)**  
+  Abra o WhatsApp no celular ➔ toque em **Aparelhos conectados** ➔ **Conectar um aparelho** e aponte a câmera para escanear o código QR gerado no terminal.
   
-* **Opção 2: Código de Pareamento**
+* **Opção 2: Código de Pareamento**  
   Útil caso seu terminal (ex: VPS sem renderização unicode completa) quebre o visual do QR Code. Informe o número do telefone com código de país e DDD quando solicitado no terminal (ex: `5511999999999`) e digite o código de 8 dígitos gerado no app do WhatsApp.
 
 ---
 
-## 🔄 Atualização Automática
+## 🔄 ATUALIZAÇÃO AUTOMÁTICA
 
 Para manter seu bot atualizado sem perder as suas configurações locais ou arquivos de banco de dados (`dados/database/*`), utilize o comando integrado de atualização segura:
 
@@ -184,7 +193,7 @@ npm run update
 
 ---
 
-## ❓ Perguntas Frequentes (FAQ)
+## ❓ PERGUNTAS FREQUENTES (FAQ)
 
 <details>
 <summary><b>Como reconfigurar o prefixo ou número de dono?</b></summary>
@@ -203,7 +212,7 @@ Certifique-se de que o executável do FFmpeg está instalado e adicionado às Va
 
 ---
 
-## 👤 Créditos e Licenciamento
+## 👤 CRÉDITOS E LICENCIAMENTO
 
 - **Projeto Base:** [Nazuna](https://github.com/DevTokyoVx/nazuna) desenvolvido originalmente por **Hiudy** e mantido por **DevTokyoVx**.
 - **Desenvolvimento Chainy:** Personalizações de layout, correções de concorrência, otimizações e scripts de atualização automática por **L1ghtzin**.
