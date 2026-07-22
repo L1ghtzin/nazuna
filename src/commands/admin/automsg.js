@@ -3,6 +3,7 @@ import fs from 'fs';
 import db from '../../utils/database/io.js';
 import { scheduleAutoMessage, unscheduleAutoMessage } from '../../workers/autoMessagesWorker.js';
 import { ensureDirectoryExists } from '../../utils/helpers.js';
+import { unwrapMessage } from '../../utils/messageHelpers.js';
 import { normalizeScheduleTime } from '../../utils/timeHelpers.js';
 import { ROOT_DIR } from '../../utils/paths.js';
 
@@ -22,17 +23,8 @@ export default {
     groupData,
     buildGroupFilePath,
     quotedMessageContent,
-    isQuotedImage,
-    isQuotedVideo,
-    isQuotedAudio,
-    isQuotedSticker,
-    isQuotedDocument,
-    isQuotedDocW,
-    isQuotedVisuU,
-    isQuotedVisuU2,
-    isQuotedMsg,
-    isQuotedMsg2,
     getFileBuffer,
+    info,
     sender,
     q,
     MESSAGES
@@ -70,104 +62,111 @@ export default {
         createdBy: sender
       };
 
-      const targetContent = quotedMessageContent || info?.message;
-      const isQuoted = !!quotedMessageContent;
+      try {
+        const rawTarget = quotedMessageContent || info?.message;
+        const targetContent = unwrapMessage(rawTarget);
+        const isQuoted = !!quotedMessageContent;
 
-      const imageMsg = targetContent?.imageMessage || 
-        targetContent?.viewOnceMessage?.message?.imageMessage ||
-        targetContent?.viewOnceMessageV2?.message?.imageMessage;
+        const imageMsg = targetContent?.imageMessage || 
+          targetContent?.viewOnceMessage?.message?.imageMessage ||
+          targetContent?.viewOnceMessageV2?.message?.imageMessage;
 
-      const videoMsg = targetContent?.videoMessage || 
-        targetContent?.viewOnceMessage?.message?.videoMessage ||
-        targetContent?.viewOnceMessageV2?.message?.videoMessage;
+        const videoMsg = targetContent?.videoMessage || 
+          targetContent?.viewOnceMessage?.message?.videoMessage ||
+          targetContent?.viewOnceMessageV2?.message?.videoMessage;
 
-      const docMsg = targetContent?.documentMessage || 
-        targetContent?.documentWithCaptionMessage?.message?.documentMessage;
+        const docMsg = targetContent?.documentMessage || 
+          targetContent?.documentWithCaptionMessage?.message?.documentMessage;
 
-      const stickerMsg = targetContent?.stickerMessage;
+        const stickerMsg = targetContent?.stickerMessage;
 
-      const audioMsg = targetContent?.audioMessage;
+        const audioMsg = targetContent?.audioMessage;
 
-      if (imageMsg || videoMsg || docMsg || stickerMsg || audioMsg) {
-        const autoMsgGroupDir = pathz.join(AUTOMSG_MEDIA_DIR, from);
-        ensureDirectoryExists(autoMsgGroupDir);
+        if (imageMsg || videoMsg || docMsg || stickerMsg || audioMsg) {
+          const safeFromFolder = from.replace(/[^a-zA-Z0-9_@.-]/g, '_');
+          const autoMsgGroupDir = pathz.join(AUTOMSG_MEDIA_DIR, safeFromFolder);
+          ensureDirectoryExists(autoMsgGroupDir);
 
-        if (imageMsg) {
-          const imageBuffer = await getFileBuffer(imageMsg, 'image');
-          const imagePath = pathz.join(autoMsgGroupDir, `${newMsgConfig.id}.jpg`);
-          fs.writeFileSync(imagePath, imageBuffer);
+          if (imageMsg) {
+            const imageBuffer = await getFileBuffer(imageMsg, 'image');
+            const imagePath = pathz.join(autoMsgGroupDir, `${newMsgConfig.id}.jpg`);
+            fs.writeFileSync(imagePath, imageBuffer);
 
-          const captionToUse = (description && description !== 'Sem descrição')
-            ? description
-            : (imageMsg?.caption && !imageMsg.caption.startsWith(prefix) ? imageMsg.caption : description);
+            const captionToUse = (description && description !== 'Sem descrição')
+              ? description
+              : (imageMsg?.caption && !imageMsg.caption.startsWith(prefix) ? imageMsg.caption : description);
 
-          newMsgConfig.type = 'image';
-          newMsgConfig.mediaPath = imagePath;
-          newMsgConfig.caption = captionToUse;
+            newMsgConfig.type = 'image';
+            newMsgConfig.mediaPath = imagePath;
+            newMsgConfig.caption = captionToUse;
 
-        } else if (videoMsg) {
-          const videoBuffer = await getFileBuffer(videoMsg, 'video');
-          const videoPath = pathz.join(autoMsgGroupDir, `${newMsgConfig.id}.mp4`);
-          fs.writeFileSync(videoPath, videoBuffer);
+          } else if (videoMsg) {
+            const videoBuffer = await getFileBuffer(videoMsg, 'video');
+            const videoPath = pathz.join(autoMsgGroupDir, `${newMsgConfig.id}.mp4`);
+            fs.writeFileSync(videoPath, videoBuffer);
 
-          const captionToUse = (description && description !== 'Sem descrição')
-            ? description
-            : (videoMsg?.caption && !videoMsg.caption.startsWith(prefix) ? videoMsg.caption : description);
+            const captionToUse = (description && description !== 'Sem descrição')
+              ? description
+              : (videoMsg?.caption && !videoMsg.caption.startsWith(prefix) ? videoMsg.caption : description);
 
-          newMsgConfig.type = 'video';
-          newMsgConfig.mediaPath = videoPath;
-          newMsgConfig.caption = captionToUse;
+            newMsgConfig.type = 'video';
+            newMsgConfig.mediaPath = videoPath;
+            newMsgConfig.caption = captionToUse;
 
-        } else if (docMsg) {
-          const docBuffer = await getFileBuffer(docMsg, 'document');
-          const docExt = docMsg?.fileName?.split('.').pop() || 'pdf';
-          const docPath = pathz.join(autoMsgGroupDir, `${newMsgConfig.id}.${docExt}`);
-          fs.writeFileSync(docPath, docBuffer);
+          } else if (docMsg) {
+            const docBuffer = await getFileBuffer(docMsg, 'document');
+            const docExt = docMsg?.fileName?.split('.').pop() || 'pdf';
+            const docPath = pathz.join(autoMsgGroupDir, `${newMsgConfig.id}.${docExt}`);
+            fs.writeFileSync(docPath, docBuffer);
 
-          const captionToUse = (description && description !== 'Sem descrição')
-            ? description
-            : (docMsg?.caption && !docMsg.caption.startsWith(prefix) ? docMsg.caption : description);
+            const captionToUse = (description && description !== 'Sem descrição')
+              ? description
+              : (docMsg?.caption && !docMsg.caption.startsWith(prefix) ? docMsg.caption : description);
 
-          newMsgConfig.type = 'document';
-          newMsgConfig.mediaPath = docPath;
-          newMsgConfig.fileName = docMsg?.fileName || 'documento.pdf';
-          newMsgConfig.caption = captionToUse;
+            newMsgConfig.type = 'document';
+            newMsgConfig.mediaPath = docPath;
+            newMsgConfig.fileName = docMsg?.fileName || 'documento.pdf';
+            newMsgConfig.caption = captionToUse;
 
-        } else if (stickerMsg) {
-          const stickerBuffer = await getFileBuffer(stickerMsg, 'sticker');
-          const stickerPath = pathz.join(autoMsgGroupDir, `${newMsgConfig.id}.webp`);
-          fs.writeFileSync(stickerPath, stickerBuffer);
+          } else if (stickerMsg) {
+            const stickerBuffer = await getFileBuffer(stickerMsg, 'sticker');
+            const stickerPath = pathz.join(autoMsgGroupDir, `${newMsgConfig.id}.webp`);
+            fs.writeFileSync(stickerPath, stickerBuffer);
 
-          newMsgConfig.type = 'sticker';
-          newMsgConfig.mediaPath = stickerPath;
+            newMsgConfig.type = 'sticker';
+            newMsgConfig.mediaPath = stickerPath;
 
-        } else if (audioMsg) {
-          const audioBuffer = await getFileBuffer(audioMsg, 'audio');
-          const audioPath = pathz.join(autoMsgGroupDir, `${newMsgConfig.id}.mp3`);
-          fs.writeFileSync(audioPath, audioBuffer);
+          } else if (audioMsg) {
+            const audioBuffer = await getFileBuffer(audioMsg, 'audio');
+            const audioPath = pathz.join(autoMsgGroupDir, `${newMsgConfig.id}.mp3`);
+            fs.writeFileSync(audioPath, audioBuffer);
 
-          newMsgConfig.type = 'audio';
-          newMsgConfig.mediaPath = audioPath;
+            newMsgConfig.type = 'audio';
+            newMsgConfig.mediaPath = audioPath;
+          }
+        } else if (isQuoted && (quotedMessageContent?.conversation || quotedMessageContent?.extendedTextMessage?.text)) {
+          const quotedText = quotedMessageContent.conversation || quotedMessageContent.extendedTextMessage?.text;
+          newMsgConfig.type = 'text';
+          newMsgConfig.content = (description && description !== 'Sem descrição') ? description : quotedText;
+        } else {
+          if (!description || description === 'Sem descrição') {
+            return reply('❌ Você precisa enviar/responder a uma mídia ou fornecer um texto após o horário.');
+          }
+          newMsgConfig.type = 'text';
+          newMsgConfig.content = description;
         }
-      } else if (isQuoted && (quotedMessageContent.conversation || quotedMessageContent.extendedTextMessage?.text)) {
-        const quotedText = quotedMessageContent.conversation || quotedMessageContent.extendedTextMessage?.text;
-        newMsgConfig.type = 'text';
-        newMsgConfig.content = (description && description !== 'Sem descrição') ? description : quotedText;
-      } else {
-        if (!description || description === 'Sem descrição') {
-          return reply('❌ Você precisa enviar/responder a uma mídia ou fornecer um texto após o horário.');
-        }
-        newMsgConfig.type = 'text';
-        newMsgConfig.content = description;
+
+        groupFileData.autoMessages.push(newMsgConfig);
+        await db.writeSafe(groupFilePath, groupFileData);
+
+        // Agenda imediatamente — sem precisar aguardar o próximo refresh do worker
+        scheduleAutoMessage(from, newMsgConfig, bot);
+
+        return reply(MESSAGES.admin.automsg.addSuccess(normalizedTime));
+      } catch (err) {
+        console.error('❌ Erro no subcomando add do automsg:', err);
+        return reply('❌ Ocorreu um erro ao processar a mídia da mensagem automática. Tente novamente.');
       }
-
-      groupFileData.autoMessages.push(newMsgConfig);
-      await db.writeAsync(groupFilePath, groupFileData);
-
-      // Agenda imediatamente — sem precisar aguardar o próximo refresh do worker
-      scheduleAutoMessage(from, newMsgConfig, bot);
-
-      return reply(MESSAGES.admin.automsg.addSuccess(normalizedTime));
     }
 
     // --- LIST ---
