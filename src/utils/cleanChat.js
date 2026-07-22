@@ -3,8 +3,7 @@ import { MESSAGES } from './messages.js';
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export function clearChat() {
-  // Retorna uma sequência de quebras de linha para "limpar" visualmente o chat no celular
-  return "\n".repeat(400);
+  return "";
 }
 
 export function buildCleanChatMessage() {
@@ -53,23 +52,13 @@ export async function sendCleanChat({
   sendSuccessReply,
   successMessage,
 }) {
-  if (sendText) {
-    await sendText(`\n\n${clearChat()}`);
-  } else {
-    await socket.sendMessage(remoteJid, {
-      text: MESSAGES.general.cleanChatBotMessage(clearChat()),
-    });
-  }
-
-  await delay(2000);
-
   await socket.relayMessage(remoteJid, buildCleanChatMessage(), {});
 
   if (!successMessage) {
     return;
   }
 
-  await delay(2000);
+  await delay(1000);
 
   if (sendSuccessReply) {
     await sendSuccessReply(successMessage);
