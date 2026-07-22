@@ -303,6 +303,11 @@ async function mp3(query, preInfo = null) {
 
 async function mp4(query, qualidade = '360p', preInfo = null) {
   try {
+    const raw = String(qualidade || '').toLowerCase();
+    let num = raw === '4k' ? 1080 : parseInt(raw, 10);
+    if (isNaN(num) || num > 1080) num = 1080;
+    const targetQuality = `${num}p`;
+
     const s = await search(query);
     if (!s.ok) throw new Error(s.msg);
 
@@ -342,7 +347,7 @@ async function mp4(query, qualidade = '360p', preInfo = null) {
       buffer,
       title,
       thumbnail,
-      quality: qualidade,
+      quality: targetQuality,
       filename,
       source,
       tempo: preInfo?.seconds || 0

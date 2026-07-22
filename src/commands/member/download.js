@@ -79,11 +79,11 @@ export default {
         let quality = '360p';
         let searchQuery = q;
 
-        const qualityMatch = searchQuery.match(/(?:--|-)?\b(144p?|240p?|360p?|480p?|720p?|1080p?|1440p?|4k)\b/i);
+        const qualityMatch = searchQuery.match(/(?:--|-)?\b(144p?|240p?|360p?|480p?|720p?|1080p?)\b/i);
         if (qualityMatch) {
           const matchedStr = qualityMatch[0];
           const raw = qualityMatch[1].toLowerCase();
-          let num = raw === '4k' ? 1080 : parseInt(raw, 10);
+          let num = parseInt(raw, 10);
           if (isNaN(num) || num > 1080) num = 1080;
           quality = `${num}p`;
           searchQuery = searchQuery.replace(matchedStr, '').replace(/\s+/g, ' ').trim();
