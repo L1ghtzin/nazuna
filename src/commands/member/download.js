@@ -1,12 +1,12 @@
 export default {
   name: "download",
   description: "Comandos de download de mídia (YouTube, Spotify, etc)",
-  commands: ["bot-zip", "botzip", "download-bot", "downloadbot", "drive", "facebook", "facebookdl", "fb", "fbdl", "gd", "gdrive", "git-bot", "git-hub", "gitbot", "github", "googledrive", "ig", "igdl", "igstory", "instagram", "instavideo", "kwai", "letra", "lyrics", "mcplugin", "mcplugins", "mediafire", "mf", "play", "play2", "play3", "playsoundcloud", "playspotify", "playvid", "repo", "repositorio", "soundcloud", "soundclouddl", "source", "source-code", "sourcecode", "spotify", "spotifydl", "tiktok", "tiktokaudio", "tiktoks", "tiktoksearch", "tiktokvideo", "tkk", "ttk", "twitter", "twitterdl", "twt", "x", "xdl", "ytmp3", "ytmp4", "zip-bot", "zipbot"],
+  commands: ["drive", "facebook", "facebookdl", "fb", "fbdl", "gd", "gdrive", "googledrive", "ig", "igdl", "igstory", "instagram", "instavideo", "kwai", "letra", "lyrics", "mediafire", "mf", "play", "play2", "play3", "playsoundcloud", "playspotify", "playvid", "soundcloud", "soundclouddl", "spotify", "spotifydl", "tiktok", "tiktokaudio", "tiktoks", "tiktoksearch", "tiktokvideo", "tkk", "ttk", "twitter", "twitterdl", "twt", "x", "xdl", "ytmp3", "ytmp4"],
   handle: async ({
     bot, from, info, command, q, reply, prefix,
     youtube, spotifyModule, soundcloud, tiktok, igdl, facebook, kwai,
     twitterModule, twitterGetInfo, gdriveGetInfo, mediafireGetInfo,
-    Lyrics: lyrics, mcPlugin,
+    Lyrics: lyrics,
     nomebot, botVersion,
     MESSAGES
   }) => {
@@ -291,25 +291,6 @@ export default {
       return;
     }
 
-    if (cmd === 'mcplugin' || cmd === 'mcplugins') {
-      if (!q) return reply(MESSAGES.member.download.mcpluginMenu(prefix, cmd));
-      if (!mcPlugin) return reply(MESSAGES.member.download.mcpluginUnavailable);
-      try {
-        await reply(MESSAGES.member.download.mcpluginSearching);
-        mcPlugin(q).then(async (datz) => {
-          if (!datz.ok) return reply(datz.msg);
-          await bot.sendMessage(from, {
-            image: { url: datz.image },
-            caption: MESSAGES.member.download.mcpluginCaption(datz.name, datz.creator, datz.desc, datz.url)
-          }, { quoted: info });
-        }).catch((e) => {
-          console.error('Erro mcplugin:', e);
-          reply(MESSAGES.error.general);
-        });
-      } catch (e) { reply(MESSAGES.error.general); }
-      return;
-    }
-
     if (cmd === 'kwai') {
       if (!q) return reply(MESSAGES.member.download.kwaiMenu);
       try {
@@ -318,15 +299,6 @@ export default {
           const item = res.data[0];
           await bot.sendMessage(from, { video: item.buff || { url: item.url }, caption: MESSAGES.member.download.kwaiCaption(item.metadata?.titulo) }, { quoted: info });
         }).catch(() => reply(MESSAGES.error.general));
-      } catch (e) { reply(MESSAGES.error.general); }
-      return;
-    }
-
-    if (['zipbot', 'zip-bot', 'botzip', 'bot-zip', 'downloadbot', 'download-bot', 'github', 'repo', 'repositorio', 'source', 'sourcecode', 'source-code', 'git-bot', 'git-hub'].includes(cmd)) {
-      try {
-        await reply(MESSAGES.member.download.sourceCodeDownloading);
-        const zipUrl = 'https://github.com/L1ghtzin/chainy/archive/refs/heads/main.zip';
-        await bot.sendMessage(from, { document: { url: zipUrl }, fileName: 'chainy-bot.zip', mimetype: 'application/zip', caption: MESSAGES.member.download.sourceCodeCaption }, { quoted: info });
       } catch (e) { reply(MESSAGES.error.general); }
       return;
     }
