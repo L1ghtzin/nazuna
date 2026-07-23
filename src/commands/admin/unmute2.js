@@ -11,26 +11,27 @@ export default {
     bot,
     from,
     reply,
-    isGroup,
-    isGroupAdmin,
     menc_os2,
     info,
     MESSAGES,
     buildGroupFilePath
   }) => {
     try {
-
       if (!menc_os2) return reply(MESSAGES.error.missing('alguém'));
       
       const groupFilePath = buildGroupFilePath(from);
-      let groupData = await readAsync(groupFilePath, { mutedUsers2: {} });
+      let groupData = await readAsync(groupFilePath, { mutedUsers: {}, mutedUsers2: {} });
       
+      groupData.mutedUsers = groupData.mutedUsers || {};
       groupData.mutedUsers2 = groupData.mutedUsers2 || {};
       const targetId = await normalizeUserId(bot, menc_os2);
       
-      const removed = removeUserFromMap(groupData.mutedUsers2, targetId) || 
-                      removeUserFromMap(groupData.mutedUsers2, menc_os2);
-      
+      const removed1 = removeUserFromMap(groupData.mutedUsers2, targetId) || 
+                       removeUserFromMap(groupData.mutedUsers2, menc_os2);
+      const removed2 = removeUserFromMap(groupData.mutedUsers, targetId) || 
+                       removeUserFromMap(groupData.mutedUsers, menc_os2);
+      const removed = removed1 || removed2;
+
       if (removed) {
         await writeAsync(groupFilePath, groupData);
         await bot.sendMessage(from, {

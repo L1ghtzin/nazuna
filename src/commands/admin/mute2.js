@@ -1,4 +1,5 @@
 import { normalizeUserId, getUserName } from '../../utils/helpers.js';
+import { removeUserFromMap } from '../../utils/groupManager.js';
 import { readAsync, writeAsync } from '../../utils/database/io.js';
 
 export default {
@@ -10,8 +11,6 @@ export default {
     bot,
     from,
     reply,
-    isGroup,
-    isGroupAdmin,
     isBotAdmin,
     menc_os2,
     info,
@@ -19,17 +18,20 @@ export default {
     buildGroupFilePath
   }) => {
     try {
-
       if (!isBotAdmin) return reply(MESSAGES.permission.botAdminOnly);
       if (!menc_os2) return reply(MESSAGES.error.missing('alguém'));
       
       const groupFilePath = buildGroupFilePath(from);
-      let groupData = await readAsync(groupFilePath, { mutedUsers2: {} });
+      let groupData = await readAsync(groupFilePath, { mutedUsers: {}, mutedUsers2: {} });
       
+      groupData.mutedUsers = groupData.mutedUsers || {};
       groupData.mutedUsers2 = groupData.mutedUsers2 || {};
       const targetId = await normalizeUserId(bot, menc_os2);
+
+      removeUserFromMap(groupData.mutedUsers, targetId);
+      removeUserFromMap(groupData.mutedUsers, menc_os2);
+
       groupData.mutedUsers2[targetId] = true;
-      
       if (targetId !== menc_os2) {
         groupData.mutedUsers2[menc_os2] = true;
       }
