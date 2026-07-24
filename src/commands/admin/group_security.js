@@ -348,6 +348,25 @@ export default {
 
       const action = args[0]?.toLowerCase();
 
+      if (action === 'on' || action === '1') {
+        if (groupData.antistatus) {
+          return reply(MESSAGES.admin.group_security.protections.alreadyActive('AntiStatus'));
+        }
+        groupData.antistatus = true;
+        await writeAsync(groupFile, groupData);
+        const currentAction = groupData.antistatus_action || 'banir';
+        return reply(MESSAGES.admin.group_security.protections.genericStatus('AntiStatus', currentAction, `• ${prefix}antistatus apagar\n• ${prefix}antistatus banir`));
+      }
+
+      if (action === 'off' || action === '0') {
+        if (!groupData.antistatus) {
+          return reply(MESSAGES.admin.group_security.protections.alreadyDisabled('AntiStatus'));
+        }
+        groupData.antistatus = false;
+        await writeAsync(groupFile, groupData);
+        return reply(MESSAGES.admin.group_security.protections.genericOff('AntiStatus'));
+      }
+
       if (action === 'apagar' || action === 'banir') {
         groupData.antistatus = true;
         groupData.antistatus_action = action;

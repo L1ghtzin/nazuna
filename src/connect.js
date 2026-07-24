@@ -546,17 +546,10 @@ function isAlreadyRepassed(msgId) {
 
             if (groupMessages.length === 0) return;
 
-            // Aguarda 100ms para permitir sincronização de rede caso o socket do bot principal esteja recebendo a mensagem em paralelo
-            await new Promise(resolve => setTimeout(resolve, 100));
-
-            // Re-checa se o bot principal recebeu a mensagem durante a janela de 100ms
-            const missedMessages = groupMessages.filter(info => !hasMainBotReceivedMsg(info.key.id));
-            if (missedMessages.length === 0) return;
-
-            // 2. O Watcher lê e inspeciona APENAS as mensagens que o bot principal NÃO recebeu
+            // 2. O Watcher lê e inspeciona APENAS mensagens em grupos com proteção ativa
             const detectedProtectionMessages = [];
 
-            for (const info of missedMessages) {
+            for (const info of groupMessages) {
                 const groupJid = info.key?.remoteJid;
 
                 // Fast Guard em O(1): Se o grupo não possuir nenhuma proteção ativa habilitada, pula a varredura
@@ -564,22 +557,26 @@ function isAlreadyRepassed(msgId) {
 
                 const analysis = inspectMessagePayload(info);
                 if (analysis.isStealth) {
-                    console.log(`👁️ [WATCHER] Mensagem omitida/não recebida pelo bot principal (${analysis.type.toUpperCase()}) detectada em ${groupJid}: ${analysis.reason}`);
+                    console.log(`👁️ [WATCHER] Mensagem de segurança (${analysis.type.toUpperCase()}) detectada em ${groupJid}: ${analysis.reason}`);
                     detectedProtectionMessages.push(info);
                 }
             }
 
-            // 3. Se nenhuma mensagem de alvo/proteção não recebida foi detectada pelo Watcher, ignora
+            // 3. Se nenhuma mensagem de alvo/proteção foi detectada pelo Watcher, ignora
             if (detectedProtectionMessages.length === 0) return;
 
-            // 4. Repassa APENAS as mensagens omitidas para o upsert do bot principal
+            // Re-verifica se o bot principal já registrou a mensagem enquanto inspecionávamos
+            const missedMessages = detectedProtectionMessages.filter(info => !hasMainBotReceivedMsg(info.key.id));
+            if (missedMessages.length === 0) return;
+
+            // 4. Repassa INSTANTANEAMENTE as mensagens omitidas para o upsert do bot principal
             if (typeof global.dispatchMainBotUpsert === 'function') {
                 const watcherPayload = {
                     type: m.type,
-                    messages: detectedProtectionMessages
+                    messages: missedMessages
                 };
 
-                console.log(`👁️ [WATCHER -> BOT PRINCIPAL] Repassando ${detectedProtectionMessages.length} mensagem(ns) omitida(s)/não recebida(s)...`);
+                console.log(`👁️ [WATCHER -> BOT PRINCIPAL] Repassando instantaneamente ${missedMessages.length} mensagem(ns) omitida(s)/não recebida(s)...`);
                 global.dispatchMainBotUpsert(watcherPayload).catch(e => 
                     console.error('👁️ [WATCHER] Erro ao repassar mensagens ao bot principal:', e)
                 );

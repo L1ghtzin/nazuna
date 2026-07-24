@@ -9,9 +9,19 @@ import {
 import { writeAsync } from '../../utils/database/io.js';
 
 async function toggleAntiStealthStatus(sub, from, groupData, groupFilePath, reply, prefix, config, MESSAGES) {
-    if (sub === 'on') groupData.antistealth = true;
-    else if (sub === 'off') groupData.antistealth = false;
-    else groupData.antistealth = !groupData.antistealth;
+    if (sub === 'on') {
+        if (groupData.antistealth) {
+            return reply(MESSAGES.middleware.antiStealth.alreadyActive);
+        }
+        groupData.antistealth = true;
+    } else if (sub === 'off') {
+        if (!groupData.antistealth) {
+            return reply(MESSAGES.middleware.antiStealth.alreadyDisabled);
+        }
+        groupData.antistealth = false;
+    } else {
+        groupData.antistealth = !groupData.antistealth;
+    }
 
     await writeAsync(groupFilePath, groupData);
     
@@ -110,8 +120,14 @@ async function handleAntipaymentCommand({
     const groupFilePath = pathz.join(DATABASE_DIR, `grupos/${from}.json`);
 
     if (sub === 'on' || sub === '1') {
+        if (groupData.antipayment) {
+            return reply(MESSAGES.middleware.antiPaymentCmd.alreadyActive);
+        }
         groupData.antipayment = true;
     } else if (sub === 'off' || sub === '0') {
+        if (!groupData.antipayment) {
+            return reply(MESSAGES.middleware.antiPaymentCmd.alreadyDisabled);
+        }
         groupData.antipayment = false;
     } else if (sub === '') {
         groupData.antipayment = !groupData.antipayment;

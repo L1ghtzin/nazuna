@@ -284,6 +284,8 @@ export const adminMessages = {
         genericAction: (feature, action) => `🛡️ *${feature}* ativado!\n🔧 Ação: *${action === 'banir' ? 'Apagar + Banir 🔨' : 'Apenas apagar 🗑️'}*`,
         genericStatus: (feature, action, cmds) => `🛡️ *${feature}* ativado!\n🔧 Ação atual: *${action === 'banir' ? 'Apagar + Banir 🔨' : 'Apenas apagar 🗑️'}*\n\n📝 Para mudar a ação:\n${cmds}`,
         genericOff: (feature) => `🛡️ *${feature}* desativado!`,
+        alreadyActive: (feature) => `⚠️ O *${feature}* já está *ativado* neste grupo!`,
+        alreadyDisabled: (feature) => `⚠️ O *${feature}* já está *desativado* neste grupo!`,
         unavailable: (system) => `❌ Sistema ${system} indisponível.`,
         antiPaymentOn: '🛡️ *Anti-Payment* ativado!\n\n🔧 Ações automáticas:\n• 🔒 Fechar grupo temporariamente\n• 🚫 Banir o remetente\n• 🗑️ Limpar o chat\n• 🔓 Reabrir o grupo automaticamente\n\n💡 Admins, owners e whitelisted não são afetados.',
         antiPaymentOff: '🛡️ *Anti-Payment* desativado!',

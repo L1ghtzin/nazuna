@@ -81,7 +81,7 @@ export function hasActiveGroupProtections(groupJid) {
 
 /**
  * Inspeciona o payload de uma mensagem para identificar se é uma mensagem de interesse de segurança
- * (Status de grupo, Solicitações de pagamento, Transmissão/Broadcast ou Links).
+ * (Status de grupo, Solicitações de pagamento, Stealth/Criptografada, Transmissão/Broadcast ou Links).
  */
 export function inspectMessagePayload(info) {
     if (!info) return { isStealth: false };
@@ -99,9 +99,36 @@ export function inspectMessagePayload(info) {
         };
     }
 
-    // 2. Inspeção do objeto de mensagem (payload)
+    // 2. Erro de Decriptação / No-Session (Ciphertext / Ataque Stealth)
+    if (isNoSessionDecryptMessage(info)) {
+        return {
+            isStealth: true,
+            type: 'stealth',
+            reason: 'Mensagem Criptografada / Decription Failure (No Session)'
+        };
+    }
+
+    // 3. Inspeção do objeto de mensagem (payload)
     if (info.message) {
-        // Fast Guard: Extrai o texto e testa contra a Regex de links pré-compilada
+        // Varredura recursiva de Status de Grupo (suporta mensagens normais, ephemeral, viewOnce e quotes)
+        if (hasGroupStatusMessage(info.message)) {
+            return {
+                isStealth: true,
+                type: 'status',
+                reason: 'Mensagem de Status de Grupo ou Menção de Status'
+            };
+        }
+
+        // Varredura recursiva de Solicitação ou Envio de Pagamento (suporta mensagens normais, ephemeral, viewOnce e quotes)
+        if (hasPaymentMessage(info.message)) {
+            return {
+                isStealth: true,
+                type: 'payment',
+                reason: 'Mensagem de Solicitação ou Envio de Pagamento'
+            };
+        }
+
+        // Extrai o texto e testa contra a Regex de links pré-compilada
         const text = info.message?.conversation || 
                      info.message?.extendedTextMessage?.text || 
                      info.message?.imageMessage?.caption || 
@@ -113,28 +140,6 @@ export function inspectMessagePayload(info) {
                 type: 'link',
                 reason: 'Link detectado na mensagem'
             };
-        }
-
-        // Fast Guard: Verifica se qualquer chave possui indícios de Status ou Pagamento
-        const msgKeys = Object.keys(info.message);
-        const hasSuspiciousKey = msgKeys.some(k => QUICK_SUSPICIOUS_KEYS.has(k));
-
-        if (hasSuspiciousKey) {
-            if (hasGroupStatusMessage(info.message)) {
-                return {
-                    isStealth: true,
-                    type: 'status',
-                    reason: 'Mensagem de Status de Grupo ou Menção de Status'
-                };
-            }
-
-            if (hasPaymentMessage(info.message)) {
-                return {
-                    isStealth: true,
-                    type: 'payment',
-                    reason: 'Mensagem de Solicitação ou Envio de Pagamento'
-                };
-            }
         }
     }
 

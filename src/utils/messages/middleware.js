@@ -64,6 +64,8 @@ export const middlewareMessages = {
     periodEnded: (minutes) => `✅ *O período de segurança de ${minutes} minutos acabou.*\n\nO grupo foi reaberto e todos podem voltar a conversar livremente.`,
     activated: (actionText, prefix) => `🛡️ *ANTI-STEALTH ATIVADO*\n\nO sistema irá proteger o grupo contra mensagens Stealth.\n\n📌 *Ação configurada:*\n${actionText}\n\n💡 Use _${prefix}antistealth acao_ para configurar.`,
     desactivated: `✅ *ANTI-STEALTH DESATIVADO*\n\nA proteção contra mensagens Stealth foi desligada.`,
+    alreadyActive: `⚠️ O *Anti-Stealth* já está *ativado* neste grupo!`,
+    alreadyDisabled: `⚠️ O *Anti-Stealth* já está *desativado* neste grupo!`,
     statusTitle: `🛡️ *ANTI-STEALTH — STATUS*\n\n`,
     statusBody: (status, action, timer, limit, actionDesc, stats) => 
       `📌 Status: ${status}\n` +
@@ -116,7 +118,9 @@ export const middlewareMessages = {
     ownerAlert: (group, user) => `🛡️ [ANTI-PAYMENT] Mensagem de pagamento detectada e mitigada no grupo *${group}*.\nAutor: @${user} (banido e chat limpo).`,
     invalidOption: (prefix) => `❌ Opção inválida. Use *${prefix}antipagamento on/off* ou *${prefix}antipagamento 1/0*`,
     activated: `🛡️ *Anti-Pagamento ATIVADO* com sucesso!\n\nCobranças e mensagens de pagamento serão detectadas e o autor banido instantaneamente, com limpeza de chat.`,
-    deactivated: `🛡️ *Anti-Pagamento DESATIVADO* com sucesso!`
+    deactivated: `🛡️ *Anti-Pagamento DESATIVADO* com sucesso!`,
+    alreadyActive: `⚠️ O *Anti-Pagamento* já está *ativado* neste grupo!`,
+    alreadyDisabled: `⚠️ O *Anti-Pagamento* já está *desativado* neste grupo!`
   },
   joinRequest: {
     captchaChallenge: (groupName, num1, num2) => 
