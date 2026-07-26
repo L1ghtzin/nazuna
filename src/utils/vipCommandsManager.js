@@ -1,7 +1,6 @@
-import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { readAsync, writeAsync } from './database/io.js';
+import db from './database/io.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -9,30 +8,25 @@ const __dirname = path.dirname(__filename);
 const VIP_COMMANDS_FILE = path.join(__dirname, '../../dados/database/dono/vipCommands.json');
 let _saveQueue = Promise.resolve();
 
+const DEFAULT_VIP_DATA = {
+  commands: [],
+  categories: {
+    download: '📥 Downloads',
+    diversao: '🎮 Diversão',
+    utilidade: '🛠️ Utilidade',
+    ia: '🤖 Inteligência Artificial',
+    editor: '✨ Editor',
+    info: 'ℹ️ Informação',
+    outros: '📦 Outros'
+  }
+};
+
 /**
  * Garante que o arquivo de comandos VIP existe
  */
 function ensureVipCommandsFile() {
-  const dir = path.dirname(VIP_COMMANDS_FILE);
-
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true });
-  }
-
-  if (!fs.existsSync(VIP_COMMANDS_FILE)) {
-    const defaultData = {
-      commands: [],
-      categories: {
-        download: '📥 Downloads',
-        diversao: '🎮 Diversão',
-        utilidade: '🛠️ Utilidade',
-        ia: '🤖 Inteligência Artificial',
-        editor: '✨ Editor',
-        info: 'ℹ️ Informação',
-        outros: '📦 Outros'
-      }
-    };
-    fs.writeFileSync(VIP_COMMANDS_FILE, JSON.stringify(defaultData, null, 2));
+  if (!db.existsSync(VIP_COMMANDS_FILE)) {
+    db.writeSafe(VIP_COMMANDS_FILE, DEFAULT_VIP_DATA);
   }
 }
 
@@ -42,11 +36,10 @@ function ensureVipCommandsFile() {
 function loadVipCommands() {
   ensureVipCommandsFile();
   try {
-    const data = fs.readFileSync(VIP_COMMANDS_FILE, 'utf8');
-    return JSON.parse(data);
+    return db.read(VIP_COMMANDS_FILE, DEFAULT_VIP_DATA);
   } catch (error) {
     console.error('Erro ao carregar comandos VIP:', error);
-    return { commands: [], categories: {} };
+    return DEFAULT_VIP_DATA;
   }
 }
 

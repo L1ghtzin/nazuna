@@ -1,6 +1,7 @@
-﻿import fs from 'fs';
+import fs from 'fs';
 import cron from 'node-cron';
 import pathz from 'path';
+import db from '../utils/database/io.js';
 import { GRUPOS_DIR } from '../utils/paths.js';
 import { ensureDirectoryExists } from '../utils/helpers.js';
 import { MESSAGES } from '../utils/messages.js';
@@ -45,11 +46,7 @@ async function checkBirthdays(bot) {
         if (!groupId.endsWith('@g.us')) continue;
 
         const filePath = pathz.join(GRUPOS_DIR, niverFile);
-        const fileContent = await fs.promises.readFile(filePath, 'utf8').catch(() => null);
-        if (!fileContent) continue;
-
-        let aniversarios = {};
-        try { aniversarios = JSON.parse(fileContent); } catch { continue; }
+        const aniversarios = await db.readAsync(filePath, {});
 
         const aniversariantes = Object.entries(aniversarios)
           .filter(([, data]) => data === today)

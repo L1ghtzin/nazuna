@@ -1,6 +1,7 @@
 import fs from 'fs';
 import cron from 'node-cron';
 import pathz from 'path';
+import db from '../utils/database/io.js';
 import { GRUPOS_DIR } from '../utils/paths.js';
 import { ensureDirectoryExists } from '../utils/helpers.js';
 import { normalizeScheduleTime } from '../utils/timeHelpers.js';
@@ -38,19 +39,12 @@ export const scheduleAutoMessage = (groupId, msgConfig, bot) => {
     const task = cron.schedule(cronExpr, async () => {
       try {
         const filePath = pathz.join(GRUPOS_DIR, `${groupId}.json`);
-        if (!fs.existsSync(filePath)) {
+        if (!db.existsSync(filePath)) {
           console.warn(`[AutoMsg] Arquivo do grupo não encontrado: ${groupId}`);
           return;
         }
         
-        let groupFileData = {};
-        try {
-          groupFileData = JSON.parse(fs.readFileSync(filePath, 'utf8'));
-        } catch (e) {
-          console.error(`[AutoMsg] Erro ao ler arquivo do grupo ${groupId}:`, e);
-          return;
-        }
-        
+        const groupFileData = await db.readAsync(filePath, {});
         const autoMessages = groupFileData.autoMessages || [];
         const currentMsg = autoMessages.find(m => m.id === msgConfig.id);
         
@@ -122,12 +116,7 @@ export const loadAllAutoMessages = async (bot) => {
       if (!groupId.endsWith('@g.us')) return;
       
       const filePath = pathz.join(GRUPOS_DIR, f);
-      let data = {};
-      try { 
-        const fileContent = await fs.promises.readFile(filePath, 'utf8');
-        data = JSON.parse(fileContent) || {}; 
-      } catch (e) { return; }
-      
+      const data = await db.readAsync(filePath, {});
       const autoMessages = data.autoMessages && Array.isArray(data.autoMessages) ? data.autoMessages : [];
       
       for (const msgConfig of autoMessages) {
@@ -152,14 +141,6 @@ export const loadAllAutoMessages = async (bot) => {
 export const startAutoMensagensWorker = (bot) => {
   try {
     loadAllAutoMessages(bot);
-
-    setInterval(() => {
-      try {
-        loadAllAutoMessages(bot);
-      } catch (e) {
-        console.error('[AutoMsg] refresh error:', e);
-      }
-    }, 6 * 60 * 60 * 1000); // a cada 6 horas
   } catch (e) {
     console.error('[AutoMsg] startAutoMensagensWorker error:', e);
   }

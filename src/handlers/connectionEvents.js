@@ -7,6 +7,7 @@ import { DisconnectReason } from 'baileys';
 import { updateOwnerLid, performMigration, migrateBlacklists } from '../utils/migration.js';
 import { loadMsgBotOn } from '../utils/database.js';
 import { buildUserId } from '../utils/helpers.js';
+import { startAllWorkers } from '../workers/index.js';
 import log from '../utils/logger.js';
 
 function trimQrMargin(qrOutput) {
@@ -89,6 +90,7 @@ export async function handleConnectionUpdate(ChainySock, update, {
       log.info('CONNECTION', 'Inicializando caches e otimizações...');
       
       await initializeOptimizedCaches(ChainySock);
+      startAllWorkers(ChainySock);
       
       await updateOwnerLid(ChainySock, numerodono, config, configPath);
       

@@ -1,7 +1,6 @@
-import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { writeAsync, readAsync } from './database/io.js';
+import db, { writeAsync, readAsync } from './database/io.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -22,36 +21,33 @@ class UserContextDB {
 
   _loadDatabaseSync() {
     try {
-      if (fs.existsSync(DB_PATH)) {
-        const content = fs.readFileSync(DB_PATH, 'utf-8');
-        if (content.trim()) {
-          const data = JSON.parse(content);
-          let modified = false;
+      if (db.existsSync(DB_PATH)) {
+        const data = db.read(DB_PATH, {});
+        let modified = false;
 
-          for (const userId in data) {
-            const user = data[userId];
-            if (user && user.relacionamento_nazuna) {
-              user.relacionamento_chainy = user.relacionamento_nazuna;
-              delete user.relacionamento_nazuna;
-              modified = true;
+        for (const userId in data) {
+          const user = data[userId];
+          if (user && user.relacionamento_nazuna) {
+            user.relacionamento_chainy = user.relacionamento_nazuna;
+            delete user.relacionamento_nazuna;
+            modified = true;
 
-              if (user.relacionamento_chainy && user.relacionamento_chainy.apelido_nazuna !== undefined) {
-                user.relacionamento_chainy.apelido_chainy = user.relacionamento_chainy.apelido_nazuna;
-                delete user.relacionamento_chainy.apelido_nazuna;
-              }
+            if (user.relacionamento_chainy && user.relacionamento_chainy.apelido_nazuna !== undefined) {
+              user.relacionamento_chainy.apelido_chainy = user.relacionamento_chainy.apelido_nazuna;
+              delete user.relacionamento_chainy.apelido_nazuna;
             }
           }
-
-          if (modified) {
-            try {
-              fs.writeFileSync(DB_PATH, JSON.stringify(data, null, 2), 'utf-8');
-              console.log('✅ [Migration] Chaves do banco de dados de contexto migradas (nazuna -> chainy) com sucesso!');
-            } catch (writeError) {
-              console.error('❌ [Migration] Erro ao salvar chaves migradas no arquivo:', writeError);
-            }
-          }
-          return data;
         }
+
+        if (modified) {
+          try {
+            db.writeSafe(DB_PATH, data);
+            console.log('✅ [Migration] Chaves do banco de dados de contexto migradas (nazuna -> chainy) com sucesso!');
+          } catch (writeError) {
+            console.error('❌ [Migration] Erro ao salvar chaves migradas no arquivo:', writeError);
+          }
+        }
+        return data;
       }
       return {};
     } catch (error) {

@@ -17,11 +17,8 @@ export default {
     from,
     info,
     reply,
-    isOwner,
     args
   }) => {
-    if (!isOwner) return reply('❌ Comando restrito ao Dono do bot.');
-
     const subcmd = args[0]?.toLowerCase();
 
     if (!subcmd || subcmd === 'status') {

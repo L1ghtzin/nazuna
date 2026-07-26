@@ -1,6 +1,5 @@
-import fs from 'fs';
+import db from '../utils/database/io.js';
 import { createRequire } from 'module';
-import { writeJsonFileQueued } from '../utils/database.js';
 import { MESSAGES } from '../utils/messages.js';
 
 // Carrega lista de jogos a partir do JSON estático (separado do código)
@@ -19,14 +18,9 @@ export const startAutoHorariosWorker = (bot) => {
         
         if (minutes !== 0 || seconds > 30) return;
         
-        if (!fs.existsSync(AUTO_HORARIOS_PATH)) return;
+        if (!db.existsSync(AUTO_HORARIOS_PATH)) return;
         
-        let autoSchedules = {};
-        try {
-          autoSchedules = JSON.parse(fs.readFileSync(AUTO_HORARIOS_PATH, 'utf8'));
-        } catch (e) {
-          return;
-        }
+        const autoSchedules = await db.readAsync(AUTO_HORARIOS_PATH, {});
         
         const currentHour = now.getHours();
         
@@ -79,7 +73,7 @@ export const startAutoHorariosWorker = (bot) => {
           }
         }
         
-        writeJsonFileQueued(AUTO_HORARIOS_PATH, autoSchedules).catch(e => console.error('Erro ao salvar auto schedules:', e));
+        db.queue(AUTO_HORARIOS_PATH, autoSchedules);
         
       } catch (err) {
         console.error('Erro no auto horários worker:', err);

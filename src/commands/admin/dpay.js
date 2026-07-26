@@ -8,13 +8,10 @@ export default {
     from,
     info,
     reply,
-    isGroupAdmin,
-    isOwner,
+    MESSAGES
   }) => {
-    if (!isGroupAdmin && !isOwner) return reply('Apenas admins podem usar.');
-
     const ctx = info.message?.extendedTextMessage?.contextInfo;
-    if (!ctx?.quotedMessage || !ctx?.stanzaId) return reply('Marque a mensagem que deseja apagar.');
+    if (!ctx?.quotedMessage || !ctx?.stanzaId) return reply(MESSAGES?.error?.quoteMsg || 'Marque a mensagem que deseja apagar.');
 
     const stanzaId = ctx.stanzaId;
     const quotedMessage = ctx.quotedMessage;
@@ -74,7 +71,7 @@ export default {
       }
     } catch (e) {
       console.error('[dpay]', e.message);
-      reply('Erro ao apagar a mensagem.');
+      reply(MESSAGES?.error?.general || 'Erro ao apagar a mensagem.');
     }
   },
 };
