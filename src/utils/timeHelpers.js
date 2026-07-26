@@ -23,14 +23,19 @@ export const validateTimeFormat = (timeStr) => {
     return { valid: false, error: 'Horário inválido. O horário não pode ser vazio.' };
   }
   
+  let formatted = timeStr.trim().toLowerCase().replace(/h/g, ':');
+  if (formatted.endsWith(':')) {
+    formatted += '00';
+  }
+  
   // Check for valid format
-  const isValidFormat = /^([01]?\d|2[0-3]):([0-5]\d)$/.test(timeStr);
+  const isValidFormat = /^([01]?\d|2[0-3]):([0-5]\d)$/.test(formatted);
   if (!isValidFormat) {
-    return { valid: false, error: 'Formato inválido. Use HH:MM (24 horas).' };
+    return { valid: false, error: 'Formato inválido. Use HH:MM ou HHhMM (24 horas).' };
   }
   
   // Parse and validate components
-  const [hours, minutes] = timeStr.split(':').map(Number);
+  const [hours, minutes] = formatted.split(':').map(Number);
   
   if (hours < 0 || hours > 23) {
     return { valid: false, error: 'Hora inválida. Use entre 00 e 23.' };
@@ -40,22 +45,15 @@ export const validateTimeFormat = (timeStr) => {
     return { valid: false, error: 'Minuto inválido. Use entre 00 e 59.' };
   }
   
-  // Check for edge cases
-  if (timeStr === '24:00') {
-    return { valid: false, error: 'Use 23:59 como horário máximo.' };
-  }
-  
-  return { valid: true, timeStr };
+  const normalizedStr = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+  return { valid: true, timeStr: normalizedStr };
 };
 
 export const normalizeScheduleTime = (timeStr) => {
   if (typeof timeStr !== 'string') return null;
-  const trimmed = timeStr.trim();
-  const match = trimmed.match(/^([01]?\d|2[0-3]):([0-5]\d)$/);
-  if (!match) return null;
-  const hours = String(parseInt(match[1], 10)).padStart(2, '0');
-  const minutes = match[2];
-  return `${hours}:${minutes}`;
+  const validation = validateTimeFormat(timeStr);
+  if (!validation.valid) return null;
+  return validation.timeStr;
 };
 
 export const hasRunForScheduleToday = (entry, today, targetTime) => {

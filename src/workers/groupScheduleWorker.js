@@ -1,10 +1,10 @@
 import fs from 'fs';
 import cron from 'node-cron';
 import pathz from 'path';
-import { writeJsonFileQueued } from '../utils/database.js';
+import db from '../utils/database/io.js';
 import { GRUPOS_DIR } from '../utils/paths.js';
-import { normalizeScheduleTime, getTodayStr, recordScheduleRun, hasRunForScheduleToday } from '../utils/timeHelpers.js';
-import { ensureDirectoryExists, isGroupId } from '../utils/helpers.js';
+import { normalizeScheduleTime, getTodayStr, recordScheduleRun } from '../utils/timeHelpers.js';
+import { ensureDirectoryExists } from '../utils/helpers.js';
 import { MESSAGES } from '../utils/messages.js';
 import config from '../config.js';
 
@@ -35,9 +35,8 @@ export const scheduleGroupJob = (groupId, type, timeStr, bot) => {
     const task = cron.schedule(cronExpr, async () => {
       try {
         const filePath = pathz.join(GRUPOS_DIR, `${groupId}.json`);
-        if (!fs.existsSync(filePath)) return;
-        let data = {};
-        try { data = JSON.parse(fs.readFileSync(filePath, 'utf8')) || {}; } catch (e) { data = {}; }
+        if (!db.existsSync(filePath)) return;
+        const data = await db.readAsync(filePath, {});
         data.schedule = data.schedule || {};
         const schedule = data.schedule;
 
@@ -69,7 +68,7 @@ export const scheduleGroupJob = (groupId, type, timeStr, bot) => {
 
         recordScheduleRun(schedule, type, getTodayStr(), normalized);
         data.schedule = schedule;
-        writeJsonFileQueued(filePath, data).catch(e => console.error('[Cron] Failed to write schedule run:', e));
+        db.queue(filePath, data);
       } catch (e) {
         console.error('[Cron] Unexpected error in scheduled job:', e);
       }
@@ -92,11 +91,7 @@ const loadAllGroupSchedules = async (bot) => {
       const groupId = f.replace(/\.json$/, '');
       if (!groupId.endsWith('@g.us')) return;
       const filePath = pathz.join(GRUPOS_DIR, f);
-      let data = {};
-      try { 
-        const fileContent = await fs.promises.readFile(filePath, 'utf8');
-        data = JSON.parse(fileContent) || {}; 
-      } catch (e) { return; }
+      const data = await db.readAsync(filePath, {});
       const schedule = data.schedule && typeof data.schedule === 'object' ? data.schedule : {};
       if (schedule.openTime) {
         scheduleGroupJob(groupId, 'open', schedule.openTime, bot);

@@ -321,16 +321,22 @@ export default {
     }
 
     if (cmd === 'opengp' || cmd === 'abrirgp') {
-      if (!q) {
-        return reply(MESSAGES.admin.group_management.status.openScheduleUsage(prefix, cmd));
-      }
-
-      const rawArg = q.trim();
+      const rawArg = (q || '').trim();
       const argLower = rawArg.toLowerCase();
+
+      // Sem argumentos ou com palavra-chave de ação imediata: abre o grupo agora
+      if (!rawArg || ['a', 'o', 'open', 'abrir', 'agora', 'now'].includes(argLower)) {
+        if (!isBotAdmin) return reply(MESSAGES.permission.botAdminOnly);
+        await bot.groupSettingUpdate(from, 'not_announcement');
+        if (groupData?.x9) {
+          await bot.sendMessage(from, { text: MESSAGES.admin.group_management.status.openX9(sender.split('@')[0]), mentions: [sender] }).catch(e => {});
+        }
+        return reply(MESSAGES.admin.group_management.status.openSuccess);
+      }
 
       groupData.schedule = groupData.schedule || {};
 
-      if (argLower === 'off' || argLower === 'desativar' || argLower === 'remove' || argLower === 'rm') {
+      if (['off', 'desativar', 'remove', 'rm', 'cancelar', 'del'].includes(argLower)) {
         delete groupData.schedule.openTime;
         if (groupData.schedule?.lastRun) {
           delete groupData.schedule.lastRun.open;
@@ -338,7 +344,7 @@ export default {
             delete groupData.schedule.lastRun;
           }
         }
-        await writeAsync(groupFile, groupData);
+        await writeSafe(groupFile, groupData);
         try { unscheduleGroupJob(from, 'open'); } catch (e) { console.error('Error unscheduling group open job:', e); }
         return reply(MESSAGES.admin.group_management.status.openScheduleRemSuccess);
       }
@@ -361,23 +367,29 @@ export default {
         }
       }
 
-      await writeAsync(groupFile, groupData);
+      await writeSafe(groupFile, groupData);
       try { scheduleGroupJob(from, 'open', normalizedTime, bot); } catch (e) { console.error('Erro ao agendar open cron:', e); }
 
       return reply(MESSAGES.admin.group_management.status.openScheduleSuccess(normalizedTime, isBotAdmin));
     }
 
     if (cmd === 'closegp' || cmd === 'fechargp') {
-      if (!q) {
-        return reply(MESSAGES.admin.group_management.status.closeScheduleUsage(prefix, cmd));
-      }
-
-      const rawArg = q.trim();
+      const rawArg = (q || '').trim();
       const argLower = rawArg.toLowerCase();
+
+      // Sem argumentos ou com palavra-chave de ação imediata: fecha o grupo agora
+      if (!rawArg || ['f', 'c', 'close', 'fechar', 'agora', 'now'].includes(argLower)) {
+        if (!isBotAdmin) return reply(MESSAGES.permission.botAdminOnly);
+        await bot.groupSettingUpdate(from, 'announcement');
+        if (groupData?.x9) {
+          await bot.sendMessage(from, { text: MESSAGES.admin.group_management.status.closeX9(sender.split('@')[0]), mentions: [sender] }).catch(e => {});
+        }
+        return reply(MESSAGES.admin.group_management.status.closeSuccess);
+      }
 
       groupData.schedule = groupData.schedule || {};
 
-      if (argLower === 'off' || argLower === 'desativar' || argLower === 'remove' || argLower === 'rm') {
+      if (['off', 'desativar', 'remove', 'rm', 'cancelar', 'del'].includes(argLower)) {
         delete groupData.schedule.closeTime;
         if (groupData.schedule?.lastRun) {
           delete groupData.schedule.lastRun.close;
@@ -385,7 +397,7 @@ export default {
             delete groupData.schedule.lastRun;
           }
         }
-        await writeAsync(groupFile, groupData);
+        await writeSafe(groupFile, groupData);
         try { unscheduleGroupJob(from, 'close'); } catch (e) { console.error('Error unscheduling group close job:', e); }
         return reply(MESSAGES.admin.group_management.status.closeScheduleRemSuccess);
       }
@@ -408,7 +420,7 @@ export default {
         }
       }
 
-      await writeAsync(groupFile, groupData);
+      await writeSafe(groupFile, groupData);
       try { scheduleGroupJob(from, 'close', normalizedTime, bot); } catch (e) { console.error('Erro ao agendar close cron:', e); }
 
       return reply(MESSAGES.admin.group_management.status.closeScheduleSuccess(normalizedTime, isBotAdmin));
