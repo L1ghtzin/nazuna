@@ -90,7 +90,7 @@ export default {
           if (imageMsg) {
             const imageBuffer = await getFileBuffer(imageMsg, 'image');
             const imagePath = pathz.join(autoMsgGroupDir, `${newMsgConfig.id}.jpg`);
-            fs.writeFileSync(imagePath, imageBuffer);
+            await fs.promises.writeFile(imagePath, imageBuffer);
 
             const captionToUse = (description && description !== 'Sem descrição')
               ? description
@@ -103,7 +103,7 @@ export default {
           } else if (videoMsg) {
             const videoBuffer = await getFileBuffer(videoMsg, 'video');
             const videoPath = pathz.join(autoMsgGroupDir, `${newMsgConfig.id}.mp4`);
-            fs.writeFileSync(videoPath, videoBuffer);
+            await fs.promises.writeFile(videoPath, videoBuffer);
 
             const captionToUse = (description && description !== 'Sem descrição')
               ? description
@@ -117,7 +117,7 @@ export default {
             const docBuffer = await getFileBuffer(docMsg, 'document');
             const docExt = docMsg?.fileName?.split('.').pop() || 'pdf';
             const docPath = pathz.join(autoMsgGroupDir, `${newMsgConfig.id}.${docExt}`);
-            fs.writeFileSync(docPath, docBuffer);
+            await fs.promises.writeFile(docPath, docBuffer);
 
             const captionToUse = (description && description !== 'Sem descrição')
               ? description
@@ -131,7 +131,7 @@ export default {
           } else if (stickerMsg) {
             const stickerBuffer = await getFileBuffer(stickerMsg, 'sticker');
             const stickerPath = pathz.join(autoMsgGroupDir, `${newMsgConfig.id}.webp`);
-            fs.writeFileSync(stickerPath, stickerBuffer);
+            await fs.promises.writeFile(stickerPath, stickerBuffer);
 
             newMsgConfig.type = 'sticker';
             newMsgConfig.mediaPath = stickerPath;
@@ -139,7 +139,7 @@ export default {
           } else if (audioMsg) {
             const audioBuffer = await getFileBuffer(audioMsg, 'audio');
             const audioPath = pathz.join(autoMsgGroupDir, `${newMsgConfig.id}.mp3`);
-            fs.writeFileSync(audioPath, audioBuffer);
+            await fs.promises.writeFile(audioPath, audioBuffer);
 
             newMsgConfig.type = 'audio';
             newMsgConfig.mediaPath = audioPath;

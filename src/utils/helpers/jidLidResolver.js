@@ -3,8 +3,7 @@ import { toLID } from '../toLID.js';
 
 // Inicializa o caminho do cache
 export function initJidLidCache(cacheFilePath) {
-  // O lidCache carrega seu próprio caminho pré-configurado
-  lidCache.load().catch((err) => {
+  lidCache.load(cacheFilePath).catch((err) => {
     console.warn(`⚠️ Erro ao carregar cache JID→LID: ${err.message}`);
   });
 }
@@ -68,11 +67,13 @@ export async function getLidFromJidCached(bot, jid) {
 // Busca reversa: dado um LID, encontra o JID correspondente no cache
 export function getJidFromLid(lid) {
   if (!lid || !lid.includes('@lid')) return null;
-  
+  const cleanLid = removeDeviceId(lid);
+  const found = lidCache.getJidFromLid(cleanLid);
+  if (found) return found;
+
   for (const [jid, cachedLid] of lidCache.entries()) {
-    // Normaliza para comparação (remove :XX se houver)
     const normalizedCached = removeDeviceId(cachedLid);
-    if (normalizedCached === lid) {
+    if (normalizedCached === cleanLid) {
       return jid;
     }
   }
@@ -254,8 +255,8 @@ export const isValidLid = (str) => /^[a-zA-Z0-9_]+@lid$/.test(str);
 export const isValidJid = (str) => /^\d+@s\.whatsapp\.net$/.test(str);
 
 export const removeDeviceId = (id) => {
-  if (!id || typeof id !== 'string' || !id.includes(':')) return id;
-  return id.split(':')[0] + (id.includes('@lid') ? '@lid' : '@s.whatsapp.net');
+  if (!id || typeof id !== 'string') return id;
+  return id.replace(/:[0-9]+/, '');
 };
 
 // Função para extrair nome de usuário de LID/JID de forma compatível

@@ -6,9 +6,11 @@ const DEBOUNCE_MS = 2000;
 
 class LIDCache {
   constructor() {
-    this.store = new Map();
+    this.pnToLidMap = new Map();
+    this.lidToPnMap = new Map();
     this.loaded = false;
     this.saveTimer = null;
+    this.filePath = JID_LID_CACHE_FILE;
   }
 
   scheduleSave() {
@@ -22,34 +24,35 @@ class LIDCache {
 
   async flush() {
     const mappings = {};
-    for (const [key, value] of this.store.entries()) {
-      if (key.endsWith('@s.whatsapp.net') || key.endsWith('@c.us')) {
-        mappings[key] = value;
-      }
+    for (const [pn, lid] of this.pnToLidMap.entries()) {
+      mappings[pn] = lid;
     }
     const data = {
       version: '1.0',
       lastUpdate: new Date().toISOString(),
       mappings
     };
-    const dir = pathz.dirname(JID_LID_CACHE_FILE);
+    const targetFile = this.filePath || JID_LID_CACHE_FILE;
+    const dir = pathz.dirname(targetFile);
     if (!fs.existsSync(dir)) {
       await fs.promises.mkdir(dir, { recursive: true });
     }
-    await fs.promises.writeFile(JID_LID_CACHE_FILE, JSON.stringify(data, null, 2), 'utf8');
+    await fs.promises.writeFile(targetFile, JSON.stringify(data, null, 2), 'utf8');
   }
 
-  async load() {
+  async load(customFilePath = null) {
+    if (customFilePath) this.filePath = customFilePath;
     if (this.loaded) return;
     this.loaded = true;
+    const targetFile = this.filePath || JID_LID_CACHE_FILE;
     try {
-      if (fs.existsSync(JID_LID_CACHE_FILE)) {
-        const raw = await fs.promises.readFile(JID_LID_CACHE_FILE, 'utf8');
+      if (fs.existsSync(targetFile)) {
+        const raw = await fs.promises.readFile(targetFile, 'utf8');
         const data = JSON.parse(raw);
         const mappings = data.mappings || {};
         for (const [jid, lid] of Object.entries(mappings)) {
-          this.store.set(jid, lid);
-          this.store.set(lid, jid);
+          this.pnToLidMap.set(jid, lid);
+          this.lidToPnMap.set(lid, jid);
         }
       }
     } catch (e) {
@@ -58,24 +61,34 @@ class LIDCache {
   }
 
   get(jid) {
-    return this.store.get(jid) || null;
+    if (!jid) return null;
+    const cleanKey = typeof jid === 'string' ? jid.replace(/:[0-9]+/, '') : jid;
+    return this.pnToLidMap.get(cleanKey) || this.lidToPnMap.get(cleanKey) || null;
+  }
+
+  getJidFromLid(lid) {
+    if (!lid) return null;
+    const cleanKey = typeof lid === 'string' ? lid.replace(/:[0-9]+/, '') : lid;
+    return this.lidToPnMap.get(cleanKey) || null;
   }
 
   set(jid, lid) {
-    if (this.store.get(jid) === lid) return;
-    this.store.set(jid, lid);
-    this.store.set(lid, jid);
+    if (!jid || !lid) return;
+    if (this.pnToLidMap.get(jid) === lid) return;
+    this.pnToLidMap.set(jid, lid);
+    this.lidToPnMap.set(lid, jid);
     this.scheduleSave();
   }
 
   entries() {
-    return this.store.entries();
+    return this.pnToLidMap.entries();
   }
 
   has(jid) {
-    return this.store.has(jid);
+    return this.pnToLidMap.has(jid) || this.lidToPnMap.has(jid);
   }
 }
 
 export const lidCache = new LIDCache();
 export default lidCache;
+

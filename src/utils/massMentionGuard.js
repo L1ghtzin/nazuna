@@ -19,11 +19,7 @@ let _configSaveQueue = Promise.resolve();
 export const loadMassMentionConfig = () => {
   if (massMentionConfigCache) return massMentionConfigCache;
   try {
-    if (fs.existsSync(MASS_MENTION_CONFIG_FILE)) {
-      massMentionConfigCache = JSON.parse(fs.readFileSync(MASS_MENTION_CONFIG_FILE, 'utf-8'));
-    } else {
-      massMentionConfigCache = {}; // Vazio = desativado por padrão
-    }
+    massMentionConfigCache = db.read(MASS_MENTION_CONFIG_FILE, {});
   } catch (e) {
     console.error('Erro ao carregar massMentionConfig:', e.message);
     massMentionConfigCache = {};
@@ -33,29 +29,17 @@ export const loadMassMentionConfig = () => {
 
 export const saveMassMentionConfig = (data) => {
   massMentionConfigCache = data;
-
-  const performSave = async () => {
-    try {
-      ensureDirectoryExists(pathz.dirname(MASS_MENTION_CONFIG_FILE));
-      const diskData = await readAsync(MASS_MENTION_CONFIG_FILE, {});
-      const merged = { ...diskData, ...data };
-      await writeAsync(MASS_MENTION_CONFIG_FILE, merged);
-    } catch (e) {
-      console.error('Erro ao salvar massMentionConfig:', e.message);
-    }
-  };
-
-  _configSaveQueue = _configSaveQueue.then(performSave, performSave);
+  try {
+    db.debounced(MASS_MENTION_CONFIG_FILE, data, 2000);
+  } catch (e) {
+    console.error('Erro ao salvar massMentionConfig:', e.message);
+  }
 };
 
 export const loadMassMentionLimit = () => {
   if (massMentionLimitCache) return massMentionLimitCache;
   try {
-    if (fs.existsSync(MASS_MENTION_LIMIT_FILE)) {
-      massMentionLimitCache = JSON.parse(fs.readFileSync(MASS_MENTION_LIMIT_FILE, 'utf-8'));
-    } else {
-      massMentionLimitCache = {};
-    }
+    massMentionLimitCache = db.read(MASS_MENTION_LIMIT_FILE, {});
   } catch (e) {
     console.error('Erro ao carregar massMentionLimit:', e.message);
     massMentionLimitCache = {};
@@ -65,19 +49,11 @@ export const loadMassMentionLimit = () => {
 
 const saveMassMentionLimit = (data) => {
   massMentionLimitCache = data;
-
-  const performSave = async () => {
-    try {
-      ensureDirectoryExists(pathz.dirname(MASS_MENTION_LIMIT_FILE));
-      const diskData = await readAsync(MASS_MENTION_LIMIT_FILE, {});
-      const merged = { ...diskData, ...data };
-      await writeAsync(MASS_MENTION_LIMIT_FILE, merged);
-    } catch (e) {
-      console.error('Erro ao salvar massMentionLimit:', e.message);
-    }
-  };
-
-  _limitSaveQueue = _limitSaveQueue.then(performSave, performSave);
+  try {
+    db.debounced(MASS_MENTION_LIMIT_FILE, data, 2000);
+  } catch (e) {
+    console.error('Erro ao salvar massMentionLimit:', e.message);
+  }
 };
 
 /**

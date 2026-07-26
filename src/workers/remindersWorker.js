@@ -1,9 +1,17 @@
 import { loadReminders, saveReminders } from '../utils/database.js';
 
+let currentBot = null;
+let intervalStarted = false;
+
 export const startRemindersWorker = (bot) => {
+  if (bot) currentBot = bot;
+  if (intervalStarted) return;
+  intervalStarted = true;
+
   try {
     setInterval(async () => {
       try {
+        if (!currentBot) return;
         const list = loadReminders();
         if (!Array.isArray(list) || list.length === 0) return;
         const now = Date.now();
@@ -15,10 +23,10 @@ export const startRemindersWorker = (bot) => {
             const textMsg = `⏰ Lembrete${r.createdByName ? ` de ${r.createdByName}` : ''}: ${r.message}`;
             try {
               if (r.chatId && String(r.chatId).endsWith('@g.us')) {
-                await bot.sendMessage(r.chatId, { text: textMsg, mentions: r.userId ? [r.userId] : [] });
+                await currentBot.sendMessage(r.chatId, { text: textMsg, mentions: r.userId ? [r.userId] : [] });
               } else {
                 const dest = r.chatId || r.userId;
-                if (dest) await bot.sendMessage(dest, { text: textMsg });
+                if (dest) await currentBot.sendMessage(dest, { text: textMsg });
               }
               r.status = 'sent';
               r.sentAt = new Date().toISOString();
@@ -39,3 +47,4 @@ export const startRemindersWorker = (bot) => {
     console.error("Start reminder worker error:", e);
   }
 };
+

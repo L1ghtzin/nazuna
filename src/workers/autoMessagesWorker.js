@@ -11,6 +11,9 @@ const isDebug = config.debug === true || process.env.CHAINY_DEBUG === '1' || pro
 
 const autoMsgCronJobs = {};
 
+let currentBot = null;
+let messagesLoaded = false;
+
 export const unscheduleAutoMessage = (groupId, msgId) => {
   const key = `${groupId}:${msgId}`;
   const j = autoMsgCronJobs[key];
@@ -21,6 +24,8 @@ export const unscheduleAutoMessage = (groupId, msgId) => {
 };
 
 export const scheduleAutoMessage = (groupId, msgConfig, bot) => {
+  if (bot) currentBot = bot;
+  const activeBot = bot || currentBot;
   if (!groupId || !msgConfig || !msgConfig.id || !msgConfig.time) return;
   
   const normalized = normalizeScheduleTime(msgConfig.time);
@@ -38,6 +43,9 @@ export const scheduleAutoMessage = (groupId, msgConfig, bot) => {
   try {
     const task = cron.schedule(cronExpr, async () => {
       try {
+        const sockToUse = currentBot || activeBot;
+        if (!sockToUse) return;
+
         const filePath = pathz.join(GRUPOS_DIR, `${groupId}.json`);
         if (!db.existsSync(filePath)) {
           console.warn(`[AutoMsg] Arquivo do grupo não encontrado: ${groupId}`);
@@ -79,7 +87,7 @@ export const scheduleAutoMessage = (groupId, msgConfig, bot) => {
           messageContent.mimetype = 'audio/mp4';
         }
         
-        await bot.sendMessage(groupId, messageContent);
+        await sockToUse.sendMessage(groupId, messageContent);
         console.log(`[AutoMsg] ✅ Mensagem enviada automaticamente: Grupo ${groupId.substring(0, 15)}... ID ${msgConfig.id} às ${normalized}`);
         
       } catch (e) {
@@ -139,9 +147,14 @@ export const loadAllAutoMessages = async (bot) => {
 };
 
 export const startAutoMensagensWorker = (bot) => {
+  if (bot) currentBot = bot;
+  if (messagesLoaded) return;
+  messagesLoaded = true;
+
   try {
     loadAllAutoMessages(bot);
   } catch (e) {
     console.error('[AutoMsg] startAutoMensagensWorker error:', e);
   }
 };
+

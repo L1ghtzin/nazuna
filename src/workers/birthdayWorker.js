@@ -24,10 +24,14 @@ function getTodayDDMM() {
   return `${day}/${month}`;
 }
 
+let currentBot = null;
+let cronStarted = false;
+
 /**
  * Verifica todos os grupos com registros de aniversario e parabeniza os aniversariantes do dia
  */
-async function checkBirthdays(bot) {
+async function checkBirthdays() {
+  if (!currentBot) return;
   try {
     if (!ensureDirectoryExists(GRUPOS_DIR)) return;
 
@@ -59,7 +63,7 @@ async function checkBirthdays(bot) {
         }
 
         const msg = MESSAGES.workers.birthday.parabens(aniversariantes);
-        await bot.sendMessage(groupId, {
+        await currentBot.sendMessage(groupId, {
           text: msg,
           mentions: aniversariantes
         });
@@ -78,10 +82,14 @@ async function checkBirthdays(bot) {
  * Inicia o worker de aniversarios (roda todo dia a meia-noite BRT)
  */
 export function startBirthdayWorker(bot) {
+  if (bot) currentBot = bot;
+  if (cronStarted) return;
+  cronStarted = true;
+
   try {
     cron.schedule('0 0 * * *', async () => {
       if (isDebug) console.log('[Birthday] Cron disparado: verificando aniversariantes...');
-      await checkBirthdays(bot);
+      await checkBirthdays();
     }, { timezone: 'America/Sao_Paulo' });
 
     if (isDebug) {
@@ -91,3 +99,4 @@ export function startBirthdayWorker(bot) {
     console.error('[Birthday] Erro ao iniciar worker:', e.message || e);
   }
 }
+

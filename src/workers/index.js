@@ -6,17 +6,33 @@ import { startDonoDivulgacaoWorker } from './donoDivulgacaoWorker.js';
 import { startBirthdayWorker } from './birthdayWorker.js';
 
 let workersStarted = false;
+let activeBot = null;
+
+export function updateWorkerSocket(bot) {
+  if (!bot) return;
+  activeBot = bot;
+  startRemindersWorker(activeBot);
+  startGpScheduleWorker(activeBot);
+  startAutoHorariosWorker(activeBot);
+  startAutoMensagensWorker(activeBot);
+  startDonoDivulgacaoWorker(activeBot);
+  startBirthdayWorker(activeBot);
+}
 
 export function startAllWorkers(bot) {
-  if (workersStarted) return;
+  if (bot) activeBot = bot;
+  if (workersStarted) {
+    updateWorkerSocket(activeBot);
+    return;
+  }
   workersStarted = true;
 
-  startRemindersWorker(bot);
-  startGpScheduleWorker(bot);
-  startAutoHorariosWorker(bot);
-  startAutoMensagensWorker(bot);
-  startDonoDivulgacaoWorker(bot);
-  startBirthdayWorker(bot);
+  startRemindersWorker(activeBot);
+  startGpScheduleWorker(activeBot);
+  startAutoHorariosWorker(activeBot);
+  startAutoMensagensWorker(activeBot);
+  startDonoDivulgacaoWorker(activeBot);
+  startBirthdayWorker(activeBot);
 }
 
 export { scheduleGroupJob, unscheduleGroupJob } from './groupScheduleWorker.js';

@@ -1,7 +1,7 @@
 // ==================== COMMAND DISPATCHER ====================
 // Extraído do index.js - Despacha comandos dinâmicos e trata comando não encontrado.
 
-import { execDynamicCommand } from '../utils/dynamicCommand.js';
+import { execDynamicCommand, findCommandImport } from '../utils/dynamicCommand.js';
 import { Commands, getTotalCommands, getTopSimilarCommands } from '../utils/commandSearch.js';
 import * as vipCommandsManager from '../utils/vipCommandsManager.js';
 import { loadCmdNotFoundConfig, checkCommandLimit, loadMsgPrefix, loadCustomReacts, processAutoResponse } from '../utils/database.js';
@@ -13,22 +13,27 @@ export async function dispatchCommand(ctx) {
     getUserName, args, q, MESSAGES
   } = ctx;
 
-  // === LIMITES DE COMANDO ===
-  if (isCmd && !['cmdlimitar', 'cmdlimit', 'limitarcmd', 'cmddeslimitar', 'cmdremovelimit', 'rmcmdlimit', 'cmdlimites', 'cmdlimits', 'listcmdlimites'].includes(command)) {
-    const globalLimitCheck = checkCommandLimit(command, sender);
-    if (globalLimitCheck.limited) { await reply(globalLimitCheck.message); return; }
-  }
-
-  // === VERIFICAÇÃO VIP ===
-  if (isCmd && vipCommandsManager.isVipCommand(command) && !isPremium) {
-    await reply(MESSAGES.middleware.commandDispatcher.vipOnly(prefix));
-    return;
-  }
-
-  // === DESPACHO DINÂMICO ===
+  // === VERIFICAÇÃO E DESPACHO DE COMANDO ===
   if (isCmd) {
-    const handledByDynamic = await execDynamicCommand(command, ctx);
-    if (handledByDynamic) return;
+    const { command: foundCmd } = await findCommandImport(command);
+    
+    if (foundCmd) {
+      // === LIMITES DE COMANDO ===
+      if (!['cmdlimitar', 'cmdlimit', 'limitarcmd', 'cmddeslimitar', 'cmdremovelimit', 'rmcmdlimit', 'cmdlimites', 'cmdlimits', 'listcmdlimites'].includes(command)) {
+        const globalLimitCheck = checkCommandLimit(command, sender);
+        if (globalLimitCheck.limited) { await reply(globalLimitCheck.message); return; }
+      }
+
+      // === VERIFICAÇÃO VIP ===
+      if (vipCommandsManager.isVipCommand(command) && !isPremium) {
+        await reply(MESSAGES.middleware.commandDispatcher.vipOnly(prefix));
+        return;
+      }
+
+      // === DESPACHO DINÂMICO ===
+      const handledByDynamic = await execDynamicCommand(command, ctx);
+      if (handledByDynamic) return;
+    }
   }
 
   // === COMANDO NÃO ENCONTRADO ===

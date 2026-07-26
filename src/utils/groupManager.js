@@ -49,7 +49,7 @@ export async function saveGroupDataById(groupId, groupData, {
   if (!groupId || !groupData || typeof groupData !== 'object') return false;
 
   try {
-    return await writeAsync(groupFile, groupData);
+    return await writeQueued(groupFile, groupData);
   } catch (error) {
     console.error(`Erro ao salvar dados do grupo ${groupId}:`, error.message);
     return false;
@@ -67,7 +67,7 @@ export async function loadGroupData(isGroup, from, groupFile, groupName) {
   try {
     const fileExists = fs.existsSync(groupFile);
     if (!fileExists) {
-      await writeAsync(groupFile, {
+      await writeQueued(groupFile, {
         mark: {},
         createdAt: new Date().toISOString(),
         groupName: groupName

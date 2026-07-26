@@ -8,10 +8,18 @@ const FORTUNE_GAMES = require('../funcs/json/autoHorariosGames.json');
 
 const AUTO_HORARIOS_PATH = './dados/database/autohorarios.json';
 
+let currentBot = null;
+let intervalStarted = false;
+
 export const startAutoHorariosWorker = (bot) => {
+  if (bot) currentBot = bot;
+  if (intervalStarted) return;
+  intervalStarted = true;
+
   try {
     setInterval(async () => {
       try {
+        if (!currentBot) return;
         const now = new Date();
         const minutes = now.getMinutes();
         const seconds = now.getSeconds();
@@ -60,7 +68,7 @@ export const startAutoHorariosWorker = (bot) => {
             responseText += MESSAGES.workers.autoHorarios.warnings;
             responseText += MESSAGES.workers.autoHorarios.footer;
             
-            await bot.sendMessage(chatId, { text: responseText });
+            await currentBot.sendMessage(chatId, { text: responseText });
             
             config.lastSent = Date.now();
             

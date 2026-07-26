@@ -12,6 +12,9 @@ const isDebug = config.debug === true || process.env.CHAINY_DEBUG === '1' || pro
 
 const gpCronJobs = {};
 
+let currentBot = null;
+let schedulesLoaded = false;
+
 export const unscheduleGroupJob = (groupId, type) => {
   const key = `${groupId}:${type}`;
   const j = gpCronJobs[key];
@@ -22,6 +25,8 @@ export const unscheduleGroupJob = (groupId, type) => {
 };
 
 export const scheduleGroupJob = (groupId, type, timeStr, bot) => {
+  if (bot) currentBot = bot;
+  const activeBot = bot || currentBot;
   if (!groupId || !timeStr) return;
   const normalized = normalizeScheduleTime(timeStr);
   if (!normalized) return;
@@ -34,6 +39,9 @@ export const scheduleGroupJob = (groupId, type, timeStr, bot) => {
   try {
     const task = cron.schedule(cronExpr, async () => {
       try {
+        const sockToUse = currentBot || activeBot;
+        if (!sockToUse) return;
+
         const filePath = pathz.join(GRUPOS_DIR, `${groupId}.json`);
         if (!db.existsSync(filePath)) return;
         const data = await db.readAsync(filePath, {});
@@ -42,8 +50,8 @@ export const scheduleGroupJob = (groupId, type, timeStr, bot) => {
 
         if (type === 'open') {
           try {
-            await bot.groupSettingUpdate(groupId, 'not_announcement');
-            await bot.sendMessage(groupId, { text: MESSAGES.workers.schedule.groupOpened });
+            await sockToUse.groupSettingUpdate(groupId, 'not_announcement');
+            await sockToUse.sendMessage(groupId, { text: MESSAGES.workers.schedule.groupOpened });
             console.log(`[Cron] ✅ Grupo ABERTO automaticamente: ${groupId.substring(0, 15)}... às ${normalized}`);
           } catch (e) {
             console.error(`[Cron Error] open ${groupId}:`, e.message || e);
@@ -54,8 +62,8 @@ export const scheduleGroupJob = (groupId, type, timeStr, bot) => {
           }
         } else {
           try {
-            await bot.groupSettingUpdate(groupId, 'announcement');
-            await bot.sendMessage(groupId, { text: MESSAGES.workers.schedule.groupClosed });
+            await sockToUse.groupSettingUpdate(groupId, 'announcement');
+            await sockToUse.sendMessage(groupId, { text: MESSAGES.workers.schedule.groupClosed });
             console.log(`[Cron] ✅ Grupo FECHADO automaticamente: ${groupId.substring(0, 15)}... às ${normalized}`);
           } catch (e) {
             console.error(`[Cron Error] close ${groupId}:`, e.message || e);
@@ -117,9 +125,14 @@ const loadAllGroupSchedules = async (bot) => {
 };
 
 export const startGpScheduleWorker = (bot) => {
+  if (bot) currentBot = bot;
+  if (schedulesLoaded) return;
+  schedulesLoaded = true;
+
   try {
     loadAllGroupSchedules(bot);
   } catch (e) {
     console.error('[Cron] startGpScheduleWorker error:', e);
   }
 };
+

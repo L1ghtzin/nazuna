@@ -57,18 +57,11 @@ class UserContextDB {
   }
 
   async saveDatabase() {
-    const performSave = async () => {
-      try {
-        const diskData = await readAsync(DB_PATH, {});
-        const merged = { ...diskData, ...this.data };
-        await writeAsync(DB_PATH, merged);
-      } catch (error) {
-        console.error('❌ Erro ao salvar contexto de usuários:', error);
-      }
-    };
-
-    this._saveQueue = this._saveQueue.then(performSave, performSave);
-    return this._saveQueue;
+    try {
+      db.debounced(DB_PATH, this.data, 2000);
+    } catch (error) {
+      console.error('❌ Erro ao salvar contexto de usuários:', error);
+    }
   }
 
   getUserContext(userId) {

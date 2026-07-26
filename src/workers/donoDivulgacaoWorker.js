@@ -3,7 +3,8 @@ import { loadDonoDivulgacao, saveDonoDivulgacao } from '../utils/database.js';
 import { isGroupId } from '../utils/helpers.js';
 import { normalizeScheduleTime, getTodayStr, hasRunForScheduleToday } from '../utils/timeHelpers.js';
 
-let donoDivulgacaoCronJob = null;
+let currentBot = null;
+let workerStarted = false;
 
 const unscheduleDonoDivulgacaoJob = () => {
   if (donoDivulgacaoCronJob && typeof donoDivulgacaoCronJob.stop === 'function') {
@@ -13,6 +14,10 @@ const unscheduleDonoDivulgacaoJob = () => {
 };
 
 export const runDonoDivulgacaoSend = async (bot, messageText, source = 'manual') => {
+  const sockToUse = bot || currentBot;
+  if (!sockToUse) {
+    return { success: false, message: '❌ Conexão não disponível para divulgação.' };
+  }
   const config = loadDonoDivulgacao();
   const groups = Array.isArray(config.groups) ? config.groups : [];
   const text = (messageText || config.message || '').trim();
@@ -33,7 +38,7 @@ export const runDonoDivulgacaoSend = async (bot, messageText, source = 'manual')
       continue;
     }
     try {
-      await bot.sendMessage(groupId, { text });
+      await sockToUse.sendMessage(groupId, { text });
       sent++;
     } catch (e) {
       failed++;
@@ -54,6 +59,7 @@ export const runDonoDivulgacaoSend = async (bot, messageText, source = 'manual')
 };
 
 const scheduleDonoDivulgacaoJob = (timeStr, bot) => {
+  if (bot) currentBot = bot;
   const normalized = normalizeScheduleTime(timeStr);
   if (!normalized) return false;
   const [hh, mm] = normalized.split(':');
@@ -75,7 +81,7 @@ const scheduleDonoDivulgacaoJob = (timeStr, bot) => {
         const today = getTodayStr();
         if (hasRunForScheduleToday(schedule.lastRun, today, targetTime)) return;
 
-        const result = await runDonoDivulgacaoSend(bot, null, 'auto');
+        const result = await runDonoDivulgacaoSend(currentBot, null, 'auto');
         if (result.success) {
           schedule.lastRun = { date: today, time: targetTime };
           config.schedule = schedule;
@@ -96,6 +102,10 @@ const scheduleDonoDivulgacaoJob = (timeStr, bot) => {
 };
 
 export const startDonoDivulgacaoWorker = (bot) => {
+  if (bot) currentBot = bot;
+  if (workerStarted) return;
+  workerStarted = true;
+
   try {
     const config = loadDonoDivulgacao();
     if (config.schedule?.enabled && config.schedule?.time) {
@@ -105,3 +115,4 @@ export const startDonoDivulgacaoWorker = (bot) => {
     console.error('[DivDono] Erro ao iniciar worker:', e);
   }
 };
+
