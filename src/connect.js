@@ -23,6 +23,7 @@ console.info = (...args) => {
 import RentalExpirationManager from './utils/rentalExpirationManager.js';
 import { groupCache } from './utils/groupCache.js';
 import { loadMsgBotOn } from './utils/database.js';
+import db from './utils/database/io.js';
 import { buildUserId, normalizeMessageContent } from './utils/helpers.js';
 import { initCaptchaIndex } from './utils/captchaIndex.js';
 import CaptchaIndex from './utils/captchaIndex.js';
@@ -233,15 +234,58 @@ async function clearAuthDir(dirToRemove = AUTH_DIR) {
     }
 }
 
-// fetchLatestBaileysVersion() faz uma requisição HTTP — se a rede estava instável
-// (causa da desconexão), essa chamada podia falhar e impedir a reconexão.
-let _cachedWAVersion = null;
+// Busca a versão mais recente do WhatsApp via Baileys com cache persistente em disco, TTL (6h) e timeout.
+const WA_VERSION_CACHE_TTL = 6 * 60 * 60 * 1000; // 6 horas
+const WA_VERSION_CACHE_FILE = path.join(__dirname, '../dados/database/wa_version_cache.json');
+let _waVersionCache = null;
+
+async function loadWAVersionCacheFromDisk() {
+    if (_waVersionCache) return _waVersionCache;
+    try {
+        const saved = await db.readAsync(WA_VERSION_CACHE_FILE, null);
+        if (saved && Array.isArray(saved.version)) {
+            _waVersionCache = saved;
+        }
+    } catch {
+        // Ignora erros de leitura inicial de cache
+    }
+    return _waVersionCache;
+}
 
 async function getWAVersion() {
-    if (_cachedWAVersion) return _cachedWAVersion;
-    const { version } = await fetchLatestBaileysVersion();
-    _cachedWAVersion = version;
-    return version;
+    const now = Date.now();
+    await loadWAVersionCacheFromDisk();
+
+    // Se houver cache válido em memória/disco dentro do TTL de 6h, reaproveita
+    if (_waVersionCache && (now - _waVersionCache.fetchedAt < WA_VERSION_CACHE_TTL)) {
+        return _waVersionCache.version;
+    }
+
+    try {
+        // Timeout de 7 segundos para evitar travamentos em conexões ou redes instáveis
+        const fetchPromise = fetchLatestBaileysVersion();
+        const timeoutPromise = new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Timeout na consulta de versão Baileys')), 7000)
+        );
+
+        const { version } = await Promise.race([fetchPromise, timeoutPromise]);
+        _waVersionCache = { version, fetchedAt: now };
+        
+        // Persiste a nova versão em disco
+        db.queue(WA_VERSION_CACHE_FILE, _waVersionCache);
+
+        return version;
+    } catch (err) {
+        // Se a busca remota falhar, tenta usar a versão salva no cache persistente (disco/memória)
+        if (_waVersionCache?.version) {
+            console.warn(`⚠️ Falha ao buscar nova versão do WhatsApp online (${err.message}). Usando versão salva no cache: ${_waVersionCache.version.join('.')}`);
+            return _waVersionCache.version;
+        }
+
+        // Se nem o cache em disco existir, retorna undefined (Baileys usará sua versão interna padrão)
+        console.warn(`⚠️ Falha ao buscar versão do WhatsApp online e nenhum cache foi encontrado (${err.message}). Usando versão padrão interna do Baileys.`);
+        return undefined;
+    }
 }
 
 async function createBotSocket(authDir) {
@@ -286,7 +330,7 @@ async function createBotSocket(authDir) {
     // Busca a versão mais recente do WhatsApp
     // CORREÇÃO: Usa versão cacheada em vez de buscar na rede a cada reconexão.
     const version = await getWAVersion();
-    console.log(`📱 Usando versão do WhatsApp: ${version.join('.')}`);
+    console.log(`📱 Usando versão do WhatsApp: ${version ? version.join('.') : 'padrão (Baileys)'}`);
     
     const ChainySock = makeWASocket({
         version: version,
