@@ -1,4 +1,5 @@
 import { useMultiFileAuthState, DisconnectReason, fetchLatestBaileysVersion, makeCacheableSignalKeyStore, makeWASocket, isJidBroadcast, isJidStatusBroadcast, isJidNewsletter } from 'baileys';
+import { Boom } from '@hapi/boom';
 import NodeCache from 'node-cache';
 import readline from 'readline';
 import pino from 'pino';
@@ -552,10 +553,27 @@ async function startWatcher(codeMode = false, phoneNumber = null, ownerJid = nul
         watcherSock.ev.on('connection.update', async (update) => {
             const { connection, lastDisconnect } = update;
             if (connection === 'close') {
-                const shouldReconnect = (lastDisconnect.error?.output?.statusCode !== DisconnectReason.loggedOut);
-                console.log(`👁️ [WATCHER] Conexão fechada. Reconectando: ${shouldReconnect}`);
+                const statusCode = lastDisconnect?.error ? new Boom(lastDisconnect.error)?.output?.statusCode : null;
+                const reasonTag = lastDisconnect?.error?.reasonNode?.tag || lastDisconnect?.error?.data?.reasonNode?.tag;
+                const isConflict = statusCode === DisconnectReason.connectionReplaced || 
+                                   reasonTag === 'conflict' || 
+                                   lastDisconnect?.error?.output?.payload?.error === 'Conflict';
+                const isLoggedOut = statusCode === DisconnectReason.loggedOut;
+                const isBadSession = statusCode === DisconnectReason.badSession;
+
+                const shouldReconnect = Boolean(lastDisconnect?.error) && !isLoggedOut && !isConflict && !isBadSession;
+
+                console.log(`👁️ [WATCHER] Conexão fechada (Código: ${statusCode || 'N/A'}). Reconectando: ${shouldReconnect}`);
+
+                global.sockWatcher = null;
+                watcherSock = null;
+
                 if (shouldReconnect) {
                     setTimeout(() => startWatcher(codeMode, phoneNumber, ownerJid), 5000);
+                } else if (isConflict) {
+                    console.warn(`👁️ [WATCHER] Conexão do Sensor substituída (conflito de sessão no mesmo número). Reconexão desativada para evitar loop.`);
+                } else if (isLoggedOut || isBadSession) {
+                    console.warn(`👁️ [WATCHER] Sensor desconectado ou sessão inválida. Limpe a pasta watcher-qr-code se desejar parear novamente.`);
                 }
             } else if (connection === 'open') {
                 console.log(`👁️ [WATCHER] Sensor (Sombra Watcher) conectado e vigiando!`);
@@ -743,6 +761,7 @@ async function gracefulShutdown(signal) {
             console.log('🔌 Fechando conexão do Sensor (Watcher)...');
             watcherSock.end(undefined);
             watcherSock = null;
+            global.sockWatcher = null;
         }
 
     // Limpa recursos
