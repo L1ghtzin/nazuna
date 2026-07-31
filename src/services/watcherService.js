@@ -140,6 +140,7 @@ export async function startWatcher(codeMode = false, phoneNumber = null, ownerJi
         if (codeMode && !hasSession && phoneNumber) {
             setTimeout(async () => {
                 try {
+                    if (!watcherSock || typeof watcherSock.requestPairingCode !== 'function') return;
                     const code = await watcherSock.requestPairingCode(phoneNumber);
                     console.log(`\n👁️ =============================================================\n🔑 CÓDIGO DE PAREAMENTO DO WATCHER: ${code}\n=============================================================\n`);
 
