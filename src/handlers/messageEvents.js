@@ -25,9 +25,10 @@ export async function handleMessagesUpsert(ChainySock, m, { messageQueue, proces
     }
   }
   
-  // --- ANTI-STEALTH (Anti Msg Criptografada) ---
-  // Fire-and-forget: não bloqueia o processamento de mensagens normais
-  processAntiStealth(ChainySock, m).catch(e => console.error('[ANTI-STEALTH] Erro crítico no módulo:', e));
+  // --- ANTI-STEALTH (Anti Msg Criptografada do Bot Principal) ---
+  if (!m.fromWatcher) {
+    processAntiStealth(ChainySock, m).catch(e => console.error('[ANTI-STEALTH] Erro crítico no módulo:', e));
+  }
   // ---------------------------------------------
   
   // Se for 'append', só processa se for solicitação de entrada (messageStubType 172)

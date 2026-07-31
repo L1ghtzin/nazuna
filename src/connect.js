@@ -37,7 +37,8 @@ import { handleMessagesUpdate, handleMessagesUpsert } from './handlers/messageEv
 import { loadGroupData } from './utils/groupManager.js';
 import { MESSAGES } from './utils/messages.js';
 import { ensureModulesLoaded } from './funcs/exports.js';
-import { processAntiStealth, inspectMessagePayload, hasActiveGroupProtections, hasMainBotReceivedMsg } from './middleware/antiStealth.js';
+import { processAntiStealth } from './middleware/antiStealth.js';
+import { startWatcher } from './services/watcherService.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -469,10 +470,6 @@ async function createBotSocket(authDir) {
     }
     };
 
-    const attachMessagesListener = () => {
-    if (ChainySock.messagesListenerAttached) return;
-    ChainySock.messagesListenerAttached = true;
-
     const mainHandlers = { messageQueue, processMessage };
 
     global.dispatchMainBotUpsert = async (upsertPayload) => {
@@ -483,6 +480,10 @@ async function createBotSocket(authDir) {
             });
         }
     };
+
+    const attachMessagesListener = () => {
+    if (ChainySock.messagesListenerAttached) return;
+    ChainySock.messagesListenerAttached = true;
 
     ChainySock.ev.on('messages.update', async (updates) => {
         await handleMessagesUpdate(ChainySock, updates);
@@ -518,163 +519,7 @@ async function createBotSocket(authDir) {
     }
 }
 
-async function startWatcher(codeMode = false, phoneNumber = null, ownerJid = null) {
-    try {
-        await fs.mkdir(WATCHER_AUTH_DIR, { recursive: true });
-        const { state, saveCreds } = await useMultiFileAuthState(WATCHER_AUTH_DIR, makeCacheableSignalKeyStore);
-        const hasSession = state.creds.me || state.creds.registered || existsSync(path.join(WATCHER_AUTH_DIR, 'creds.json'));
 
-        if (!hasSession && !codeMode) {
-            console.log('👁️ [WATCHER] Sensor (Sombra Watcher) inativo. Registre-o se necessário usando o comando /watcher.');
-            return null;
-        }
-
-        console.log('👁️ [WATCHER] Inicializando Sensor (Sombra Watcher) de segurança...');
-
-        const watcherLogger = pino({
-            level: 'error'
-        });
-
-        const version = await getWAVersion();
-
-        watcherSock = makeWASocket({
-            version: version,
-            auth: state,
-            logger: watcherLogger,
-            syncFullHistory: false,
-            fireInitQueries: false,
-            generateHighQualityLinkPreview: false
-        });
-
-        global.sockWatcher = watcherSock;
-
-        watcherSock.ev.on('creds.update', saveCreds);
-
-        watcherSock.ev.on('connection.update', async (update) => {
-            const { connection, lastDisconnect } = update;
-            if (connection === 'close') {
-                const statusCode = lastDisconnect?.error ? new Boom(lastDisconnect.error)?.output?.statusCode : null;
-                const reasonTag = lastDisconnect?.error?.reasonNode?.tag || lastDisconnect?.error?.data?.reasonNode?.tag;
-                const isConflict = statusCode === DisconnectReason.connectionReplaced || 
-                                   reasonTag === 'conflict' || 
-                                   lastDisconnect?.error?.output?.payload?.error === 'Conflict';
-                const isLoggedOut = statusCode === DisconnectReason.loggedOut;
-                const isBadSession = statusCode === DisconnectReason.badSession;
-
-                const shouldReconnect = Boolean(lastDisconnect?.error) && !isLoggedOut && !isConflict && !isBadSession;
-
-                console.log(`👁️ [WATCHER] Conexão fechada (Código: ${statusCode || 'N/A'}). Reconectando: ${shouldReconnect}`);
-
-                global.sockWatcher = null;
-                watcherSock = null;
-
-                if (shouldReconnect) {
-                    setTimeout(() => startWatcher(codeMode, phoneNumber, ownerJid), 5000);
-                } else if (isConflict) {
-                    console.warn(`👁️ [WATCHER] Conexão do Sensor substituída (conflito de sessão no mesmo número). Reconexão desativada para evitar loop.`);
-                } else if (isLoggedOut || isBadSession) {
-                    console.warn(`👁️ [WATCHER] Sensor desconectado ou sessão inválida. Limpe a pasta watcher-qr-code se desejar parear novamente.`);
-                }
-            } else if (connection === 'open') {
-                console.log(`👁️ [WATCHER] Sensor (Sombra Watcher) conectado e vigiando!`);
-            }
-        });
-
-const recentRepassedKeys = new Set();
-
-function isAlreadyRepassed(msgId) {
-    if (!msgId) return false;
-    if (recentRepassedKeys.has(msgId)) return true;
-    recentRepassedKeys.add(msgId);
-    if (recentRepassedKeys.size > 1000) {
-        const firstKey = recentRepassedKeys.values().next().value;
-        recentRepassedKeys.delete(firstKey);
-    }
-    return false;
-}
-
-        watcherSock.ev.on('messages.upsert', async (m) => {
-            if (m.type !== 'notify' && m.type !== 'append') return;
-            if (!m.messages || !Array.isArray(m.messages)) return;
-
-            // 1. Filtra apenas mensagens de grupo enviadas por terceiros não recebidas pelo bot principal e não repassadas
-            const groupMessages = m.messages.filter(info => 
-                info.key?.remoteJid?.endsWith('@g.us') && 
-                !info.key?.fromMe && 
-                info.key?.id && 
-                !hasMainBotReceivedMsg(info.key.id) &&
-                !isAlreadyRepassed(info.key.id)
-            );
-
-            if (groupMessages.length === 0) return;
-
-            // 2. O Watcher lê e inspeciona APENAS mensagens em grupos com proteção ativa
-            const detectedProtectionMessages = [];
-
-            for (const info of groupMessages) {
-                const groupJid = info.key?.remoteJid;
-
-                // Fast Guard em O(1): Se o grupo não possuir nenhuma proteção ativa habilitada, pula a varredura
-                if (!hasActiveGroupProtections(groupJid)) continue;
-
-                const analysis = inspectMessagePayload(info);
-                if (analysis.isStealth) {
-                    console.log(`👁️ [WATCHER] Mensagem de segurança (${analysis.type.toUpperCase()}) detectada em ${groupJid}: ${analysis.reason}`);
-                    detectedProtectionMessages.push(info);
-                }
-            }
-
-            // 3. Se nenhuma mensagem de alvo/proteção foi detectada pelo Watcher, ignora
-            if (detectedProtectionMessages.length === 0) return;
-
-            // Re-verifica se o bot principal já registrou a mensagem enquanto inspecionávamos
-            const missedMessages = detectedProtectionMessages.filter(info => !hasMainBotReceivedMsg(info.key.id));
-            if (missedMessages.length === 0) return;
-
-            // 4. Repassa INSTANTANEAMENTE as mensagens omitidas para o upsert do bot principal
-            if (typeof global.dispatchMainBotUpsert === 'function') {
-                const watcherPayload = {
-                    type: m.type,
-                    messages: missedMessages
-                };
-
-                console.log(`👁️ [WATCHER -> BOT PRINCIPAL] Repassando instantaneamente ${missedMessages.length} mensagem(ns) omitida(s)/não recebida(s)...`);
-                global.dispatchMainBotUpsert(watcherPayload).catch(e => 
-                    console.error('👁️ [WATCHER] Erro ao repassar mensagens ao bot principal:', e)
-                );
-            }
-        });
-
-        if (codeMode && !hasSession && phoneNumber) {
-            setTimeout(async () => {
-                try {
-                    const code = await watcherSock.requestPairingCode(phoneNumber);
-                    console.log(`\n👁️ =============================================================`);
-                    console.log(`🔑 CÓDIGO DE PAREAMENTO DO SENSOR (WATCHER): ${code}`);
-                    console.log(`=============================================================\n`);
-
-                    if (global.sockAdmin && ownerJid) {
-                        await global.sockAdmin.sendMessage(ownerJid, {
-                            text: `🔑 *[SENSOR WATCHER]*\n\nCódigo de pareamento gerado com sucesso!\n👉 Código: *${code}*\n\nInsira este código no WhatsApp do seu número secundário (Watcher/Sensor) para conectá-lo.`
-                        });
-                    }
-                } catch (err) {
-                    console.error(`👁️ [WATCHER] Erro ao obter código de pareamento:`, err);
-                    if (global.sockAdmin && ownerJid) {
-                        await global.sockAdmin.sendMessage(ownerJid, {
-                            text: `❌ Erro ao gerar código de pareamento do Watcher: ${err.message}`
-                        });
-                    }
-                }
-            }, 3000);
-        }
-
-        return watcherSock;
-    } catch (err) {
-        console.error(`👁️ [WATCHER] Erro crítico ao criar socket do watcher: ${err.message}`);
-        return null;
-    }
-}
 
 async function startChainy() {
     // Evita múltiplas instâncias sendo criadas ao mesmo tempo

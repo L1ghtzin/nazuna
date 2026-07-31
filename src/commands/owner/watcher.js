@@ -1,4 +1,4 @@
-import { startWatcher } from '../../connect.js';
+import { startWatcher } from '../../services/watcherService.js';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
