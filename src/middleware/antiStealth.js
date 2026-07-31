@@ -5,6 +5,7 @@ import { MESSAGES } from '../utils/messages.js';
 import { idsMatch, removeDeviceId } from '../utils/helpers.js';
 import { GRUPOS_DIR } from '../utils/paths.js';
 import groupCache from '../utils/groupCache.js';
+import { isWatcherInGroup } from '../services/watcherService.js';
 
 // ── CONSTANTES E ESTADO EM MEMÓRIA ────────────────────────────────
 const STEALTH_WINDOW_MS = 4_000;
@@ -113,6 +114,7 @@ export async function processAntiStealth(ChainySock, m) {
         const isGroup = groupJid?.endsWith('@g.us') ?? false;
 
         if (fromMe || !isGroup || !participant) continue;
+        if (isWatcherInGroup(groupJid) && !m?.fromWatcher) continue;
 
         const isNoSession = isNoSessionDecryptMessage(info);
         if (!isNoSession) {
