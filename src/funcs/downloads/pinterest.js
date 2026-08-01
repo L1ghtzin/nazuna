@@ -55,7 +55,7 @@ async function search(query) {
       }
     } catch {}
 
-    // 2. SiputZX API (múltiplos resultados, qualidade original)
+    // 2. SiputZX API (fallback de busca)
     try {
       const { data } = await axios.get(`${SIPUTZX}/s/pinterest`, { params: { query }, timeout: 15000 });
       if (data?.status && data.data?.length) {

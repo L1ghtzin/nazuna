@@ -72,54 +72,45 @@ export default {
       
       await reply(MESSAGES.general.wait);
       
-      let apiUrl;
-      let usedSystemZone = false;
+      let stickerBuffer = null;
+      let stickerUrl = null;
 
-      // Tenta a API primária (SystemZone)
-      try {
-        const response = await axios.get(`https://systemzone.store/api/brat?text=${encodeURIComponent(q)}${isAnimated ? '&animado=true' : ''}`);
-        if (response.data && response.data.status && response.data.imagem) {
-          apiUrl = response.data.imagem;
-          usedSystemZone = true;
-        } else {
-          throw new Error('Resposta inválida do SystemZone');
-        }
-      } catch (e) {
-        console.error('Erro na API primária do SystemZone, usando fallback Siputzx:', e.message);
-      }
+      // Lista de provedores para tentar em ordem de confiabilidade
+      const providers = isAnimated ? [
+        `https://api.siputzx.my.id/api/m/brat?text=${encodeURIComponent(q)}&isAnimated=true&delay=${delay}`,
+        `https://aqul-brat.hf.space/api/brat?text=${encodeURIComponent(q)}`,
+        `https://systemzone.store/api/brat?text=${encodeURIComponent(q)}&animado=true`
+      ] : [
+        `https://aqul-brat.hf.space/api/brat?text=${encodeURIComponent(q)}`,
+        `https://api.siputzx.my.id/api/m/brat?text=${encodeURIComponent(q)}&isAnimated=false&delay=${delay}`,
+        `https://systemzone.store/api/brat?text=${encodeURIComponent(q)}`
+      ];
 
-      // Se falhou no SystemZone ou se for bratvid (animado)
-      if (!apiUrl) {
-        apiUrl = `https://api.siputzx.my.id/api/m/brat?text=${encodeURIComponent(q)}&isAnimated=${isAnimated}&delay=${delay}`;
-      }
-
-      try {
-        return await sendSticker(bot, from, { 
-          sticker: { url: apiUrl }, 
-          packname: nomebot, 
-          author: pushname,
-          type: (isAnimated && !usedSystemZone) ? 'video' : 'image'
-        });
-      } catch (e) {
-        console.error('Erro no comando brat:', e);
-        
-        // Se usamos SystemZone e deu erro ao enviar, tentamos a Siputzx como último recurso
-        if (usedSystemZone) {
-          try {
-            console.log('Tentando novamente com fallback Siputzx...');
-            const fallbackUrl = `https://api.siputzx.my.id/api/m/brat?text=${encodeURIComponent(q)}&isAnimated=${isAnimated}&delay=${delay}`;
-            return await sendSticker(bot, from, { 
-              sticker: { url: fallbackUrl }, 
-              packname: nomebot, 
-              author: pushname,
-              type: isAnimated ? 'video' : 'image'
-            });
-          } catch (fallbackErr) {
-            console.error('Erro no fallback Siputzx:', fallbackErr);
+      for (const providerUrl of providers) {
+        try {
+          const res = await axios.get(providerUrl, { responseType: 'arraybuffer', timeout: 8000 });
+          if (res.status === 200 && res.data && res.data.length > 0) {
+            stickerBuffer = Buffer.from(res.data);
+            break;
           }
+        } catch (e) {
+          console.warn(`[Brat] Provider falhou (${providerUrl}):`, e.message);
         }
-        return reply(MESSAGES.error.general);
       }
+
+      if (stickerBuffer) {
+        try {
+          return await sendSticker(bot, from, { 
+            sticker: stickerBuffer, 
+            packname: nomebot, 
+            author: pushname
+          });
+        } catch (e) {
+          console.error('Erro ao enviar sticker do buffer brat:', e);
+        }
+      }
+
+      return reply(MESSAGES.error.general);
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -127,13 +118,35 @@ export default {
     // ═══════════════════════════════════════════════════════════════
     if (cmd === 'emojimix') {
       if (!q) return reply(MESSAGES.member.sticker.missingEmojis);
-      const url = `https://api.siputzx.my.id/api/m/emojimix?emo=${encodeURIComponent(q)}`;
-      try {
-        const buffer = await axios.get(url, { responseType: 'arraybuffer' }).then(res => Buffer.from(res.data));
-        return await sendSticker(bot, from, { sticker: buffer, packname: nomebot, author: pushname });
-      } catch (e) {
-        return reply(MESSAGES.error.general);
+      await reply(MESSAGES.general.wait);
+
+      const providers = [
+        `https://api.siputzx.my.id/api/m/emojimix?emo=${encodeURIComponent(q)}`,
+        `https://systemzone.store/api/emojimix?emo=${encodeURIComponent(q)}`
+      ];
+
+      let buffer = null;
+      for (const url of providers) {
+        try {
+          const res = await axios.get(url, { responseType: 'arraybuffer', timeout: 8000 });
+          if (res.status === 200 && res.data && res.data.length > 0) {
+            buffer = Buffer.from(res.data);
+            break;
+          }
+        } catch (e) {
+          console.warn(`[EmojiMix] Provider falhou (${url}):`, e.message);
+        }
       }
+
+      if (buffer) {
+        try {
+          return await sendSticker(bot, from, { sticker: buffer, packname: nomebot, author: pushname });
+        } catch (e) {
+          console.error('Erro ao enviar sticker emojimix:', e);
+        }
+      }
+
+      return reply(MESSAGES.error.general);
     }
 
     // ═══════════════════════════════════════════════════════════════
