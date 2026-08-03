@@ -497,6 +497,12 @@ export async function buildMessageContext(bot, info, store, messagesCache, renta
     const ownerJid = `${numerodono}@s.whatsapp.net`;
     const botId = getBotId(bot);
     const isBotSender = sender === botId || sender === bot.user?.id?.split(':')[0] + '@s.whatsapp.net' || sender === bot.user?.id?.split(':')[0] + '@lid';
+    const isWatcherSender = Boolean(
+      global.sockWatcher?.user && (
+        sender.includes(global.sockWatcher.user.id?.split(':')[0]) ||
+        (global.sockWatcher.user.lid && sender.includes(global.sockWatcher.user.lid.split(':')[0]))
+      )
+    );
 
     const senderBase = sender.split('@')[0];
     const ownerBase = String(numerodono);
@@ -510,7 +516,7 @@ export async function buildMessageContext(bot, info, store, messagesCache, renta
       (lidowner && sender === lidowner) ||
       (lidOwnerBase && senderBase === lidOwnerBase);
 
-    const isOwner = isRealOwner || info.key.fromMe || isBotSender || isSubOwner;
+    const isOwner = isRealOwner || info.key.fromMe || isBotSender || isWatcherSender || isSubOwner;
 
     const isOwnerOrSub = isOwner;
 
