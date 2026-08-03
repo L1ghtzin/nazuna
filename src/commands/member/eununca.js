@@ -1,15 +1,17 @@
+import staticData from '../../funcs/utils/staticDataLoader.js';
+
 export default {
   name: "eununca",
   description: "Cria uma enquete de Eu Nunca",
   commands: ["eununca"],
   usage: `${global.prefix}eununca`,
-  handle: async ({  reply, isGroup, isModoBn, bot, from, toolsJson , MESSAGES, info }) => {
+  handle: async ({ reply, isGroup, isModoBn, bot, from, MESSAGES, info }) => {
     try {
       if (!isGroup) return reply(MESSAGES.error.onlyGroup);
       if (!isModoBn) return reply(MESSAGES.error.modoBnDisabled);
       
-      const items = toolsJson().iNever;
-      const pollQuestion = items[Math.floor(Math.random() * items.length)];
+      const pollQuestion = staticData.getRandom('eununca');
+      if (!pollQuestion) return reply(MESSAGES.error.general);
       
       await bot.sendMessage(from, {
         poll: {

@@ -10,22 +10,7 @@ const __dirname = path.dirname(__filename);
 // createRequire is only used for JSON or true CJS modules
 const require = createRequire(import.meta.url);
 
-/**
- * Carrega e faz o parse de um arquivo JSON de forma síncrona.
- * Usamos fs direto para continuar funcionando em ESM sem require() em módulos ESM.
- * @param {string} filePath - O caminho relativo para o arquivo JSON.
- * @returns {any | undefined} O objeto JSON ou undefined se falhar.
- */
-function loadJsonSync(filePath) {
-    try {
-        const fullPath = path.resolve(__dirname, filePath);
-        const data = fs.readFileSync(fullPath, 'utf-8');
-        return JSON.parse(data);
-    } catch (error) {
-        console.error(`[ERRO] Falha ao carregar o arquivo JSON: ${filePath}. Erro: ${error.message}`);
-        return undefined;
-    }
-}
+
 
 /**
  * Inicializa e retorna o objeto de módulos agregados.
@@ -231,12 +216,7 @@ async function loadModules() {
         modules.antipalavra = antipalavraMod.default ?? antipalavraMod;
         modules.antistickerplus = antistickerplusMod.default ?? antistickerplusMod;
 
-        // --- JSONs (sync read as before, exposed as functions) ---
-        const toolsJsonData = loadJsonSync('json/tools.json');
-        const vabJsonData = loadJsonSync('json/vab.json');
 
-        modules.toolsJson = () => toolsJsonData;
-        modules.vabJson = () => vabJsonData;
 
         return modules;
     })();

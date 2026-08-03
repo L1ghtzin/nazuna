@@ -403,7 +403,7 @@ export async function buildMessageContext(bot, info, store, messagesCache, renta
 
   const {
     youtube, tiktok, pinterest, igdl, kwai, sendSticker, Dicionary, styleText,
-    emojiMix, upload, mcPlugin, tictactoe, toolsJson, vabJson,
+    emojiMix, upload, mcPlugin, tictactoe,
     Lyrics, commandStats, VerifyUpdate, relationshipManager,
     spotify, soundcloud, facebook, twitter, gdrive, mediafire, search, imagetools, freefire,
     // Novos módulos
@@ -868,7 +868,7 @@ export async function buildMessageContext(bot, info, store, messagesCache, renta
       // Módulos
       menus, modules: modulesExport,
       youtube, tiktok, pinterest, igdl, kwai, sendSticker, Dicionary, styleText,
-      emojiMix, upload, mcPlugin, tictactoe, toolsJson, vabJson,
+      emojiMix, upload, mcPlugin, tictactoe,
       Lyrics, commandStats, VerifyUpdate, relationshipManager,
       spotify, soundcloud, facebook, twitter, gdrive, mediafire, freefire,
       connect4, uno, memoria, achievements, gifts, reputation, qrcode, notes,
