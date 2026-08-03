@@ -4,7 +4,7 @@
 import fs from 'fs';
 import pathz from 'path';
 import { PREFIX } from '../../config.js';
-import { ensureDirectoryExists, loadJsonFile, normalizar, getUserName, isUserId, isValidJid, isGroupId, buildUserId, getLidFromJidCached, idsMatch, debouncedSaveJson } from '../helpers.js';
+import { ensureDirectoryExists, loadJsonFile, normalizar, getUserName, isUserId, isValidJid, isGroupId, buildUserId, getLidFromJidCached, getJidFromLid, idsMatch, debouncedSaveJson } from '../helpers.js';
 import { writeJsonFile, writeJsonFileQueued } from './_core.js';
 import {
   DATABASE_DIR,
