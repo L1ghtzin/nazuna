@@ -41,7 +41,7 @@ export function isNoSessionDecryptMessage(info) {
     if (!info?.message && info?.messageStubType === 2) {
         const params = info.messageStubParameters || [];
         if (params.length === 0) return true;
-        return params.some(p => typeof p === 'string' && /decrypt|session|cipher|no session/i.test(p));
+        return params.some(p => typeof p === 'string' && /decrypt|session|cipher|no session|counter|mac|prekey|signal|key/i.test(p));
     }
     return false;
 }

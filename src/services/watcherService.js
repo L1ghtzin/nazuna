@@ -82,10 +82,21 @@ export async function startWatcher(codeMode = false, phoneNumber = null, ownerJi
         console.log('👁️ [WATCHER] Inicializando Sensor Sombra...');
         const version = await getWAVersion();
 
+        const watcherLogger = pino({ level: 'error' }, {
+            write: (msgStr) => {
+                try {
+                    const obj = JSON.parse(msgStr);
+                    if (obj.msg === 'failed to decrypt message' && obj.key && global.sockAdmin) {
+                        // Evita o despejo bruto do log JSON e permite que o Anti-Stealth trate se necessário
+                    }
+                } catch (e) {}
+            }
+        });
+
         watcherSock = makeWASocket({
             version,
             auth: state,
-            logger: pino({ level: 'error' }),
+            logger: watcherLogger,
             syncFullHistory: false,
             fireInitQueries: false,
             generateHighQualityLinkPreview: false
