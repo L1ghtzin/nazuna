@@ -49,20 +49,25 @@ export const getMessageText = (message) => {
     return message.buttonsResponseMessage.selectedButtonId;
   }
   
-  return message.conversation || 
-         message.extendedTextMessage?.text || 
-         message.imageMessage?.caption || 
-         message.videoMessage?.caption || 
-         message.documentWithCaptionMessage?.message?.documentMessage?.caption || 
-         message.viewOnceMessage?.message?.imageMessage?.caption || 
-         message.viewOnceMessage?.message?.videoMessage?.caption || 
-         message.viewOnceMessageV2?.message?.imageMessage?.caption || 
-         message.viewOnceMessageV2?.message?.videoMessage?.caption || 
-         message.editedMessage?.message?.protocolMessage?.editedMessage?.extendedTextMessage?.text || 
-         message.editedMessage?.message?.protocolMessage?.editedMessage?.imageMessage?.caption || 
-         message.requestPaymentMessage?.noteMessage?.extendedTextMessage?.text ||
-         message.groupStatusMessage?.message?.extendedTextMessage?.text ||
-         message.groupStatusMessageV2?.message?.extendedTextMessage?.text ||
+  const actualMessage = unwrapMessage(message) || message;
+
+  return actualMessage.conversation || 
+         actualMessage.extendedTextMessage?.text || 
+         actualMessage.imageMessage?.caption || 
+         actualMessage.videoMessage?.caption || 
+         actualMessage.documentWithCaptionMessage?.message?.documentMessage?.caption || 
+         actualMessage.viewOnceMessage?.message?.imageMessage?.caption || 
+         actualMessage.viewOnceMessage?.message?.videoMessage?.caption || 
+         actualMessage.viewOnceMessageV2?.message?.imageMessage?.caption || 
+         actualMessage.viewOnceMessageV2?.message?.videoMessage?.caption || 
+         actualMessage.editedMessage?.message?.protocolMessage?.editedMessage?.extendedTextMessage?.text || 
+         actualMessage.editedMessage?.message?.protocolMessage?.editedMessage?.imageMessage?.caption || 
+         actualMessage.requestPaymentMessage?.noteMessage?.extendedTextMessage?.text ||
+         actualMessage.groupStatusMessage?.message?.extendedTextMessage?.text ||
+         actualMessage.groupStatusMessageV2?.message?.extendedTextMessage?.text ||
+         actualMessage.interactiveMessage?.header?.title ||
+         actualMessage.interactiveMessage?.body?.text ||
+         actualMessage.interactiveMessage?.footer?.text ||
          '';
 };
 

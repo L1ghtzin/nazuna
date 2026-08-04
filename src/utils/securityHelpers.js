@@ -79,11 +79,28 @@ function hasPaymentMessageKey(value, depth = 0, seenObjects = new WeakSet()) {
  * Desconsidera citações (quotedMessage) para evitar bans indevidos por citações.
  */
 export function hasPaymentMessage(message) {
+  if (!message) return false;
   let msg = message;
   if (msg?.protocolMessage?.editedMessage) {
     msg = msg.protocolMessage.editedMessage;
   }
-  return hasPaymentMessageKey(msg);
+  
+  // 1. Busca profunda em objetos
+  if (hasPaymentMessageKey(msg)) return true;
+  
+  // 2. Busca robusta em strings (bypass protection para interactiveMessage e buttonParamsJson)
+  try {
+    const msgString = JSON.stringify(msg);
+    if (msgString.includes('"requestPaymentMessage"') || 
+        msgString.includes('"sendPaymentMessage"') || 
+        msgString.includes('"currencyCodeIso4217"')) {
+      return true;
+    }
+  } catch (e) {
+    // Ignora erros de circular reference
+  }
+  
+  return false;
 }
 
 function hasGroupStatusAttribution(statusAttributions) {
