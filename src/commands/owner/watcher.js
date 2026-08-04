@@ -11,13 +11,15 @@ export default {
   name: "watcher",
   description: "Gerencia a conexão do Sensor Watcher (Sombra)",
   commands: ["watcher", "sensor"],
-  usage: "{prefix}watcher [status | parear <numero> | reset]",
+  usage: "{prefix}watcher [status | parear <numero> | reset | payload]",
   handle: async ({
     bot,
     from,
     info,
     reply,
-    args
+    args,
+    type,
+    quotedMessageContent
   }) => {
     const subcmd = args[0]?.toLowerCase();
 
@@ -32,7 +34,8 @@ export default {
       msg += `💡 *Subcomandos disponíveis:*\n`;
       msg += `👉 */watcher status* - Mostra este painel\n`;
       msg += `👉 */watcher parear <número>* - Pareia um número secundário para atuar como sensor (Ex: /watcher parear 559299999999)\n`;
-      msg += `👉 */watcher reset* - Desconecta o sensor e apaga a sessão atual`;
+      msg += `👉 */watcher reset* - Desconecta o sensor e apaga a sessão atual\n`;
+      msg += `👉 */watcher payload* - Envia o payload completo da mensagem (ou da mensagem citada) como arquivo JSON`;
       
       return reply(msg);
     }
@@ -82,6 +85,41 @@ export default {
       return;
     }
 
-    return reply(`❌ Subcomando inválido! Use */watcher status*, */watcher parear <número>* ou */watcher reset*.`);
+    if (subcmd === 'payload') {
+      const contextInfo = info.message?.extendedTextMessage?.contextInfo;
+      const hasQuoted = contextInfo?.quotedMessage;
+
+      let targetPayload;
+      let payloadLabel;
+
+      if (hasQuoted) {
+        targetPayload = {
+          quotedMessage: contextInfo.quotedMessage,
+          stanzaId: contextInfo.stanzaId || null,
+          participant: contextInfo.participant || null,
+          remoteJid: contextInfo.remoteJid || null,
+        };
+        payloadLabel = 'quoted_message';
+      } else {
+        targetPayload = info;
+        payloadLabel = 'message';
+      }
+
+      const jsonString = JSON.stringify(targetPayload, null, 2);
+      const jsonBuffer = Buffer.from(jsonString, 'utf-8');
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+      const fileName = `payload_${payloadLabel}_${timestamp}.json`;
+
+      await bot.sendMessage(from, {
+        document: jsonBuffer,
+        fileName,
+        mimetype: 'application/json',
+        caption: `📦 *Payload ${hasQuoted ? 'da mensagem citada' : 'da mensagem'}*\n🏷️ Tipo: *${hasQuoted ? Object.keys(contextInfo.quotedMessage)[0] : type}*`
+      }, { quoted: info });
+
+      return;
+    }
+
+    return reply(`❌ Subcomando inválido! Use */watcher status*, */watcher parear <número>*, */watcher reset* ou */watcher payload*.`);
   },
 };
