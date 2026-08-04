@@ -95,9 +95,8 @@ const logger = pino({
                     console.log(`👤 Participante: ${obj.key.participant || obj.author || 'Desconhecido'}`);
                     console.log(`❌ Erro: ${obj.err?.message || obj.err || 'Chave duplicada ou não preenchida'}\n`);
 
-                    if (obj.key?.id) {
-                        registerMainBotReceivedMsg(obj.key.id);
-                    }
+                    // NOTA: NÃO chamamos mais registerMainBotReceivedMsg(obj.key.id) aqui!
+                    // Isso impedia o Watcher de repassar a mensagem descriptografada.
 
                     const mockUpsert = {
                         type: 'notify',

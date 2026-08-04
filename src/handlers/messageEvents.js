@@ -1,5 +1,7 @@
 import { processAntiStealth, processAntiStealthUpdate, isNoSessionDecryptMessage, registerMainBotReceivedMsg } from '../middleware/antiStealth.js';
 
+const processedMessagesCache = new Set();
+
 export async function handleMessagesUpdate(ChainySock, updates) {
   try {
     await processAntiStealthUpdate(ChainySock, updates);
@@ -34,10 +36,26 @@ export async function handleMessagesUpsert(ChainySock, m, { messageQueue, proces
   if (m.type !== 'notify' && m.type !== 'append') return;
 
   // Filtra mensagens stealth (stubType 2 / falha de decriptação) do pipeline normal.
-  // Elas já foram tratadas pelo processAntiStealth acima. Sem este filtro, cada stealth
-  // entra no messageQueue e dispara buildMessageContext -> convertIdsToLid para TODOS
-  // os membros/admins do grupo, saturando o socket durante rajadas de stealth.
-  const messagesToProcess = m.messages.filter(info => !isNoSessionDecryptMessage(info));
+  // Também faz a deduplicação instantânea (O(1)) para evitar Race Conditions
+  // entre o Watcher e a conexão nativa, eliminando qualquer atraso artificial.
+  const messagesToProcess = m.messages.filter(info => {
+    if (isNoSessionDecryptMessage(info)) return false;
+    
+    const msgId = info.key?.id;
+    if (!msgId) return true; // Se não tem ID, deixa passar
+
+    if (processedMessagesCache.has(msgId)) return false; // Já processada, descarta
+    
+    processedMessagesCache.add(msgId);
+    if (processedMessagesCache.size > 5000) {
+      // Limpa os IDs mais antigos para não vazar memória
+      const first = processedMessagesCache.values().next().value;
+      processedMessagesCache.delete(first);
+    }
+    
+    return true;
+  });
+
   if (messagesToProcess.length === 0) return;
 
   try {

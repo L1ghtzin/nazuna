@@ -137,7 +137,10 @@ export async function processAntiStealth(ChainySock, m) {
         const state = getState(groupJid, participant);
         state.stealthTimestamps = [...state.stealthTimestamps, now].filter(t => now - t <= STEALTH_WINDOW_MS);
 
-        const threshold = state.normalMessages === 0 ? 2 : Math.max(2, cfg.limit || 3);
+        // O threshold agora usa o limite configurado (mínimo 2) estritamente.
+        // A dependência de 'normalMessages' foi removida para evitar que bots
+        // enviem iscas (ex: ".") antes do ataque stealth.
+        const threshold = Math.max(2, cfg.limit || 3);
         if (state.stealthTimestamps.length < threshold) continue;
 
         recentlyPunished.set(punishKey, now);
