@@ -37,7 +37,7 @@ import { handleMessagesUpdate, handleMessagesUpsert } from './handlers/messageEv
 import { loadGroupData } from './utils/groupManager.js';
 import { MESSAGES } from './utils/messages.js';
 import { ensureModulesLoaded } from './funcs/exports.js';
-import { processAntiStealth } from './middleware/antiStealth.js';
+import { processAntiStealth, registerMainBotReceivedMsg } from './middleware/antiStealth.js';
 import { startWatcher } from './services/watcherService.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -95,11 +95,9 @@ const logger = pino({
                     console.log(`👤 Participante: ${obj.key.participant || obj.author || 'Desconhecido'}`);
                     console.log(`❌ Erro: ${obj.err?.message || obj.err || 'Chave duplicada ou não preenchida'}\n`);
 
-                    recordMessageEnvelope({
-                        key: obj.key,
-                        messageStubType: 2,
-                        stealthMeta: true
-                    }, false);
+                    if (obj.key?.id) {
+                        registerMainBotReceivedMsg(obj.key.id);
+                    }
 
                     const mockUpsert = {
                         type: 'notify',

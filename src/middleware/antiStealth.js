@@ -6,6 +6,7 @@ import { idsMatch, removeDeviceId } from '../utils/helpers.js';
 import { GRUPOS_DIR } from '../utils/paths.js';
 import groupCache from '../utils/groupCache.js';
 import { isWatcherInGroup } from '../services/watcherService.js';
+import db from '../utils/database/io.js';
 
 // ── CONSTANTES E ESTADO EM MEMÓRIA ────────────────────────────────
 const STEALTH_WINDOW_MS = 4_000;
