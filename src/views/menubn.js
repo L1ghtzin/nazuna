@@ -366,6 +366,7 @@ ${middleBorder}${menuItemIcon}${prefix}ranknerd
 ${middleBorder}${menuItemIcon}${prefix}ranktrabalhador
 ${middleBorder}${menuItemIcon}${prefix}rankbrabo
 ${middleBorder}${menuItemIcon}${prefix}ranklindo
+${middleBorder}${menuItemIcon}${prefix}rankfeio
 ${middleBorder}${menuItemIcon}${prefix}rankmalandro
 ${middleBorder}${menuItemIcon}${prefix}rankengracado
 ${middleBorder}${menuItemIcon}${prefix}rankcharmoso
@@ -393,6 +394,7 @@ ${middleBorder}${menuItemIcon}${prefix}ranknerd
 ${middleBorder}${menuItemIcon}${prefix}ranktrabalhadora
 ${middleBorder}${menuItemIcon}${prefix}rankbraba
 ${middleBorder}${menuItemIcon}${prefix}ranklinda
+${middleBorder}${menuItemIcon}${prefix}rankfeia
 ${middleBorder}${menuItemIcon}${prefix}rankmalandra
 ${middleBorder}${menuItemIcon}${prefix}rankengracada
 ${middleBorder}${menuItemIcon}${prefix}rankcharmosa
